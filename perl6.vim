@@ -15,31 +15,47 @@
 " of language that only Perl can parse. But I'll do my best to get
 " vim to."
 
+" Avoid infinite loop in this file
+if exists('b:perl6_syntax_init')
+    finish
+endif
+let b:perl6_syntax_init = 1
+
 " Billions of keywords
 syn keyword p6Attn          TODO XXX contained
+
 syn keyword p6Module        module class role use require package enum grammar
+
 syn keyword p6KeyDecl       coro sub submethod method is but does trusts multi
 syn keyword p6KeyDecl       rule token regex category
+
 syn keyword p6KeyScopeDecl  let my our state temp has constant proto
+
 syn keyword p6KeyFlow       if else elsif unless
 syn keyword p6KeyFlow       for foreach loop while until when next last redo
 syn keyword p6KeyFlow       given not or and err xor return default exit
+
 syn keyword p6ClosureTrait  BEGIN CHECK INIT START FIRST ENTER LEAVE KEEP UNDO NEXT LAST
 syn keyword p6ClosureTrait  PRE POST END rw signature returns of parsed cached
 syn keyword p6ClosureTrait  readonly ref copy
 syn keyword p6ClosureTrait  inline tighter looser equiv assoc
+
 syn keyword p6KeyException  die fail try CATCH CONTROL warn
+
 syn keyword p6KeyIO         print open read write readline say seek close slurp
 syn keyword p6KeyIO         opendir readdir
+
 syn keyword p6KeyProperty   constant prec key value irs ofs ors pos export
 syn keyword p6KeyProperty   float int str true false int1 int2 int4 int8
 syn keyword p6KeyProperty   int16 int32 int64 uint1 uint2 uint4 uint8 uint16
 syn keyword p6KeyProperty   uint32 uint64 num16 num32 num64 complex16 complex32
 syn keyword p6KeyProperty   complex64 complex128 buf8 buf16 buf32 buf64
 syn keyword p6KeyProperty   WHAT HOW
+
 syn keyword p6KeyType       Array Bool Class Code Hash Int IO Num NumRange
 syn keyword p6KeyType       Str StrRange Sub Role Rule Rat Complex Any
 syn keyword p6KeyType       Scalar List
+
 syn keyword p6KeyFunc       substr index rindex
 syn keyword p6KeyFunc       grep map sort
 syn keyword p6KeyFunc       join split reduce min max reverse truncate zip
@@ -55,9 +71,12 @@ syn keyword p6KeyFunc       printf sprintf caller evalfile run runinstead
 syn keyword p6KeyFunc       nothing want bless chr ord list item gmtime
 syn keyword p6KeyFunc       localtime time gethost getpw chroot getlogin kill
 syn keyword p6KeyFunc       fork wait perl context
+
 syn keyword p6KeySpecial    eval operator undef undefine
 syn keyword p6KeySpecial    infix postfix prefix cirumfix postcircumfix
+
 syn keyword p6KeyCompare    eq ne lt le gt ge cmp == != < <= > >=
+
 syn match   p6Normal        "\w*::\w\+"
 
 " Comments
@@ -245,4 +264,5 @@ hi link p6Variable      Identifier
 hi link p6VarException  Special
 hi link p6String        String
 
-let b:current_syntax = "perl6"
+let b:current_syntax = 'perl6'
+unlet b:perl6_syntax_init
