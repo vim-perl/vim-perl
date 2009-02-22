@@ -1,6 +1,6 @@
 " Vim indent file
 " Language:     Perl6
-" Author:       Rafael Garcia-Suarez <rgarciasuarez@free.fr>
+" Author:       Andy Lester <andy@petdance.com>
 " Last Change:
 "
 " Adapted from Perl indent file by Rafael Garcia-Suarez <rgarciasuarez@free.fr>
