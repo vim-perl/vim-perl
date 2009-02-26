@@ -103,7 +103,7 @@ syn keyword perlStatementNumeric	abs atan2 cos exp hex int log oct rand sin sqrt
 syn keyword perlStatementList		splice unshift shift push pop split join reverse grep map sort unpack
 syn keyword perlStatementHash		each exists keys values tie tied untie
 syn keyword perlStatementIOfunc		carp confess croak dbmclose dbmopen die syscall
-syn keyword perlStatementFiledesc	binmode close closedir eof fileno getc lstat print printf readdir readline readpipe rewinddir select stat tell telldir write nextgroup=perlFiledescStatementNocomma skipwhite
+syn keyword perlStatementFiledesc	binmode close closedir eof fileno getc lstat print printf readdir readline readpipe rewinddir say select stat tell telldir write nextgroup=perlFiledescStatementNocomma skipwhite
 syn keyword perlStatementFiledesc	fcntl flock ioctl open opendir read seek seekdir sysopen sysread sysseek syswrite truncate nextgroup=perlFiledescStatementComma skipwhite
 syn keyword perlStatementVector		pack vec
 syn keyword perlStatementFiles		chdir chmod chown chroot glob link mkdir readlink rename rmdir symlink umask unlink utime
