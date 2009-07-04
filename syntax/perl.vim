@@ -1,18 +1,17 @@
 " Vim syntax file
-" Language:	Perl
-" Maintainer:	Nick Hibma <nick@van-laarhoven.org>
-" Last Change:	2006 November 23
-" Location:	http://www.van-laarhoven.org/vim/syntax/perl.vim
+" Language:     Perl 5
+" Maintainer:   Andy Lester <andy@petdance.com>
+" URL:          http://github.com/petdance/vim-perl/tree/master
+" Last Change:  2009-07-04
+" Contributors: Andy Lester <andy@petdance.com>
+"               Hinrik Örn Sigurðsson <hinrik.sig@gmail.com>
+"               Nick Hibma <nick@van-laarhoven.org>
+"               Sonia Heimann <niania@netsurf.org>
+"               and many others.
 "
 " Please download most recent version first before mailing
 " any comments.
-" See also the file perl.vim.regression.pl to check whether your
-" modifications work in the most odd cases
-" http://www.van-laarhoven.org/vim/syntax/perl.vim.regression.pl
 "
-" Original version: Sonia Heimann <niania@netsurf.org>
-" Thanks to many people for their contribution.
-
 " The following parameters are available for tuning the
 " perl syntax highlighting, with defaults given:
 "
