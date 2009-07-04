@@ -1,0 +1,6 @@
+
+NEXT
+Big updates to the q(), qq(), qr() and qx() ops.
+
+* Added proper Perl brackets behavior to all bracketed q() ops.
+* Added support for <> as the brackets.
