@@ -2246,4 +2246,4 @@ setlocal foldmethod=syntax
 
 let b:current_syntax = "perl6"
 
-" vim:ts=8:sts=4:sw=4:expandtab
+" vim:ts=8:sts=4:sw=4:expandtab:ft=vim
