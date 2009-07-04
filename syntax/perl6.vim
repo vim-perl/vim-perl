@@ -266,3 +266,5 @@ hi link p6String        String
 
 let b:current_syntax = 'perl6'
 unlet b:perl6_syntax_init
+
+" vim:ts=8:sts=4:sw=4:expandtab

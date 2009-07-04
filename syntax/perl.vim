@@ -575,4 +575,4 @@ syn sync match perlSyncPOD	grouphere NONE "^=cut"
 
 let b:current_syntax = "perl"
 
-" vim: ts=8
+" vim:ts=8:sts=4:sw=4:expandtab

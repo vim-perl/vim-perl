@@ -177,4 +177,4 @@ endfunction
 let &cpo = s:cpo_save
 unlet s:cpo_save
 
-" vim:ts=8:sts=4:sw=4
+" vim:ts=8:sts=4:sw=4:expandtab
