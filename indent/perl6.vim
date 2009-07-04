@@ -1,14 +1,21 @@
 " Vim indent file
 " Language:     Perl 6
-" Author:       Andy Lester <andy@petdance.com>
+" Maintainer:   Andy Lester <andy@petdance.com>
 " URL:          http://github.com/petdance/vim-perl/tree/master
-" Last Change:  June 3, 2009
+" Last Change:  2009-07-04
+" Contributors: Andy Lester <andy@petdance.com>
+"               Hinrik Örn Sigurðsson <hinrik.sig@gmail.com>
+"
+" Adapted from Perl indent file by Rafael Garcia-Suarez <rgarciasuarez@free.fr>
 
 " Suggestions and improvements by :
 "   Aaron J. Sherman (use syntax for hints)
 "   Artem Chuprina (play nice with folding)
-
-" TODO things that are not or not properly indented (yet) :
+" TODO:
+" This file still relies on stuff from the Perl 5 syntax file, which Perl 6
+" does not use.
+"
+" Things that are not or not properly indented (yet) :
 " - Continued statements
 "     print "foo",
 "       "bar";
@@ -28,21 +35,26 @@ let b:did_indent = 1
 " Is syntax highlighting active ?
 let b:indent_use_syntax = has("syntax")
 
-setlocal indentexpr=GetPerlIndent()
-setlocal indentkeys+=0=,0),0=or,0=and
+setlocal indentexpr=GetPerl6Indent()
+
+" we reset it first because the Perl 5 indent file might have been loaded due
+" to a .pl/pm file extension, and indent files don't clean up afterwards
+setlocal indentkeys&
+
+setlocal indentkeys+=0=,0),0],0>,0»,0=or,0=and
 if !b:indent_use_syntax
     setlocal indentkeys+=0=EO
 endif
 
 " Only define the function once.
-if exists("*GetPerlIndent")
+if exists("*GetPerl6Indent")
     finish
 endif
 
 let s:cpo_save = &cpo
 set cpo-=C
 
-function GetPerlIndent()
+function GetPerl6Indent()
 
     " Get the line to be indented
     let cline = getline(v:lnum)
@@ -53,7 +65,7 @@ function GetPerlIndent()
     endif
 
     " Don't reindent coments on first column
-    if cline =~ '^#.'
+    if cline =~ '^#'
         return 0
     endif
 
@@ -64,23 +76,10 @@ function GetPerlIndent()
     endif
 
     " Don't reindent POD and heredocs
-    if csynid == "perlPOD" || csynid == "perlHereDoc" || csynid =~ "^pod"
+    if csynid =~ "^p6Pod"
         return indent(v:lnum)
     endif
 
-    " Indent end-of-heredocs markers to column 0
-    if b:indent_use_syntax
-        " Assumes that an end-of-heredoc marker matches \I\i* to avoid
-        " confusion with other types of strings
-        if csynid == "perlStringStartEnd" && cline =~ '^\I\i*$'
-            return 0
-        endif
-    else
-        " Without syntax hints, assume that end-of-heredocs markers begin with EO
-        if cline =~ '^\s*EO'
-            return 0
-        endif
-    endif
 
     " Now get the indent of the previous perl line.
 
@@ -97,11 +96,7 @@ function GetPerlIndent()
         let skippin = 2
         while skippin
             let synid = synIDattr(synID(lnum,1,0),"name")
-            if (synid == "perlStringStartEnd" && line =~ '^\I\i*$')
-                        \ || (skippin != 2 && synid == "perlPOD")
-                        \ || (skippin != 2 && synid == "perlHereDoc")
-                        \ || synid == "perlComment"
-                        \ || synid =~ "^pod"
+            if (synid =~ "^p6Pod" || synid =~ "p6Comment")
                 let lnum = prevnonblank(lnum - 1)
                 if lnum == 0
                     return 0
@@ -113,53 +108,14 @@ function GetPerlIndent()
                 let skippin = 0
             endif
         endwhile
-    else
-        if line =~ "^EO"
-            let lnum = search("<<[\"']\\=EO", "bW")
-            let line = getline(lnum)
-            let ind = indent(lnum)
-        endif
     endif
 
-    " Indent blocks enclosed by {} or ()
-    if b:indent_use_syntax
-        " Find a real opening brace
-        let bracepos = match(line, '[(){}]', matchend(line, '^\s*[)}]'))
-        while bracepos != -1
-            let synid = synIDattr(synID(lnum, bracepos + 1, 0), "name")
-            " If the brace is highlighted in one of those groups, indent it.
-            " 'perlHereDoc' is here only to handle the case '&foo(<<EOF)'.
-            if synid == ""
-                        \ || synid == "perlMatchStartEnd"
-                        \ || synid == "perlHereDoc"
-                        \ || synid =~ "^perlFiledescStatement"
-                        \ || synid =~ '^perl\(Sub\|BEGINEND\|If\)Fold'
-                let brace = strpart(line, bracepos, 1)
-                if brace == '(' || brace == '{'
-                    let ind = ind + &sw
-                else
-                    let ind = ind - &sw
-                endif
-            endif
-            let bracepos = match(line, '[(){}]', bracepos + 1)
-        endwhile
-        let bracepos = matchend(cline, '^\s*[)}]')
-        if bracepos != -1
-            let synid = synIDattr(synID(v:lnum, bracepos, 0), "name")
-            if synid == ""
-                        \ || synid == "perlMatchStartEnd"
-                        \ || synid =~ '^perl\(Sub\|BEGINEND\|If\)Fold'
-                let ind = ind - &sw
-            endif
-        endif
-    else
-        if line =~ '[{(]\s*\(#[^)}]*\)\=$'
+        if line =~ '[<«\[{(]\s*\(#[^)}\]»>]*\)\=$'
             let ind = ind + &sw
         endif
-        if cline =~ '^\s*[)}]'
+        if cline =~ '^\s*[)}\]»>]'
             let ind = ind - &sw
         endif
-    endif
 
     " Indent lines that begin with 'or' or 'and'
     if cline =~ '^\s*\(or\|and\)\>'
