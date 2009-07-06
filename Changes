@@ -6,3 +6,5 @@ Big updates to the q(), qq(), qr() and qx() ops.
 * Added support for <> as the brackets.
 
 Added a test.pm file for testing on.
+
+Added ftplugin/perl6.vim
