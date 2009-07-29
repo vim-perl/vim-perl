@@ -1,7 +1,9 @@
 " Vim filetype plugin file
 " Language:     Perl 6
-" Maintainer:   Hinrik Örn Sigurðsson <hinrik.sig@gmail.com>
-" Last Change:  Apr 18th 2009
+" Maintainer:   Andy Lester <andy@petdance.com>
+" URL:          http://github.com/petdance/vim-perl/tree/master
+" Last Change:  2009-04-18
+" Contributors: Hinrik Örn Sigurðsson <hinrik.sig@gmail.com>
 "
 " Based on ftplugin/perl.vim by Dan Sharp <dwsharp at hotmail dot com>
 
@@ -60,7 +62,7 @@ let &l:path=perl6path
 
 " Undo the stuff we changed.
 let b:undo_ftplugin = "setlocal fo< com< cms< inc< inex< def< isk<" .
-	    \	      " | unlet! b:browsefilter"
+	    \         " | unlet! b:browsefilter"
 
 " Restore the saved compatibility options.
 let &cpo = s:save_cpo
