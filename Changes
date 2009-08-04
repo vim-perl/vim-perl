@@ -1,10 +1,19 @@
+Tue Aug 4 2009
+    - perl5: Pulled in the rest of mauke's improvements. This fixes issues
+      with q() ops and its various brackets (Hinrik)
 
-NEXT
-Big updates to the q(), qq(), qr() and qx() ops.
+Mon Aug 3 2009
+    - Add a tarball target to the Makefile (petdance)
 
-* Added proper Perl brackets behavior to all bracketed q() ops.
-* Added support for <> as the brackets.
+Sun Aug 2 2009
+    - perl5: Add perl-regression.pl to ease testing (petdance)
+    - perl5: Add spell checking to the comments syntax group (petdance)
 
-Added a test.pm file for testing on.
+Wed Jul 29 2009
+    - perl5: Highlight method calls on __PACKAGE__ (Hinrik)
 
-Added ftplugin/perl6.vim
+Thu Jun 11 2009
+    - perl5: Allow whitespace around autoquoted hash keys (Hinrik)
+
+Wed Jun 3 2009
+    - perl5: Fix highlighting of //= from Perl 5.10 (Hinrik)
