@@ -8,3 +8,5 @@ Big updates to the q(), qq(), qr() and qx() ops.
 Added a test.pm file for testing on.
 
 Added ftplugin/perl6.vim
+
+Added syntax/pod.vim
