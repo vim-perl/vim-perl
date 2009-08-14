@@ -1,12 +1,22 @@
+Changelog for the vim-perl package
 
-NEXT
-Big updates to the q(), qq(), qr() and qx() ops.
+1.00    Tue Aug  4 21:38:31 CDT 2009
+====================================
+[ENHANCEMENTS]
+perl5:
 
-* Added proper Perl brackets behavior to all bracketed q() ops.
-* Added support for <> as the brackets.
+Pulled in the rest of mauke's improvements. This fixes issues
+with q() ops and its various brackets (Hinrik)
 
-Added a test.pm file for testing on.
+Add spell checking to the comments syntax group.
 
-Added ftplugin/perl6.vim
+Highlight method calls on __PACKAGE__ (Hinrik)
 
-Added syntax/pod.vim
+Allow whitespace around autoquoted hash keys (Hinrik)
+
+Fix highlighting of //= from Perl 5.10 (Hinrik)
+
+[BUILDING]
+Add a tarball target to the Makefile.
+
+Add Nick Hibma's perl-regression.pl to ease testing.
