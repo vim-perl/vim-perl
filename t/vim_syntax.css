@@ -2,50 +2,45 @@
  * A stylesheet designed to be used with the HTML output of the
  * Perl module Text::VimColor.
  *
- * This file defines colors for every vim syntax group, for testing the
- * correctness of vim syntax files.
+ * This file uses a different color or style for every vim syntax group,
+ * good for testing the correctness of vim syntax files.
  *
  */
 
-body { color: black; background: white none }
+body { color: #2e3436; background: #eeeeec none }
 
-A:link { color: #00F; background: white none }
-A:visited { color: #909; background: white none }
-A:hover { color: #F00; background: white none }
-A:active { color: #F00; background: white none }
-
-.synNormal         { color: #000000 }
-.synComment        { color: #0000FF }
-.synConstant       { color: #FF00FF }
-.synSpecial        { color: #6A5ACD }
-.synIdentifier     { color: #008B8B }
-.synStatement      { color: #A52A2A ; font-weight: bold }
-.synPreProc        { color: #A020F0 }
-.synType           { color: #2E8B57 ; font-weight: bold }
-.synUnderlined     { color: #000000 ; text-decoration: underline }
-.synIgnore         { color: #000000 }
-.synError          { color: #FFFFFF ; background: #FF0000 none }
-.synTodo           { color: #0000FF ; background: #FFFF00 none }
-.synString         { color: #000000 }
-.synCharacter      { color: #000000 }
-.synNumber         { color: #000000 }
-.synBoolean        { color: #000000 }
-.synFloat          { color: #000000 }
-.synFunction       { color: #000000 }
-.synConditional    { color: #000000 }
-.synRepeat         { color: #000000 }
-.synLabel          { color: #000000 }
-.synOperator       { color: #000000 }
-.synKeyword        { color: #000000 }
-.synException      { color: #000000 }
-.synInclude        { color: #000000 }
-.synDefine         { color: #000000 }
-.synMacro          { color: #000000 }
-.synPreCondit      { color: #000000 }
-.synStorageClass   { color: #000000 }
-.synTypedef        { color: #000000 }
-.synTag            { color: #000000 }
-.synSpecialChar    { color: #000000 }
-.synDelimiter      { color: #000000 }
-.synSpecialComment { color: #000000 }
-.synDebug          { color: #000000 }
+.synNormal         { color: #2e3436 }
+.synComment        { color: #204a87 }
+.synConstant       { color: #a40000 }
+.synSpecial        { color: #3465a4 }
+.synIdentifier     { color: #4e9a06 }
+.synStatement      { color: #c4a000 ; font-weight: bold }
+.synPreProc        { color: #5c3566 ; font-weight: bold }
+.synType           { color: #ce5c00 ; font-weight: bold }
+.synUnderlined     { color: #2e3436 ; text-decoration: underline }
+.synIgnore         { color: #d3d7cf }
+.synError          { color: #eeeeec ; background: #cc0000 none }
+.synTodo           { color: #2e3436 ; background: #c4a000 none }
+.synString         { color: #cc0000 }
+.synCharacter      { color: #ef2929 }
+.synNumber         { color: #75507b }
+.synBoolean        { color: #e9b96e ; font-weight: bold }
+.synFloat          { color: #ad7fa8 }
+.synFunction       { color: #8f5902 }
+.synConditional    { color: #ce5c00 ; font-style: italic }
+.synRepeat         { color: #ce5c00 }
+.synLabel          { color: #000000 ; font-weight: bold }
+.synOperator       { color: #f57900 ; font-weight: bold }
+.synKeyword        { color: #c17d11 }
+.synException      { color: #75507b ; font-style: italic }
+.synInclude        { color: #73d216 ; font-weight: bold }
+.synDefine         { color: #ad7fa8 ; font-weight: bold }
+.synMacro          { color: #ad7fa8 }
+.synPreCondit      { color: #729fcf }
+.synStorageClass   { color: #3465a4 ; font-weight: bold }
+.synTypedef        { color: #73d216 ; font-style: italic }
+.synTag            { color: #cc0000 ; font-style: italic }
+.synSpecialChar    { color: #fcaf3e ; font-weight: bold }
+.synDelimiter      { color: #204a87 ; font-weight: bold }
+.synSpecialComment { color: #729fcf ; font-weight: bold }
+.synDebug          { color: #edd400 ; font-style: italic }
