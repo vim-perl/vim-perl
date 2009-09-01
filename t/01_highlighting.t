@@ -29,7 +29,8 @@ for my $lang (qw(perl perl6)) {
         vim_options          => [
             qw(-RXZ -i NONE -u NONE -U NONE -N -n), # for performance
             '+set nomodeline',          # for performance
-            '+set runtimepath=',        # don't consider system runtime files
+            '+set runtimepath=.',       # don't consider system runtime files
+            '+let perl_include_pod=1',
             "+source $ftplugin_file",
             "+source $syntax_file",
             "+source $color_file",      # all syntax classes should be defined
