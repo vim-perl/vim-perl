@@ -1,0 +1,166 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <style>
+/*
+ * A stylesheet designed to be used with the HTML output of the
+ * Perl module Text::VimColor.
+ *
+ * This file defines colors for every vim syntax group, for testing the
+ * correctness of vim syntax files.
+ *
+ */
+
+body { color: black; background: white none }
+
+A:link { color: #00F; background: white none }
+A:visited { color: #909; background: white none }
+A:hover { color: #F00; background: white none }
+A:active { color: #F00; background: white none }
+
+.synNormal         { color: #000000 }
+.synComment        { color: #0000FF }
+.synConstant       { color: #FF00FF }
+.synSpecial        { color: #6A5ACD }
+.synIdentifier     { color: #008B8B }
+.synStatement      { color: #A52A2A ; font-weight: bold }
+.synPreProc        { color: #A020F0 }
+.synType           { color: #2E8B57 ; font-weight: bold }
+.synUnderlined     { color: #000000 ; text-decoration: underline }
+.synIgnore         { color: #000000 }
+.synError          { color: #FFFFFF ; background: #FF0000 none }
+.synTodo           { color: #0000FF ; background: #FFFF00 none }
+.synString         { color: #000000 }
+.synCharacter      { color: #000000 }
+.synNumber         { color: #000000 }
+.synBoolean        { color: #000000 }
+.synFloat          { color: #000000 }
+.synFunction       { color: #000000 }
+.synConditional    { color: #000000 }
+.synRepeat         { color: #000000 }
+.synLabel          { color: #000000 }
+.synOperator       { color: #000000 }
+.synKeyword        { color: #000000 }
+.synException      { color: #000000 }
+.synInclude        { color: #000000 }
+.synDefine         { color: #000000 }
+.synMacro          { color: #000000 }
+.synPreCondit      { color: #000000 }
+.synStorageClass   { color: #000000 }
+.synTypedef        { color: #000000 }
+.synTag            { color: #000000 }
+.synSpecialChar    { color: #000000 }
+.synDelimiter      { color: #000000 }
+.synSpecialComment { color: #000000 }
+.synDebug          { color: #000000 }
+</style>
+ </head>
+ <body>
+
+<pre><span class="synPreProc">#!/usr/local/bin/perl</span>
+<span class="synComment"># From http://www.van-laarhoven.org/vim/syntax/perl.vim.regression.pl</span>
+<span class="synComment"># Regression tests for the perl.vim file</span>
+<span class="synComment"># Please run this one first before committing any patches.</span>
+
+<span class="synComment"># //</span>
+
+<span class="synIdentifier">$a</span> /= <span class="synNumber">2</span>;
+<span class="synConditional">if</span> (<span class="synStatement">/</span><span class="synString">hello</span><span class="synStatement">/</span>) {
+   <span class="synIdentifier">$b</span> = <span class="synNumber">2</span>;
+}
+
+<span class="synIdentifier">$a</span> =~ <span class="synStatement">/</span><span class="synString"> hello</span><span class="synStatement">/</span>;
+<span class="synIdentifier">$a</span> /= <span class="synStatement">/</span><span class="synString">hello</span><span class="synStatement">/x</span>;
+<span class="synIdentifier">$a</span> = <span class="synNumber">1</span>/<span class="synIdentifier">$hello</span> / <span class="synNumber">2</span>/<span class="synNumber">4</span>;
+
+
+<span class="synIdentifier">$a</span> = new HelloWorld::Thing;
+
+<span class="synStatement">package</span><span class="synType"> HelloWorld</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">new </span>{
+	<span class="synStatement">my</span> (<span class="synIdentifier">$class</span>) = <span class="synIdentifier">@_</span>;
+
+	<span class="synStatement">return</span> <span class="synOperator">bless</span> {}, <span class="synIdentifier">$class</span>;
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># Test for here document. EOF should be coloured as string or as statement</span>
+<span class="synComment"># depending on whether perl_string_as_statement is set.</span>
+<span class="synComment"># </span><span class="synTodo">XXX</span><span class="synComment"> 'if $true' is highlighted incorrectly</span>
+<span class="synIdentifier">$true</span> = <span class="synNumber">1</span>;
+<span class="synStatement">print</span> <span class="synString">&lt;&lt;EOF if </span><span class="synIdentifier">$true</span><span class="synString">;</span>
+<span class="synString">Here document</span>
+<span class="synString">EOF</span>
+<span class="synStatement">print</span> <span class="synString">&lt;&lt;&quot;EOF&quot; if </span><span class="synIdentifier">$true</span><span class="synString">;</span>
+<span class="synString">Here document</span>
+<span class="synString">EOF</span>
+<span class="synStatement">print</span> <span class="synString">&lt;&lt;'EOF' if $true;</span>
+<span class="synString">Here document</span>
+<span class="synString">EOF</span>
+
+<span class="synComment"># Here documents finishing with an empty line. Note the Error colour because of</span>
+<span class="synComment"># the line with only a space in it.</span>
+<span class="synStatement">print</span> <span class="synString">&lt;&lt;&quot;&quot; if </span><span class="synIdentifier">$true</span><span class="synString">;</span>
+<span class="synString">Here document</span>
+<span class="synError"> </span>
+
+<span class="synStatement">print</span> <span class="synString">&lt;&lt;'' if $true;</span>
+<span class="synString">Here document</span>
+<span class="synError"> </span>
+
+<span class="synComment"># Here document with a different. Only works in 6.0.</span>
+<span class="synStatement">print</span> <span class="synString">&lt;&lt;RandomID;</span>
+<span class="synString">here document</span>
+<span class="synString">RandomID</span>
+
+<span class="synComment"># Don't fold</span>
+<span class="synComment">#</span>
+<span class="synKeyword">sub </span><span class="synFunction">x</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">x </span>{ <span class="synStatement">print</span> <span class="synString">&quot;x&quot;</span>; }
+
+<span class="synKeyword">sub </span><span class="synFunction">y</span><span class="synType">($)</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">y</span><span class="synType">($) </span>{ <span class="synStatement">print</span> <span class="synString">&quot;y&quot;</span>; }
+
+<span class="synComment"># Fold</span>
+<span class="synComment">#</span>
+<span class="synKeyword">sub </span><span class="synFunction">y </span><span class="synType">($) </span>{
+        <span class="synStatement">print</span> <span class="synString">&quot;y&quot;</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">y</span><span class="synType">($)</span>
+{
+        <span class="synStatement">print</span> <span class="synString">&quot;y&quot;</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">x </span>{
+        <span class="synStatement">print</span> <span class="synString">&quot;x&quot;</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">x</span>
+{
+        <span class="synStatement">print</span> <span class="synString">&quot;x&quot;</span>;
+}
+
+<span class="synPreProc">BEGIN</span> {
+        <span class="synKeyword">sub </span><span class="synFunction">x </span>{
+                <span class="synStatement">print</span> <span class="synString">&quot;x&quot;</span>;
+        }
+}
+
+
+<span class="synComment"># Fold the DATA segment</span>
+<span class="synComment"># </span><span class="synTodo">XXX</span><span class="synComment"> We should add some POD to show that that is highlighted correctly as well</span>
+<span class="synComment">#     in there.</span>
+<span class="synComment">#</span>
+<span class="synComment">__DATA__</span>
+
+<span class="synComment">hello world</span>
+</pre>
+
+ </body>
+</html>

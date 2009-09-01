@@ -1,5 +1,11 @@
 Changelog for the vim-perl package
 
+1.??
+====================================
+[TESTING]
+Added a test harness in t/ (try "make test"). Moved example code
+to t_source/ (Hinrik)
+
 1.00    Tue Aug  4 21:38:31 CDT 2009
 ====================================
 [ENHANCEMENTS]

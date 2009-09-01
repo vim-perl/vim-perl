@@ -29,3 +29,6 @@ tarball: dirs
 		ftplugin/*.vim \
 		indent/*.vim \
 		syntax/*.vim
+
+test:
+	prove -rv t
