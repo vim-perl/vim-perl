@@ -58,6 +58,10 @@ sub test_source_file {
     $html_file .= '.html';
     
     SKIP: {
+        # remove old failure output if present
+        my $fail = "${file}_fail.html";
+        unlink $fail;
+
         # create the corresponding html file if it's missing
         if (!-e $html_file) {
             open my $markup, '>', $html_file or die "Can't open $html_file: $!\n";
@@ -71,6 +75,14 @@ sub test_source_file {
         my $expected = do { local $/; scalar <$handle> };
         
         eq_or_diff($output, $expected, "Correct output for $file");
+
+        # if the HTML is incorrect, write it out to a file for
+        # the user to inspect
+        if ($output ne $expected) {
+            open my $fh, '>', $fail or die "Can't open $fail: $!\n";
+            print $fh $output;
+            diag("You can inspect the incorrect output at $fail");
+        }
     }
 }
 
