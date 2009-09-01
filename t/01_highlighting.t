@@ -20,7 +20,7 @@ my $css_file   = catfile('t', 'vim_syntax.css');
 my $hilite;
 
 for my $lang (qw(perl perl6)) {
-    my $syntax_file = catfile('syntax', "$lang.vim");
+    my $syntax_file   = catfile('syntax', "$lang.vim");
     my $ftplugin_file = catfile('ftplugin', "$lang.vim");
 
     $hilite = Text::VimColor->new(
@@ -61,7 +61,7 @@ sub test_source_file {
             print $markup $output;
             close $markup;
             
-            skip("No output file found for '$file', creating...", 1);
+            skip("Created $html_file", 1);
         }
             
         open my $handle, '<', $html_file or die "Can't open $html_file: $!\n";
