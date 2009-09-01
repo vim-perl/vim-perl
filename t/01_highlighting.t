@@ -1,5 +1,6 @@
 use strict;
 use warnings;
+use Cwd;
 use File::Find;
 use File::Spec::Functions qw<catfile catdir>;
 use Test::More 'no_plan';
@@ -22,11 +23,13 @@ my $hilite;
 for my $lang (qw(perl perl6)) {
     my $syntax_file   = catfile('syntax', "$lang.vim");
     my $ftplugin_file = catfile('ftplugin', "$lang.vim");
+    my $css_url = 'file:///' . join('/', getcwd(), 't', 'vim_syntax.css');
 
     $hilite = Text::VimColor->new(
-        html_full_page       => 1,
-        html_stylesheet_file => $css_file,
-        vim_options          => [
+        html_full_page         => 1,
+        html_inline_stylesheet => 0,
+        html_stylesheet_url    => $css_url,
+        vim_options            => [
             qw(-RXZ -i NONE -u NONE -U NONE -N -n), # for performance
             '+set nomodeline',          # for performance
             '+set runtimepath=.',       # don't consider system runtime files
