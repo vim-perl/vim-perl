@@ -17,6 +17,7 @@ Allow whitespace around autoquoted hash keys (Hinrik)
 Fix highlighting of //= from Perl 5.10 (Hinrik)
 
 [BUILDING]
-Add a tarball target to the Makefile.
+Add a tarball target to the Makefile.  Thanks to Mike Kelly for
+contributions.
 
 Add Nick Hibma's perl-regression.pl to ease testing.
