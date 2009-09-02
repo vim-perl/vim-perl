@@ -1,5 +1,6 @@
 default:
 	@echo There is no default target.
+	@echo Some handle targets: test, install
 
 dirs:
 	mkdir -p $(HOME)/.vim/ftplugin
