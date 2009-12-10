@@ -1,0 +1,8 @@
+This is the aggregation of all the various Perl-related syntax and
+helper files for Perl 5 and Perl 6.
+
+For now, to install just do a "make install" and you'll get the
+.vim files all installed in your ~/.vim directory.  It should do more than that, and probably use the Perl installation tools, but I'm not there yet.
+
+xoxo,
+Andy (andy@petdance.com)
