@@ -27,6 +27,8 @@ Allow whitespace around autoquoted hash keys (Hinrik)
 
 Fix highlighting of //= from Perl 5.10 (Hinrik)
 
+added 'parent' keyword for perl5.
+
 [BUILDING]
 Add a tarball target to the Makefile.  Thanks to Mike Kelly for
 contributions.
