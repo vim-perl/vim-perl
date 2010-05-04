@@ -823,7 +823,7 @@ syn region p6RxAssertCall
     \ contains=TOP
 syn region p6RxCharClass
     \ matchgroup=p6StringSpecial2
-    \ start="\%(<[-!+]\?\)\@<=\["
+    \ start="\%(<[-!+?]\?\)\@<=\["
     \ skip="\\]"
     \ end="]"
     \ contained
