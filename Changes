@@ -7,6 +7,8 @@ perl5:
 
 Fix overzealous matching of /^package/ inside Pod (Hinrik)
 
+Added xs.vim.
+
 [FIXES]
 Minor tweak to p6RxCharClass.  Thanks, Arne Skjærholt.
 
