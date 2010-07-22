@@ -1,11 +1,11 @@
-" Vim syntax file
-" Language: TT2 ( Inner HTML )
-" Last Change:  21 Jul 2010
-" Maintainar:   MORIKI Atsushi <4woods+vim@gmail.com>
-"
+" Language:     TT2 embedded with HTML
+" Maintainer:   Andy Lester <andy@petdance.com>
+" Author:       Moriki, Atsushi <4woods+vim@gmail.com>
+" URL:          http://github.com/petdance/vim-perl
+" Last Change:  2010-07-21
 
 if exists("b:current_syntax")
-  finish
+    finish
 endif
 
 runtime! syntax/html.vim
