@@ -11,6 +11,10 @@ Added */xs.vim.
 
 Added syntax/tt2.vim and syntax/tt2html.vim
 
+The "if" show up as an error if you accidentally use "else if"
+instead of "elsif".  Also added "elseif" as an error.  Thanks,
+Benjamin R. Haskell.
+
 [FIXES]
 Minor tweak to p6RxCharClass.  Thanks, Arne Skjærholt.
 
