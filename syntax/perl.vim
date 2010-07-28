@@ -216,7 +216,8 @@ syn match  perlSpecialMatch	"(\*\%(\%(PRUNE\|SKIP\|THEN\)\%(:[^)]*\)\=\|\%(MARK\
 syn match  perlNotEmptyLine	"^\s\+$" contained
 " Highlight '} else if (...) {', it should be '} else { if (...) { ' or
 " '} elsif (...) {'.
-syn match perlElseIfError	"[^[:space:]{]\+" contained
+syn match perlElseIfError	"\s\+if" contained
+syn keyword perlElseIfError	elseif
 
 " Variable interpolation
 "
