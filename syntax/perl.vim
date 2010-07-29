@@ -214,8 +214,7 @@ syn match  perlSpecialMatch	"(\*\%(\%(PRUNE\|SKIP\|THEN\)\%(:[^)]*\)\=\|\%(MARK\
 "
 " Highlight lines with only whitespace (only in blank delimited here documents) as errors
 syn match  perlNotEmptyLine	"^\s\+$" contained
-" Highlight '} else if (...) {', it should be '} else { if (...) { ' or
-" '} elsif (...) {'.
+" Highlight "} else if (...) {", it should be "} else { if (...) { " or "} elsif (...) {"
 syn match perlElseIfError	"\s\+if" contained
 syn keyword perlElseIfError	elseif
 
