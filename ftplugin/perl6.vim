@@ -2,7 +2,7 @@
 " Language:     Perl 6
 " Maintainer:   Andy Lester <andy@petdance.com>
 " URL:          http://github.com/petdance/vim-perl/tree/master
-" Last Change:  2009-04-18
+" Last Change:  2010-08-10
 " Contributors: Hinrik Örn Sigurðsson <hinrik.sig@gmail.com>
 "
 " Based on ftplugin/perl.vim by Dan Sharp <dwsharp at hotmail dot com>
