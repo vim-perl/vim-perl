@@ -1,39 +1,53 @@
+FTPLUGIN=$(HOME)/.vim/ftplugin
+INDENT=$(HOME)/.vim/indent
+SYNTAX=$(HOME)/.vim/syntax
+
 default:
 	@echo There is no default target.
 	@echo Some handle targets: test, install
 
 dirs:
-	mkdir -p $(HOME)/.vim/ftplugin
-	mkdir -p $(HOME)/.vim/indent
-	mkdir -p $(HOME)/.vim/syntax
+	mkdir -p $(FTPLUGIN) $(INDENT) $(SYNTAX)
 
 install: dirs
-	cp ftplugin/perl.vim  $(HOME)/.vim/ftplugin
-	cp ftplugin/perl6.vim $(HOME)/.vim/ftplugin
-	cp ftplugin/xs.vim    $(HOME)/.vim/ftplugin
-	cp indent/perl.vim    $(HOME)/.vim/indent
-	cp indent/perl6.vim   $(HOME)/.vim/indent
-	cp syntax/perl.vim    $(HOME)/.vim/syntax
-	cp syntax/perl6.vim   $(HOME)/.vim/syntax
-	cp syntax/pod.vim     $(HOME)/.vim/syntax
-	cp syntax/xs.vim      $(HOME)/.vim/syntax
+	cp ftplugin/perl.vim  $(FTPLUGIN)
+	cp ftplugin/perl6.vim $(FTPLUGIN)
+	cp ftplugin/xs.vim    $(FTPLUGIN)
+	cp indent/perl.vim    $(INDENT)
+	cp indent/perl6.vim   $(INDENT)
+	cp syntax/perl.vim    $(SYNTAX)
+	cp syntax/perl6.vim   $(SYNTAX)
+	cp syntax/pod.vim     $(SYNTAX)
+	cp syntax/tt2.vim     $(SYNTAX)
+	cp syntax/tt2html.vim $(SYNTAX)
+	cp syntax/xs.vim      $(SYNTAX)
 
 symlinks: dirs
-	ln -sf $(PWD)/ftplugin/perl.vim  $(HOME)/.vim/ftplugin
-	ln -sf $(PWD)/ftplugin/perl6.vim $(HOME)/.vim/ftplugin
-	ln -sf $(PWD)/ftplugin/xs.vim    $(HOME)/.vim/ftplugin
-	ln -sf $(PWD)/indent/perl.vim    $(HOME)/.vim/indent
-	ln -sf $(PWD)/indent/perl6.vim   $(HOME)/.vim/indent
-	ln -sf $(PWD)/syntax/perl.vim    $(HOME)/.vim/syntax
-	ln -sf $(PWD)/syntax/perl6.vim   $(HOME)/.vim/syntax
-	ln -sf $(PWD)/syntax/pod.vim     $(HOME)/.vim/syntax
-	ln -sf $(PWD)/syntax/xs.vim      $(HOME)/.vim/syntax
+	ln -sf $(PWD)/ftplugin/perl.vim  $(FTPLUGIN)
+	ln -sf $(PWD)/ftplugin/perl6.vim $(FTPLUGIN)
+	ln -sf $(PWD)/ftplugin/xs.vim    $(FTPLUGIN)
+	ln -sf $(PWD)/indent/perl.vim    $(INDENT)
+	ln -sf $(PWD)/indent/perl6.vim   $(INDENT)
+	ln -sf $(PWD)/syntax/perl.vim    $(SYNTAX)
+	ln -sf $(PWD)/syntax/perl6.vim   $(SYNTAX)
+	ln -sf $(PWD)/syntax/pod.vim     $(SYNTAX)
+	ln -sf $(PWD)/syntax/tt2.vim     $(SYNTAX)
+	ln -sf $(PWD)/syntax/tt2html.vim $(SYNTAX)
+	ln -sf $(PWD)/syntax/xs.vim      $(SYNTAX)
 
 tarball: dirs
 	tar czvf vim-perl.tar.gz \
-		ftplugin/*.vim \
-		indent/*.vim \
-		syntax/*.vim
+		ftplugin/perl.vim \
+		ftplugin/perl6.vim \
+		ftplugin/xs.vim \
+		\
+		indent/perl.vim \
+		indent/perl6.vim \
+		\
+		syntax/perl.vim \
+		syntax/perl6.vim \
+		syntax/pod.vim \
+		syntax/xs.vim \
 
 test:
 	prove -rv t
