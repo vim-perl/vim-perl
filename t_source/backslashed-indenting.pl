@@ -8,9 +8,16 @@ my $bar;
 # bracket, thus goofing up indents.
 if ( $foo ) {
     if ( $bar ) {
-        $x = \
-            14 + 2;
+        $x = [
+            qw(
+            foo
+            \
+            bar
+            ]
+            bat
+            ),
+            "\x"
+        ];
+        $x = '\x';
     }
-}
-elsif ( $bar ) {
 }
