@@ -15,8 +15,14 @@ The "if" show up as an error if you accidentally use "else if"
 instead of "elsif".  Also added "elseif" as an error.  Thanks,
 Benjamin R. Haskell.
 
+Add %+ match hash to syntax/perl.vim.
+
 [FIXES]
 Minor tweak to p6RxCharClass.  Thanks, Arne Skjærholt.
+
+Fixed a problem with folding subs caused by rules being out of
+order.  Thanks, Christian J. Robinson.
+(http://github.com/petdance/vim-perl/issues/closed#issue/28)
 
 [TESTING]
 Added a test harness in t/ (try "make test"). Moved example code
