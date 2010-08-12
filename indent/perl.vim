@@ -11,9 +11,9 @@
 " TODO things that are not or not properly indented (yet) :
 " - Continued statements
 "     print "foo",
-"	"bar";
+"       "bar";
 "     print "foo"
-"	if bar();
+"       if bar();
 " - Multiline regular expressions (m//x)
 " (The following probably needs modifying the perl syntax file)
 " - qw() lists
@@ -52,7 +52,7 @@ function GetPerlIndent()
         return 0
     endif
 
-    " Don't reindent coments on first column
+    " Don't reindent comments on first column
     if cline =~ '^#.'
         return 0
     endif
@@ -124,7 +124,12 @@ function GetPerlIndent()
     " Indent blocks enclosed by {}, (), or []
     if b:indent_use_syntax
         " Find a real opening brace
-        let bracepos = match(line, '[(){}\[\]]', matchend(line, '^\s*[)}\]]'))
+        " NOTE: Unlike Perl character classes, we do NOT need to escape the
+        " closing brackets with a backslash.  Doing so just puts a backslash
+        " in the character class and causes sorrow.  Instead, put the closing
+        " bracket as the first character in the class.
+        let braceclass = '[][(){}]'
+        let bracepos = match(line, braceclass, matchend(line, '^\s*[])}]'))
         while bracepos != -1
             let synid = synIDattr(synID(lnum, bracepos + 1, 0), "name")
             " If the brace is highlighted in one of those groups, indent it.
@@ -141,9 +146,9 @@ function GetPerlIndent()
                     let ind = ind - &sw
                 endif
             endif
-            let bracepos = match(line, '[(){}\[\]]', bracepos + 1)
+            let bracepos = match(line, braceclass, bracepos + 1)
         endwhile
-        let bracepos = matchend(cline, '^\s*[)}\]]')
+        let bracepos = matchend(cline, '^\s*[])}]')
         if bracepos != -1
             let synid = synIDattr(synID(v:lnum, bracepos, 0), "name")
             if synid == ""
@@ -153,10 +158,10 @@ function GetPerlIndent()
             endif
         endif
     else
-        if line =~ '[{\[(]\s*\(#[^)}\]]*\)\=$'
+        if line =~ '[{[(]\s*\(#[^])}]*\)\=$'
             let ind = ind + &sw
         endif
-        if cline =~ '^\s*[)}\]]'
+        if cline =~ '^\s*[])}]'
             let ind = ind - &sw
         endif
     endif
