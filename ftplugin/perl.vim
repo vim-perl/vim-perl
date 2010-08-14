@@ -38,7 +38,6 @@ setlocal define=[^A-Za-z_]
 " problem for you, add an after/ftplugin/perl.vim file that contains
 "       set isfname-=:
 set isfname+=:
-"setlocal iskeyword=48-57,_,A-Z,a-z,:
 
 " Set this once, globally.
 if !exists("perlpath")
