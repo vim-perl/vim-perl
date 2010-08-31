@@ -23,7 +23,7 @@ my $hilite;
 for my $lang (qw(perl perl6)) {
     my $syntax_file   = catfile('syntax', "$lang.vim");
     my $ftplugin_file = catfile('ftplugin', "$lang.vim");
-    my $css_url = 'file:///' . join('/', getcwd(), 't', 'vim_syntax.css');
+    my $css_url = join('/', '..', '..', 't', 'vim_syntax.css');
 
     $hilite = Text::VimColor->new(
         html_full_page         => 1,
