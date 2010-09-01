@@ -1,6 +1,6 @@
 my $escaped_fixed = "lol is \"lol\"";
-my $escaped_fixed = q(lol is (\));
-my $escaped_fixed = qq(lol is (\));
+my $escaped_fixed = q(lol is (\)));
+my $escaped_fixed = qq(lol is (\)));
 my $escaped_fixed = qr(\((.)\)); # this really is ok, not sure how to match balanced ()s in vim-syntax-lingo though
 
 package Dummy;
