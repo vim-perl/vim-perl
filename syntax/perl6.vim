@@ -1,12 +1,13 @@
 " Vim syntax file
-" Language:     Perl 6
-" Maintainer:   Andy Lester <andy@petdance.com>
-" Homepage:     http://github.com/petdance/vim-perl/tree/master
-" Last Change:  2009-07-04
+" Language:      Perl 6
+" Maintainer:    Andy Lester <andy@petdance.com>
+" Homepage:      http://github.com/petdance/vim-perl/tree/master
+" Bugs/requests: http://github.com/petdance/vim-perl/issues
+" Last Change:   2009-07-04
 
-" Contributors: Luke Palmer <fibonaci@babylonia.flatirons.org>
-"               Moritz Lenz <moritz@faui2k3.org>
-"               Hinrik Örn Sigurðsson <hinrik.sig@gmail.com>
+" Contributors:  Luke Palmer <fibonaci@babylonia.flatirons.org>
+"                Moritz Lenz <moritz@faui2k3.org>
+"                Hinrik Örn Sigurðsson <hinrik.sig@gmail.com>
 "
 " This is a big undertaking. Perl 6 is the sort of language that only Perl
 " can parse. But I'll do my best to get vim to.

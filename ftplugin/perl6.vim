@@ -1,9 +1,10 @@
 " Vim filetype plugin file
-" Language:     Perl 6
-" Maintainer:   Andy Lester <andy@petdance.com>
-" URL:          http://github.com/petdance/vim-perl/tree/master
-" Last Change:  2010-08-10
-" Contributors: Hinrik Örn Sigurðsson <hinrik.sig@gmail.com>
+" Language:      Perl 6
+" Maintainer:    Andy Lester <andy@petdance.com>
+" Homepage:      http://github.com/petdance/vim-perl
+" Bugs/requests: http://github.com/petdance/vim-perl/issues
+" Last Change:   2010-08-10
+" Contributors:  Hinrik Örn Sigurðsson <hinrik.sig@gmail.com>
 "
 " Based on ftplugin/perl.vim by Dan Sharp <dwsharp at hotmail dot com>
 

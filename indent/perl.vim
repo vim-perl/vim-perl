@@ -1,8 +1,9 @@
 " Vim indent file
-" Language:     Perl 5
-" Author:       Andy Lester <andy@petdance.com>
-" URL:          http://github.com/petdance/vim-perl/tree/master
-" Last Change:  June 3, 2009
+" Language:      Perl 5
+" Author:        Andy Lester <andy@petdance.com>
+" Homepage:      http://github.com/petdance/vim-perl
+" Bugs/requests: http://github.com/petdance/vim-perl/issues
+" Last Change:   June 3, 2009
 
 " Suggestions and improvements by :
 "   Aaron J. Sherman (use syntax for hints)

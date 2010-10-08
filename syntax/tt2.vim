@@ -1,8 +1,9 @@
-" Language:     TT2 (Perl Template Toolkit)
-" Maintainer:   Andy Lester <andy@petdance.com>
-" Author:       Moriki, Atsushi <4woods+vim@gmail.com>
-" URL:          http://github.com/petdance/vim-perl
-" Last Change:  2010-07-21
+" Language:      TT2 (Perl Template Toolkit)
+" Maintainer:    Andy Lester <andy@petdance.com>
+" Author:        Moriki, Atsushi <4woods+vim@gmail.com>
+" Homepage:      http://github.com/petdance/vim-perl
+" Bugs/requests: http://github.com/petdance/vim-perl/issues
+" Last Change:   2010-07-21
 "
 " Instration:
 "   put tt2.vim and tt2html.vim in to your syntax diretory.

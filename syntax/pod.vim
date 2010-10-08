@@ -1,9 +1,10 @@
 " Vim syntax file
-" Language:     Perl POD format
-" Maintainer:   Andy Lester <andy@petdance.com>
-" Previously:   Scott Bigham <dsb@killerbunnies.org>
-" URL:          http://github.com/petdance/vim-perl
-" Last Change:  2009-08-14
+" Language:      Perl POD format
+" Maintainer:    Andy Lester <andy@petdance.com>
+" Previously:    Scott Bigham <dsb@killerbunnies.org>
+" Homepage:      http://github.com/petdance/vim-perl
+" Bugs/requests: http://github.com/petdance/vim-perl/issues
+" Last Change:   2009-08-14
 
 " To add embedded POD documentation highlighting to your syntax file, add
 " the commands:
