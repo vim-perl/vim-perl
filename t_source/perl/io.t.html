@@ -1,0 +1,30 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">print</span> <span class="synString">&quot;text</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+<span class="synStatement">print</span> <span class="synIdentifier">STDERR</span> <span class="synString">&quot;text</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+<span class="synStatement">print {</span><span class="synIdentifier">$filehandle</span><span class="synStatement">}</span> <span class="synString">&quot;text</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+<span class="synStatement">print {</span><span class="synperlStatementIndirObjWrap"> </span><span class="synIdentifier">$OK</span><span class="synperlStatementIndirObjWrap"> ? STDOUT : STDERR </span><span class="synStatement">}</span> <span class="synString">&quot;stuff</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+
+<span class="synStatement">printf</span> <span class="synString">&quot;text</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+<span class="synStatement">printf</span> <span class="synIdentifier">STDERR</span> <span class="synString">&quot;text</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+<span class="synStatement">printf {</span><span class="synIdentifier">$filehandle</span><span class="synStatement">}</span> <span class="synString">&quot;text</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+<span class="synStatement">printf {</span><span class="synperlStatementIndirObjWrap"> </span><span class="synIdentifier">$OK</span><span class="synperlStatementIndirObjWrap"> ? STDOUT : STDERR </span><span class="synStatement">}</span> <span class="synString">&quot;stuff</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+
+
+<span class="synStatement">use </span><span class="synFloat">5.010</span>;
+
+<span class="synStatement">say</span> <span class="synString">&quot;text&quot;</span>;
+<span class="synStatement">say</span> <span class="synIdentifier">STDERR</span> <span class="synString">&quot;text&quot;</span>;
+<span class="synStatement">say {</span><span class="synIdentifier">$filehandle</span><span class="synStatement">}</span> <span class="synString">&quot;text&quot;</span>;
+<span class="synStatement">say {</span><span class="synperlStatementIndirObjWrap"> </span><span class="synIdentifier">$OK</span><span class="synperlStatementIndirObjWrap"> ? STDOUT : STDERR </span><span class="synStatement">}</span> <span class="synString">&quot;stuff</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+
+</pre>
+
+ </body>
+</html>
