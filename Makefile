@@ -1,6 +1,8 @@
-FTPLUGIN=$(HOME)/.vim/ftplugin
-INDENT=$(HOME)/.vim/indent
-SYNTAX=$(HOME)/.vim/syntax
+PREFIX?=$(HOME)/.vim
+
+FTPLUGIN=$(PREFIX)/ftplugin
+INDENT=$(PREFIX)/indent
+SYNTAX=$(PREFIX)/syntax
 
 default:
 	@echo There is no default target.
