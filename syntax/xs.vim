@@ -1,8 +1,9 @@
 " Vim syntax file
-" Language:     XS (Perl extension interface language)
-" Maintainer:   Andy Lester <andy@petdance.com>
-" URL:          http://github.com/petdance/vim-perl
-" Last Change:  2009-08-14
+" Language:      XS (Perl extension interface language)
+" Maintainer:    Andy Lester <andy@petdance.com>
+" Homepage:      http://github.com/petdance/vim-perl
+" Bugs/requests: http://github.com/petdance/vim-perl/issues
+" Last Change:   2009-08-14
 
 " Quit when a syntax file was already loaded
 if exists("b:current_syntax")

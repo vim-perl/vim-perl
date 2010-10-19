@@ -31,6 +31,8 @@ thus screwing up indents.  Thanks, Tom Wyant.
 Added a test harness in t/ (try "make test"). Moved example code
 to t_source/ (Hinrik)
 
+Fixes to the test suite from Matt Boyle.
+
 
 1.00    Tue Aug  4 21:38:31 CDT 2009
 ====================================
