@@ -2,8 +2,8 @@
 "
 " Language:     Perl with MooseX::Declare and Moose keywords
 " Maintainer:   Rafael Kitover <rkitover@cpan.org>
-" Last Change:  2010-07-25
-" Contributors: Denis Pokataev
+" Last Change:  2010-11-03
+" Contributors: Denis Pokataev, Oleg Kostyuk
 "
 " ORIGINAL VERSION:
 "
@@ -129,7 +129,7 @@ syn region  perlGenericBlock	matchgroup=perlGenericBlock start="{" end="}" conta
 
 " All keywords
 "
-syn match perlConditional		"\<\%(if\|elsif\|unless\|given\|when\|default\)\>"
+syn match perlConditional		"\<\%(if\|elsif\|unless\|given\|when\|default\|switch\|case\)\>"
 syn match perlConditional		"\<else\>" nextgroup=perlElseIfError skipwhite skipnl skipempty
 syn match perlRepeat			"\<\%(while\|for\%(each\)\=\|do\|until\|continue\)\>"
 syn match perlOperator			"\<\%(defined\|undef\|eq\|ne\|[gl][et]\|cmp\|not\|and\|or\|xor\|not\|bless\|ref\|do\)\>"
