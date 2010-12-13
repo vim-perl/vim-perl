@@ -46,8 +46,8 @@ if !exists("perl_string_as_statement")
   let perl_string_as_statement=1
 endif
 
-" Moose (and some other common) functions
-syn match perlStatementProc		"\<\%(blessed\|reftype\|confess\|carp\|croak\|class_has\|has\|inner\|is\|mutable\|immutable\|immutable\|super\|requires\)\>"
+" Moose, HTML::FormHandler and some other common functions
+syn match perlStatementProc		"\<\%(blessed\|reftype\|confess\|carp\|croak\|class_has\|has\|has_field\|inner\|is\|mutable\|immutable\|immutable\|super\|requires\)\>"
 
 " Moose typelib stuff
 syn match perlStatementProc		"\<\%(subtype\|coerce\|as\|from\|via\|message\|enum\|class_type\|role_type\|maybe_type\|duck_type\|optimize_as\|type\|where\)\>"
