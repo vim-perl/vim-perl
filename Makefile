@@ -35,7 +35,7 @@ symlinks: dirs
 	ln -sf $(PWD)/syntax/tt2html.vim $(SYNTAX)
 	ln -sf $(PWD)/syntax/xs.vim      $(SYNTAX)
 
-tarball: dirs
+tarball: 
 	tar czvf vim-perl.tar.gz \
 		ftplugin/perl.vim \
 		ftplugin/perl6.vim \
