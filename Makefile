@@ -2,12 +2,33 @@ FTPLUGIN=$(HOME)/.vim/ftplugin
 INDENT=$(HOME)/.vim/indent
 SYNTAX=$(HOME)/.vim/syntax
 
+PATHOGEN_PATH=$(HOME)/.vim/bundle/vim-perl
+
 default:
 	@echo There is no default target.
 	@echo Some handle targets: test, install
 
 dirs:
 	mkdir -p $(FTPLUGIN) $(INDENT) $(SYNTAX)
+
+pathogen-install: tarball
+	mkdir -p $(PATHOGEN_PATH)
+	tar -C $(PATHOGEN_PATH) -zxf vim-perl.tar.gz
+
+local:
+	mkdir -p vim-perl/ftplugin vim-perl/indent vim-perl/syntax
+	cp ftplugin/perl.vim   vim-perl/ftplugin
+	cp ftplugin/perl6.vim  vim-perl/ftplugin
+	cp ftplugin/xs.vim     vim-perl/ftplugin
+	cp indent/perl.vim     vim-perl/indent
+	cp indent/perl6.vim    vim-perl/indent
+	cp syntax/perl.vim     vim-perl/syntax
+	cp syntax/perl6.vim    vim-perl/syntax
+	cp syntax/pod.vim      vim-perl/syntax
+	cp syntax/tt2.vim      vim-perl/syntax
+	cp syntax/tt2html.vim  vim-perl/syntax
+	cp syntax/xs.vim       vim-perl/syntax
+
 
 install: dirs
 	cp ftplugin/perl.vim  $(FTPLUGIN)
