@@ -2,7 +2,7 @@
 "
 " Language:     Perl with MooseX::Declare and Moose keywords
 " Maintainer:   Rafael Kitover <rkitover@cpan.org>
-" Last Change:  2010-11-03
+" Last Change:  2011-01-03
 " Contributors: Denis Pokataev, Oleg Kostyuk
 "
 " ORIGINAL VERSION:
@@ -595,9 +595,7 @@ else
   syn sync maxlines=5000
 endif
 
-syn sync match perlSyncPOD	grouphere perlPOD "^=pod"
-syn sync match perlSyncPOD	grouphere perlPOD "^=head"
-syn sync match perlSyncPOD	grouphere perlPOD "^=item"
+syn sync match perlSyncPOD	grouphere perlPOD "^=[a-z]\S*"
 syn sync match perlSyncPOD	grouphere NONE "^=cut"
 
 let b:current_syntax = "perl"
