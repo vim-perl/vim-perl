@@ -1,13 +1,13 @@
 " Vim syntax file
-" Language:	Perl POD format with support for arbitrary POD sections
+" Language:     Perl POD format with support for arbitrary POD sections
 " Maintainer:   Oleg Kostyuk <cub@cpan.org>
 " Last Change:  2011-01-03
 "
 " ORIGINAL VERSION:
 "
-" Language:	Perl POD format
-" Maintainer:	Scott Bigham <dsb@killerbunnies.org>
-" Last Change:	2007 Jan 21
+" Language:     Perl POD format
+" Maintainer:   Scott Bigham <dsb@killerbunnies.org>
+" Last Change:  2007 Jan 21
 "
 " To add embedded POD documentation highlighting to your syntax file, add
 " the commands:
@@ -34,22 +34,22 @@ endif
 syn match podCommand	"^=head[1234]"	nextgroup=podCmdText contains=@NoSpell
 syn match podCommand	"^=item"	nextgroup=podCmdText contains=@NoSpell
 syn match podCommand	"^=over"	nextgroup=podOverIndent skipwhite contains=@NoSpell
-syn match podCommand	"^=back" contains=@NoSpell
-syn match podCommand	"^=cut" contains=@NoSpell
-syn match podCommand	"^=pod" contains=@NoSpell
+syn match podCommand	"^=back"	contains=@NoSpell
+syn match podCommand	"^=cut"		contains=@NoSpell
+syn match podCommand	"^=pod"		contains=@NoSpell
 syn match podCommand	"^=for"		nextgroup=podForKeywd skipwhite contains=@NoSpell
 syn match podCommand	"^=begin"	nextgroup=podForKeywd skipwhite contains=@NoSpell
 syn match podCommand	"^=end"		nextgroup=podForKeywd skipwhite contains=@NoSpell
 syn match podCommand	"^=[a-z]\S*"	nextgroup=podForKeywd skipwhite contains=@NoSpell
 
 " Text of a =head1, =head2 or =item command
-syn match podCmdText	".*$" contained contains=podFormat,@NoSpell
+syn match podCmdText	".*$"	contained contains=podFormat,@NoSpell
 
 " Indent amount of =over command
-syn match podOverIndent	"\d\+" contained contains=@NoSpell
+syn match podOverIndent	"\d\+"	contained contains=@NoSpell
 
 " Formatter identifier keyword for =for, =begin and =end commands
-syn match podForKeywd	"\S\+" contained contains=@NoSpell
+syn match podForKeywd	"\S\+"	contained contains=@NoSpell
 
 " An indented line, to be displayed verbatim
 syn match podVerbatimLine	"^\s.*$" contains=@NoSpell
