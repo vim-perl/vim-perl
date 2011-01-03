@@ -1,8 +1,14 @@
 " Vim syntax file
+" Language:	Perl POD format with support for arbitrary POD sections
+" Maintainer:   Oleg Kostyuk <cub@cpan.org>
+" Last Change:  2011-01-03
+"
+" ORIGINAL VERSION:
+"
 " Language:	Perl POD format
 " Maintainer:	Scott Bigham <dsb@killerbunnies.org>
 " Last Change:	2007 Jan 21
-
+"
 " To add embedded POD documentation highlighting to your syntax file, add
 " the commands:
 "
@@ -34,6 +40,7 @@ syn match podCommand	"^=pod" contains=@NoSpell
 syn match podCommand	"^=for"		nextgroup=podForKeywd skipwhite contains=@NoSpell
 syn match podCommand	"^=begin"	nextgroup=podForKeywd skipwhite contains=@NoSpell
 syn match podCommand	"^=end"		nextgroup=podForKeywd skipwhite contains=@NoSpell
+syn match podCommand	"^=[a-z]\S*"	nextgroup=podForKeywd skipwhite contains=@NoSpell
 
 " Text of a =head1, =head2 or =item command
 syn match podCmdText	".*$" contained contains=podFormat,@NoSpell
