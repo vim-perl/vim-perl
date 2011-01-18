@@ -54,7 +54,7 @@ syn match perlStatementProc		"\<\%(subtype\|coerce\|as\|from\|via\|message\|enum
 
 " Test::More, Test::Moose and Test::Exception stuff (except for "is", which is
 " already highlighted.)
-syn match perlStatementProc             "\<\%(plan\|use_ok\|require_ok\|ok\|isnt\|diag\|like\|unlike\|cmp_ok\|is_deeply\|skip\|can_ok\|isa_ok\|pass\|fail\|BAIL_OUT\|meta_ok\|does_ok\|has_attribute_ok\|throws_ok\|dies_ok\|lives_ok\|lives_and\)\>"
+syn match perlStatementProc             "\<\%(plan\|use_ok\|require_ok\|ok\|isnt\|diag\|like\|unlike\|cmp_ok\|is_deeply\|skip\|can_ok\|isa_ok\|pass\|fail\|done_testing\|BAIL_OUT\|meta_ok\|does_ok\|has_attribute_ok\|throws_ok\|dies_ok\|lives_ok\|lives_and\)\>"
 
 " Test::Differences
 syn match perlStatementProc             "\<\%(eq_or_diff\|eq_or_diff_data\|eq_or_diff_text\|table_diff\|unified_diff\|oldstyle_diff\|context_diff\)\>"
