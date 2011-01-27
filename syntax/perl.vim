@@ -62,8 +62,7 @@ syn match perlStatementProc             "\<\%(blessed\|reftype\|confess\|carp\|c
 " Moose typelib stuff
 syn match perlStatementProc             "\<\%(subtype\|coerce\|as\|from\|via\|message\|enum\|class_type\|role_type\|maybe_type\|duck_type\|optimize_as\|type\|where\)\>"
 
-" Test::More, Test::Moose and Test::Exception stuff (except for "is", which is
-" already highlighted.)
+" Test::More, Test::Moose and Test::Exception stuff (except for "is", which is already highlighted.)
 syn match perlStatementProc             "\<\%(plan\|use_ok\|require_ok\|ok\|isnt\|diag\|note\|explain\|like\|unlike\|cmp_ok\|is_deeply\|skip\|can_ok\|isa_ok\|new_ok\|pass\|fail\|skip\|todo_skip\|done_testing\|BAIL_OUT\|meta_ok\|does_ok\|has_attribute_ok\|throws_ok\|dies_ok\|lives_ok\|lives_and\|subtest\)\>"
 
 " Test::Differences
@@ -76,17 +75,12 @@ syn match perlStatementProc             "\<\%(all_perl_files_ok\|all_critic_ok\|
 " Try::Tiny
 syn match perlStatementProc             "\<\%(try\|catch\|finally\)\>"
 
-syn match perlMethodName +\%(\h\|::\|['"]\)\%(\w\|::\|\$\)\+["']\?\_s*\|+ contained nextgroup=perlPossibleComma
-
-syn match perlPossibleComma +\_s*\%(=>\|,\)\?\_s*\|+ contained nextgroup=perlAnonSubOrMethod
-
-syn match perlAnonSubOrMethod +\_s*\%(sub\|method\)\_s*\|+ contained contains=perlFunction nextgroup=perlMethodSignature
-
-syn match perlMethodSignature +\_s*\%((\_[^)]*)\)\?\_s*\|+ nextgroup=perlSubAttributes contained contains=@perlExpr,perlStatementProc
-
-syn match perlFunction +\<\%(class\|role\|extends\|with\)\>\_s*+ nextgroup=perlPackageRef
-
-syn match perlFunction +\<\%(method\|before\|after\|around\|override\|augment\)\>\_s*+ nextgroup=perlMethodName
+syn match perlMethodName                +\%(\h\|::\|['"]\)\%(\w\|::\|\$\)\+["']\?\_s*\|+ contained nextgroup=perlPossibleComma
+syn match perlPossibleComma             +\_s*\%(=>\|,\)\?\_s*\|+ contained nextgroup=perlAnonSubOrMethod
+syn match perlAnonSubOrMethod           +\_s*\%(sub\|method\)\_s*\|+ contained contains=perlFunction nextgroup=perlMethodSignature
+syn match perlMethodSignature           +\_s*\%((\_[^)]*)\)\?\_s*\|+ nextgroup=perlSubAttributes contained contains=@perlExpr,perlStatementProc
+syn match perlFunction                  +\<\%(class\|role\|extends\|with\)\>\_s*+ nextgroup=perlPackageRef
+syn match perlFunction                  +\<\%(method\|before\|after\|around\|override\|augment\)\>\_s*+ nextgroup=perlMethodName
 
 command -nargs=+ HiLink hi def link <args>
 HiLink perlMethodName Function
@@ -208,12 +202,12 @@ syn match  perlPackageRef               "[$@#%*&]\%(\%(::\|'\)\=\I\i*\%(\%(::\|'
 
 if !exists("perl_no_scope_in_variables")
   syn match  perlVarPlain       "\%([@$]\|\$#\)\$*\%(\I\i*\)\=\%(\%(::\|'\)\I\i*\)*\%(::\|\i\@<=\)" contains=perlPackageRef nextgroup=perlVarMember,perlVarSimpleMember,perlMethod
-  syn match  perlVarPlain2                      "%\$*\%(\I\i*\)\=\%(\%(::\|'\)\I\i*\)*\%(::\|\i\@<=\)" contains=perlPackageRef
-  syn match  perlFunctionName                   "&\$*\%(\I\i*\)\=\%(\%(::\|'\)\I\i*\)*\%(::\|\i\@<=\)" contains=perlPackageRef nextgroup=perlVarMember,perlVarSimpleMember,perlMethod
+  syn match  perlVarPlain2      "%\$*\%(\I\i*\)\=\%(\%(::\|'\)\I\i*\)*\%(::\|\i\@<=\)" contains=perlPackageRef
+  syn match  perlFunctionName   "&\$*\%(\I\i*\)\=\%(\%(::\|'\)\I\i*\)*\%(::\|\i\@<=\)" contains=perlPackageRef nextgroup=perlVarMember,perlVarSimpleMember,perlMethod
 else
   syn match  perlVarPlain       "\%([@$]\|\$#\)\$*\%(\I\i*\)\=\%(\%(::\|'\)\I\i*\)*\%(::\|\i\@<=\)" nextgroup=perlVarMember,perlVarSimpleMember,perlMethod
-  syn match  perlVarPlain2                      "%\$*\%(\I\i*\)\=\%(\%(::\|'\)\I\i*\)*\%(::\|\i\@<=\)"
-  syn match  perlFunctionName                   "&\$*\%(\I\i*\)\=\%(\%(::\|'\)\I\i*\)*\%(::\|\i\@<=\)" nextgroup=perlVarMember,perlVarSimpleMember,perlMethod
+  syn match  perlVarPlain2      "%\$*\%(\I\i*\)\=\%(\%(::\|'\)\I\i*\)*\%(::\|\i\@<=\)"
+  syn match  perlFunctionName   "&\$*\%(\I\i*\)\=\%(\%(::\|'\)\I\i*\)*\%(::\|\i\@<=\)" nextgroup=perlVarMember,perlVarSimpleMember,perlMethod
 endif
 
 if !exists("perl_no_extended_vars")
@@ -284,13 +278,13 @@ syn region  perlShellCommand    matchgroup=perlMatchStartEnd start="`" end="`" c
 " Constants
 "
 " Numbers
-syn match  perlNumber   "\<\%(0\%(x\x[[:xdigit:]_]*\|b[01][01_]*\|\o[0-7_]*\|\)\|[1-9][[:digit:]_]*\)\>"
-syn match  perlFloat    "\<\d[[:digit:]_]*[eE][\-+]\=\d\+"
-syn match  perlFloat    "\<\d[[:digit:]_]*\.[[:digit:]_]*\%([eE][\-+]\=\d\+\)\="
-syn match  perlFloat    "\.[[:digit:]_]\+\%([eE][\-+]\=\d\+\)\="
+syn match  perlNumber           "\<\%(0\%(x\x[[:xdigit:]_]*\|b[01][01_]*\|\o[0-7_]*\|\)\|[1-9][[:digit:]_]*\)\>"
+syn match  perlFloat            "\<\d[[:digit:]_]*[eE][\-+]\=\d\+"
+syn match  perlFloat            "\<\d[[:digit:]_]*\.[[:digit:]_]*\%([eE][\-+]\=\d\+\)\="
+syn match  perlFloat            "\.[[:digit:]_]\+\%([eE][\-+]\=\d\+\)\="
 
-syn match  perlString   "\<\%(v\d\+\%(\.\d\+\)*\|\d\+\%(\.\d\+\)\{2,}\)\>" contains=perlVStringV
-syn match  perlVStringV "\<v" contained
+syn match  perlString           "\<\%(v\d\+\%(\.\d\+\)*\|\d\+\%(\.\d\+\)\{2,}\)\>" contains=perlVStringV
+syn match  perlVStringV         "\<v" contained
 
 
 syn region perlParensSQ         start=+(+ end=+)+ extend contained transparent contains=perlParensSQ,@perlInterpSQ keepend
