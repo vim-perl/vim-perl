@@ -39,28 +39,28 @@ syn match podCommand    "^=begin"       nextgroup=podForKeywd skipwhite contains
 syn match podCommand    "^=end"         nextgroup=podForKeywd skipwhite contains=@NoSpell
 
 " Text of a =head1, =head2 or =item command
-syn match podCmdText	".*$" contained contains=podFormat,@NoSpell
+syn match podCmdText    ".*$"   contained contains=podFormat,@NoSpell
 
 " Indent amount of =over command
-syn match podOverIndent	"\d\+" contained contains=@NoSpell
+syn match podOverIndent "\d\+"  contained contains=@NoSpell
 
 " Formatter identifier keyword for =for, =begin and =end commands
-syn match podForKeywd	"\S\+" contained contains=@NoSpell
+syn match podForKeywd   "\S\+"  contained contains=@NoSpell
 
 " An indented line, to be displayed verbatim
-syn match podVerbatimLine	"^\s.*$" contains=@NoSpell
+syn match podVerbatimLine       "^\s.*$" contains=@NoSpell
 
 " Inline textual items handled specially by POD
-syn match podSpecial	"\(\<\|&\)\I\i*\(::\I\i*\)*([^)]*)" contains=@NoSpell
-syn match podSpecial	"[$@%]\I\i*\(::\I\i*\)*\>" contains=@NoSpell
+syn match podSpecial    "\(\<\|&\)\I\i*\(::\I\i*\)*([^)]*)" contains=@NoSpell
+syn match podSpecial    "[$@%]\I\i*\(::\I\i*\)*\>" contains=@NoSpell
 
 " Special formatting sequences
-syn region podFormat	start="[IBSCLFX]<[^<]"me=e-1 end=">" oneline contains=podFormat,@NoSpell
-syn region podFormat	start="[IBSCLFX]<<\s" end="\s>>" oneline contains=podFormat,@NoSpell
-syn match  podFormat	"Z<>"
-syn match  podFormat	"E<\(\d\+\|\I\i*\)>" contains=podEscape,podEscape2,@NoSpell
-syn match  podEscape	"\I\i*>"me=e-1 contained contains=@NoSpell
-syn match  podEscape2	"\d\+>"me=e-1 contained contains=@NoSpell
+syn region podFormat    start="[IBSCLFX]<[^<]"me=e-1 end=">" oneline contains=podFormat,@NoSpell
+syn region podFormat    start="[IBSCLFX]<<\s" end="\s>>" oneline contains=podFormat,@NoSpell
+syn match  podFormat    "Z<>"
+syn match  podFormat    "E<\(\d\+\|\I\i*\)>" contains=podEscape,podEscape2,@NoSpell
+syn match  podEscape    "\I\i*>"me=e-1 contained contains=@NoSpell
+syn match  podEscape2   "\d\+>"me=e-1 contained contains=@NoSpell
 
 " Define the default highlighting.
 " For version 5.7 and earlier: only when not done already
@@ -73,15 +73,15 @@ if version >= 508 || !exists("did_pod_syntax_inits")
     command -nargs=+ HiLink hi def link <args>
   endif
 
-  HiLink podCommand		Statement
-  HiLink podCmdText		String
-  HiLink podOverIndent		Number
-  HiLink podForKeywd		Identifier
-  HiLink podFormat		Identifier
-  HiLink podVerbatimLine	PreProc
-  HiLink podSpecial		Identifier
-  HiLink podEscape		String
-  HiLink podEscape2		Number
+  HiLink podCommand             Statement
+  HiLink podCmdText             String
+  HiLink podOverIndent          Number
+  HiLink podForKeywd            Identifier
+  HiLink podFormat              Identifier
+  HiLink podVerbatimLine        PreProc
+  HiLink podSpecial             Identifier
+  HiLink podEscape              String
+  HiLink podEscape2             Number
 
   delcommand HiLink
 endif
