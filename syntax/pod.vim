@@ -1,11 +1,17 @@
 " Vim syntax file
-" Language:      Perl POD format
-" Maintainer:    Andy Lester <andy@petdance.com>
-" Previously:    Scott Bigham <dsb@killerbunnies.org>
+" Language:      Perl POD format with support for arbitrary POD sections
+" Maintainer:    Andy Lester <andy@petdance.com>,
+"                Oleg Kostyuk <cub@cpan.org>
 " Homepage:      http://github.com/petdance/vim-perl
 " Bugs/requests: http://github.com/petdance/vim-perl/issues
-" Last Change:   2009-08-14
-
+" Last Change:   2011-01-27
+"
+" ORIGINAL VERSION:
+"
+" Language:      Perl POD format
+" Maintainer:    Scott Bigham <dsb@killerbunnies.org>
+" Last Change:   2007 Jan 21
+"
 " To add embedded POD documentation highlighting to your syntax file, add
 " the commands:
 "
@@ -37,6 +43,7 @@ syn match podCommand    "^=pod"         contains=@NoSpell
 syn match podCommand    "^=for"         nextgroup=podForKeywd skipwhite contains=@NoSpell
 syn match podCommand    "^=begin"       nextgroup=podForKeywd skipwhite contains=@NoSpell
 syn match podCommand    "^=end"         nextgroup=podForKeywd skipwhite contains=@NoSpell
+syn match podCommand    "^=[a-z]\S*"    nextgroup=podForKeywd skipwhite contains=@NoSpell
 
 " Text of a =head1, =head2 or =item command
 syn match podCmdText    ".*$"   contained contains=podFormat,@NoSpell
