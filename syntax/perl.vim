@@ -59,46 +59,46 @@ if perl_moose_stuff
   "   fix $foo->Bar->baz(23)->dongs highlighting
   "   make the -> for method calls a different color
   "   make methods a different color than variables
-  
+
   " Moose, HTML::FormHandler and some other common functions
   syn match perlStatementProc             "\<\%(blessed\|reftype\|confess\|carp\|croak\|class_has\|has\|has_field\|inner\|is\|mutable\|immutable\|super\|requires\)\>"
-  
+
   " Moose typelib stuff
   syn match perlStatementProc             "\<\%(subtype\|coerce\|as\|from\|via\|message\|enum\|class_type\|role_type\|maybe_type\|duck_type\|optimize_as\|type\|where\)\>"
-  
+
   " Test::More, Test::Moose and Test::Exception stuff (except for "is", which is already highlighted.)
   syn match perlStatementProc             "\<\%(plan\|use_ok\|require_ok\|ok\|isnt\|diag\|note\|explain\|like\|unlike\|cmp_ok\|is_deeply\|skip\|can_ok\|isa_ok\|new_ok\|pass\|fail\|skip\|todo_skip\|done_testing\|BAIL_OUT\|meta_ok\|does_ok\|has_attribute_ok\|throws_ok\|dies_ok\|lives_ok\|lives_and\|subtest\)\>"
-  
+
   " Test::Differences
   syn match perlStatementProc             "\<\%(eq_or_diff\|eq_or_diff_data\|eq_or_diff_text\|table_diff\|unified_diff\|oldstyle_diff\|context_diff\)\>"
-  
+
   " Test::*, all functions like all_perl_files_ok/all_pod_coverage_ok/etc
   " may be, will be better something like: \<\%(all_[a-z_]\+_ok\)\>
   syn match perlStatementProc             "\<\%(all_perl_files_ok\|all_critic_ok\|all_pod_coverage_ok\|all_pod_files_spelling_ok\|all_pod_files_ok\|all_cover_ok\)\>"
-  
+
   " Try::Tiny
   syn match perlStatementProc             "\<\%(try\|catch\|finally\)\>"
-  
+
   syn match perlMethodName                +\%(\h\|::\|['"]\)\%(\w\|::\|\$\)\+["']\?\_s*\|+ contained nextgroup=perlPossibleComma
   syn match perlPossibleComma             +\_s*\%(=>\|,\)\?\_s*\|+ contained nextgroup=perlAnonSubOrMethod
   syn match perlAnonSubOrMethod           +\_s*\%(sub\|method\)\_s*\|+ contained contains=perlFunction nextgroup=perlMethodSignature
   syn match perlMethodSignature           +\_s*\%((\_[^)]*)\)\?\_s*\|+ nextgroup=perlSubAttributes contained contains=@perlExpr,perlStatementProc
   syn match perlFunction                  +\<\%(class\|role\|extends\|with\)\>\_s*+ nextgroup=perlPackageRef
   syn match perlFunction                  +\<\%(method\|before\|after\|around\|override\|augment\)\>\_s*+ nextgroup=perlMethodName
-  
+
   command -nargs=+ HiLink hi def link <args>
   HiLink perlMethodName Function
   delcommand HiLink
-  
+
   "hilite Moose types
   syn match perlString "\<Any\>\|\<Item\>\|\<Bool\>\|\<Maybe\>\|\<Undef\>\|\<Defined\>\|\<Value\>\|\<Num\>\|\<Int\>\|\<Str\>\|\<ClassName\>\|\<Ref\>\|\<ScalarRef\>\|\<ArrayRef\>\|\<HashRef\>\|\<CodeRef\>\|\<RegexpRef\>\|\<GlobRef\>\|\<FileHandle\>\|\<Object\>\|\<Role\>"
-  
+
   if !exists("perl_no_sync_on_sub")
     syn sync match perlSync       grouphere NONE "^\s*\<method\>"
     syn sync match perlSync       grouphere NONE "^\s*\<class\>"
     syn sync match perlSync       grouphere NONE "^\s*\<role\>"
   endif
-  
+
   if exists("perl_fold")
     if !exists("perl_nofold_subs")
       syn region perlSubFold     start="^\z(\s*\)\<class\>.*[^};]$" end="^\z1}\s*\%(#.*\)\=$" transparent fold keepend
@@ -334,7 +334,7 @@ syn region perlSubstitutionGQQ          matchgroup=perlMatchStartEnd start=+(+ e
 syn region perlSubstitutionGQQ          matchgroup=perlMatchStartEnd start=+\[+ end=+\][ecgimopsx]*+ contained contains=@perlInterpDQ,perlBracketsDQ keepend
 syn region perlSubstitutionGQQ          matchgroup=perlMatchStartEnd start=+{+ end=+}[ecgimopsx]*+ contained contains=@perlInterpDQ,perlBracesDQ keepend
 syn region perlSubstitutionGQQ          matchgroup=perlMatchStartEnd start=+<+ end=+>[ecgimopsx]*+ contained contains=@perlInterpDQ,perlAnglesDQ keepend
-syn region perlSubstitutionSQ           matchgroup=perlMatchStartEnd start=+'+  end=+'[ecgimopsx]*+ contained contains=@perlInterpSQ keepend 
+syn region perlSubstitutionSQ           matchgroup=perlMatchStartEnd start=+'+  end=+'[ecgimopsx]*+ contained contains=@perlInterpSQ keepend
 
 " Translations
 " perlMatch is the first part, perlTranslation* is the second, translator part.
