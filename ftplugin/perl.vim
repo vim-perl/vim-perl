@@ -30,7 +30,7 @@ endif
 " Provided by Ned Konz <ned at bike-nomad dot com>
 "---------------------------------------------
 setlocal include=\\<\\(use\\\|require\\)\\>
-setlocal includeexpr=substitute(substitute(substitute(v:fname,'::','/','g'),'[-/]\\?$','.pm',''),'^q[qw]\\?/','','')
+setlocal includeexpr=substitute(substitute(v:fname,'^.\\{-}\\([A-Za-z0-9_:]\\+\\)[^A-Za-z0-9_:]*$','\\1.pm',''),'::','/','g')
 setlocal define=[^A-Za-z_]
 
 " The following line changes a global variable but is necessary to make
