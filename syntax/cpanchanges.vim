@@ -34,7 +34,8 @@ command -nargs=+ HiLink hi def link <args>
 HiLink cpanchangesVersion		Identifier
 HiLink cpanchangesDate			Statement
 HiLink cpanchangesGroup			Special
-HiLink cpanchangesItemMarker 		SpecialChar
+" changed from SpecialChar to Special for testing with Text::VimColor
+HiLink cpanchangesItemMarker 		Special
 HiLink cpanchangesNextRelease 	PreProc
 HiLink cpanchangesPreamble		Comment
 
