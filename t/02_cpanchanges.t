@@ -33,6 +33,8 @@ my %groups;
     close($fh);
 }
 
+# TODO: Do we care about the whitespace between tokens or should we just ignore it?
+
 my @tests = (
 
 # everything
@@ -44,6 +46,7 @@ Revision history for Local::Module
 1.001 2011-02-17
 
   - Changed everything
+  [ Other News ]
   - Ingored bug:
     RT: #000000
 
@@ -58,6 +61,7 @@ CHANGES
     [$groups{Date},         '2011-02-17'], ['',"\n\n  "],
     [$groups{ItemMarker},   '-'],
     ['',                    " Changed everything\n  "],
+    [$groups{Group},        "[ Other News ]"], ['', "\n  "],
     [$groups{ItemMarker},   '-'],
     ['',                    " Ingored bug:\n    RT: #000000\n\n"],
     [$groups{Version},      '1.000001'], ['',' '],
@@ -138,6 +142,45 @@ CHANGES
     [$groups{Version},      '3.123456'], ['',"  "],
     [$groups{Date},         '2011-02-16'],
     ['', " 20:19:18 America/New_York\n\n          Add Something\n\n          Change something else\n          that I won't describe\n"],
+]],
+
+# preamble, next token, multiple releases, multiple groups in a single release
+[ <<'CHANGES'
+Revision history for Local::Module
+
+{{$NEXT}}
+
+v3.3.3 2011-02-17
+
+  [ Less ]
+
+  - Removed z
+  - Removed y
+
+  [ More ]
+
+  - Added x
+
+v2.2.2 2011-02-16
+
+  Initial release
+CHANGES
+, [
+    [$groups{Preamble},     'Revision history for Local::Module'], ['',"\n\n"],
+    [$groups{NextRelease},  '{{$NEXT}}'], ['',"\n\n"],
+    [$groups{Version},      'v3.3.3'], ['',' '],
+    [$groups{Date},         '2011-02-17'], ['',"\n\n  "],
+    [$groups{Group},        "[ Less ]"], ['', "\n\n  "],
+    [$groups{ItemMarker},   '-'],
+    ['',                    " Removed z\n  "],
+    [$groups{ItemMarker},   '-'],
+    ['',                    " Removed y\n\n  "],
+    [$groups{Group},        "[ More ]"], ['', "\n\n  "],
+    [$groups{ItemMarker},   '-'],
+    ['',                    " Added x\n\n"],
+    [$groups{Version},      'v2.2.2'], ['',' '],
+    [$groups{Date},         '2011-02-16'],
+	['', "\n\n  Initial release\n"]
 ]],
 
 );
