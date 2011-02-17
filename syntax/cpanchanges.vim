@@ -21,12 +21,12 @@ syn match   cpanchangesVersion 		/^v\?[0-9._]\+/ contained
 syn match   cpanchangesDate 		/\d\{4}-\d\{2}-\d\{2}/ contained
 syn match   cpanchangesGroup 		/^\s\+\[.\+\]/
 syn match   cpanchangesItemMarker 	/^\s\+[-*]\+/
-syn match   cpanchangesDZNextRelease 	/{{$NEXT}}/
+syn match   cpanchangesNextRelease 	/{{$NEXT}}/
 
-" Preamble is any text before the first line that looks like a version (or DZ marker)
+" Preamble is any text before the first line that looks like a version (or 'next' token)
 " If there is no preamble then "start=/\%1l/" swallows the first release line.
 " Is there a workaround other than repeating the endpattern and using "\@!" ?
-syn region  cpanchangesPreamble start=/\%1l\([v0-9._]\{2,}\|{{$NEXT}}\)\@!/ end=/^\([v0-9._]\{2,}\|{{$NEXT}}\)/me=s-1
+syn region  cpanchangesPreamble start=/\%1l\(v\?[0-9._]\+\|{{$NEXT}}\)\@!/ end=/^\([v0-9._]\{2,}\|{{$NEXT}}\)/me=s-1
 
 command -nargs=+ HiLink hi def link <args>
 
@@ -35,7 +35,7 @@ HiLink cpanchangesVersion		Identifier
 HiLink cpanchangesDate			Statement
 HiLink cpanchangesGroup			Special
 HiLink cpanchangesItemMarker 		SpecialChar
-HiLink cpanchangesDZNextRelease 	PreProc
+HiLink cpanchangesNextRelease 	PreProc
 HiLink cpanchangesPreamble		Comment
 
 delcommand HiLink
