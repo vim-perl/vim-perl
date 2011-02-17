@@ -19,8 +19,11 @@ endif
 syn match   cpanchangesRelease 		/^\S.\+/ contains=cpanchangesVersion,cpanchangesDate
 syn match   cpanchangesVersion 		/^v\?[0-9._]\+/ contained
 syn match   cpanchangesDate 		/\d\{4}-\d\{2}-\d\{2}/ contained
-syn match   cpanchangesGroup 		/^\s\+\[.\+\]/
-syn match   cpanchangesItemMarker 	/^\s\+[-*]\+/
+
+" use "\@<=" to avoid matching the opening whitespace
+syn match   cpanchangesGroup 		/\%(^\s\+\)\@<=\[.\+\]$/
+syn match   cpanchangesItemMarker 	/\%(^\s\+\)\@<=[-*]\+/
+
 syn match   cpanchangesNextRelease 	/{{$NEXT}}/
 
 " Preamble is any text before the first line that looks like a version (or 'next' token)
