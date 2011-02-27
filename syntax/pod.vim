@@ -86,6 +86,59 @@ if version >= 508 || !exists("did_pod_syntax_inits")
   delcommand HiLink
 endif
 
+if exists("perl_pod_spellcheck_headings")
+  " Spell-check headings
+  syn clear podCmdText
+  syn match podCmdText    ".*$" contained contains=podFormat
+endif
+
+if exists("perl_pod_formatting")
+  " By default, escapes like C<> are not checked for spelling. Remove B<>
+  " and I<> from the list of escapes.
+  syn clear podFormat
+  syn region podFormat  start="[SCLFX]<[^<]"me=e-1 end=">" oneline contains=podFormat,@NoSpell
+  syn region podFormat  start="[SCLFX]<<\s" end="\s>>" oneline contains=podFormat,@NoSpell
+
+  " These are required so that whatever is *within* B<...> and I<...> is
+  " spell-checked, but not the B or I itself.
+  syn match podBoldOpen   contained "B<" contains=@NoSpell
+  syn match podItalicOpen contained "I<" contains=@NoSpell
+
+  " Same as above but for the B<< >> and I<< >> syntax.
+  syn match podBoldAlternativeDelimOpen   contained "B<< " contains=@NoSpell
+  syn match podItalicAlternativeDelimOpen contained "I<< " contains=@NoSpell
+
+  " Add support for spell checking text inside B<> and I<>.
+  syn region podBold start="B<[^<]"ms=s-2 end=">"me=e-1 oneline contains=podBoldItalic,podBoldOpen
+  syn region podBoldAlternativeDelim start="B<<\s" end="\s>>" oneline contains=podBoldAlternativeDelimOpen
+
+  syn region podItalic start="I<[^<]"me=e-1 end=">" oneline contains=podItalicBold,podItalicOpen
+  syn region podItalicAlternativeDelim start="I<<\s" end="\s>>" oneline contains=podItalicAlternativeDelimOpen
+
+  " Nested bold/italic and vice-versa
+  syn region podBoldItalic contained start="[I]<[^<]"me=e-1 end=">" oneline
+  syn region podItalicBold contained start="[B]<[^<]"me=e-1 end=">" oneline
+
+  " Restore this (otherwise B<> is shown as bold inside verbatim)
+  syn match podVerbatimLine	"^\s.*$" contains=@NoSpell
+
+  " Specify how to display these
+  hi def podBold term=bold cterm=bold gui=bold
+
+  hi link podBoldAlternativeDelim podBold
+  hi link podBoldAlternativeDelimOpen podBold
+  hi link podBoldOpen podBold
+
+  hi def podItalic term=italic cterm=italic gui=italic
+
+  hi link podItalicAlternativeDelim podItalic
+  hi link podItalicAlternativeDelimOpen podItalic
+  hi link podItalicOpen podItalic
+
+  hi def podBoldItalic term=italic,bold cterm=italic,bold gui=italic,bold
+  hi def podItalicBold term=italic,bold cterm=italic,bold gui=italic,bold
+endif
+
 let b:current_syntax = "pod"
 
 " vim: ts=8
