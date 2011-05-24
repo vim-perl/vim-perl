@@ -5,6 +5,8 @@ Changelog for the vim-perl package
 [ENHANCEMENTS]
 perl5:
 
+Highlight braces following printf and say. Thanks, Matt Boyle.
+
 Fix overzealous matching of /^package/ inside Pod (Hinrik)
 
 Added */xs.vim.
