@@ -12,11 +12,13 @@ dirs:
 	mkdir -p $(FTPLUGIN) $(INDENT) $(SYNTAX)
 
 install: dirs
+	cp ftplugin/cpanchanges.vim $(FTPLUGIN)
 	cp ftplugin/perl.vim  $(FTPLUGIN)
 	cp ftplugin/perl6.vim $(FTPLUGIN)
 	cp ftplugin/xs.vim    $(FTPLUGIN)
 	cp indent/perl.vim    $(INDENT)
 	cp indent/perl6.vim   $(INDENT)
+	cp syntax/cpanchanges.vim $(SYNTAX)
 	cp syntax/perl.vim    $(SYNTAX)
 	cp syntax/perl6.vim   $(SYNTAX)
 	cp syntax/pod.vim     $(SYNTAX)
@@ -25,11 +27,13 @@ install: dirs
 	cp syntax/xs.vim      $(SYNTAX)
 
 symlinks: dirs
+	ln -sf $(PWD)/ftplugin/cpanchanges.vim $(FTPLUGIN)
 	ln -sf $(PWD)/ftplugin/perl.vim  $(FTPLUGIN)
 	ln -sf $(PWD)/ftplugin/perl6.vim $(FTPLUGIN)
 	ln -sf $(PWD)/ftplugin/xs.vim    $(FTPLUGIN)
 	ln -sf $(PWD)/indent/perl.vim    $(INDENT)
 	ln -sf $(PWD)/indent/perl6.vim   $(INDENT)
+	ln -sf $(PWD)/syntax/cpanchanges.vim $(SYNTAX)
 	ln -sf $(PWD)/syntax/perl.vim    $(SYNTAX)
 	ln -sf $(PWD)/syntax/perl6.vim   $(SYNTAX)
 	ln -sf $(PWD)/syntax/pod.vim     $(SYNTAX)
@@ -39,6 +43,7 @@ symlinks: dirs
 
 tarball: 
 	tar czvf vim-perl.tar.gz \
+		ftplugin/cpanchanges.vim \
 		ftplugin/perl.vim \
 		ftplugin/perl6.vim \
 		ftplugin/xs.vim \
@@ -46,6 +51,7 @@ tarball:
 		indent/perl.vim \
 		indent/perl6.vim \
 		\
+		syntax/cpanchanges.vim \
 		syntax/perl.vim \
 		syntax/perl6.vim \
 		syntax/pod.vim \
