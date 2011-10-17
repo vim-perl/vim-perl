@@ -1,9 +1,11 @@
+#!/usr/bin/perl
+
 use strict;
 use warnings;
 use Cwd;
 use File::Find;
 use File::Spec::Functions qw<catfile catdir>;
-use Test::More 'no_plan';
+use Test::More tests => 5;
 use Test::Differences;
 use Text::VimColor;
 

@@ -38,6 +38,9 @@ Rafael Kitover.
 Added a test harness in t/ (try "make test"). Moved example code
 to t_source/ (Hinrik)
 
+Added a test for package declaration highlighting.  Thanks, Matt
+Boyle.
+
 Fixes to the test suite from Matt Boyle.
 
 
