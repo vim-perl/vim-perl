@@ -19,6 +19,7 @@ Benjamin R. Haskell.
 
 Add %+ match hash to syntax/perl.vim.
 
+
 [FIXES]
 Minor tweak to p6RxCharClass.  Thanks, Arne Skjærholt.
 
@@ -28,6 +29,10 @@ order.  Thanks, Christian J. Robinson.
 
 Fixed bug where backslashes would be seen as closing a set of braces,
 thus screwing up indents.  Thanks, Tom Wyant.
+
+Fixed highlights on comments before opening brace of a sub. Thanks,
+Rafael Kitover.
+
 
 [TESTING]
 Added a test harness in t/ (try "make test"). Moved example code
