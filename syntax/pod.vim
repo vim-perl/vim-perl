@@ -96,31 +96,63 @@ if exists("perl_pod_formatting")
   " By default, escapes like C<> are not checked for spelling. Remove B<>
   " and I<> from the list of escapes.
   syn clear podFormat
-  syn region podFormat  start="[SCLFX]<[^<]"me=e-1 end=">" oneline contains=podFormat,@NoSpell
-  syn region podFormat  start="[SCLFX]<<\s" end="\s>>" oneline contains=podFormat,@NoSpell
+  syn region podFormat start="[CLF]<[^<]"me=e-1 end=">" oneline contains=podFormat,@NoSpell
+  syn region podFormat start="[CLF]<<\s" end="\s>>" oneline contains=podFormat,@NoSpell
 
-  " These are required so that whatever is *within* B<...> and I<...> is
-  " spell-checked, but not the B or I itself.
-  syn match podBoldOpen   contained "B<" contains=@NoSpell
-  syn match podItalicOpen contained "I<" contains=@NoSpell
+  " Don't spell-check inside E<>, but ensure that the E< itself isn't
+  " marked as a spelling mistake.
+  syn match podFormat   "E<\(\d\+\|\I\i*\)>" contains=podEscape,podEscape2,@NoSpell
 
-  " Same as above but for the B<< >> and I<< >> syntax.
-  syn match podBoldAlternativeDelimOpen   contained "B<< " contains=@NoSpell
-  syn match podItalicAlternativeDelimOpen contained "I<< " contains=@NoSpell
+  " Z<> is a mock formatting code. Ensure Z<> on its own isn't marked as a
+  " spelling mistake.
+  syn match podFormat   "Z<>" contains=podEscape,podEscape2,@NoSpell
 
-  " Add support for spell checking text inside B<> and I<>.
-  syn region podBold start="B<[^<]"ms=s-2 end=">"me=e-1 oneline contains=podBoldItalic,podBoldOpen
+  " These are required so that whatever is *within* B<...>, I<...>, etc. is
+  " spell-checked, but not the B, I, ... itself.
+  syn match podBoldOpen    "B<" contains=@NoSpell
+  syn match podItalicOpen  "I<" contains=@NoSpell
+  syn match podNoSpaceOpen "S<" contains=@NoSpell
+  syn match podIndexOpen   "X<" contains=@NoSpell
+
+  " Same as above but for the << >> syntax.
+  syn match podBoldAlternativeDelimOpen    "B<< " contains=@NoSpell
+  syn match podItalicAlternativeDelimOpen  "I<< " contains=@NoSpell
+  syn match podNoSpaceAlternativeDelimOpen "S<< " contains=@NoSpell
+  syn match podIndexAlternativeDelimOpen   "X<< " contains=@NoSpell
+
+  " Add support for spell checking text inside B<>, I<>, S<> and X<>.
+  syn region podBold start="B<[^<]"me=e end=">" oneline contains=podBoldItalic,podBoldOpen
   syn region podBoldAlternativeDelim start="B<<\s" end="\s>>" oneline contains=podBoldAlternativeDelimOpen
 
-  syn region podItalic start="I<[^<]"me=e-1 end=">" oneline contains=podItalicBold,podItalicOpen
+  syn region podItalic start="I<[^<]"me=e end=">" oneline contains=podItalicBold,podItalicOpen
   syn region podItalicAlternativeDelim start="I<<\s" end="\s>>" oneline contains=podItalicAlternativeDelimOpen
 
   " Nested bold/italic and vice-versa
-  syn region podBoldItalic contained start="[I]<[^<]"me=e-1 end=">" oneline
-  syn region podItalicBold contained start="[B]<[^<]"me=e-1 end=">" oneline
+  syn region podBoldItalic contained start="I<[^<]"me=e end=">" oneline
+  syn region podItalicBold contained start="B<[^<]"me=e end=">" oneline
+
+  syn region podNoSpace start="S<[^<]"ms=s-2 end=">"me=e oneline contains=podNoSpaceOpen
+  syn region podNoSpaceAlternativeDelim start="S<<\s"ms=s-2 end="\s>>"me=e oneline contains=podNoSpaceAlternativeDelimOpen
+
+  syn region podIndex start="X<[^<]"ms=s-2 end=">"me=e oneline contains=podIndexOpen
+  syn region podIndexAlternativeDelim start="X<<\s"ms=s-2 end="\s>>"me=e oneline contains=podIndexAlternativeDelimOpen
 
   " Restore this (otherwise B<> is shown as bold inside verbatim)
   syn match podVerbatimLine	"^\s.*$" contains=@NoSpell
+
+  " Ensure formatted text can be displayed in headings and items
+  syn clear podCmdText
+
+  if exists("perl_pod_spellcheck_headings")
+    syn match podCmdText ".*$" contained contains=podFormat,podBold,
+          \podBoldAlternativeDelim,podItalic,podItalicAlternativeDelim,
+          \podBoldOpen,podItalicOpen,podBoldAlternativeDelimOpen,
+          \podItalicAlternativeDelimOpen,podNoSpaceOpen
+  else
+    syn match podCmdText ".*$" contained contains=podFormat,podBold,
+          \podBoldAlternativeDelim,podItalic,podItalicAlternativeDelim,
+          \@NoSpell
+  endif
 
   " Specify how to display these
   hi def podBold term=bold cterm=bold gui=bold
@@ -128,6 +160,12 @@ if exists("perl_pod_formatting")
   hi link podBoldAlternativeDelim podBold
   hi link podBoldAlternativeDelimOpen podBold
   hi link podBoldOpen podBold
+
+  hi link podNoSpace                 Identifier
+  hi link podNoSpaceAlternativeDelim Identifier
+
+  hi link podIndex                   Identifier
+  hi link podIndexAlternativeDelim   Identifier
 
   hi def podItalic term=italic cterm=italic gui=italic
 
