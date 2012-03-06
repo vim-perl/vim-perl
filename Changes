@@ -4,6 +4,7 @@ Changelog for the vim-perl package
 ====================================
 [ENHANCEMENTS]
 perl5:
+New s/// flags in 5.14 are now highlighted (Karen Etheridge)
 
 Highlight braces following printf and say. Thanks, Matt Boyle.
 

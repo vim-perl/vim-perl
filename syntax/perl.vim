@@ -255,12 +255,12 @@ syn region perlMatch	matchgroup=perlMatchStartEnd start=+\<\%(::\|'\|->\)\@<!s\s
 syn region perlMatch	matchgroup=perlMatchStartEnd start=+\<\%(::\|'\|->\)\@<!s\s*<+ end=+>+ contains=@perlInterpMatch,perlAnglesDQ nextgroup=perlSubstitutionGQQ skipwhite skipempty skipnl keepend
 syn region perlMatch	matchgroup=perlMatchStartEnd start=+\<\%(::\|'\|->\)\@<!s\s*\[+ end=+\]+ contains=@perlInterpMatch,perlBracketsDQ nextgroup=perlSubstitutionGQQ skipwhite skipempty skipnl keepend
 syn region perlMatch	matchgroup=perlMatchStartEnd start=+\<\%(::\|'\|->\)\@<!s\s*{+ end=+}+ contains=@perlInterpMatch,perlBracesDQ nextgroup=perlSubstitutionGQQ skipwhite skipempty skipnl keepend
-syn region perlSubstitutionGQQ		matchgroup=perlMatchStartEnd start=+\z([^[:space:]'([{<]\)+ end=+\z1[ecgimopsx]*+ keepend contained contains=@perlInterpDQ
-syn region perlSubstitutionGQQ		matchgroup=perlMatchStartEnd start=+(+ end=+)[ecgimopsx]*+ contained contains=@perlInterpDQ,perlParensDQ keepend
-syn region perlSubstitutionGQQ		matchgroup=perlMatchStartEnd start=+\[+ end=+\][ecgimopsx]*+ contained contains=@perlInterpDQ,perlBracketsDQ keepend
-syn region perlSubstitutionGQQ		matchgroup=perlMatchStartEnd start=+{+ end=+}[ecgimopsx]*+ contained contains=@perlInterpDQ,perlBracesDQ keepend
-syn region perlSubstitutionGQQ		matchgroup=perlMatchStartEnd start=+<+ end=+>[ecgimopsx]*+ contained contains=@perlInterpDQ,perlAnglesDQ keepend
-syn region perlSubstitutionSQ		matchgroup=perlMatchStartEnd start=+'+  end=+'[ecgimopsx]*+ contained contains=@perlInterpSQ keepend 
+syn region perlSubstitutionGQQ		matchgroup=perlMatchStartEnd start=+\z([^[:space:]'([{<]\)+ end=+\z1[msixpodualgcer]*+ keepend contained contains=@perlInterpDQ
+syn region perlSubstitutionGQQ		matchgroup=perlMatchStartEnd start=+(+ end=+)[msixpodualgcer]*+ contained contains=@perlInterpDQ,perlParensDQ keepend
+syn region perlSubstitutionGQQ		matchgroup=perlMatchStartEnd start=+\[+ end=+\][msixpodualgcer]*+ contained contains=@perlInterpDQ,perlBracketsDQ keepend
+syn region perlSubstitutionGQQ		matchgroup=perlMatchStartEnd start=+{+ end=+}[msixpodualgcer]*+ contained contains=@perlInterpDQ,perlBracesDQ keepend
+syn region perlSubstitutionGQQ		matchgroup=perlMatchStartEnd start=+<+ end=+>[msixpodualgcer]*+ contained contains=@perlInterpDQ,perlAnglesDQ keepend
+syn region perlSubstitutionSQ		matchgroup=perlMatchStartEnd start=+'+  end=+'[msixpodualgcer]*+ contained contains=@perlInterpSQ keepend 
 
 " Translations
 " perlMatch is the first part, perlTranslation* is the second, translator part.
