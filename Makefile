@@ -3,13 +3,14 @@ PREFIX?=$(HOME)/.vim
 FTPLUGIN=$(PREFIX)/ftplugin
 INDENT=$(PREFIX)/indent
 SYNTAX=$(PREFIX)/syntax
+TOOLS=$(PREFIX)/tools
 
 default:
 	@echo There is no default target.
 	@echo Some handle targets: test, install
 
 dirs:
-	mkdir -p $(FTPLUGIN) $(INDENT) $(SYNTAX)
+	mkdir -p $(FTPLUGIN) $(INDENT) $(SYNTAX) $(TOOLS)
 
 install: dirs
 	cp ftplugin/perl.vim  $(FTPLUGIN)
@@ -23,6 +24,7 @@ install: dirs
 	cp syntax/tt2.vim     $(SYNTAX)
 	cp syntax/tt2html.vim $(SYNTAX)
 	cp syntax/xs.vim      $(SYNTAX)
+	cp tools/efm_perl.pl  $(TOOLS)
 
 symlinks: dirs
 	ln -sf $(PWD)/ftplugin/perl.vim  $(FTPLUGIN)
@@ -36,8 +38,9 @@ symlinks: dirs
 	ln -sf $(PWD)/syntax/tt2.vim     $(SYNTAX)
 	ln -sf $(PWD)/syntax/tt2html.vim $(SYNTAX)
 	ln -sf $(PWD)/syntax/xs.vim      $(SYNTAX)
+	ln -sf $(PWD)/tools/efm_perl.pl  $(TOOLS)
 
-tarball: 
+tarball:
 	tar czvf vim-perl.tar.gz \
 		ftplugin/perl.vim \
 		ftplugin/perl6.vim \
@@ -50,6 +53,8 @@ tarball:
 		syntax/perl6.vim \
 		syntax/pod.vim \
 		syntax/xs.vim \
+		\
+		tools/efm_perl.pl \
 
 test:
 	prove -rv t
