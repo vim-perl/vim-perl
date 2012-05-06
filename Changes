@@ -21,6 +21,9 @@ Benjamin R. Haskell.
 
 Add %+ match hash to syntax/perl.vim.
 
+"gf" lets you open modules when they are used outside "use" commands
+as in "Foo::Bar->new" (Manni Heumann, @mannih)
+
 
 [FIXES]
 Minor tweak to p6RxCharClass.  Thanks, Arne Skjærholt.
