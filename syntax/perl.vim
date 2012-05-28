@@ -64,7 +64,7 @@ syn region  perlGenericBlock	matchgroup=perlGenericBlock start="{" end="}" conta
 " All keywords
 "
 syn match perlConditional		"\<\%(if\|elsif\|unless\|given\|when\|default\)\>"
-syn match perlConditional		"\<else\>" nextgroup=perlElseIfError skipwhite skipnl skipempty
+syn match perlConditional		"\<else\%(\%(\_s\*if\>\)\|\>\)" contains=perlElseIfError skipwhite skipnl skipempty
 syn match perlRepeat			"\<\%(while\|for\%(each\)\=\|do\|until\|continue\)\>"
 syn match perlOperator			"\<\%(defined\|undef\|eq\|ne\|[gl][et]\|cmp\|not\|and\|or\|xor\|not\|bless\|ref\|do\)\>"
 syn match perlControl			"\<\%(BEGIN\|CHECK\|INIT\|END\|UNITCHECK\)\>"
@@ -188,8 +188,8 @@ syn match  perlSpecialMatch	"(\*\%(\%(PRUNE\|SKIP\|THEN\)\%(:[^)]*\)\=\|\%(MARK\
 " Highlight lines with only whitespace (only in blank delimited here documents) as errors
 syn match  perlNotEmptyLine	"^\s\+$" contained
 " Highlight "} else if (...) {", it should be "} else { if (...) { " or "} elsif (...) {"
-syn match perlElseIfError	"\s\+if" contained
-syn keyword perlElseIfError	elseif
+syn match perlElseIfError	"else\_s*if" containedin=perlConditional
+syn keyword perlElseIfError	elseif containedin=perlConditional
 
 " Variable interpolation
 "
