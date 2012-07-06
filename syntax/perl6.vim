@@ -2239,6 +2239,7 @@ endif
 "syn sync match p6SyncPod groupthere p6PodDelimRegion    "^=begin\>"
 "syn sync match p6SyncPod groupthere p6PodDelimEndRegion "^=end\>"
 
+let perl6_fold = 1
 if exists("perl6_fold")
     " Let's just sync whole file, the other methods aren't reliable (or I don't
     " know how to use them reliably)
