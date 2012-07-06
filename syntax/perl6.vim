@@ -2239,11 +2239,13 @@ endif
 "syn sync match p6SyncPod groupthere p6PodDelimRegion    "^=begin\>"
 "syn sync match p6SyncPod groupthere p6PodDelimEndRegion "^=end\>"
 
-" Let's just sync whole file, the other methods aren't reliable (or I don't
-" know how to use them reliably)
-syn sync fromstart
+if exists("perl6_fold")
+    " Let's just sync whole file, the other methods aren't reliable (or I don't
+    " know how to use them reliably)
+    syn sync fromstart
 
-setlocal foldmethod=syntax
+    setlocal foldmethod=syntax
+endif
 
 let b:current_syntax = "perl6"
 
