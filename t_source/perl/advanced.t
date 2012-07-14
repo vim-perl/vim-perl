@@ -92,6 +92,9 @@ BEGIN {
         }
 }
 
+# todo notes
+# TODO line without colon
+# TODO: line with colon
 
 # Fold the DATA segment
 # XXX We should add some POD to show that that is highlighted correctly as well
