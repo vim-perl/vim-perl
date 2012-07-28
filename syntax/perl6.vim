@@ -2247,6 +2247,9 @@ if exists("perl6_fold")
     " Let's just sync whole file, the other methods aren't reliable (or I don't
     " know how to use them reliably)
     syn sync fromstart
+
+    syn region perl6ClassFold start="^\z(\s*\)\<class\>" end="^\z1}" transparent fold keepend
+
     syn region perl6SubFold start="^\z(\s*\)\%(my\|our\|multi\|proto\|only\)\?\s*\<\(sub\|method\|submethod\)\>.*[^};]$" end="^\z1}" transparent fold keepend
     syn region perl6SubFold start="^\z(\s*\)\%(multi\|proto\|only\)\s*\%(\<\(sub\|method\|submethod\)\>\)\@!.*[^};]$" end="^\z1}" transparent fold keepend
 
