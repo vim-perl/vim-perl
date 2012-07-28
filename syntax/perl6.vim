@@ -69,6 +69,9 @@ elseif exists("b:current_syntax")
     finish
 endif
 
+let old_cpo=&cpo
+set cpo-=C
+
 " identifiers
 syn match p6Normal display "\K\%(\k\|[-']\K\@=\)*"
 
@@ -2251,5 +2254,7 @@ if exists("perl6_fold")
 endif
 
 let b:current_syntax = "perl6"
+
+let &cpo=old_cpo
 
 " vim:ts=8:sts=4:sw=4:expandtab:ft=vim
