@@ -17,6 +17,8 @@ let s:save_cpo = &cpo
 set cpo-=C
 
 setlocal formatoptions+=crq
+setlocal keywordprg=perldoc\ -f
+
 setlocal comments=:#
 setlocal commentstring=#%s
 
@@ -40,6 +42,30 @@ setlocal define=[^A-Za-z_]
 " after/ftplugin/perl6.vim file that contains
 "       set isfname-=:
 set isfname+=:
+"setlocal iskeyword=48-57,_,A-Z,a-z,:
+
+" Set this once, globally.
+if !exists("perlpath")
+    if executable("perl")
+      try
+	if &shellxquote != '"'
+	    let perlpath = system('perl6 -e  "@*INC.join(q/,/).say"')
+	else
+	    let perlpath = system("perl6 -e  '@*INC.join(q/,/).say'")
+	endif
+	let perlpath = substitute(perlpath,',.$',',,','')
+      catch /E145:/
+	let perlpath = ".,,"
+      endtry
+    else
+	" If we can't call perl to get its path, just default to using the
+	" current directory and the directory of the current file.
+	let perlpath = ".,,"
+    endif
+endif
+
+let &l:path=perlpath
+"---------------------------------------------
 
 " Undo the stuff we changed.
 let b:undo_ftplugin = "setlocal fo< com< cms< inc< inex< def< isk<" .
