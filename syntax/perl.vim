@@ -94,7 +94,7 @@ syn match perlStatementTime		"\<\%(gmtime\|localtime\|time\)\>"
 
 syn match perlStatementMisc		"\<\%(warn\|formline\|reset\|scalar\|prototype\|lock\|tied\=\|untie\)\>"
 
-syn keyword perlTodo			TODO TBD FIXME XXX NOTE contained
+syn keyword perlTodo			TODO TODO: TBD TBD: FIXME FIXME: XXX XXX: NOTE NOTE: contained
 
 syn region perlStatementIndirObjWrap   matchgroup=perlStatementIndirObj start="\<\%(map\|grep\|sort\|printf\=\|say\|system\|exec\)\>\s*{" end="}" contains=@perlTop,perlGenericBlock
 

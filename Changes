@@ -21,6 +21,12 @@ Benjamin R. Haskell.
 
 Add %+ match hash to syntax/perl.vim.
 
+"gf" lets you open modules when they are used outside "use" commands
+as in "Foo::Bar->new" (Manni Heumann, @mannih)
+
+Words like FIXME and TODO now include FIXME: and TODO: (@berekuk,
+Vyacheslav Matyukhin)
+
 
 [FIXES]
 Minor tweak to p6RxCharClass.  Thanks, Arne Skjærholt.
