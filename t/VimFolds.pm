@@ -141,9 +141,9 @@ sub _find_expected_folds {
     while(<$fh>) {
         chomp;
 
-        if(/<<</) {
+        if(/\Q{{{\E/) {
             push @fold_stack, $.;
-        } elsif(/>>>/) {
+        } elsif(/\Q}}}\E/) {
             my $start = pop @fold_stack;
             push @folds, {
                 start => $start,
