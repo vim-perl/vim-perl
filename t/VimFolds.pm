@@ -167,7 +167,10 @@ sub folds_match {
     }
     local $Test::Builder::Level =  $Test::Builder::Level + 1;
 
-    cmp_set(\@got_folds, \@expected_folds);
+    unless(cmp_set(\@got_folds, \@expected_folds)) {
+        diag('Got: ' . join('', explain(\@got_folds)));
+        diag('Expected: ' . join('', explain(\@expected_folds)));
+    }
 }
 
 1;
