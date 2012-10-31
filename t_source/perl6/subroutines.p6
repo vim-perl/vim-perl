@@ -44,6 +44,36 @@ my sub dynamic_sub2 is dynamic { # {{{
     ...
 } # }}}
 
-# multi
-# proto
-# only 
+proto sub diag($s) { # {{{
+    say 'pre-dispatch';
+    {*};
+    say 'post-dispatch';
+} # }}}
+
+multi sub diag(Str $s) { # {{{
+    say $s;
+} # }}}
+
+multi sub diag(Int $s) { # {{{
+    say $s;
+} # }}}
+
+only sub diag2(Int $s) { # {{{
+    say $s;
+} # }}}
+
+proto new_proto { # {{{
+    ...
+} # }}}
+
+multi new_multi { # {{{
+    ...
+} # }}}
+
+my multi my_multi(Int $s) { # {{{
+    return $s + 1;
+} # }}}
+
+my Int multi my_multi2(Int $s) { # {{{
+    return $s + 2;
+} # }}}
