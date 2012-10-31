@@ -28,8 +28,6 @@ our sub goodbye { # {{{
     say 'goodbye';
 } # }}}
 
-sub prototype;
-
 sub GLOBAL::global { # {{{
     say "I'm in global scope!";
 } # }}}
