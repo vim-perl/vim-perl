@@ -20,6 +20,10 @@ sub add2 (Int $a, Int $b --> Int) { # {{{
     return $a + $b;
 } # }}}
 
+sub add3 (Int $a, Int $b) returns Int { # {{{
+    return $a + $b;
+} # }}}
+
 my sub hello { # {{{
     say 'hello';
 } # }}}
