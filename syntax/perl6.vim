@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language:      Perl 6
 " Maintainer:    Andy Lester <andy@petdance.com>
-" Homepage:      http://github.com/petdance/vim-perl/tree/master
-" Bugs/requests: http://github.com/petdance/vim-perl/issues
+" Homepage:      http://github.com/vim-perl/vim-perl/tree/master
+" Bugs/requests: http://github.com/vim-perl/vim-perl/issues
 " Last Change:   2009-07-04
 
 " Contributors:  Luke Palmer <fibonaci@babylonia.flatirons.org>

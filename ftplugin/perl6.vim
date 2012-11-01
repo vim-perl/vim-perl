@@ -1,8 +1,8 @@
 " Vim filetype plugin file
 " Language:      Perl 6
 " Maintainer:    Andy Lester <andy@petdance.com>
-" Homepage:      http://github.com/petdance/vim-perl
-" Bugs/requests: http://github.com/petdance/vim-perl/issues
+" Homepage:      http://github.com/vim-perl/vim-perl
+" Bugs/requests: http://github.com/vim-perl/vim-perl/issues
 " Last Change:   2010-08-10
 " Contributors:  Hinrik Örn Sigurðsson <hinrik.sig@gmail.com>
 "

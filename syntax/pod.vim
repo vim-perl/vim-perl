@@ -2,8 +2,8 @@
 " Language:      Perl POD format
 " Maintainer:    Andy Lester <andy@petdance.com>
 " Previously:    Scott Bigham <dsb@killerbunnies.org>
-" Homepage:      http://github.com/petdance/vim-perl
-" Bugs/requests: http://github.com/petdance/vim-perl/issues
+" Homepage:      http://github.com/vim-perl/vim-perl
+" Bugs/requests: http://github.com/vim-perl/vim-perl/issues
 " Last Change:   2009-08-14
 
 " To add embedded POD documentation highlighting to your syntax file, add
