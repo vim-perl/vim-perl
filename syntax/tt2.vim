@@ -51,7 +51,9 @@ if !exists("b:tt2_syn_tags")
     "let b:tt2_syn_tags = '\[% %] \[\* \*]'
 endif
 
-let b:tt2_syn_inc_perl = 1
+if !exists("b:tt2_syn_inc_perl")
+    let b:tt2_syn_inc_perl = 1
+endif
 
 if exists("b:current_syntax")
   finish
@@ -89,7 +91,7 @@ if exists("b:tt2_syn_tags")
                     \ 'keepend extend'
 
         "Include Perl syntax when 'PERL' 'RAWPERL' block
-        if exists("b:tt2_syn_inc_perl")
+        if b:tt2_syn_inc_perl
             syn include @Perl $VIMRUNTIME/syntax/perl.vim
             exec 'syn region tt2_perlcode '.
                         \ 'start=+\(\(RAW\)\=PERL\s*[-]\=' . s:ed . '\(\n\)\=\)\@<=+ ' .
@@ -116,7 +118,7 @@ else
                 \ keepend extend
 
     "Include Perl syntax when 'PERL' 'RAWPERL' block
-    if exists("b:tt2_syn_inc_perl")
+    if b:tt2_syn_inc_perl
         syn include @Perl $VIMRUNTIME/syntax/perl.vim
         syn region tt2_perlcode
                     \ start=+\(\(RAW\)\=PERL\s*[-]\=%]\(\n\)\=\)\@<=+
