@@ -47,20 +47,20 @@ setlocal iskeyword=48-57,_,A-Z,a-z,:,-
 " Set this once, globally.
 if !exists("perlpath")
     if executable("perl")
-      try
-    if &shellxquote != '"'
-        let perlpath = system('perl6 -e  "@*INC.join(q/,/).say"')
+        try
+            if &shellxquote != '"'
+                let perlpath = system('perl6 -e  "@*INC.join(q/,/).say"')
+            else
+                let perlpath = system("perl6 -e  '@*INC.join(q/,/).say'")
+            endif
+            let perlpath = substitute(perlpath,',.$',',,','')
+        catch /E145:/
+            let perlpath = ".,,"
+        endtry
     else
-        let perlpath = system("perl6 -e  '@*INC.join(q/,/).say'")
-    endif
-    let perlpath = substitute(perlpath,',.$',',,','')
-      catch /E145:/
-    let perlpath = ".,,"
-      endtry
-    else
-    " If we can't call perl to get its path, just default to using the
-    " current directory and the directory of the current file.
-    let perlpath = ".,,"
+        " If we can't call perl to get its path, just default to using the
+        " current directory and the directory of the current file.
+        let perlpath = ".,,"
     endif
 endif
 
