@@ -17,7 +17,7 @@ let s:save_cpo = &cpo
 set cpo-=C
 
 setlocal formatoptions+=crq
-setlocal keywordprg=perldoc\ -f
+setlocal keywordprg=p6doc
 
 setlocal comments=:#
 setlocal commentstring=#%s
