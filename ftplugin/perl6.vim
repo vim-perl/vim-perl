@@ -46,7 +46,7 @@ setlocal iskeyword=48-57,_,A-Z,a-z,:,-
 
 " Set this once, globally.
 if !exists("perlpath")
-    if executable("perl")
+    if executable("perl6")
         try
             if &shellxquote != '"'
                 let perlpath = system('perl6 -e  "@*INC.join(q/,/).say"')
