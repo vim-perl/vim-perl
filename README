@@ -1,8 +1,16 @@
 This is the aggregation of all the various Perl-related syntax and
 helper files for Perl 5 and Perl 6.
 
-For now, to install just do a "make install" and you'll get the
-.vim files all installed in your ~/.vim directory.  It should do more than that, and probably use the Perl installation tools, but I'm not there yet.
+You can install vim-perl using
+
+* Pathogen and git submodules
+* Vundle
+
+Both were tested and work: please read the related documentation on the related sites.
+
+The legacy method is to install just do a "make install" and you'll get the
+.vim files all installed in your ~/.vim directory.
 
 xoxo,
+eiro,
 Andy (andy@petdance.com)
