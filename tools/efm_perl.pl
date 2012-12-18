@@ -49,6 +49,11 @@ push @checks, '-Mwarnings::unused'   if `perldoc -l warnings::unused 2> /dev/nul
 # uninit is not included in 5.10 and later
 push @checks, '-Muninit'             if ( $] < 5.010 ) && `perldoc -l uninit 2> /dev/null`;
 
+# need to turn on taint if it's on the shebang line.
+# naive check for [tT] switch ... will both t and T ever be used at the same time?
+my ( $taint ) = `head -n 1 $file` =~ /\s.*-.*?(t)/i;
+push @checks, "-$taint" if $taint ne '';
+
 my $checks = join ' ', @checks;
 
 my ( $message, $extracted_file, $lineno, $rest );
