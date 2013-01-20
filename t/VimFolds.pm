@@ -22,7 +22,7 @@ sub _get_folds {
     my ( $self, $filename ) = @_;
 
     my $script_before = $self->{'script_before'} || '';
-    my $syntax_file   = $self->{'syntax_file'};
+    my $syntax_file   = 'syntax/' . $self->{'language'} . '.vim';
 
     my $script_file    = File::Temp->new(SUFFIX => '.vim');
     my $dump_file      = File::Temp->new;
@@ -157,10 +157,14 @@ sub _find_expected_folds {
 }
 
 sub folds_match {
-    my ( $self, $filename ) = @_;
+    my ( $self, $code ) = @_;
 
-    my @expected_folds = $self->_find_expected_folds($filename);
-    my @got_folds      = $self->_get_folds($filename);
+    my $tempfile = File::Temp->new;
+    print { $tempfile } $code;
+    close $tempfile;
+
+    my @expected_folds = $self->_find_expected_folds($tempfile->filename);
+    my @got_folds      = $self->_get_folds($tempfile->filename);
 
     foreach my $fold (@got_folds) {
         delete $fold->{'level'};
