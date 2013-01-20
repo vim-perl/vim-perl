@@ -5,9 +5,17 @@ use warnings;
 use Cwd;
 use File::Find;
 use File::Spec::Functions qw<catfile catdir>;
-use Test::More tests => 5;
+use Test::More;
 use Test::Differences;
 use Text::VimColor;
+
+my $test_file_count = 0;
+find(sub {
+    return if !/\.(?:pl|pm|pod|t)$/;
+    $test_file_count++;
+}, 't_source/perl', 't_source/perl6');
+
+plan tests => $test_file_count;
 
 # hack to work around a silly limitation in Text::VimColor,
 # will remove it when Text::VimColor has been patched
