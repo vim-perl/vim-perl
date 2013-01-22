@@ -28,6 +28,7 @@ elseif exists("b:current_syntax")
 endif
 
 " POD commands
+syn match podCommand    "^=encoding"  nextgroup=podCmdText contains=@NoSpell
 syn match podCommand    "^=head[1234]"  nextgroup=podCmdText contains=@NoSpell
 syn match podCommand    "^=item"        nextgroup=podCmdText contains=@NoSpell
 syn match podCommand    "^=over"        nextgroup=podOverIndent skipwhite contains=@NoSpell
