@@ -34,6 +34,9 @@ if exists("b:current_syntax")
   finish
 endif
 
+let s:cpo_save = &cpo
+set cpo&vim
+
 
 " POD starts with ^=<word> and ends with ^=cut
 
@@ -544,6 +547,9 @@ syn sync match perlSyncPOD	grouphere perlPOD "^=item"
 syn sync match perlSyncPOD	grouphere NONE "^=cut"
 
 let b:current_syntax = "perl"
+
+let &cpo = s:cpo_save
+unlet s:cpo_save
 
 " XXX Change to sts=4:sw=4
 " vim:ts=8:sts=2:sw=2:expandtab:ft=vim
