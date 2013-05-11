@@ -3,7 +3,7 @@
 " Maintainer:    vim-perl <vim-perl@googlegroups.com>
 " Homepage:      http://github.com/vim-perl/vim-perl
 " Bugs/requests: http://github.com/vim-perl/vim-perl/issues
-" Last Change:   2009-08-14
+" Last Change:   2013-05-11
 
 if exists("b:did_ftplugin") | finish | endif
 let b:did_ftplugin = 1
@@ -78,6 +78,9 @@ endif
 " Undo the stuff we changed.
 let b:undo_ftplugin = "setlocal fo< com< cms< inc< inex< def< isf< kp< path<" .
 	    \	      " | unlet! b:browsefilter"
+
+" proper matching for matchit plugin
+let b:match_skip = 's:comment\|string\|perlQQ\|perlShellCommand\|perlHereDoc\|perlSubstitution\|perlTranslation\|perlMatch\|perlFormatField'
 
 " Restore the saved compatibility options.
 let &cpo = s:save_cpo
