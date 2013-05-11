@@ -428,6 +428,9 @@ endif
 
 command -nargs=+ HiLink hi def link <args>
 
+" NOTE: If you're linking new highlight groups to perlString, please also put
+"       them into b:match_skip in ftplugin/perl.vim.
+
 " The default highlighting.
 HiLink perlSharpBang		PreProc
 HiLink perlControl		PreProc
