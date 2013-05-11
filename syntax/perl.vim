@@ -117,7 +117,7 @@ syn match perlLabel      "^\s*\h\w*\s*::\@!\%(\<v\d\+\s*:\)\@<!"
 
 " Special variables first ($^A, ...) and ($|, $', ...)
 syn match  perlVarPlain		 "$^[ACDEFHILMNOPRSTVWX]\="
-syn match  perlVarPlain		 "$[\\\"\[\]'&`+*.,;=%~!?@#$<>(-]"
+syn match  perlVarPlain		 "$[\\\"\[\]'&`+*.,;=%~!?@#$<>(-]" extend
 syn match  perlVarPlain		 "%+"
 syn match  perlVarPlain		 "$\%(0\|[1-9]\d*\)"
 " Same as above, but avoids confusion in $::foo (equivalent to $main::foo)
@@ -157,9 +157,9 @@ if !exists("perl_no_extended_vars")
   syn match  perlVarPlain2	"[%&*]\$*{\I\i*}" nextgroup=perlVarMember,perlVarSimpleMember,perlMethod
   syn match  perlVarPlain	"\%(\$#\|[@$]\)\$*{\I\i*}" nextgroup=perlVarMember,perlVarSimpleMember,perlMethod
   syn region perlVarMember	matchgroup=perlVarPlain start="\%(->\)\={" skip="\\}" end="}" contained contains=@perlExpr nextgroup=perlVarMember,perlVarSimpleMember,perlMethod
-  syn match  perlVarSimpleMember	"\%(->\)\={\s*\I\i*\s*}" nextgroup=perlVarMember,perlVarSimpleMember,perlMethod contains=perlVarSimpleMemberName contained
+  syn match  perlVarSimpleMember	"\%(->\)\={\s*\I\i*\s*}" nextgroup=perlVarMember,perlVarSimpleMember,perlMethod contains=perlVarSimpleMemberName contained extend
   syn match  perlVarSimpleMemberName	"\I\i*" contained
-  syn region perlVarMember	matchgroup=perlVarPlain start="\%(->\)\=\[" skip="\\]" end="]" contained contains=@perlExpr nextgroup=perlVarMember,perlVarSimpleMember,perlMethod
+  syn region perlVarMember	matchgroup=perlVarPlain start="\%(->\)\=\[" skip="\\]" end="]" contained contains=@perlExpr nextgroup=perlVarMember,perlVarSimpleMember,perlMethod extend
   syn match perlPackageConst	"__PACKAGE__" nextgroup=perlMethod
   syn match  perlMethod		"->\$*\I\i*" contained nextgroup=perlVarSimpleMember,perlVarMember,perlMethod
 endif
