@@ -24,6 +24,8 @@ Any bug reports/feature requests/patches should be directed to the [vim-perl gro
 
 ## Curly braces inside of regexes/strings are considered when I use %
 
+(See also [GH #86](https://github.com/vim-perl/vim-perl/issues/86))
+
 Vim itself only considers double quotes in this scenario; the matchit plugin, however,
 can deal with this scenario and vim-perl's files are set up to work with it should you
 choose to use it.
