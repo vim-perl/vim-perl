@@ -16,7 +16,8 @@ let b:did_ftplugin = 1
 let s:save_cpo = &cpo
 set cpo-=C
 
-setlocal formatoptions+=crq
+setlocal formatoptions-=t
+setlocal formatoptions+=crqol
 setlocal keywordprg=p6doc
 
 setlocal comments=:#
