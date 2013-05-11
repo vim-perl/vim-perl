@@ -12,7 +12,7 @@ They were all tested and work: please read the related documentation on the rela
 The legacy method is to install just do a "make install" and you'll get the
 .vim files all installed in your ~/.vim directory.
 
-Any bug reports/feature requests/patches should be directed to the [vim-perl group](https://groups.google.com/group/vim-perl)
+Any bug reports/feature requests/patches should be directed to the [vim-perl group](https://groups.google.com/group/vim-perl).
 
 xoxo,
 eiro,
