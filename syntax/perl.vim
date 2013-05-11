@@ -18,7 +18,7 @@
 " The following parameters are available for tuning the
 " perl syntax highlighting, with defaults given:
 "
-" unlet perl_include_pod
+" let perl_include_pod = 1
 " unlet perl_no_scope_in_variables
 " unlet perl_no_extended_vars
 " unlet perl_string_as_statement
@@ -41,7 +41,7 @@ set cpo&vim
 
 " POD starts with ^=<word> and ends with ^=cut
 
-if exists("perl_include_pod")
+if !exists("perl_include_pod") || perl_include_pod == 1
   " Include a while extra syntax file
   syn include @Pod syntax/pod.vim
   unlet b:current_syntax
