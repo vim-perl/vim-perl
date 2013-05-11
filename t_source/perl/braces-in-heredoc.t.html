@@ -1,0 +1,31 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synPreProc">#!/usr/bin/env perl</span>
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">foo </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$x</span> = <span class="synString">&lt;&lt;'PERL';</span>
+<span class="synString">sub func1 {</span>
+<span class="synString">    print 'In a heredoc';</span>
+<span class="synString">} # Syntax highlighting things this brace closes foo()'s body</span>
+
+<span class="synString"># This function is highlighted as if it is not in a heredoc.</span>
+<span class="synString">sub func2 {</span>
+<span class="synString">    print 'Still in a heredoc';</span>
+<span class="synString">}</span>
+<span class="synString">PERL</span>
+
+    <span class="synStatement">print</span> <span class="synString">'Out of the heredoc'</span>;
+}
+</pre>
+
+ </body>
+</html>
