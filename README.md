@@ -20,6 +20,14 @@ The legacy method is to install just do a "make install" and you'll get the
 
 Any bug reports/feature requests/patches should be directed to the [vim-perl group](https://groups.google.com/group/vim-perl).
 
+= FAQ =
+
+== Curly braces instead of regexes/strings are considered when I use % ==
+
+Vim itself only considers double quotes in this scenario; the matchit plugin, however,
+can deal with this scenario and vim-perl's files are set up to work with it should you
+choose to use it.
+
 xoxo,
 eiro,
 Andy (andy@petdance.com)
