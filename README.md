@@ -22,7 +22,7 @@ Any bug reports/feature requests/patches should be directed to the [vim-perl gro
 
 # FAQ
 
-## Curly braces instead of regexes/strings are considered when I use %
+## Curly braces inside of regexes/strings are considered when I use %
 
 Vim itself only considers double quotes in this scenario; the matchit plugin, however,
 can deal with this scenario and vim-perl's files are set up to work with it should you
