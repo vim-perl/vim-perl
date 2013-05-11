@@ -174,7 +174,7 @@ syn match  perlFiledescStatement	"\u\w*" contained
 
 " Special characters in strings and matches
 syn match  perlSpecialString	"\\\%(\o\{1,3}\|x\%({\x\+}\|\x\{1,2}\)\|c.\|[^cx]\)" contained extend
-syn match  perlSpecialStringU2	"\\." extend contained transparent contains=NONE
+syn match  perlSpecialStringU2	"\\." extend contained contains=NONE
 syn match  perlSpecialStringU	"\\\\" contained
 syn match  perlSpecialMatch	"\\[1-9]" contained extend
 syn match  perlSpecialMatch	"\\g\%(\d\+\|{\%(-\=\d\+\|\h\w*\)}\)" contained
@@ -533,6 +533,8 @@ HiLink perlParensDQ		perlString
 HiLink perlBracketsDQ		perlString
 HiLink perlBracesDQ		perlString
 HiLink perlAnglesDQ		perlString
+
+HiLink perlSpecialStringU2	perlString
 
 " Possible errors
 HiLink perlNotEmptyLine		Error
