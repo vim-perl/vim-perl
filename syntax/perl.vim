@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:      Perl 5
-" Maintainer:    Andy Lester <andy@petdance.com>
+" Maintainer:    vim-perl <vim-perl@googlegroups.com>
 " Homepage:      http://github.com/vim-perl/vim-perl/tree/master
 " Bugs/requests: http://github.com/vim-perl/vim-perl/issues
 " Last Change:   2013-05-11

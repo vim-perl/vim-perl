@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:      Perl POD format
-" Maintainer:    Andy Lester <andy@petdance.com>
+" Maintainer:    vim-perl <vim-perl@googlegroups.com>
 " Previously:    Scott Bigham <dsb@killerbunnies.org>
 " Homepage:      http://github.com/vim-perl/vim-perl
 " Bugs/requests: http://github.com/vim-perl/vim-perl/issues

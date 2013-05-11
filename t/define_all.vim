@@ -1,6 +1,6 @@
 " Vim color file
-" Filename: define_all
-" Maintainer: Hinrik Örn Sigurðsson <hinrik.sig at gmail dot com>
+" Filename:     define_all
+" Maintainer:   vim-perl <vim-perl@googlegroups.com>
 " Installation: Drop this file in your $VIMRUNTIME/colors/ directory
 " 
 " This is a dummy color file that defines a color for every syntax class.

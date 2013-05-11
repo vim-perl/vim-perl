@@ -1,5 +1,5 @@
 " Language:      TT2 (Perl Template Toolkit)
-" Maintainer:    Andy Lester <andy@petdance.com>
+" Maintainer:    vim-perl <vim-perl@googlegroups.com>
 " Author:        Moriki, Atsushi <4woods+vim@gmail.com>
 " Homepage:      http://github.com/vim-perl/vim-perl
 " Bugs/requests: http://github.com/vim-perl/vim-perl/issues
