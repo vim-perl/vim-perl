@@ -390,9 +390,11 @@ syn match  perlFormatField	"@$" contained
 
 " __END__ and __DATA__ clauses
 if exists("perl_fold")
-  syntax region perlDATA		start="^__\%(DATA\|END\)__$" skip="." end="." contains=perlPOD,@perlDATA fold
+  syntax region perlDATA		start="^__DATA__$" skip="." end="." fold
+  syntax region perlDATA		start="^__END__$" skip="." end="." contains=perlPOD,@perlDATA fold
 else
-  syntax region perlDATA		start="^__\%(DATA\|END\)__$" skip="." end="." contains=perlPOD,@perlDATA
+  syntax region perlDATA		start="^__DATA__$" skip="." end="."
+  syntax region perlDATA		start="^__END__$" skip="." end="." contains=perlPOD,@perlDATA
 endif
 
 "
