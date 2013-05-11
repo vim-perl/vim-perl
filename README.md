@@ -1,5 +1,9 @@
+= vim-perl =
+
 This is the aggregation of all the various Perl-related syntax and
 helper files for Perl 5 and Perl 6.
+
+= Installation =
 
 You can install vim-perl using
 
@@ -11,6 +15,8 @@ They were all tested and work: please read the related documentation on the rela
 
 The legacy method is to install just do a "make install" and you'll get the
 .vim files all installed in your ~/.vim directory.
+
+= Getting Help =
 
 Any bug reports/feature requests/patches should be directed to the [vim-perl group](https://groups.google.com/group/vim-perl).
 
