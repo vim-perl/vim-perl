@@ -3,7 +3,7 @@
 " Maintainer:    Andy Lester <andy@petdance.com>
 " Homepage:      http://github.com/vim-perl/vim-perl
 " Bugs/requests: http://github.com/vim-perl/vim-perl/issues
-" Last Change:   2010-08-10
+" Last Change:   2013-05-11
 " Contributors:  Hinrik Örn Sigurðsson <hinrik.sig@gmail.com>
 "
 " Based on ftplugin/perl.vim by Dan Sharp <dwsharp at hotmail dot com>

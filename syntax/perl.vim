@@ -3,12 +3,13 @@
 " Maintainer:    Andy Lester <andy@petdance.com>
 " Homepage:      http://github.com/vim-perl/vim-perl/tree/master
 " Bugs/requests: http://github.com/vim-perl/vim-perl/issues
-" Last Change:   2010-08-10
+" Last Change:   2013-05-11
 " Contributors:  Andy Lester <andy@petdance.com>
 "                Hinrik Örn Sigurðsson <hinrik.sig@gmail.com>
 "                Lukas Mai <l.mai.web.de>
 "                Nick Hibma <nick@van-laarhoven.org>
 "                Sonia Heimann <niania@netsurf.org>
+"                Rob Hoelz <rob@hoelz.ro>
 "                and many others.
 "
 " Please download most recent version first before mailing
