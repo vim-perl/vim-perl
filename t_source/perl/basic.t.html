@@ -7,9 +7,9 @@
  <body>
 
 <pre><span class="synStatement">my</span> <span class="synIdentifier">$escaped_fixed</span> = <span class="synString">&quot;lol is </span><span class="synSpecial">\&quot;</span><span class="synString">lol</span><span class="synSpecial">\&quot;</span><span class="synString">&quot;</span>;
-<span class="synStatement">my</span> <span class="synIdentifier">$escaped_fixed</span> = <span class="synString">q(lol is (\</span>)<span class="synString">))</span>;
+<span class="synStatement">my</span> <span class="synIdentifier">$escaped_fixed</span> = <span class="synString">q(lol is (\)))</span>;
 <span class="synStatement">my</span> <span class="synIdentifier">$escaped_fixed</span> = <span class="synString">qq(lol is (</span><span class="synSpecial">\)</span><span class="synString">))</span>;
-<span class="synStatement">my</span> <span class="synIdentifier">$escaped_fixed</span> = <span class="synString">qr(</span><span class="synSpecial">\(</span><span class="synString">(.</span>)<span class="synSpecial">\)</span><span class="synString">)</span>; <span class="synComment"># this really is ok, not sure how to match balanced ()s in vim-syntax-lingo though</span>
+<span class="synStatement">my</span> <span class="synIdentifier">$escaped_fixed</span> = <span class="synString">qr(</span><span class="synSpecial">\(</span><span class="synString">(.)</span><span class="synSpecial">\)</span><span class="synString">)</span>; <span class="synComment"># this really is ok, not sure how to match balanced ()s in vim-syntax-lingo though</span>
 
 <span class="synStatement">package</span><span class="synType"> Dummy</span>;
 

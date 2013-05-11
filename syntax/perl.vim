@@ -222,15 +222,15 @@ syn match  perlString	"\<\%(v\d\+\%(\.\d\+\)*\|\d\+\%(\.\d\+\)\{2,}\)\>" contain
 syn match  perlVStringV	"\<v" contained
 
 
-syn region perlParensSQ		start=+(+ end=+)+ extend contained transparent contains=perlParensSQ,@perlInterpSQ keepend
-syn region perlBracketsSQ	start=+\[+ end=+\]+ extend contained transparent contains=perlBracketsSQ,@perlInterpSQ keepend
-syn region perlBracesSQ		start=+{+ end=+}+ extend contained transparent contains=perlBracesSQ,@perlInterpSQ keepend
-syn region perlAnglesSQ		start=+<+ end=+>+ extend contained transparent contains=perlAnglesSQ,@perlInterpSQ keepend
+syn region perlParensSQ		start=+(+ end=+)+ extend contained contains=perlParensSQ,@perlInterpSQ keepend
+syn region perlBracketsSQ	start=+\[+ end=+\]+ extend contained contains=perlBracketsSQ,@perlInterpSQ keepend
+syn region perlBracesSQ		start=+{+ end=+}+ extend contained contains=perlBracesSQ,@perlInterpSQ keepend
+syn region perlAnglesSQ		start=+<+ end=+>+ extend contained contains=perlAnglesSQ,@perlInterpSQ keepend
 
-syn region perlParensDQ		start=+(+ end=+)+ extend contained transparent contains=perlParensDQ,@perlInterpDQ keepend
-syn region perlBracketsDQ	start=+\[+ end=+\]+ extend contained transparent contains=perlBracketsDQ,@perlInterpDQ keepend
-syn region perlBracesDQ		start=+{+ end=+}+ extend contained transparent contains=perlBracesDQ,@perlInterpDQ keepend
-syn region perlAnglesDQ		start=+<+ end=+>+ extend contained transparent contains=perlAnglesDQ,@perlInterpDQ keepend
+syn region perlParensDQ		start=+(+ end=+)+ extend contained contains=perlParensDQ,@perlInterpDQ keepend
+syn region perlBracketsDQ	start=+\[+ end=+\]+ extend contained contains=perlBracketsDQ,@perlInterpDQ keepend
+syn region perlBracesDQ		start=+{+ end=+}+ extend contained contains=perlBracesDQ,@perlInterpDQ keepend
+syn region perlAnglesDQ		start=+<+ end=+>+ extend contained contains=perlAnglesDQ,@perlInterpDQ keepend
 
 
 " Simple version of searches and matches
@@ -241,7 +241,7 @@ syn region perlMatch	matchgroup=perlMatchStartEnd start=+\<\%(::\|'\|->\)\@<!m\s
 syn region perlMatch	matchgroup=perlMatchStartEnd start=+\<\%(::\|'\|->\)\@<!m\s*(+ end=+)[msixpodualgc]*+ contains=@perlInterpMatch,perlParensDQ keepend
 
 " A special case for m{}, m<> and m[] which allows for comments and extra whitespace in the pattern
-syn region perlMatch	matchgroup=perlMatchStartEnd start=+\<\%(::\|'\|->\)\@<!m\s*{+ end=+}[msixpodualgc]*+ contains=@perlInterpMatch,perlComment,perlBracesDQ keepend
+syn region perlMatch	matchgroup=perlMatchStartEnd start=+\<\%(::\|'\|->\)\@<!m\s*{+ end=+}[msixpodualgc]*+ contains=@perlInterpMatch,perlComment,perlBracesDQ
 syn region perlMatch	matchgroup=perlMatchStartEnd start=+\<\%(::\|'\|->\)\@<!m\s*<+ end=+>[msixpodualgc]*+ contains=@perlInterpMatch,perlAnglesDQ keepend
 syn region perlMatch	matchgroup=perlMatchStartEnd start=+\<\%(::\|'\|->\)\@<!m\s*\[+ end=+\][msixpodualgc]*+ contains=@perlInterpMatch,perlComment,perlBracketsDQ keepend
 
@@ -517,6 +517,20 @@ HiLink perlSpecialString	perlSpecial
 HiLink perlSpecialStringU	perlSpecial
 HiLink perlSpecialMatch		perlSpecial
 HiLink perlDATA			perlComment
+
+" NOTE: Due to a bug in Vim (or more likely, a misunderstanding on my part),
+"       I had to remove the transparent property from the following regions
+"       in order to get them to highlight correctly.  Feel free to remove
+"       these and reinstate the transparent property if you know how.
+HiLink perlParensSQ		perlString
+HiLink perlBracketsSQ		perlString
+HiLink perlBracesSQ		perlString
+HiLink perlAnglesSQ		perlString
+
+HiLink perlParensDQ		perlString
+HiLink perlBracketsDQ		perlString
+HiLink perlBracesDQ		perlString
+HiLink perlAnglesDQ		perlString
 
 " Possible errors
 HiLink perlNotEmptyLine		Error
