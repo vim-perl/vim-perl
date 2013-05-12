@@ -257,7 +257,10 @@ sub output {
 
 my $vim = \*STDOUT;
 
-my $date = gmtime() . ' UTC';
+my ( undef, undef, undef, $day, $month, $year ) = gmtime();
+$year += 1900;
+$month++;
+my $date = sprintf '%04d-%02d-%02d', $year, $month, $day;
 
 print $vim <<_VIM_;
 " Vim syntax file
