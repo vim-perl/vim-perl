@@ -47,15 +47,10 @@ if !b:indent_use_syntax
     setlocal indentkeys+=0=EO
 endif
 
-" Only define the function once.
-if exists("*GetPerl6Indent")
-    finish
-endif
-
 let s:cpo_save = &cpo
 set cpo-=C
 
-function GetPerl6Indent()
+function! GetPerl6Indent()
 
     " Get the line to be indented
     let cline = getline(v:lnum)
