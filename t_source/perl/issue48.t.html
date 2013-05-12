@@ -1,0 +1,30 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synComment"># vim:ft=perl</span>
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">print</span> <span class="synIdentifier">@{</span><span class="synperlVarBlock"> </span><span class="synIdentifier">$dbh-&gt;selectrow_arrayref</span><span class="synperlVarBlock">(</span><span class="synString">&lt;&lt;SQL) };</span>
+<span class="synString">SELECT s[site_hum_id</span>
+<span class="synString">  FROM site_inst s</span>
+<span class="synString">SQL</span>
+
+<span class="synStatement">print</span> <span class="synIdentifier">%{</span><span class="synperlVarBlock2"> </span><span class="synIdentifier">$dbh-&gt;selectrow_arrayref</span><span class="synperlVarBlock2">(</span><span class="synString">&lt;&lt;SQL) };</span>
+<span class="synString">SELECT s[site_hum_id</span>
+<span class="synString">  FROM site_inst s</span>
+<span class="synString">SQL</span>
+
+<span class="synIdentifier">*{</span><span class="synString">&quot;foo</span><span class="synSpecial">\:</span><span class="synString">:bar&quot;</span><span class="synIdentifier">}</span> = <span class="synNumber">1</span>;
+
+<span class="synStatement">print</span> <span class="synString">'hi'</span>;
+</pre>
+
+ </body>
+</html>
