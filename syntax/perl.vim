@@ -12,7 +12,7 @@
 "                Rob Hoelz <rob@hoelz.ro>
 "                and many others.
 "
-" Please download most recent version first before mailing
+" Please download the most recent version first, before mailing
 " any comments.
 "
 " The following parameters are available for tuning the
@@ -265,7 +265,7 @@ syn region perlSubstitutionGQQ		matchgroup=perlMatchStartEnd start=+(+ end=+)[ms
 syn region perlSubstitutionGQQ		matchgroup=perlMatchStartEnd start=+\[+ end=+\][msixpodualgcer]*+ contained contains=@perlInterpDQ,perlBracketsDQ keepend
 syn region perlSubstitutionGQQ		matchgroup=perlMatchStartEnd start=+{+ end=+}[msixpodualgcer]*+ contained contains=@perlInterpDQ,perlBracesDQ keepend
 syn region perlSubstitutionGQQ		matchgroup=perlMatchStartEnd start=+<+ end=+>[msixpodualgcer]*+ contained contains=@perlInterpDQ,perlAnglesDQ keepend
-syn region perlSubstitutionSQ		matchgroup=perlMatchStartEnd start=+'+  end=+'[msixpodualgcer]*+ contained contains=@perlInterpSQ keepend 
+syn region perlSubstitutionSQ		matchgroup=perlMatchStartEnd start=+'+  end=+'[msixpodualgcer]*+ contained contains=@perlInterpSQ keepend
 
 " Translations
 " perlMatch is the first part, perlTranslation* is the second, translator part.
