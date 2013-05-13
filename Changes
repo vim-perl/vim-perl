@@ -4,8 +4,8 @@ Changelog for the vim-perl package
 ====================================
 [ENHANCEMENTS]
 perl5:
-New flags in 5.14 for the m//, s///, and tr/// operators are now highlighted
-(Karen Etheridge)
+New flags in 5.14 for the m//, s///, and tr/// operators are now
+highlighted (Karen Etheridge)
 
 Highlight braces following printf and say. Thanks, Matt Boyle.
 
@@ -13,7 +13,9 @@ Fix overzealous matching of /^package/ inside Pod (Hinrik)
 
 Added */xs.vim.
 
-Added syntax/tt2.vim and syntax/tt2html.vim
+Added syntax/tt2.vim, syntax/tt2html.vim and tt2js.vim files for
+Template Toolkit, TT files for HTML and TT files for JavaScript.
+(Thanks to Atsushi Moriki and Peter Yates)
 
 The "if" show up as an error if you accidentally use "else if"
 instead of "elsif".  Also added "elseif" as an error.  Thanks,
@@ -26,6 +28,8 @@ as in "Foo::Bar->new" (Manni Heumann, @mannih)
 
 Words like FIXME and TODO now include FIXME: and TODO: (@berekuk,
 Vyacheslav Matyukhin)
+
+POD formatting highlights have been enabled inside POD blocks.
 
 
 [FIXES]
@@ -40,6 +44,8 @@ thus screwing up indents.  Thanks, Tom Wyant.
 
 Fixed highlights on comments before opening brace of a sub. Thanks,
 Rafael Kitover.
+
+Braces within a heredoc no longer confuse the highlighting.
 
 
 [TESTING]
