@@ -20,6 +20,9 @@ The legacy method is to install just do a "make install" and you'll get the
 
 Any bug reports/feature requests/patches should be directed to the [vim-perl group](https://groups.google.com/group/vim-perl).
 
+When reporting bugs in the highlighting of items, please include an example file as well
+as a screenshot demonstrating the problem.
+
 # FAQ
 
 ## Curly braces inside of regexes/strings are considered when I use %
