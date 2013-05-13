@@ -12,7 +12,7 @@
 "                Rob Hoelz <rob@hoelz.ro>
 "                and many others.
 "
-" Please download most recent version first before mailing
+" Please download the most recent version first, before mailing
 " any comments.
 "
 " The following parameters are available for tuning the
