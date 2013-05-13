@@ -43,7 +43,7 @@ sub maybe_type {
  local $_ = $_[0];
 
  return if $skip_types{$_};
- 
+
  ++$types{$_};
 }
 
@@ -237,7 +237,7 @@ print STDERR "Found " . (keys %functions) . " functions, "
                       . (keys %variables) . " variables, "
                       . (keys %constants) . " constants and "
                       . (keys %types)     . " types\n";
- 
+
 my $len = 78;
 
 sub output {

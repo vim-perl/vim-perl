@@ -84,10 +84,10 @@ sub test_source_file {
 
     $hilite->syntax_mark_file($file);
     my $output = $hilite->html();
-    
+
     my $html_file = $file;
     $html_file .= '.html';
-    
+
     SKIP: {
         # remove old failure output if present
         my $fail = "${file}_fail.html";
@@ -98,13 +98,13 @@ sub test_source_file {
             open my $markup, '>', $html_file or die "Can't open $html_file: $!\n";
             print $markup $output;
             close $markup;
-            
+
             skip("Created $html_file", 1);
         }
-            
+
         open my $handle, '<', $html_file or die "Can't open $html_file: $!\n";
         my $expected = do { local $/; scalar <$handle> };
-        
+
         eq_or_diff($output, $expected, "Correct output for $file");
 
         # if the HTML is incorrect, write it out to a file for
