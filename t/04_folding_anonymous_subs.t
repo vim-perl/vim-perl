@@ -37,10 +37,7 @@ my $anon_sub = sub { # {{{
 }; # }}}
 END_PERL
 
-SKIP: {
-    skip 'not fixed yet', 2;
-
-    $anon_folds->folds_match(<<'END_PERL');
+$anon_folds->folds_match(<<'END_PERL');
 use strict;
 use warnings;
 
@@ -61,7 +58,7 @@ sub something { # {{{
 } # }}}
 END_PERL
 
-    $anon_folds->folds_match(<<'END_PERL');
+$anon_folds->folds_match(<<'END_PERL');
 has parser_rules => (
     is      => 'ro',
     default => sub { [] },
@@ -81,4 +78,6 @@ sub _append_child { # {{{
     return $child;
 } }}}
 END_PERL
-}
+
+# XXX anon subroutine with prototype
+# XXX anon subroutine with start on following line
