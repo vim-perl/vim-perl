@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use lib 't';
 
-use Test::More tests => 4;
+use Test::More tests => 9;
 use VimFolds;
 
 my $no_anon_folds = VimFolds->new(
@@ -79,5 +79,44 @@ sub _append_child { # {{{
 } }}}
 END_PERL
 
-# XXX anon subroutine with prototype
-# XXX anon subroutine with start on following line
+$anon_folds->folds_match(<<'END_PERL');
+my $sub = sub :Attribute { # {{{
+    say 'foo';
+    say 'bar';
+    say 'baz';
+}; # }}}
+END_PERL
+
+$anon_folds->folds_match(<<'END_PERL');
+my $sub = sub () { # {{{
+    say 'foo';
+    say 'bar';
+    say 'baz';
+}; # }}}
+END_PERL
+
+$anon_folds->folds_match(<<'END_PERL');
+my $sub = sub () { # {{{
+    my $string = q/foo } bar/;
+    say 'more stuff';
+}; # }}}
+END_PERL
+
+$anon_folds->folds_match(<<'END_PERL');
+my $sub = sub () { # {{{
+    my $perl = <<'END_PERL2';
+sub {
+    say 'hello'
+}
+END_PERL2
+}; # }}}
+END_PERL
+
+$anon_folds->folds_match(<<'END_PERL');
+my $sub = sub ()
+{ # {{{
+    say 'foo';
+    say 'bar';
+    say 'baz';
+}; # }}}
+END_PERL
