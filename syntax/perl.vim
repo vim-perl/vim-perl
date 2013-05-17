@@ -376,7 +376,7 @@ endif
 syn match  perlString "\I\@<!-\?\I\i*\%(\s*=>\)\@="
 
 " All other # are comments, except ^#!
-syn match  perlComment		"#.*" contains=perlTodo,@Spell
+syn match  perlComment		"#.*" contains=perlTodo,@Spell extend
 syn match  perlSharpBang	"^#!.*"
 
 " Formats
