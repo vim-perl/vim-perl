@@ -154,7 +154,7 @@ END_PERL2 # }}}
 }; # }}}
 END_PERL
 
-$anon_folds->folds_match(<<'END_PERL');
+$anon_folds->folds_match(<<'END_PERL', 'test opening sub brace on next line');
 my $sub = sub ()
 { # {{{
     say 'foo';
