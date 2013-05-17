@@ -2,8 +2,21 @@ use strict;
 use warnings;
 use lib 't';
 
-use Test::More tests => 19;
+use Test::More;
 use VimFolds;
+
+my @quote_words = qw(q qq qx qw qr);
+my @quote_chars = (
+    '/',
+    '.',
+    '#',
+    '()',
+    '[]',
+    '{}',
+    '<>',
+);
+
+plan tests => 12 + (@quote_chars * @quote_words);
 
 my $no_anon_folds = VimFolds->new(
     language      => 'perl',
@@ -96,13 +109,6 @@ my $sub = sub () { # {{{
 END_PERL
 
 $anon_folds->folds_match(<<'END_PERL');
-my $sub = sub () { # {{{
-    my $string = q/foo } bar/;
-    say 'more stuff';
-}; # }}}
-END_PERL
-
-$anon_folds->folds_match(<<'END_PERL');
 my $sub = sub { # {{{
     my $string = 'foo } bar';
     say 'more stuff';
@@ -116,47 +122,24 @@ my $sub = sub { # {{{
 }; # }}}
 END_PERL
 
-$anon_folds->folds_match(<<'END_PERL');
-my $sub = sub { # {{{
-    my $string = q.foo } bar.;
+foreach my $word (@quote_words) {
+    foreach my $char_pair (@quote_chars) {
+        my $open_char  = substr($char_pair, 0, 1);
+        my $close_char = length($char_pair) > 1
+            ? substr($char_pair, 1, 1)
+            : $open_char;
+        my $char = $close_char eq '}' ? '\}' : '}';
+
+        my $code = <<"END_PERL";
+my \$sub = sub { # {{{
+    my \$string = ${word}${open_char}foo $char bar${close_char};
     say 'more stuff';
 }; # }}}
 END_PERL
 
-$anon_folds->folds_match(<<'END_PERL');
-my $sub = sub { # {{{
-    my $string = q#foo } bar#;
-    say 'more stuff';
-}; # }}}
-END_PERL
-
-$anon_folds->folds_match(<<'END_PERL');
-my $sub = sub { # {{{
-    my $string = q(foo } bar);
-    say 'more stuff';
-}; # }}}
-END_PERL
-
-$anon_folds->folds_match(<<'END_PERL');
-my $sub = sub { # {{{
-    my $string = q[foo } bar];
-    say 'more stuff';
-}; # }}}
-END_PERL
-
-$anon_folds->folds_match(<<'END_PERL');
-my $sub = sub { # {{{
-    my $string = q{foo \} bar};
-    say 'more stuff';
-}; # }}}
-END_PERL
-
-$anon_folds->folds_match(<<'END_PERL');
-my $sub = sub { # {{{
-    my $string = q<foo } bar>;
-    say 'more stuff';
-}; # }}}
-END_PERL
+        $anon_folds->folds_match($code, "Testing ${word}${open_char}...${close_char} with embedded }");
+    }
+}
 
 # I know this is not valid Perl, but VimFolds
 # will strip the comments.  Besides, I needed a
