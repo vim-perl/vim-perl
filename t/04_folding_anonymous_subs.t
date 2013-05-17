@@ -16,7 +16,7 @@ my @quote_chars = (
     '<>',
 );
 
-plan tests => 13 + (@quote_chars * @quote_words);
+plan tests => 15 + (@quote_chars * @quote_words);
 
 my $no_anon_folds = VimFolds->new(
     language      => 'perl',
@@ -204,5 +204,17 @@ sub my_sub { # {{{
     return sub { # {{{
         say 'hello';
     }; # }}}
+}; # }}}
+END_PERL
+
+$anon_folds->folds_match(<<'END_PERL', 'Test folding with @{...} nested in a regular sub');
+sub my_sub { # {{{
+    my @entries = @{ $ref };
+}; # }}}
+END_PERL
+
+$anon_folds->folds_match(<<'END_PERL', 'Test folding with %{...} nested in a regular sub');
+sub my_sub { # {{{
+    my %entries = %{ $ref };
 }; # }}}
 END_PERL
