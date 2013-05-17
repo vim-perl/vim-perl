@@ -10,7 +10,7 @@ my $folds = VimFolds->new(
     script_before => 'let perl_fold=1 | let perl_nofold_packages=1'
 );
 
-$folds->folds_match(<<'END_PERL');
+$folds->folds_match(<<'END_PERL', 'test folds on a regular sub');
 use strict;
 use warnings;
 
@@ -21,7 +21,7 @@ sub foo { # {{{
 } # }}}
 END_PERL
 
-$folds->folds_match(<<'END_PERL');
+$folds->folds_match(<<'END_PERL', 'test folds on a sub with the opening brace on the next line');
 use strict;
 use warnings;
 
@@ -33,7 +33,7 @@ sub foo
 } # }}}
 END_PERL
 
-$folds->folds_match(<<'END_PERL');
+$folds->folds_match(<<'END_PERL', 'test folds for a sub prototype');
 use strict;
 use warnings;
 
