@@ -408,7 +408,7 @@ if exists("perl_fold")
   endif
   if !exists("perl_nofold_subs")
     if exists("perl_fold_anonymous_subs") && perl_fold_anonymous_subs
-      syn region perlSubFold     start="\<sub\>[^\n;]*{" end="}" transparent fold keepend
+      syn region perlSubFold     start="\<sub\>[^\n;]*{" end="}" transparent fold keepend extend
       syn region perlSubFold start="^\z(\s*\)\<\(BEGIN\|END\|CHECK\|INIT\)\>.*[^};]$" end="^\z1}" transparent fold keepend
 
       syn region perlBraces start="{" end="}" transparent extend
