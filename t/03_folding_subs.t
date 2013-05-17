@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use lib 't';
 
-use Test::More tests => 1;
+use Test::More tests => 3;
 use VimFolds;
 
 my $folds = VimFolds->new(
@@ -13,6 +13,31 @@ my $folds = VimFolds->new(
 $folds->folds_match(<<'END_PERL');
 use strict;
 use warnings;
+
+sub foo { # {{{
+    my ( $self, @params ) = @_;
+
+    print "hello!\n";
+} # }}}
+END_PERL
+
+$folds->folds_match(<<'END_PERL');
+use strict;
+use warnings;
+
+sub foo
+{ # {{{
+    my ( $self, @params ) = @_;
+
+    print "hello!\n";
+} # }}}
+END_PERL
+
+$folds->folds_match(<<'END_PERL');
+use strict;
+use warnings;
+
+sub foo;
 
 sub foo { # {{{
     my ( $self, @params ) = @_;
