@@ -180,7 +180,7 @@ syn match  perlSpecialMatch	"\\[1-9]" contained extend
 syn match  perlSpecialMatch	"\\g\%(\d\+\|{\%(-\=\d\+\|\h\w*\)}\)" contained
 syn match  perlSpecialMatch	"\\k\%(<\h\w*>\|'\h\w*'\)" contained
 syn match  perlSpecialMatch	"{\d\+\%(,\%(\d\+\)\=\)\=}" contained
-syn match  perlSpecialMatch	"\[[]-]\=[^\[\]]*[]-]\=\]" contained
+syn match  perlSpecialMatch	"\[[]-]\=[^\[\]]*[]-]\=\]" contained extend
 syn match  perlSpecialMatch	"[+*()?.]" contained
 syn match  perlSpecialMatch	"(?[#:=!]" contained
 syn match  perlSpecialMatch	"(?[impsx]*\%(-[imsx]\+\)\=)" contained
