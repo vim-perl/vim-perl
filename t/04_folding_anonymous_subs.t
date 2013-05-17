@@ -16,7 +16,7 @@ my @quote_chars = (
     '<>',
 );
 
-plan tests => 12 + (@quote_chars * @quote_words);
+plan tests => 13 + (@quote_chars * @quote_words);
 
 my $no_anon_folds = VimFolds->new(
     language      => 'perl',
@@ -191,4 +191,18 @@ sub foo { # {{{
     print { $fh } "warning!\n";
     close $fh;
 } # }}}
+END_PERL
+
+$anon_folds->folds_match(<<'END_PERL', 'Test folding with an anonymous sub nested in a regular one');
+use strict;
+use warnings;
+use feature qw(say);
+
+sub my_sub { # {{{
+    say 'hi';
+
+    return sub { # {{{
+        say 'hello';
+    }; # }}}
+}; # }}}
 END_PERL
