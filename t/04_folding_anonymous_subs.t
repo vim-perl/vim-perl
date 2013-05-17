@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use lib 't';
 
-use Test::More tests => 9;
+use Test::More tests => 11;
 use VimFolds;
 
 my $no_anon_folds = VimFolds->new(
@@ -119,4 +119,30 @@ my $sub = sub ()
     say 'bar';
     say 'baz';
 }; # }}}
+END_PERL
+
+$anon_folds->folds_match(<<'END_PERL', 'test folds with print { $fh } ... (anonymous ON)');
+use strict;
+use warnings;
+
+sub foo { # {{{
+    my ( $self, @params ) = @_;
+
+    open my $fh, '> ', 'log.txt' or die $!;
+    print { $fh } "warning!\n";
+    close $fh;
+} # }}}
+END_PERL
+
+$no_anon_folds->folds_match(<<'END_PERL', 'test folds with print { $fh } ... (anonymous OFF)');
+use strict;
+use warnings;
+
+sub foo { # {{{
+    my ( $self, @params ) = @_;
+
+    open my $fh, '> ', 'log.txt' or die $!;
+    print { $fh } "warning!\n";
+    close $fh;
+} # }}}
 END_PERL
