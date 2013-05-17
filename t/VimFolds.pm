@@ -157,7 +157,7 @@ sub _find_expected_folds {
 }
 
 sub folds_match {
-    my ( $self, $code ) = @_;
+    my ( $self, $code, $name ) = @_;
 
     my $tempfile = File::Temp->new;
     print { $tempfile } $code;
@@ -171,7 +171,7 @@ sub folds_match {
     }
     local $Test::Builder::Level =  $Test::Builder::Level + 1;
 
-    unless(cmp_set(\@got_folds, \@expected_folds)) {
+    unless(cmp_set(\@got_folds, \@expected_folds, $name)) {
         diag('Got: ' . join('', explain(\@got_folds)));
         diag('Expected: ' . join('', explain(\@expected_folds)));
     }
