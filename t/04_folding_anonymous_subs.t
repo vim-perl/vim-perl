@@ -102,13 +102,16 @@ my $sub = sub () { # {{{
 }; # }}}
 END_PERL
 
+# I know this is not valid Perl, but VimFolds
+# will strip the comments.  Besides, I needed a
+# way to tell VimFolds where the folds begin/end.
 $anon_folds->folds_match(<<'END_PERL');
 my $sub = sub () { # {{{
-    my $perl = <<'END_PERL2';
+    my $perl = <<'END_PERL2'; # {{{
 sub {
     say 'hello'
 }
-END_PERL2
+END_PERL2 # }}}
 }; # }}}
 END_PERL
 
