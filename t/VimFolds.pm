@@ -12,6 +12,16 @@ use File::Temp;
 use Test::More;
 use Test::Deep;
 
+my $FOLD_RE = qr{
+    \s* [#] \s*
+    (?:
+        (?:[{][{][{])
+        |
+        (?:[}][}][}])
+    )
+    \s* $
+}xm;
+
 sub new {
     my ( $class, %params ) = @_;
 
@@ -130,28 +140,24 @@ END_VIM
 }
 
 sub _find_expected_folds {
-    my ( $self, $filename ) = @_;
+    my ( $self, $code ) = @_;
 
     my @folds;
     my @fold_stack;
 
-    my $fh;
-
-    open $fh, '<', $filename;
-    while(<$fh>) {
-        chomp;
-
-        if(/\Q{{{\E/) {
-            push @fold_stack, $.;
-        } elsif(/\Q}}}\E/) {
+    my $line_no = 1;
+    foreach my $line (split /\n/, $code) {
+        if($line =~ /\Q{{{\E/) {
+            push @fold_stack, $line_no;
+        } elsif($line =~ /\Q}}}\E/) {
             my $start = pop @fold_stack;
             push @folds, {
                 start => $start,
-                end   => $.,
+                end   => $line_no,
             };
         }
+        $line_no++;
     }
-    close $fh;
 
     return @folds;
 }
@@ -159,11 +165,13 @@ sub _find_expected_folds {
 sub folds_match {
     my ( $self, $code, $name ) = @_;
 
-    my $tempfile = File::Temp->new;
-    print { $tempfile } $code;
+    my $tempfile      = File::Temp->new;
+    my $foldless_code = $code;
+    $foldless_code    =~ s/$FOLD_RE//g;
+    print { $tempfile } $foldless_code;
     close $tempfile;
 
-    my @expected_folds = $self->_find_expected_folds($tempfile->filename);
+    my @expected_folds = $self->_find_expected_folds($code);
     my @got_folds      = $self->_get_folds($tempfile->filename);
 
     foreach my $fold (@got_folds) {
