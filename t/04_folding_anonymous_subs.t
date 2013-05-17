@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use lib 't';
 
-use Test::More tests => 11;
+use Test::More tests => 19;
 use VimFolds;
 
 my $no_anon_folds = VimFolds->new(
@@ -98,6 +98,62 @@ END_PERL
 $anon_folds->folds_match(<<'END_PERL');
 my $sub = sub () { # {{{
     my $string = q/foo } bar/;
+    say 'more stuff';
+}; # }}}
+END_PERL
+
+$anon_folds->folds_match(<<'END_PERL');
+my $sub = sub { # {{{
+    my $string = 'foo } bar';
+    say 'more stuff';
+}; # }}}
+END_PERL
+
+$anon_folds->folds_match(<<'END_PERL');
+my $sub = sub { # {{{
+    my $string = "foo } bar";
+    say 'more stuff';
+}; # }}}
+END_PERL
+
+$anon_folds->folds_match(<<'END_PERL');
+my $sub = sub { # {{{
+    my $string = q.foo } bar.;
+    say 'more stuff';
+}; # }}}
+END_PERL
+
+$anon_folds->folds_match(<<'END_PERL');
+my $sub = sub { # {{{
+    my $string = q#foo } bar#;
+    say 'more stuff';
+}; # }}}
+END_PERL
+
+$anon_folds->folds_match(<<'END_PERL');
+my $sub = sub { # {{{
+    my $string = q(foo } bar);
+    say 'more stuff';
+}; # }}}
+END_PERL
+
+$anon_folds->folds_match(<<'END_PERL');
+my $sub = sub { # {{{
+    my $string = q[foo } bar];
+    say 'more stuff';
+}; # }}}
+END_PERL
+
+$anon_folds->folds_match(<<'END_PERL');
+my $sub = sub { # {{{
+    my $string = q{foo \} bar};
+    say 'more stuff';
+}; # }}}
+END_PERL
+
+$anon_folds->folds_match(<<'END_PERL');
+my $sub = sub { # {{{
+    my $string = q<foo } bar>;
     say 'more stuff';
 }; # }}}
 END_PERL
