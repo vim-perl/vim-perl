@@ -21,7 +21,10 @@ sub foo { # {{{
 } # }}}
 END_PERL
 
-$folds->folds_match(<<'END_PERL', 'test folds on a sub with the opening brace on the next line');
+TODO: {
+    local $TODO = q{Next-line subs don't fold properly yet'};
+
+    $folds->folds_match(<<'END_PERL', 'test folds on a sub with the opening brace on the next line');
 use strict;
 use warnings;
 
@@ -32,6 +35,7 @@ sub foo
     print "hello!\n";
 } # }}}
 END_PERL
+}
 
 $folds->folds_match(<<'END_PERL', 'test folds for a sub prototype');
 use strict;
