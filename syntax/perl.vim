@@ -72,7 +72,10 @@ syn match perlConditional		"\<\%(if\|elsif\|unless\|given\|when\|default\)\>"
 syn match perlConditional		"\<else\%(\%(\_s\*if\>\)\|\>\)" contains=perlElseIfError skipwhite skipnl skipempty
 syn match perlRepeat			"\<\%(while\|for\%(each\)\=\|do\|until\|continue\)\>"
 syn match perlOperator			"\<\%(defined\|undef\|eq\|ne\|[gl][et]\|cmp\|not\|and\|or\|xor\|not\|bless\|ref\|do\)\>"
-syn match perlControl			"\<\%(BEGIN\|CHECK\|INIT\|END\|UNITCHECK\)\>"
+" for some reason, adding this as the nextgroup for perlControl fixes BEGIN
+" folding issues...
+syn match perlFakeGroup 		"" contained
+syn match perlControl			"\<\%(BEGIN\|CHECK\|INIT\|END\|UNITCHECK\)\>\_s*" nextgroup=perlFakeGroup
 
 syn match perlStatementStorage		"\<\%(my\|our\|local\|state\)\>"
 syn match perlStatementControl		"\<\%(return\|last\|next\|redo\|goto\|break\)\>"
@@ -409,7 +412,7 @@ if exists("perl_fold")
   if !exists("perl_nofold_subs")
     if exists("perl_fold_anonymous_subs") && perl_fold_anonymous_subs
       syn region perlSubFold     start="\<sub\>[^\n;]*{" end="}" transparent fold keepend extend
-      syn region perlSubFold start="^\z(\s*\)\<\(BEGIN\|END\|CHECK\|INIT\)\>.*[^};]$" end="^\z1}" transparent fold keepend
+      syn region perlSubFold     start="\<\%(BEGIN\|END\|CHECK\|INIT\)\>\s*{" end="}" transparent fold keepend
 
       syn region perlBraces start="{" end="}" transparent extend
     else
