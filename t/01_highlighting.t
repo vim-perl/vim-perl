@@ -15,7 +15,7 @@ find(sub {
     $test_file_count++;
 }, 't_source/perl', 't_source/perl6');
 
-plan tests => $test_file_count * 2;
+plan tests => $test_file_count * 3;
 
 # hack to work around a silly limitation in Text::VimColor,
 # will remove it when Text::VimColor has been patched
@@ -65,6 +65,29 @@ for my $lang (qw(perl perl6)) {
             '+set runtimepath=.',       # don't consider system runtime files
             '+let perl_include_pod=1',
             '+let perl_fold=1',
+            "+source $ftplugin_file",
+            "+source $syntax_file",
+            "+source $color_file",      # all syntax classes should be defined
+        ],
+    );
+
+    find({
+        wanted   => \&test_source_file,
+        no_chdir => 1,
+    }, catdir('t_source', $lang));
+
+    # XXX this isn't really needed for perl6...
+    $hilite = Text::VimColor->new(
+        html_full_page         => 1,
+        html_inline_stylesheet => 0,
+        html_stylesheet_url    => $css_url,
+        vim_options            => [
+            qw(-RXZ -i NONE -u NONE -U NONE -N -n), # for performance
+            '+set nomodeline',          # for performance
+            '+set runtimepath=.',       # don't consider system runtime files
+            '+let perl_include_pod=1',
+            '+let perl_fold=1',
+            '+let perl_fold_anonymous_subs=1',
             "+source $ftplugin_file",
             "+source $syntax_file",
             "+source $color_file",      # all syntax classes should be defined
