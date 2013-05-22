@@ -227,3 +227,12 @@ BEGIN { # {{{
 
 say 'hello';
 END_PERL
+
+$anon_folds->folds_match(<<'END_PERL', 'Test sub folding with attributes');
+sub startup :Test(startup) { # {{{
+    my ( $self ) = @_;
+
+} # }}}
+
+say 'hi';
+END_PERL
