@@ -31,6 +31,7 @@ Vyacheslav Matyukhin)
 
 POD formatting highlights have been enabled inside POD blocks.
 
+Anonymous subroutines are now foldable.
 
 [FIXES]
 Minor tweak to p6RxCharClass.  Thanks, Arne Skjærholt.
