@@ -1,6 +1,6 @@
 " Perl highlighting for Moose keywords
 " Maintainer:   vim-perl <vim-perl@groups.google.com>
-" Installation: Put into after/perl/moose.vim
+" Installation: Put into after/syntax/perl/moose.vim
 
 " XXX include guard
 syntax match perlFunction      '\<\%(before\|after\|around\|override\|augment\)\>'
