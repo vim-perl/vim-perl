@@ -16,7 +16,7 @@ my @quote_chars = (
     '<>',
 );
 
-plan tests => 17 + (@quote_chars * @quote_words);
+plan tests => 18 + (@quote_chars * @quote_words);
 
 my $no_anon_folds = VimFolds->new(
     language      => 'perl',
@@ -232,6 +232,20 @@ $anon_folds->folds_match(<<'END_PERL', 'Test sub folding with attributes');
 sub startup :Test(startup) { # {{{
     my ( $self ) = @_;
 
+} # }}}
+
+say 'hi';
+END_PERL
+
+$anon_folds->folds_match(<<'END_PERL', '');
+sub _get_perls { # {{{
+    my @perls = split /\n/, qx(perlbrew list);
+    my ( $current_perl ) = grep { /^\*\s*/ } @perls;
+    ( $current_perl )    = $current_perl =~ /^\*\s*(\S+)/;
+
+    $current_perl = _extract_perl($current_perl);
+
+    return ( $current_perl, map { /^\*?\s*(?<name>\S+)/; $+{'name'} } @perls );
 } # }}}
 
 say 'hi';
