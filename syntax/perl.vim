@@ -27,7 +27,7 @@
 " let perl_sync_dist = 100
 " unlet perl_fold
 " unlet perl_fold_blocks
-" let perl_nofold_packages = 1
+" unlet perl_nofold_packages
 " let perl_nofold_subs = 1
 " unlet perl_fold_anonymous_subs
 
