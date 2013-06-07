@@ -101,7 +101,13 @@ syn keyword perlStatementInclude        import
 syn match perlStatementProc		"\<\%(alarm\|exec\|fork\|get\%(pgrp\|ppid\|priority\)\|kill\|pipe\|set\%(pgrp\|priority\)\|sleep\|system\|times\|wait\%(pid\)\=\)\>"
 syn keyword perlStatementSocket         accept bind connect getpeername getsockname getsockopt listen recv send setsockopt shutdown socket socketpair
 syn match perlStatementIPC		"\<\%(msg\%(ctl\|get\|rcv\|snd\)\|sem\%(ctl\|get\|op\)\|shm\%(ctl\|get\|read\|write\)\)\>"
-syn match perlStatementNetwork		"\<\%(\%(end\|[gs]et\)\%(host\|net\|proto\|serv\)ent\|get\%(\%(host\|net\)by\%(addr\|name\)\|protoby\%(name\|number\)\|servby\%(name\|port\)\)\)\>"
+
+syn keyword perlStatementNetwork        gethostent getnetent getprotoent getservent
+syn keyword perlStatementNetwork        sethostent setnetent setprotoent setservent
+syn keyword perlStatementNetwork        endhostent endnetent endprotoent endservent
+syn keyword perlStatementNetwork        gethostbyaddr gethostbyname getnetbyaddr getnetbyname
+syn keyword perlStatementNetwork        getprotobyname getprotobynumber getservbyname getservbyport
+
 syn keyword perlStatementPword          getpwuid getpwnam getgrgid getgrnam getlogin
 syn keyword perlStatementPword          getpwent setpwent endpwent
 syn keyword perlStatementPword          getgrent setgrent endgrent
