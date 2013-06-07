@@ -95,10 +95,12 @@ syn keyword perlStatementVector         vec
 syn keyword perlStatementFiles          chdir chmod chown chroot glob link mkdir readlink rename rmdir symlink umask unlink utime
 syn match perlStatementFiles		"-[rwxoRWXOezsfdlpSbctugkTBMAC]\>"
 syn keyword perlStatementFlow           caller die dump eval exit wantarray
-syn keyword perlStatementInclude        require
+
+syn keyword perlStatementInclude        require import
 syn match perlStatementInclude		"\<\%(use\|no\)\s\+\%(\%(attributes\|attrs\|autouse\|parent\|base\|big\%(int\|num\|rat\)\|blib\|bytes\|charnames\|constant\|diagnostics\|encoding\%(::warnings\)\=\|feature\|fields\|filetest\|if\|integer\|less\|lib\|locale\|mro\|open\|ops\|overload\|re\|sigtrap\|sort\|strict\|subs\|threads\%(::shared\)\=\|utf8\|vars\|version\|vmsish\|warnings\%(::register\)\=\)\>\)\="
-syn keyword perlStatementInclude        import
-syn match perlStatementProc		"\<\%(alarm\|exec\|fork\|get\%(pgrp\|ppid\|priority\)\|kill\|pipe\|set\%(pgrp\|priority\)\|sleep\|system\|times\|wait\%(pid\)\=\)\>"
+
+syn keyword perlStatementProc           alarm exec fork getpgrp getppid getpriority kill pipe setpgrp setpriority sleep system times wait waitpid
+
 syn keyword perlStatementSocket         accept bind connect getpeername getsockname getsockopt listen recv send setsockopt shutdown socket socketpair
 
 syn keyword perlStatementIPC            msgctl msgget msgrcv msgsnd semctl semget semop shmctl shmget shmread shmwrite
