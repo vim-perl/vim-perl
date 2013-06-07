@@ -102,7 +102,9 @@ syn match perlStatementProc		"\<\%(alarm\|exec\|fork\|get\%(pgrp\|ppid\|priority
 syn keyword perlStatementSocket         accept bind connect getpeername getsockname getsockopt listen recv send setsockopt shutdown socket socketpair
 syn match perlStatementIPC		"\<\%(msg\%(ctl\|get\|rcv\|snd\)\|sem\%(ctl\|get\|op\)\|shm\%(ctl\|get\|read\|write\)\)\>"
 syn match perlStatementNetwork		"\<\%(\%(end\|[gs]et\)\%(host\|net\|proto\|serv\)ent\|get\%(\%(host\|net\)by\%(addr\|name\)\|protoby\%(name\|number\)\|servby\%(name\|port\)\)\)\>"
-syn match perlStatementPword		"\<\%(get\%(pw\%(uid\|nam\)\|gr\%(gid\|nam\)\|login\)\)\|\%(end\|[gs]et\)\%(pw\|gr\)ent\>"
+syn keyword perlStatementPword          getpwuid getpwnam getgrgid getgrnam getlogin
+syn keyword perlStatementPword          getpwent setpwent endpwent
+syn keyword perlStatementPword          getgrent setgrent endgrent
 syn keyword perlStatementTime           gmtime localtime time
 
 syn keyword perlStatementMisc           warn format formline reset scalar prototype lock tie tied untie
