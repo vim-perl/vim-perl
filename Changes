@@ -48,6 +48,10 @@ Rafael Kitover.
 
 Braces within a heredoc no longer confuse the highlighting.
 
+Keyword detection for "accept" was looking for "acept".
+
+Added higlighting for "import" and "format".
+
 
 [TESTING]
 Added a test harness in t/ (try "make test"). Moved example code
