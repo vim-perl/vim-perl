@@ -100,7 +100,8 @@ syn match perlStatementInclude		"\<\%(use\|no\)\s\+\%(\%(attributes\|attrs\|auto
 syn keyword perlStatementInclude        import
 syn match perlStatementProc		"\<\%(alarm\|exec\|fork\|get\%(pgrp\|ppid\|priority\)\|kill\|pipe\|set\%(pgrp\|priority\)\|sleep\|system\|times\|wait\%(pid\)\=\)\>"
 syn keyword perlStatementSocket         accept bind connect getpeername getsockname getsockopt listen recv send setsockopt shutdown socket socketpair
-syn match perlStatementIPC		"\<\%(msg\%(ctl\|get\|rcv\|snd\)\|sem\%(ctl\|get\|op\)\|shm\%(ctl\|get\|read\|write\)\)\>"
+
+syn keyword perlStatementIPC            msgctl msgget msgrcv msgsnd semctl semget semop shmctl shmget shmread shmwrite
 
 syn keyword perlStatementNetwork        gethostent getnetent getprotoent getservent
 syn keyword perlStatementNetwork        sethostent setnetent setprotoent setservent
