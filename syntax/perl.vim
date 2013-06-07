@@ -75,14 +75,14 @@ syn region  perlGenericBlock	matchgroup=perlGenericBlock start="{" end="}" conta
 syn match perlConditional		"\<\%(if\|elsif\|unless\|given\|when\|default\)\>"
 syn match perlConditional		"\<else\%(\%(\_s\*if\>\)\|\>\)" contains=perlElseIfError skipwhite skipnl skipempty
 syn match perlRepeat			"\<\%(while\|for\%(each\)\=\|do\|until\|continue\)\>"
-syn match perlOperator			"\<\%(defined\|undef\|eq\|ne\|[gl][et]\|cmp\|not\|and\|or\|xor\|not\|bless\|ref\|do\)\>"
+syn keyword perlOperator                defined undef eq ne ge le gt lt cmp not and or xor not bless ref do
 " for some reason, adding this as the nextgroup for perlControl fixes BEGIN
 " folding issues...
 syn match perlFakeGroup 		"" contained
 syn match perlControl			"\<\%(BEGIN\|CHECK\|INIT\|END\|UNITCHECK\)\>\_s*" nextgroup=perlFakeGroup
 
 syn match perlStatementStorage		"\<\%(my\|our\|local\|state\)\>"
-syn match perlStatementControl		"\<\%(return\|last\|next\|redo\|goto\|break\)\>"
+syn keyword perlStatementControl        return last next redo goto break
 syn keyword perlStatementScalar         chop chomp chr crypt index rindex lc lcfirst length ord pack sprintf substr uc ucfirst
 syn match perlStatementRegexp		"\<\%(pos\|quotemeta\|split\|study\)\>"
 syn keyword perlStatementNumeric        abs atan2 cos exp hex int log oct rand sin sqrt srand
@@ -92,7 +92,7 @@ syn keyword perlStatementIOfunc         syscall dbmopen dbmclose
 syn match perlStatementFiledesc		"\<\%(binmode\|close\%(dir\)\=\|eof\|fileno\|getc\|lstat\|printf\=\|read\%(dir\|line\|pipe\)\|rewinddir\|say\|select\|stat\|tell\%(dir\)\=\|write\)\>" nextgroup=perlFiledescStatementNocomma skipwhite
 syn match perlStatementFiledesc		"\<\%(fcntl\|flock\|ioctl\|open\%(dir\)\=\|read\|seek\%(dir\)\=\|sys\%(open\|read\|seek\|write\)\|truncate\)\>" nextgroup=perlFiledescStatementComma skipwhite
 syn keyword perlStatementVector         vec
-syn match perlStatementFiles		"\<\%(ch\%(dir\|mod\|own\|root\)\|glob\|link\|mkdir\|readlink\|rename\|rmdir\|symlink\|umask\|unlink\|utime\)\>"
+syn keyword perlStatementFiles          chdir chmod chown chroot glob link mkdir readlink rename rmdir symlink umask unlink utime
 syn match perlStatementFiles		"-[rwxoRWXOezsfdlpSbctugkTBMAC]\>"
 syn keyword perlStatementFlow           caller die dump eval exit wantarray
 syn keyword perlStatementInclude        require
@@ -104,7 +104,7 @@ syn match perlStatementNetwork		"\<\%(\%(end\|[gs]et\)\%(host\|net\|proto\|serv\
 syn match perlStatementPword		"\<\%(get\%(pw\%(uid\|nam\)\|gr\%(gid\|nam\)\|login\)\)\|\%(end\|[gs]et\)\%(pw\|gr\)ent\>"
 syn keyword perlStatementTime           gmtime localtime time
 
-syn match perlStatementMisc		"\<\%(warn\|formline\|reset\|scalar\|prototype\|lock\|tied\=\|untie\)\>"
+syn keyword perlStatementMisc           warn formline reset scalar prototype lock tie tied untie
 
 syn keyword perlTodo			TODO TODO: TBD TBD: FIXME FIXME: XXX XXX: NOTE NOTE: contained
 
