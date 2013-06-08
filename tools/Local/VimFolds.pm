@@ -1,4 +1,4 @@
-package VimFolds;
+package Local::VimFolds;
 
 use strict;
 use warnings;
@@ -24,6 +24,12 @@ my $FOLD_RE = qr{
 
 sub new {
     my ( $class, %params ) = @_;
+
+    if(my $options = $params{'options'}) {
+        $params{'script_before'} = join(' | ', map {
+            "let $_=" . $options->{$_}
+        } keys %$options);
+    }
 
     return bless { %params }, $class;
 }
