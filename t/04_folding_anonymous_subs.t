@@ -1,9 +1,9 @@
 use strict;
 use warnings;
-use lib 't';
+use lib 'tools';
 
 use Test::More;
-use VimFolds;
+use Local::VimFolds;
 
 my @quote_words = qw(q qq qx qw qr);
 my @quote_chars = (
@@ -18,14 +18,21 @@ my @quote_chars = (
 
 plan tests => 18 + (@quote_chars * @quote_words);
 
-my $no_anon_folds = VimFolds->new(
-    language      => 'perl',
-    script_before => 'let perl_fold=1 | let perl_nofold_packages=1'
+my $no_anon_folds = Local::VimFolds->new(
+    language => 'perl',
+    options  => {
+        perl_fold            => 1,
+        perl_nofold_packages => 1,
+    },
 );
 
-my $anon_folds = VimFolds->new(
-    language      => 'perl',
-    script_before => 'let perl_fold=1 | let perl_nofold_packages=1 | let perl_fold_anonymous_subs=1'
+my $anon_folds = Local::VimFolds->new(
+    language => 'perl',
+    options  => {
+        perl_fold                => 1,
+        perl_nofold_packages     => 1,
+        perl_fold_anonymous_subs => 1,
+    },
 );
 
 $no_anon_folds->folds_match(<<'END_PERL');

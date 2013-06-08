@@ -1,13 +1,16 @@
 use strict;
 use warnings;
-use lib 't';
+use lib 'tools';
 
 use Test::More tests => 3;
-use VimFolds;
+use Local::VimFolds;
 
-my $folds = VimFolds->new(
-    language      => 'perl',
-    script_before => 'let perl_fold=1 | let perl_nofold_packages=1'
+my $folds = Local::VimFolds->new(
+    language => 'perl',
+    options  => {
+        perl_fold            => 1,
+        perl_nofold_packages => 1,
+    },
 );
 
 $folds->folds_match(<<'END_PERL', 'test folds on a regular sub');
