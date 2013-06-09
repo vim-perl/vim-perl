@@ -45,7 +45,8 @@ my $fold = Local::VimFolds->new(
     language => 'perl',
 );
 
-my $revision = read_file('corpus_html/revision', chomp => 1);
+my $revision = read_file('corpus_html/revision');
+chomp $revision;
 my $pretty_revision = qx(git log -1 --pretty=format:%d $revision);
 chomp $pretty_revision;
 $pretty_revision =~ s/^\s+|\s+$//g;
