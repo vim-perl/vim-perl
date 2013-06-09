@@ -33,6 +33,18 @@ Vim itself only considers double quotes in this scenario; the matchit plugin, ho
 can deal with this scenario and vim-perl's files are set up to work with it should you
 choose to use it.
 
+## Can you add highlighting for Moose, Try::Tiny, Test::More, etc, keywords?
+
+We have syntax "extensions" under the contrib directory; you can kind custom highlighting
+for these sorts of things there.
+
+# Contributing
+
+If you would like to contribute to vim-perl (which would be greatly appreciated!), you may find
+the `build-corpus.pl` and `verify-corpus.pl` scripts of use.  What I do is drop the sources
+for `Moose`, `Data::Printer`, and `Regexp::Debugger` in the corpus directory and use the scripts
+to make sure my changes don't cause regressions in highlighting and folding.
+
 xoxo,
 eiro,
 Andy (andy@petdance.com)
