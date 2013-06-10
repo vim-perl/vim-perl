@@ -244,7 +244,7 @@ sub startup :Test(startup) { # {{{
 say 'hi';
 END_PERL
 
-$anon_folds->folds_match(<<'END_PERL', '');
+$anon_folds->folds_match(<<'END_PERL', 'Test sub folding with strange map block');
 sub _get_perls { # {{{
     my @perls = split /\n/, qx(perlbrew list);
     my ( $current_perl ) = grep { /^\*\s*/ } @perls;
