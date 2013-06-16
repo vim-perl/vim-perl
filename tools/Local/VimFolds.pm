@@ -31,6 +31,12 @@ sub new {
         } keys %$options);
     }
 
+    if(my $tty = $params{'debug_tty'}) {
+        my $fh;
+        open $fh, '+<', $tty;
+        $params{'debug_tty'} = $fh;
+    }
+
     return bless { %params }, $class;
 }
 
@@ -103,15 +109,23 @@ END_VIM
         $pty->set_raw;
         sleep 1; # wait for folds to be set up
         print { $pty } ":call DumpFoldsAndQuit()\n";
-        while(<$pty>) {
-            # just read until the child is done
+        my $tty = $self->{'debug_tty'};
+        if($tty) {
+            my $char = '';
+            while(sysread($pty, $char, 1)) {
+                syswrite $tty, $char;
+            }
+        } else {
+            while(<$pty>) {
+                # just read until the child is done
+            }
         }
         close $pty;
         waitpid $pid, 0;
     } else {
         $pty->make_slave_controlling_terminal;
         my $slave = $pty->slave;
-        $slave->clone_winsize_from(\*STDIN);
+        $slave->clone_winsize_from($self->{'debug_tty'} || \*STDIN);
         $slave->set_raw;
 
         open STDIN,  '<&', $slave->fileno;
@@ -120,7 +134,7 @@ END_VIM
 
         close $slave;
 
-        exec 'vim', '-u', $script_file->filename, $filename;
+        exec 'vim', '-n', '-u', $script_file->filename, $filename;
     }
 
     my @folds;
