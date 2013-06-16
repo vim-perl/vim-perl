@@ -98,8 +98,6 @@ END_VIM
     my $pty = IO::Pty->new;
     my $pid = fork;
 
-    croak "Unable to fork" unless defined $pid;
-
     if($pid) {
         $pty->close_slave;
         $pty->set_raw;
