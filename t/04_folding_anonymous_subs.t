@@ -16,7 +16,7 @@ my @quote_chars = (
     '<>',
 );
 
-plan tests => 18 + (@quote_chars * @quote_words);
+plan tests => 19 + (@quote_chars * @quote_words);
 
 my $no_anon_folds = Local::VimFolds->new(
     language => 'perl',
