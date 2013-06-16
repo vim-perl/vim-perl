@@ -2,7 +2,7 @@ package Local::VimFolds;
 
 use strict;
 use warnings;
-use autodie;
+use autodie qw(open close fork waitpid exec);
 use parent 'Exporter';
 
 use Carp qw(croak);
