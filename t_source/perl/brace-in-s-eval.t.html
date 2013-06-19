@@ -1,0 +1,24 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synPreProc">#!/usr/bin/env perl</span>
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+<span class="synStatement">use feature</span> <span class="synString">qw(say)</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">dump_reasonably_readable_octets </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$input</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synIdentifier">$input</span> =~ <span class="synStatement">s/</span><span class="synSpecial">([^a-zA-Z0-9])</span><span class="synStatement">/</span><span class="synString">'\x{' . sprintf('%x', ord(</span><span class="synIdentifier">$1</span><span class="synString">)) . '}'</span><span class="synStatement">/ge</span>;
+    diag(<span class="synIdentifier">$input</span>);
+}
+</pre>
+
+ </body>
+</html>
