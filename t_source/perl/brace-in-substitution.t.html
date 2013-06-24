@@ -1,0 +1,29 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synPreProc">#!/usr/bin/env perl</span>
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+<span class="synStatement">use feature</span> <span class="synString">qw(say)</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">test_sub </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$dbh</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$sql_template</span> = <span class="synString">&lt;&lt;'END_SQL';</span>
+<span class="synString">SELECT {{COLUMNS}} FROM MyTable</span>
+<span class="synString">END_SQL</span>
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$sql</span> = <span class="synIdentifier">$sql_template</span> =~ <span class="synStatement">s/</span><span class="synSpecial">\Q</span><span class="synString">{{COLUMNS}}</span><span class="synSpecial">\E</span><span class="synStatement">/</span><span class="synString">username</span><span class="synStatement">/gr</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$dbh-&gt;selectall_arrayref</span>(<span class="synIdentifier">$sql</span>);
+}
+</pre>
+
+ </body>
+</html>
