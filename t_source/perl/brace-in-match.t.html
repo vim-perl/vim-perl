@@ -1,0 +1,21 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">extract_date </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$table_name</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$year</span>, <span class="synIdentifier">$month</span>, <span class="synIdentifier">$day</span> ) = <span class="synIdentifier">$table_name</span> =~ <span class="synStatement">/</span><span class="synSpecial">(\d{4})(\d{2})(\d{2})</span><span class="synString">$</span><span class="synStatement">/</span>;
+    <span class="synStatement">return</span> <span class="synStatement">join</span>(<span class="synString">'-'</span>, <span class="synIdentifier">$year</span>, <span class="synIdentifier">$month</span>, <span class="synIdentifier">$day</span>);
+}
+</pre>
+
+ </body>
+</html>
