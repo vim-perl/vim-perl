@@ -35,7 +35,7 @@ choose to use it.
 
 ## Can you add highlighting for Moose, Try::Tiny, Test::More, etc, keywords?
 
-We have syntax "extensions" under the contrib directory; you can kind custom highlighting
+We have syntax "extensions" under the contrib directory; you can find custom highlighting
 for these sorts of things there.
 
 # Contributing
