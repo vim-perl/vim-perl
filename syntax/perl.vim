@@ -67,7 +67,6 @@ endif
 
 
 syn cluster perlTop		contains=TOP
-syn region  perlGenericBlock	matchgroup=perlGenericBlock start="{" end="}" contained transparent
 
 
 " All keywords
