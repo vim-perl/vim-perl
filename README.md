@@ -45,6 +45,6 @@ the `build-corpus.pl` and `verify-corpus.pl` scripts of use.  What I do is drop 
 for `Moose`, `Data::Printer`, and `Regexp::Debugger` in the corpus directory and use the scripts
 to make sure my changes don't cause regressions in highlighting and folding.
 
-xoxo,
-eiro,
+xoxo,<br />
+eiro,<br />
 Andy (andy@petdance.com)
