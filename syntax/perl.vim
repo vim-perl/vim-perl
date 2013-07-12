@@ -223,7 +223,7 @@ syn region  perlShellCommand	matchgroup=perlMatchStartEnd start="`" end="`" cont
 syn match  perlNumber	"\<\%(0\%(x\x[[:xdigit:]_]*\|b[01][01_]*\|\o[0-7_]*\|\)\|[1-9][[:digit:]_]*\)\>"
 syn match  perlFloat	"\<\d[[:digit:]_]*[eE][\-+]\=\d\+"
 syn match  perlFloat	"\<\d[[:digit:]_]*\.[[:digit:]_]*\%([eE][\-+]\=\d\+\)\="
-syn match  perlFloat	"\.[[:digit:]_]\+\%([eE][\-+]\=\d\+\)\="
+syn match  perlFloat    "\.[[:digit:]][[:digit:]_]*\%([eE][\-+]\=\d\+\)\="
 
 syn match  perlString	"\<\%(v\d\+\%(\.\d\+\)*\|\d\+\%(\.\d\+\)\{2,}\)\>" contains=perlVStringV
 syn match  perlVStringV	"\<v" contained
