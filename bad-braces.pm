@@ -8,3 +8,7 @@ my $hashref = { map { $_->{class}->id } @{$specs_flattened->{$set}} ) };
 sub foo {
     push( @ids, map { $_->{class}->id } @{$specs_flattened->{$set}} );
 }
+
+for my $i ( 1..10 ) {
+    push( @ids, map { $_->{class}->id } @{$specs_flattened->{$set}} );
+}
