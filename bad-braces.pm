@@ -17,3 +17,14 @@ sub foo {
     push( @ids, map { $_->{class}->id } @{$specs_flattened->{$set}} );
 }
 
+
+if ( foo() ) {
+    push( @ids, map { $_->{class}->id } @{$specs_flattened->{$set}} );
+}
+elsif ( bar() ) {
+    push( @ids, map { $_->{class}->id } @{$specs_flattened->{$set}} );
+}
+else {
+    push( @ids, map { $_->{class}->id } @{$specs_flattened->{$set}} );
+}
+
