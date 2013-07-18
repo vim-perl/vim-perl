@@ -8,5 +8,6 @@
 runtime! syntax/sql.vim
 unlet b:current_syntax
 syntax include @SQL syntax/sql.vim
-" XXX highlight $table in "END_SQL"?
-syntax region perlHereDocSQL matchgroup=perlStringStartEnd start='<<\s*\(['"]\=\)\z(\%(END_\)\=SQL\)\1' end='^\z1$' contains=@SQL
+syntax region perlHereDocSQL matchgroup=perlStringStartEnd start=+<<\s*'\z(\%(END_\)\=SQL\)'+ end='^\z1$' contains=@SQL
+syntax region perlHereDocSQL matchgroup=perlStringStartEnd start='<<\s*"\z(\%(END_\)\=SQL\)"' end='^\z1$' contains=@perlInterpDQ,@SQL
+syntax region perlHereDocSQL matchgroup=perlStringStartEnd start='<<\s*\z(\%(END_\)\=SQL\)'   end='^\z1$' contains=@perlInterpDQ,@SQL
