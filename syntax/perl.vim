@@ -67,7 +67,6 @@ endif
 
 
 syn cluster perlTop		contains=TOP
-syn region  perlGenericBlock	matchgroup=perlGenericBlock start="{" end="}" contained transparent
 
 
 " All keywords
@@ -108,7 +107,7 @@ syn match perlStatementMisc		"\<\%(warn\|format\|formline\|reset\|scalar\|protot
 
 syn keyword perlTodo			TODO TODO: TBD TBD: FIXME FIXME: XXX XXX: NOTE NOTE: contained
 
-syn region perlStatementIndirObjWrap   matchgroup=perlStatementIndirObj start="\<\%(map\|grep\|sort\|printf\=\|say\|system\|exec\)\>\s*{" end="}" contains=@perlTop,perlGenericBlock extend
+syn region perlStatementIndirObjWrap   matchgroup=perlStatementIndirObj start="\<\%(map\|grep\|sort\|printf\=\|say\|system\|exec\)\>\s*{" end="}" contains=@perlTop,perlBraces extend
 
 syn match perlLabel      "^\s*\h\w*\s*::\@!\%(\<v\d\+\s*:\)\@<!"
 
