@@ -258,8 +258,12 @@ sub _get_perls { # {{{
 say 'hi';
 END_PERL
 
-$anon_folds->folds_match(<<'END_PERL', 'Test sub folding for subroutine with ; in prototype')
+TODO: {
+    local $TODO = 'Not yet implemented';
+
+    $anon_folds->folds_match(<<'END_PERL', 'Test sub folding for subroutine with ; in prototype')
 sub p (\[@$%&];%) { # {{{
     return _print_and_return( $_[0], _data_printer(!!defined wantarray, @_) );
 } # }}}
 END_PERL
+}
