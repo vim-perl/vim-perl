@@ -16,7 +16,7 @@ my @quote_chars = (
     '<>',
 );
 
-plan tests => 19 + (@quote_chars * @quote_words);
+plan tests => 20 + (@quote_chars * @quote_words);
 
 my $no_anon_folds = Local::VimFolds->new(
     language => 'perl',
@@ -267,3 +267,11 @@ sub p (\[@$%&];%) { # {{{
 } # }}}
 END_PERL
 }
+
+$anon_folds->folds_match(<<'END_PERL', 'Test ${var} in `...`')
+sub foo { # {{{
+    my ( $var ) = @_;
+    my $output = `echo ${var}`;
+    return $output;
+} # }}}
+END_PERL
