@@ -19,11 +19,7 @@ install: dirs
 	cp tools/efm_perl.pl $(TOOLS)/
 
 tarball:
-	tar czvf vim-perl.tar.gz \
-		ftplugin/*.vim \
-		indent/*.vim \
-		syntax/*.vim \
-		tools/efm_perl.pl \
+	perl tools/make-tarball.pl
 
 test:
 	prove -rv t
