@@ -68,6 +68,8 @@ if version < 600
 elseif exists("b:current_syntax")
     finish
 endif
+let s:keepcpo= &cpo
+set cpo&vim
 
 " identifiers
 syn match p6Normal display "\K\%(\k\|[-']\K\@=\)*"
@@ -2246,5 +2248,8 @@ syn sync fromstart
 setlocal foldmethod=syntax
 
 let b:current_syntax = "perl6"
+
+let &cpo = s:keepcpo
+unlet s:keepcpo
 
 " vim:ts=8:sts=4:sw=4:expandtab:ft=vim

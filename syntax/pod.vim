@@ -27,6 +27,9 @@ elseif exists("b:current_syntax")
   finish
 endif
 
+let s:cpo_save = &cpo
+set cpo&vim
+
 " POD commands
 syn match podCommand    "^=encoding"  nextgroup=podCmdText contains=@NoSpell
 syn match podCommand    "^=head[1234]"  nextgroup=podCmdText contains=@NoSpell
@@ -179,5 +182,8 @@ if exists("perl_pod_formatting")
 endif
 
 let b:current_syntax = "pod"
+
+let &cpo = s:cpo_save
+unlet s:cpo_save
 
 " vim: ts=8

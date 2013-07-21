@@ -85,3 +85,4 @@ let b:match_skip = 's:comment\|string\|perlQQ\|perlShellCommand\|perlHereDoc\|pe
 
 " Restore the saved compatibility options.
 let &cpo = s:save_cpo
+unlet s:save_cpo

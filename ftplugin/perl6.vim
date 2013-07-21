@@ -74,3 +74,4 @@ let b:undo_ftplugin = "setlocal fo< com< cms< inc< inex< def< isk<" .
 
 " Restore the saved compatibility options.
 let &cpo = s:save_cpo
+unlet s:save_cpo

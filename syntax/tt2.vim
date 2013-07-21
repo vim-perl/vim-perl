@@ -59,6 +59,9 @@ if exists("b:current_syntax")
   finish
 endif
 
+let s:cpo_save = &cpo
+set cpo&vim
+
 syn case match
 
 syn cluster tt2_top_cluster contains=tt2_perlcode,tt2_tag_region
@@ -200,5 +203,8 @@ if exists("b:tt2_syn_tags")
 endif
 
 let b:current_syntax = "tt2"
+
+let &cpo = s:cpo_save
+unlet s:cpo_save
 
 " vim:ts=4:sw=4
