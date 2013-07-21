@@ -3,7 +3,7 @@
 " Maintainer:    vim-perl <vim-perl@googlegroups.com>
 " Homepage:      http://github.com/vim-perl/vim-perl
 " Bugs/requests: http://github.com/vim-perl/vim-perl/issues
-" Last Change:   May 12, 2013
+" Last Change:   {{LAST_CHANGE}}
 
 " Suggestions and improvements by :
 "   Aaron J. Sherman (use syntax for hints)
