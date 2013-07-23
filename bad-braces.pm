@@ -11,12 +11,9 @@ for my $i ( 1..10 ) {
     push( @ids, map { $_->{class}->id } @{$specs_flattened->{$set}} );
 }
 
-
-# For Andy, this is not colored right
 sub foo {
     push( @ids, map { $_->{class}->id } @{$specs_flattened->{$set}} );
 }
-
 
 if ( foo() ) {
     push( @ids, map { $_->{class}->id } @{$specs_flattened->{$set}} );
@@ -28,3 +25,6 @@ else {
     push( @ids, map { $_->{class}->id } @{$specs_flattened->{$set}} );
 }
 
+
+# For Andy, this is not colored right
+my $listref = [ map { {$_ => 9} } @foo ];
