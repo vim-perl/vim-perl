@@ -68,6 +68,7 @@ endif
 
 syn cluster perlTop		contains=TOP
 
+syn region perlBraces start="{" end="}" transparent extend
 
 " All keywords
 "
@@ -416,8 +417,6 @@ if exists("perl_fold")
     if exists("perl_fold_anonymous_subs") && perl_fold_anonymous_subs
       syn region perlSubFold     start="\<sub\>[^\n;]*{" end="}" transparent fold keepend extend
       syn region perlSubFold     start="\<\%(BEGIN\|END\|CHECK\|INIT\)\>\s*{" end="}" transparent fold keepend
-
-      syn region perlBraces start="{" end="}" transparent extend
     else
       syn region perlSubFold     start="^\z(\s*\)\<sub\>.*[^};]$" end="^\z1}\s*\%(#.*\)\=$" transparent fold keepend
       syn region perlSubFold start="^\z(\s*\)\<\%(BEGIN\|END\|CHECK\|INIT\|UNITCHECK\)\>.*[^};]$" end="^\z1}\s*$" transparent fold keepend
