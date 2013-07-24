@@ -133,6 +133,7 @@ function! GetPerlIndent()
             if synid == ""
                         \ || synid == "perlMatchStartEnd"
                         \ || synid == "perlHereDoc"
+                        \ || synid == "perlBraces"
                         \ || synid =~ "^perlFiledescStatement"
                         \ || synid =~ '^perl\(Sub\|Block\|Package\)Fold'
                 let brace = strpart(line, bracepos, 1)
@@ -149,6 +150,7 @@ function! GetPerlIndent()
             let synid = synIDattr(synID(v:lnum, bracepos, 0), "name")
             if synid == ""
                         \ || synid == "perlMatchStartEnd"
+                        \ || synid == "perlBraces"
                         \ || synid =~ '^perl\(Sub\|Block\|Package\)Fold'
                 let ind = ind - &sw
             endif
