@@ -28,3 +28,14 @@ else {
 
 # For Andy, this is not colored right
 my $listref = [ map { {$_ => 9} } @foo ];
+
+my $foo = {
+    blah => x,
+    foo => x,
+};
+
+my $x =
+{
+    yada,
+    yada,
+};
