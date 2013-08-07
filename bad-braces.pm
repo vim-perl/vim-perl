@@ -25,6 +25,18 @@ else {
     push( @ids, map { $_->{class}->id } @{$specs_flattened->{$set}} );
 }
 
+my @flrids = join( ' ', map { $_->{flrid} } @{$set} );
+
+my $set = sqldo_set( $sql, { ':listid' => $listid } );
+
+if ( @{$set} > 1_000 ) {
+    # Do nothing
+}
+else {
+    my $flrids = join( ' ', map { $_->{flrid} } @{$set} );
+    return "flrid:($flrids)";
+}
+
 
 # For Andy, this is not colored right
 my $listref = [ map { {$_ => 9} } @foo ];
