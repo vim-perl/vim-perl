@@ -38,7 +38,17 @@ else {
 }
 
 
-# For Andy, this is not colored right
+# For Andy, these are not colored right
+
+MAIN: {
+    while ( <> ) {
+        if ( $line =~ m{^INFO:.+/select params=\{(.+)\} hits=(\d+) status=0 QTime=(\d+)} ) {
+            # do something
+        }
+    }
+}
+
+
 my $listref = [ map { {$_ => 9} } @foo ];
 
 my $foo = {
