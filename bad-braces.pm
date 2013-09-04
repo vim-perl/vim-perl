@@ -48,6 +48,8 @@ MAIN: {
     }
 }
 
+# Both sets of braces should be colored.
+$foo =~ s{ /$}{};
 
 my $listref = [ map { {$_ => 9} } @foo ];
 
