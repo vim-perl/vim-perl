@@ -8,8 +8,6 @@
 " Please mail any fixes or improvements to the above address. Things that need
 " doing include:
 "
-"  - Add match for component names in <& &> blocks.
-"  - Add match for component names in <%def> and <%method> block delimiters.
 "  - Fix <%text> blocks to show HTML tags but ignore Mason tags.
 "
 
@@ -60,7 +58,7 @@ syn region masonPerlBraces start="{" end="}" contained
 syn region masonLine matchgroup=Delimiter start="^%" end="$" keepend contains=@perlTop,masonPerlBraces
 syn region masonExpr matchgroup=Delimiter start="<%" end="%>" contains=@perlTop
 syn region masonPerl matchgroup=Delimiter start="<%perl>" end="</%perl>" contains=masonPod,@perlTop
-syn region masonComp keepend matchgroup=Delimiter start="<&" end="&>" contains=@perlTop
+syn region masonComp keepend matchgroup=Delimiter start="<&\s*[._/[:alnum:]]*" end="&>" contains=@perlTop
 
 syn region masonArgs matchgroup=Delimiter start="<%args>" end="</%args>" contains=masonPod,@perlTop
 
@@ -69,8 +67,8 @@ syn region masonCleanup matchgroup=Delimiter start="<%cleanup>" end="</%cleanup>
 syn region masonOnce matchgroup=Delimiter start="<%once>" end="</%once>" contains=masonPod,@perlTop
 syn region masonShared matchgroup=Delimiter start="<%shared>" end="</%shared>" contains=masonPod,@perlTop
 
-syn region masonDef matchgroup=Delimiter start="<%def[^>]*>" end="</%def>" contains=@htmlTop
-syn region masonMethod matchgroup=Delimiter start="<%method[^>]*>" end="</%method>" contains=@htmlTop
+syn region masonDef matchgroup=Delimiter start="<%def\s*[._/[:alnum:]]\+\s*>" end="</%def>" contains=@htmlTop
+syn region masonMethod matchgroup=Delimiter start="<%method\s*[._/[:alnum:]]\+\s*>" end="</%method>" contains=@htmlTop
 
 syn region masonFlags matchgroup=Delimiter start="<%flags>" end="</%flags>" contains=masonPod,@perlTop
 syn region masonAttr matchgroup=Delimiter start="<%attr>" end="</%attr>" contains=masonPod,@perlTop
