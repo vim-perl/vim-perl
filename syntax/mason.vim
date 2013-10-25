@@ -1,13 +1,13 @@
 " Vim syntax file
-" Language:    Mason (Perl embedded in HTML)
-" Maintainer:  Andrew Smith <andrewdsmith@yahoo.com>
-" Last change: 2003 May 11
-" URL:	       http://www.masonhq.com/editors/mason.vim
+" Language:     Mason (Perl embedded in HTML)
+" Maintainer:   vim-perl <vim-perl@googlegroups.com>
+" Homepage:      http://github.com/vim-perl/vim-perl/tree/master
+" Bugs/requests: http://github.com/vim-perl/vim-perl/issues
+" Last Change:  {{LAST_CHANGE}}
+" Contributors: Hinrik Örn Sigurðsson <hinrik.sig@gmail.com>
+"               Andrew Smith <andrewdsmith@yahoo.com>
 "
-" This seems to work satisfactorily with html.vim and perl.vim for version 5.5.
-" Please mail any fixes or improvements to the above address. Things that need
-" doing include:
-"
+" TODO:
 "  - Fix <%text> blocks to show HTML tags but ignore Mason tags.
 "
 
