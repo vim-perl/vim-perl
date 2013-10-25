@@ -43,33 +43,38 @@ syn cluster htmlPreproc add=@masonTop
 "
 if version < 600
 	syn include @perlTop <sfile>:p:h/perl.vim
+        unlet b:current_syntax
+	syn include @podTop <sfile>:p:h/pod.vim
 else
 	syn include @perlTop syntax/perl.vim
+        unlet b:current_syntax
+        syn include @podTop syntax/pod.vim
 endif
 
 " It's hard to reduce down to the correct sub-set of Perl to highlight in some
 " of these cases so I've taken the safe option of just using perlTop in all of
 " them. If you have any suggestions, please let me know.
 "
+syn region masonPod start="^=[a-z]" end="^=cut" keepend contained contains=@podTop
 syn region masonLine matchgroup=Delimiter start="^%" end="$" contains=@perlTop
 syn region masonExpr matchgroup=Delimiter start="<%" end="%>" contains=@perlTop
-syn region masonPerl matchgroup=Delimiter start="<%perl>" end="</%perl>" contains=@perlTop
+syn region masonPerl matchgroup=Delimiter start="<%perl>" end="</%perl>" contains=masonPod,@perlTop
 syn region masonComp keepend matchgroup=Delimiter start="<&" end="&>" contains=@perlTop
 
-syn region masonArgs matchgroup=Delimiter start="<%args>" end="</%args>" contains=@perlTop
+syn region masonArgs matchgroup=Delimiter start="<%args>" end="</%args>" contains=masonPod,@perlTop
 
-syn region masonInit matchgroup=Delimiter start="<%init>" end="</%init>" contains=@perlTop
-syn region masonCleanup matchgroup=Delimiter start="<%cleanup>" end="</%cleanup>" contains=@perlTop
-syn region masonOnce matchgroup=Delimiter start="<%once>" end="</%once>" contains=@perlTop
-syn region masonShared matchgroup=Delimiter start="<%shared>" end="</%shared>" contains=@perlTop
+syn region masonInit matchgroup=Delimiter start="<%init>" end="</%init>" contains=masonPod,@perlTop
+syn region masonCleanup matchgroup=Delimiter start="<%cleanup>" end="</%cleanup>" contains=masonPod,@perlTop
+syn region masonOnce matchgroup=Delimiter start="<%once>" end="</%once>" contains=masonPod,@perlTop
+syn region masonShared matchgroup=Delimiter start="<%shared>" end="</%shared>" contains=masonPod,@perlTop
 
 syn region masonDef matchgroup=Delimiter start="<%def[^>]*>" end="</%def>" contains=@htmlTop
 syn region masonMethod matchgroup=Delimiter start="<%method[^>]*>" end="</%method>" contains=@htmlTop
 
-syn region masonFlags matchgroup=Delimiter start="<%flags>" end="</%flags>" contains=@perlTop
-syn region masonAttr matchgroup=Delimiter start="<%attr>" end="</%attr>" contains=@perlTop
+syn region masonFlags matchgroup=Delimiter start="<%flags>" end="</%flags>" contains=masonPod,@perlTop
+syn region masonAttr matchgroup=Delimiter start="<%attr>" end="</%attr>" contains=masonPod,@perlTop
 
-syn region masonFilter matchgroup=Delimiter start="<%filter>" end="</%filter>" contains=@perlTop
+syn region masonFilter matchgroup=Delimiter start="<%filter>" end="</%filter>" contains=masonPod,@perlTop
 
 syn region masonDoc matchgroup=Delimiter start="<%doc>" end="</%doc>"
 syn region masonText matchgroup=Delimiter start="<%text>" end="</%text>"
@@ -88,6 +93,7 @@ if version >= 508 || !exists("did_mason_syn_inits")
 	endif
 
 	HiLink masonDoc Comment
+	HiLink masonPod Comment
 
 	delc HiLink
 endif

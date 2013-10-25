@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use File::Spec::Functions qw<catfile catdir>;
-use Test::More tests => 1; # can we upgrade to 0.88 and use done_testing?
+use Test::More tests => 2; # can we upgrade to 0.88 and use done_testing?
 use Test::Differences;
 use Text::VimColor;
 
@@ -53,6 +53,36 @@ MASON
         [ masonPerl   => ';'  ],
         [ Delimiter   => "</%perl>" ],
         [ ''          => "</h1>\n"  ],
+    ],
+    'basic Template syntax';
+
+eq_or_diff
+    parse_string(<<MASON),
+<%init>
+=for foobar
+some docs
+=cut
+print "foo";
+</%init>
+MASON
+    [
+        [ Delimiter   => '<%init>'  ],
+        [ ''          => "\n"       ],
+        [ Statement   => '=for'     ],
+        [ Comment     => ' '        ],
+        [ Identifier  => 'foobar'   ],
+        [ ''          => "\n"       ],
+        [ Comment     => 'some docs'],
+        [ ''          => "\n"       ],
+        [ Statement   => '=cut'     ],
+        [ ''          => "\n"       ],
+        [ Statement   => 'print'    ],
+        [ masonInit   => ' '        ],
+        [ String      => '"foo"'    ],
+        [ masonInit   => ';'        ],
+        [ ''          => "\n"       ],
+        [ Delimiter   => '</%init>' ],
+        [ ''          => "\n"       ],
     ],
     'basic Template syntax';
 
