@@ -65,6 +65,7 @@ syn region masonArgs matchgroup=Delimiter start="<%args>" end="</%args>" contain
 syn region masonInit matchgroup=Delimiter start="<%init>" end="</%init>" contains=masonPod,@perlTop
 syn region masonCleanup matchgroup=Delimiter start="<%cleanup>" end="</%cleanup>" contains=masonPod,@perlTop
 syn region masonOnce matchgroup=Delimiter start="<%once>" end="</%once>" contains=masonPod,@perlTop
+syn region masonClass matchgroup=Delimiter start="<%class>" end="</%class>" contains=masonPod,@perlTop
 syn region masonShared matchgroup=Delimiter start="<%shared>" end="</%shared>" contains=masonPod,@perlTop
 
 syn region masonDef matchgroup=Delimiter start="<%def\s*[._/[:alnum:]]\+\s*>" end="</%def>" contains=@htmlTop
