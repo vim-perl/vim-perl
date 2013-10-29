@@ -91,6 +91,7 @@ eq_or_diff
 % if ($boolean) {
 <li>hello</li>
 % }
+<& SELF:header &>
 MASON
     [
         [ Delimiter       => '%'],
@@ -103,6 +104,10 @@ MASON
         [ ''              => "\n<li>hello</li>\n"],
         [ Delimiter       => "%"],
         [ masonLine       => ' }'],
+        [ ''              => "\n"],
+        [ Delimiter       => "<& SELF:header"],
+        [ masonComp       => ' '],
+        [ Delimiter       => "&>"],
         [ ''              => "\n"],
     ],
     'basic Template syntax';
