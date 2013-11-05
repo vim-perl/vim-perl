@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use File::Spec::Functions qw<catfile catdir>;
-use Test::More tests => 3; # can we upgrade to 0.88 and use done_testing?
+use Test::More tests => 4; # can we upgrade to 0.88 and use done_testing?
 use Test::Differences;
 use Text::VimColor;
 
@@ -109,6 +109,35 @@ MASON
         [ masonComp       => ' '],
         [ Delimiter       => "&>"],
         [ ''              => "\n"],
+    ],
+    'basic Template syntax';
+
+eq_or_diff
+    parse_string(<<'MASON'),
+<&| foo, bar => $baz &>
+asdf
+%# foo
+<hlagh>
+</&>
+MASON
+    [
+        [ Delimiter        => '<&| foo'],
+        [ masonComp        => ', '],
+        [ String           => 'bar'],
+        [ masonComp        => ' => '],
+        [ Identifier       => '$baz'],
+        [ masonComp        => ' '],
+        [ Delimiter        => '&>'],
+        [ ''               => "\n"],
+        [ masonCompContent => "asdf"],
+        [ ''               => "\n"],
+        [ Delimiter        => "%"],
+        [ Comment          => '# foo'],
+        [ ''               => "\n"],
+        [ masonCompContent => "<hlagh>"],
+        [ ''               => "\n"],
+        [ Delimiter        => "</&>"],
+        [ ''               => "\n"],
     ],
     'basic Template syntax';
 
