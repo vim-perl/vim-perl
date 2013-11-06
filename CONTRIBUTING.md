@@ -9,6 +9,10 @@ When submitting an issue relating to highlighting, please attach the following:
 
 These things make issues **much** easier to debug!
 
+Also, remember that scripts under `contrib` or other third party plugins have the potential to
+break your highlighting; if you find an issue, please try it without any contrib scripts or
+other plugins set up.
+
 # Helping Out
 
 If you would like to contribute to vim-perl (which would be greatly appreciated!), you may find
