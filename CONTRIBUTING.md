@@ -1,6 +1,6 @@
 # Reporting Issues
 
-When submitting an issue relating to highlighting, please attach the following:
+When submitting an issue relating to highlighting/folding, please attach the following:
 
   - A screenshot of the issue.
   - The file used in the screenshot.  If it's proprietary or too big, please try
@@ -10,7 +10,7 @@ When submitting an issue relating to highlighting, please attach the following:
 These things make issues **much** easier to debug!
 
 Also, remember that scripts under `contrib` or other third party plugins have the potential to
-break your highlighting; if you find an issue, please try it without any contrib scripts or
+break your highlighting/folding; if you find an issue, please try it without any contrib scripts or
 other plugins set up.
 
 # Helping Out
