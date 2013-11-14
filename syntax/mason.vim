@@ -58,8 +58,8 @@ syn region masonPerlBraces start="{" end="}" contained
 syn region masonLine matchgroup=Delimiter start="^%" end="$" keepend contains=@perlTop,masonPerlBraces
 syn region masonExpr matchgroup=Delimiter start="<%" end="%>" contains=@perlTop
 syn region masonPerl matchgroup=Delimiter start="<%perl>" end="</%perl>" contains=masonPod,@perlTop
-syn region masonComp keepend matchgroup=Delimiter start="<&\s*\%(\a\+:\)\?[._/[:alnum:]]*" end="&>" contains=@perlTop
-syn region masonComp keepend matchgroup=Delimiter skipnl start="<&|\s*\%(\a\+:\)\?[._/[:alnum:]]*" end="&>" contains=@perlTop nextgroup=masonCompContent
+syn region masonComp keepend matchgroup=Delimiter start="<&\s*\%(\a\+:\)\?[-._/[:alnum:]]*" end="&>" contains=@perlTop
+syn region masonComp keepend matchgroup=Delimiter skipnl start="<&|\s*\%(\a\+:\)\?[-._/[:alnum:]]*" end="&>" contains=@perlTop nextgroup=masonCompContent
 syn region masonCompContent matchgroup=Delimiter start="" end="</&>" contained contains=@masonTop
 
 syn region masonArgs matchgroup=Delimiter start="<%args>" end="</%args>" contains=masonPod,@perlTop
@@ -70,8 +70,8 @@ syn region masonOnce matchgroup=Delimiter start="<%once>" end="</%once>" contain
 syn region masonClass matchgroup=Delimiter start="<%class>" end="</%class>" contains=masonPod,@perlTop
 syn region masonShared matchgroup=Delimiter start="<%shared>" end="</%shared>" contains=masonPod,@perlTop
 
-syn region masonDef matchgroup=Delimiter start="<%def\s*[._/[:alnum:]]\+\s*>" end="</%def>" contains=@htmlTop
-syn region masonMethod matchgroup=Delimiter start="<%method\s*[._/[:alnum:]]\+\s*>" end="</%method>" contains=@htmlTop
+syn region masonDef matchgroup=Delimiter start="<%def\s*[-._/[:alnum:]]\+\s*>" end="</%def>" contains=@htmlTop
+syn region masonMethod matchgroup=Delimiter start="<%method\s*[-._/[:alnum:]]\+\s*>" end="</%method>" contains=@htmlTop
 
 syn region masonFlags matchgroup=Delimiter start="<%flags>" end="</%flags>" contains=masonPod,@perlTop
 syn region masonAttr matchgroup=Delimiter start="<%attr>" end="</%attr>" contains=masonPod,@perlTop
