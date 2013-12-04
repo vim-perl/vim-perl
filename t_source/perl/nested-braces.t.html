@@ -1,0 +1,34 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synIdentifier">@new_array</span> = <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$hash{$_}</span> <span class="synStatement">}</span> <span class="synIdentifier">@array</span>; <span class="synComment"># dsfdsfsdfds</span>
+<span class="synKeyword">sub </span><span class="synFunction">foo </span>{
+    {
+        <span class="synStatement">print</span> <span class="synStatement">{</span><span class="synIdentifier">$foo</span><span class="synStatement">}</span> <span class="synIdentifier">@new_array</span>;
+    }
+}
+<span class="synStatement">print</span> <span class="synStatement">{</span>FOOBAR<span class="synStatement">}</span> <span class="synIdentifier">@new_array</span>;
+
+<span class="synStatement">map</span> <span class="synStatement">{</span> { <span class="synString">bar</span> =&gt; <span class="synIdentifier">$hash{$_}</span> } <span class="synStatement">}</span> <span class="synIdentifier">@keys</span>;
+<span class="synStatement">push</span> <span class="synIdentifier">@{$foo-&gt;{</span><span class="synString">bar</span><span class="synIdentifier">}}</span>, <span class="synIdentifier">$elem</span>;
+<span class="synStatement">say</span> <span class="synRepeat">for</span> <span class="synStatement">keys</span> <span class="synIdentifier">%{$foo-&gt;{</span><span class="synString">bar</span><span class="synIdentifier">}}</span>;
+<span class="synKeyword">sub </span><span class="synFunction">foo </span>{
+    <span class="synStatement">print</span> <span class="synIdentifier">@{$bar-&gt;{</span><span class="synString">x</span><span class="synIdentifier">}}</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">foo </span>{
+    <span class="synStatement">push</span>( <span class="synIdentifier">@ids</span>, <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;{</span><span class="synString">class</span><span class="synIdentifier">}-&gt;id</span> <span class="synStatement">}</span> <span class="synIdentifier">@{$specs_flattened-&gt;{$set}}</span> );
+}
+
+<span class="synStatement">print</span> <span class="synStatement">join</span>(<span class="synString">&quot;,&quot;</span> <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synString">&quot;</span><span class="synIdentifier">$_</span><span class="synString">=h{</span><span class="synIdentifier">$_</span><span class="synString">}&quot;</span> <span class="synStatement">}</span> <span class="synStatement">keys</span> <span class="synIdentifier">%h</span>);
+
+<span class="synStatement">print</span> <span class="synStatement">join</span>(<span class="synString">&quot;,&quot;</span> <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synString">&quot;</span><span class="synIdentifier">$_</span><span class="synString">=h</span><span class="synIdentifier">$_</span><span class="synString">}&quot;</span> <span class="synStatement">}</span> <span class="synStatement">keys</span> <span class="synIdentifier">%h</span>);
+</pre>
+
+ </body>
+</html>
