@@ -125,7 +125,8 @@ syn match perlLabel      "^\s*\h\w*\s*::\@!\%(\<v\d\+\s*:\)\@<!"
 " Special variables first ($^A, ...) and ($|, $', ...)
 syn match  perlVarPlain		 "$^[ACDEFHILMNOPRSTVWX]\="
 syn match  perlVarPlain		 "$[\\\"\[\]'&`+*.,;=%~!?@#$<>(-]"
-syn match  perlVarPlain		 "%+"
+syn match  perlVarPlain		 "%[-+]"
+syn match  perlVarPlain		 "@[-+]"
 syn match  perlVarPlain		 "$\%(0\|[1-9]\d*\)"
 " Same as above, but avoids confusion in $::foo (equivalent to $main::foo)
 syn match  perlVarPlain		 "$::\@!"
