@@ -125,7 +125,6 @@ syn match perlLabel      "^\s*\h\w*\s*::\@!\%(\<v\d\+\s*:\)\@<!"
 " Special variables first ($^A, ...) and ($|, $', ...)
 syn match  perlVarPlain		 "$^[ACDEFHILMNOPRSTVWX]\="
 syn match  perlVarPlain		 "$[\\\"\[\]'&`+*.,;=%~!?@#$<>(-]"
-syn match  perlVarPlain		 "%[-+]"
 syn match  perlVarPlain		 "@[-+]"
 syn match  perlVarPlain		 "$\%(0\|[1-9]\d*\)"
 " Same as above, but avoids confusion in $::foo (equivalent to $main::foo)
@@ -152,6 +151,8 @@ else
   syn match  perlVarPlain2                   "%\$*\%(\I\i*\)\=\%(\%(::\|'\)\I\i*\)*\%(::\|\i\@<=\)"
   syn match  perlFunctionName                "&\$*\%(\I\i*\)\=\%(\%(::\|'\)\I\i*\)*\%(::\|\i\@<=\)" nextgroup=perlVarMember,perlVarSimpleMember,perlMethod
 endif
+
+syn match  perlVarPlain2	 "%[-+]"
 
 if !exists("perl_no_extended_vars")
   syn cluster perlExpr		contains=perlStatementIndirObjWrap,perlStatementScalar,perlStatementRegexp,perlStatementNumeric,perlStatementList,perlStatementHash,perlStatementFiles,perlStatementTime,perlStatementMisc,perlVarPlain,perlVarPlain2,perlVarNotInMatches,perlVarSlash,perlVarBlock,perlVarBlock2,perlShellCommand,perlFloat,perlNumber,perlStringUnexpanded,perlString,perlQQ,perlArrow,perlBraces
