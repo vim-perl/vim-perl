@@ -1,6 +1,3 @@
-
-# These all look OK
-
 push( @ids, map { $_->{class}->id } @{$specs_flattened->{$set}} );
 
 my %hash = map { $_->{class}->id } @{$specs_flattened->{$set}} );
@@ -38,8 +35,6 @@ else {
 }
 
 
-# For Andy, these are not colored right
-
 MAIN: {
     while ( <> ) {
         if ( $line =~ m{^INFO:.+/select params=\{(.+)\} hits=(\d+) status=0 QTime=(\d+)} ) {
@@ -48,7 +43,6 @@ MAIN: {
     }
 }
 
-# Both sets of braces should be colored.
 $foo =~ s{ /$}{};
 
 my $listref = [ map { {$_ => 9} } @foo ];

@@ -1,0 +1,71 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">push</span>( <span class="synIdentifier">@ids</span>, <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;{</span><span class="synString">class</span><span class="synIdentifier">}-&gt;id</span> <span class="synStatement">}</span> <span class="synIdentifier">@{$specs_flattened-&gt;{$set}}</span> );
+
+<span class="synStatement">my</span> <span class="synIdentifier">%hash</span> = <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;{</span><span class="synString">class</span><span class="synIdentifier">}-&gt;id</span> <span class="synStatement">}</span> <span class="synIdentifier">@{$specs_flattened-&gt;{$set}}</span> );
+
+<span class="synStatement">my</span> <span class="synIdentifier">$hashref</span> = { <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;{</span><span class="synString">class</span><span class="synIdentifier">}-&gt;id</span> <span class="synStatement">}</span> <span class="synIdentifier">@{$specs_flattened-&gt;{$set}}</span> ) };
+
+<span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$i</span> ( <span class="synFloat">1..10</span> ) {
+    <span class="synStatement">push</span>( <span class="synIdentifier">@ids</span>, <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;{</span><span class="synString">class</span><span class="synIdentifier">}-&gt;id</span> <span class="synStatement">}</span> <span class="synIdentifier">@{$specs_flattened-&gt;{$set}}</span> );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">foo </span>{
+    <span class="synStatement">push</span>( <span class="synIdentifier">@ids</span>, <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;{</span><span class="synString">class</span><span class="synIdentifier">}-&gt;id</span> <span class="synStatement">}</span> <span class="synIdentifier">@{$specs_flattened-&gt;{$set}}</span> );
+}
+
+<span class="synConditional">if</span> ( foo() ) {
+    <span class="synStatement">push</span>( <span class="synIdentifier">@ids</span>, <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;{</span><span class="synString">class</span><span class="synIdentifier">}-&gt;id</span> <span class="synStatement">}</span> <span class="synIdentifier">@{$specs_flattened-&gt;{$set}}</span> );
+}
+<span class="synConditional">elsif</span> ( bar() ) {
+    <span class="synStatement">push</span>( <span class="synIdentifier">@ids</span>, <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;{</span><span class="synString">class</span><span class="synIdentifier">}-&gt;id</span> <span class="synStatement">}</span> <span class="synIdentifier">@{$specs_flattened-&gt;{$set}}</span> );
+}
+<span class="synConditional">else</span> {
+    <span class="synStatement">push</span>( <span class="synIdentifier">@ids</span>, <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;{</span><span class="synString">class</span><span class="synIdentifier">}-&gt;id</span> <span class="synStatement">}</span> <span class="synIdentifier">@{$specs_flattened-&gt;{$set}}</span> );
+}
+
+<span class="synStatement">my</span> <span class="synIdentifier">@flrids</span> = <span class="synStatement">join</span>( <span class="synString">' '</span>, <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;{</span><span class="synString">flrid</span><span class="synIdentifier">}</span> <span class="synStatement">}</span> <span class="synIdentifier">@{$set}</span> );
+
+<span class="synStatement">my</span> <span class="synIdentifier">$set</span> = sqldo_set( <span class="synIdentifier">$sql</span>, { <span class="synString">':listid'</span> =&gt; <span class="synIdentifier">$listid</span> } );
+
+<span class="synConditional">if</span> ( <span class="synIdentifier">@{$set}</span> &gt; <span class="synNumber">1_000</span> ) {
+    <span class="synComment"># Do nothing</span>
+}
+<span class="synConditional">else</span> {
+    <span class="synStatement">my</span> <span class="synIdentifier">$flrids</span> = <span class="synStatement">join</span>( <span class="synString">' '</span>, <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;{</span><span class="synString">flrid</span><span class="synIdentifier">}</span> <span class="synStatement">}</span> <span class="synIdentifier">@{$set}</span> );
+    <span class="synStatement">return</span> <span class="synString">&quot;flrid:(</span><span class="synIdentifier">$flrids</span><span class="synString">)&quot;</span>;
+}
+
+
+<span class="synLabel">MAIN:</span> {
+    <span class="synRepeat">while</span> ( &lt;&gt; ) {
+        <span class="synConditional">if</span> ( <span class="synIdentifier">$line</span> =~ <span class="synStatement">m{</span><span class="synString">^INFO:</span><span class="synSpecial">.+</span><span class="synString">/select params=</span><span class="synSpecial">\{(.+)\}</span><span class="synString"> hits=</span><span class="synSpecial">(\d+)</span><span class="synString"> status=0 QTime=</span><span class="synSpecial">(\d+)</span><span class="synStatement">}</span> ) {
+            <span class="synComment"># do something</span>
+        }
+    }
+}
+
+<span class="synIdentifier">$foo</span> =~ <span class="synStatement">s{</span><span class="synString"> /$</span><span class="synStatement">}{}</span>;
+
+<span class="synStatement">my</span> <span class="synIdentifier">$listref</span> = [ <span class="synStatement">map</span> <span class="synStatement">{</span> {<span class="synIdentifier">$_</span> =&gt; <span class="synNumber">9</span>} <span class="synStatement">}</span> <span class="synIdentifier">@foo</span> ];
+
+<span class="synStatement">my</span> <span class="synIdentifier">$foo</span> = {
+    <span class="synString">blah</span> =&gt; x,
+    <span class="synString">foo</span> =&gt; x,
+};
+
+<span class="synStatement">my</span> <span class="synIdentifier">$x</span> =
+{
+    yada,
+    yada,
+};
+</pre>
+
+ </body>
+</html>
