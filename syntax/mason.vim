@@ -56,7 +56,8 @@ endif
 syn region masonPod start="^=[a-z]" end="^=cut" keepend contained contains=@podTop
 syn cluster perlTop remove=perlBraces
 syn region masonLine matchgroup=Delimiter start="^%" end="$" keepend contains=@perlTop
-syn region masonExpr matchgroup=Delimiter start="<%" end="%>" contains=@perlTop
+syn region masonPerlComment start="#" end="\%(%>\)\@=\|$" contained contains=perlTodo,@Spell
+syn region masonExpr matchgroup=Delimiter start="<%" end="%>" contains=@perlTop,masonPerlComment
 syn region masonPerl matchgroup=Delimiter start="<%perl>" end="</%perl>" contains=masonPod,@perlTop
 syn region masonComp keepend matchgroup=Delimiter start="<&\s*\%([-._/[:alnum:]]\+:\)\?[-._/[:alnum:]]*" end="&>" contains=@perlTop
 syn region masonComp keepend matchgroup=Delimiter skipnl start="<&|\s*\%([-._/[:alnum:]]\+:\)\?[-._/[:alnum:]]*" end="&>" contains=@perlTop nextgroup=masonCompContent
@@ -96,6 +97,7 @@ if version >= 508 || !exists("did_mason_syn_inits")
 
 	HiLink masonDoc Comment
 	HiLink masonPod Comment
+	HiLink masonPerlComment perlComment
 
 	delc HiLink
 endif

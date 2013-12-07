@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use File::Spec::Functions qw<catfile catdir>;
-use Test::More tests => 5; # can we upgrade to 0.88 and use done_testing?
+use Test::More tests => 6; # can we upgrade to 0.88 and use done_testing?
 use Test::Differences;
 use Text::VimColor;
 
@@ -173,6 +173,47 @@ MASON
         ['masonLine',' '],
         ['String','qw(qa sa )'],
         ['masonLine',';'],
+        ['',"\n"],
+    ],
+    'basic Template syntax';
+
+eq_or_diff
+    parse_string(<<'MASON'),
+<% # This is a single-line comment
+foo+2
+%>
+dsfsdf+2
+<html>
+<% # foo %>
+<%
+    # This is a
+    # multi-line comment
+%>
+MASON
+    [
+        ['Delimiter','<%'],
+        ['masonExpr',' '],
+        ['Comment','# This is a single-line comment'],
+        ['',"\n"],
+        ['masonExpr','foo+'],
+        ['Number',2],
+        ['',"\n"],
+        ['Delimiter','%>'],
+        ['',"\ndsfsdf+2\n<html>\n"],
+        ['Delimiter','<%'],
+        ['masonExpr',' '],
+        ['Comment','# foo '],
+        ['Delimiter','%>'],
+        ['',"\n"],
+        ['Delimiter','<%'],
+        ['',"\n"],
+        ['masonExpr','    '],
+        ['Comment','# This is a'],
+        ['',"\n"],
+        ['masonExpr','    '],
+        ['Comment','# multi-line comment'],
+        ['',"\n"],
+        ['Delimiter','%>'],
         ['',"\n"],
     ],
     'basic Template syntax';
