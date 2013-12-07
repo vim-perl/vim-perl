@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use File::Spec::Functions qw<catfile catdir>;
-use Test::More tests => 4; # can we upgrade to 0.88 and use done_testing?
+use Test::More tests => 5; # can we upgrade to 0.88 and use done_testing?
 use Test::Differences;
 use Text::VimColor;
 
@@ -99,8 +99,7 @@ MASON
         [ Conditional     => 'if'],
         [ masonLine       => ' ('],
         [ Identifier      => '$boolean'],
-        [ masonLine       => ') '],
-        [ masonPerlBraces => '{'],
+        [ masonLine       => ') {'],
         [ ''              => "\n<li>hello</li>\n"],
         [ Delimiter       => "%"],
         [ masonLine       => ' }'],
@@ -138,6 +137,43 @@ MASON
         [ ''               => "\n"],
         [ Delimiter        => "</&>"],
         [ ''               => "\n"],
+    ],
+    'basic Template syntax';
+
+eq_or_diff
+    parse_string(<<'MASON'),
+% for my $t (qw{foo bar}) { # foo
+<div>
+% map { $_ => 'y' } qw(qa sa );
+MASON
+    [
+        ['Delimiter','%'],
+        ['masonLine',' '],
+        ['Repeat','for'],
+        ['masonLine',' '],
+        ['Statement','my'],
+        ['masonLine',' '],
+        ['Identifier','$t'],
+        ['masonLine',' ('],
+        ['String','qw{foo bar}'],
+        ['masonLine',') { '],
+        ['Comment','# foo'],
+        ['',"\n<div>\n"],
+        ['Delimiter','%'],
+        ['masonLine',' '],
+        ['Statement','map'],
+        ['masonLine',' '],
+        ['Statement','{'],
+        ['masonLine',' '],
+        ['Identifier','$_'],
+        ['masonLine',' => '],
+        ['String','\'y\''],
+        ['masonLine',' '],
+        ['Statement','}'],
+        ['masonLine',' '],
+        ['String','qw(qa sa )'],
+        ['masonLine',';'],
+        ['',"\n"],
     ],
     'basic Template syntax';
 

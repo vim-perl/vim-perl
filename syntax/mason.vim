@@ -54,8 +54,8 @@ endif
 " them. If you have any suggestions, please let me know.
 "
 syn region masonPod start="^=[a-z]" end="^=cut" keepend contained contains=@podTop
-syn region masonPerlBraces start="{" end="}" contained
-syn region masonLine matchgroup=Delimiter start="^%" end="$" keepend contains=@perlTop,masonPerlBraces
+syn cluster perlTop remove=perlBraces
+syn region masonLine matchgroup=Delimiter start="^%" end="$" keepend contains=@perlTop
 syn region masonExpr matchgroup=Delimiter start="<%" end="%>" contains=@perlTop
 syn region masonPerl matchgroup=Delimiter start="<%perl>" end="</%perl>" contains=masonPod,@perlTop
 syn region masonComp keepend matchgroup=Delimiter start="<&\s*\%([-._/[:alnum:]]\+:\)\?[-._/[:alnum:]]*" end="&>" contains=@perlTop
