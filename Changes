@@ -35,6 +35,9 @@ Anonymous subroutines are now foldable.
 
 Added mason.vim. (Hinrik)
 
+map, grep and sort blocks are now properly indented.  Thanks, Brian
+M. Carlson.
+
 [FIXES]
 Minor tweak to p6RxCharClass.  Thanks, Arne Skjærholt.
 
