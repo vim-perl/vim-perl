@@ -83,7 +83,7 @@ syn match perlControl			"\<\%(BEGIN\|CHECK\|INIT\|END\|UNITCHECK\)\>\_s*" nextgr
 
 syn match perlStatementStorage		"\<\%(my\|our\|local\|state\)\>"
 syn match perlStatementControl		"\<\%(return\|last\|next\|redo\|goto\|break\)\>"
-syn match perlStatementScalar		"\<\%(chom\=p\|chr\|crypt\|r\=index\|lc\%(first\)\=\|length\|ord\|pack\|sprintf\|substr\|uc\%(first\)\=\)\>"
+syn match perlStatementScalar		"\<\%(chom\=p\|chr\|crypt\|r\=index\|lc\%(first\)\=\|length\|ord\|pack\|sprintf\|substr\|uc\%(first\)\=\|fc\)\>"
 syn match perlStatementRegexp		"\<\%(pos\|quotemeta\|split\|study\)\>"
 syn match perlStatementNumeric		"\<\%(abs\|atan2\|cos\|exp\|hex\|int\|log\|oct\|rand\|sin\|sqrt\|srand\)\>"
 syn match perlStatementList		"\<\%(splice\|unshift\|shift\|push\|pop\|join\|reverse\|grep\|map\|sort\|unpack\)\>"
@@ -94,7 +94,7 @@ syn match perlStatementFiledesc		"\<\%(fcntl\|flock\|ioctl\|open\%(dir\)\=\|read
 syn match perlStatementVector		"\<vec\>"
 syn match perlStatementFiles		"\<\%(ch\%(dir\|mod\|own\|root\)\|glob\|link\|mkdir\|readlink\|rename\|rmdir\|symlink\|umask\|unlink\|utime\)\>"
 syn match perlStatementFiles		"-[rwxoRWXOezsfdlpSbctugkTBMAC]\>"
-syn match perlStatementFlow		"\<\%(caller\|die\|dump\|eval\|exit\|wantarray\)\>"
+syn match perlStatementFlow		"\<\%(caller\|die\|dump\|eval\|exit\|wantarray\|evalbytes\)\>"
 syn match perlStatementInclude		"\<\%(require\|import\)\>"
 syn match perlStatementInclude		"\<\%(use\|no\)\s\+\%(\%(attributes\|attrs\|autouse\|parent\|base\|big\%(int\|num\|rat\)\|blib\|bytes\|charnames\|constant\|diagnostics\|encoding\%(::warnings\)\=\|feature\|fields\|filetest\|if\|integer\|less\|lib\|locale\|mro\|open\|ops\|overload\|re\|sigtrap\|sort\|strict\|subs\|threads\%(::shared\)\=\|utf8\|vars\|version\|vmsish\|warnings\%(::register\)\=\)\>\)\="
 syn match perlStatementProc		"\<\%(alarm\|exec\|fork\|get\%(pgrp\|ppid\|priority\)\|kill\|pipe\|set\%(pgrp\|priority\)\|sleep\|system\|times\|wait\%(pid\)\=\)\>"
@@ -375,9 +375,20 @@ syn match perlFunction +\<sub\>\_s*+ nextgroup=perlSubName
 " a string
 syn match  perlString "\I\@<!-\?\I\i*\%(\s*=>\)\@="
 
-" All other # are comments, except ^#!
-syn match  perlComment		"#.*" contains=perlTodo,@Spell extend
-syn match  perlSharpBang	"^#!.*"
+" perlcritic comments
+hi def link perlCritic PreProc
+syn match perlCritic "\%(#[^#]*\)\@<!#\zs#\s*no\s\+critic\s*\%(qw\|\)\%(([a-zA-Z0-9,: ]*)\|\)\ze"
+syn match perlCritic "\%(#[^#]*\)\@<!#\zs#\s*use\s\+critic\ze"
+syn match perlComment "#.*" contains=perlTodo,perlCritic,@Spell
+
+" perltidy comments, always MUST be placed after "syn match perlComment" definition
+hi def link perlTidyComment Comment
+hi def link perlTidy PreProc
+syn match perlTidy "^\s*#\zs\%(<<<\|>>>\)\ze"
+syn match perlTidyComment "^\s*#\%(<<<\|>>>\).*" contains=perlTidy,@Spell
+
+" perlSharpBang, always MUST be placed after "syn match perlTidyComment" definition
+syn match perlSharpBang "^#!.*"
 
 " Formats
 syn region perlFormat		matchgroup=perlStatementIOFunc start="^\s*\<format\s\+\k\+\s*=\s*$"rs=s+6 end="^\s*\.\s*$" contains=perlFormatName,perlFormatField,perlVarPlain,perlVarPlain2
@@ -406,14 +417,15 @@ if exists("perl_fold")
   if !exists("perl_nofold_packages")
     syn region perlPackageFold start="^package \S\+;\s*\%(#.*\)\=$" end="^1;\=\s*\%(#.*\)\=$" end="\n\+package"me=s-1 transparent fold keepend
   endif
+
   if !exists("perl_nofold_subs")
-    if exists("perl_fold_anonymous_subs") && perl_fold_anonymous_subs
-      syn region perlSubFold     start="\<sub\>[^\n;]*{" end="}" transparent fold keepend extend
-      syn region perlSubFold     start="\<\%(BEGIN\|END\|CHECK\|INIT\)\>\s*{" end="}" transparent fold keepend
-    else
-      syn region perlSubFold     start="^\z(\s*\)\<sub\>.*[^};]$" end="^\z1}\s*\%(#.*\)\=$" transparent fold keepend
-      syn region perlSubFold start="^\z(\s*\)\<\%(BEGIN\|END\|CHECK\|INIT\|UNITCHECK\)\>.*[^};]$" end="^\z1}\s*$" transparent fold keepend
-    endif
+      "\%([^}]*\|.*\%(#.*\)\@<=}.*\) - allow match only any chars exclude }
+      "or } preceding with #.*
+      syn region perlSubFold start="^\z(\s*\)\<sub\>\s\+[a-zA-Z0-9_]\+\s*{\%([^}]*\|.*\%(#.*\)\@<=}.*\)$" end="^\z1}\s*\%(#.*\)\=$" transparent fold keepend
+      syn region perlSubFold start="^\z(\s*\)\<\%(BEGIN\|END\|CHECK\|INIT\|UNITCHECK\)\>\s*{\%([^}]*\|.*\%(#.*\)\@<=}.*\)$" end="^\z1}\s*$" transparent fold keepend
+      if exists("perl_fold_anonymous_subs") && perl_fold_anonymous_subs
+          syn region perlSubFold start="\<sub\>\s*{\%([^}]*\|.*\%(#.*\)\@<=}.*\)$" end="^\s*};\s*\%(#.*\)\=$" transparent fold keepend
+      endif
   endif
 
   if exists("perl_fold_blocks")
