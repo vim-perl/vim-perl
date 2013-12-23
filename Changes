@@ -41,6 +41,8 @@ M. Carlson.
 Provide information to matchit plugin to jump between if/elsif/else.
 Credit to Alan Young.
 
+Added "fc" and "evalbytes" keywords.  Thanks, Rafael Kitover.
+
 [FIXES]
 Minor tweak to p6RxCharClass.  Thanks, Arne Skjærholt.
 
