@@ -376,8 +376,8 @@ syn match perlFunction +\<sub\>\_s*+ nextgroup=perlSubName
 syn match  perlString "\I\@<!-\?\I\i*\%(\s*=>\)\@="
 
 " All other # are comments, except ^#!
-syn match  perlComment		"#.*" contains=perlTodo,@Spell extend
-syn match  perlSharpBang	"^#!.*"
+syn match  perlComment    "#.*" contains=perlTodo,@Spell extend
+syn match  perlSharpBang  "^#!.*"
 
 " Formats
 syn region perlFormat		matchgroup=perlStatementIOFunc start="^\s*\<format\s\+\k\+\s*=\s*$"rs=s+6 end="^\s*\.\s*$" contains=perlFormatName,perlFormatField,perlVarPlain,perlVarPlain2
@@ -406,14 +406,15 @@ if exists("perl_fold")
   if !exists("perl_nofold_packages")
     syn region perlPackageFold start="^package \S\+;\s*\%(#.*\)\=$" end="^1;\=\s*\%(#.*\)\=$" end="\n\+package"me=s-1 transparent fold keepend
   endif
+
   if !exists("perl_nofold_subs")
-    if exists("perl_fold_anonymous_subs") && perl_fold_anonymous_subs
-      syn region perlSubFold     start="\<sub\>[^\n;]*{" end="}" transparent fold keepend extend
-      syn region perlSubFold     start="\<\%(BEGIN\|END\|CHECK\|INIT\)\>\s*{" end="}" transparent fold keepend
-    else
-      syn region perlSubFold     start="^\z(\s*\)\<sub\>.*[^};]$" end="^\z1}\s*\%(#.*\)\=$" transparent fold keepend
-      syn region perlSubFold start="^\z(\s*\)\<\%(BEGIN\|END\|CHECK\|INIT\|UNITCHECK\)\>.*[^};]$" end="^\z1}\s*$" transparent fold keepend
-    endif
+      "\%([^}]*\|.*\%(#.*\)\@<=}.*\) - allow match only any chars exclude }
+      "or } preceding with #.*
+      syn region perlSubFold start="^\z(\s*\)\<sub\>\s\+[a-zA-Z0-9_]\+\s*{\%([^}]*\|.*\%(#.*\)\@<=}.*\)$" end="^\z1}\s*\%(#.*\)\=$" transparent fold keepend
+      syn region perlSubFold start="^\z(\s*\)\<\%(BEGIN\|END\|CHECK\|INIT\|UNITCHECK\)\>\s*{\%([^}]*\|.*\%(#.*\)\@<=}.*\)$" end="^\z1}\s*$" transparent fold keepend
+      if exists("perl_fold_anonymous_subs") && perl_fold_anonymous_subs
+          syn region perlSubFold start="\<sub\>\s*{\%([^}]*\|.*\%(#.*\)\@<=}.*\)$" end="^\s*};\s*\%(#.*\)\=$" transparent fold keepend
+      endif
   endif
 
   if exists("perl_fold_blocks")
