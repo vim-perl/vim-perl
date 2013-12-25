@@ -406,13 +406,12 @@ if exists("perl_fold")
   if !exists("perl_nofold_packages")
     syn region perlPackageFold start="^package \S\+;\s*\%(#.*\)\=$" end="^1;\=\s*\%(#.*\)\=$" end="\n\+package"me=s-1 transparent fold keepend
   endif
+
   if !exists("perl_nofold_subs")
+    syn region perlSubFold start="^\z(\s*\)\<sub\>\s\+[a-zA-Z0-9_]\+\s*{\%([^}]*\|.*\%(#.*\)\@<=}.*\)$" end="^\z1}\s*\%(#.*\)\=$" transparent fold keepend
+    syn region perlSubFold start="^\z(\s*\)\<\%(BEGIN\|END\|CHECK\|INIT\|UNITCHECK\)\>\s*{\%([^}]*\|.*\%(#.*\)\@<=}.*\)$" end="^\z1}\s*$" transparent fold keepend
     if exists("perl_fold_anonymous_subs") && perl_fold_anonymous_subs
-      syn region perlSubFold     start="\<sub\>[^\n;]*{" end="}" transparent fold keepend extend
-      syn region perlSubFold     start="\<\%(BEGIN\|END\|CHECK\|INIT\)\>\s*{" end="}" transparent fold keepend
-    else
-      syn region perlSubFold     start="^\z(\s*\)\<sub\>.*[^};]$" end="^\z1}\s*\%(#.*\)\=$" transparent fold keepend
-      syn region perlSubFold start="^\z(\s*\)\<\%(BEGIN\|END\|CHECK\|INIT\|UNITCHECK\)\>.*[^};]$" end="^\z1}\s*$" transparent fold keepend
+      syn region perlSubFold start="\<sub\>\s*{\%([^}]*\|.*\%(#.*\)\@<=}.*\)$" end="^\s*};\s*\%(#.*\)\=$" transparent fold keepend
     endif
   endif
 
