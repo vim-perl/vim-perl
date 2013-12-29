@@ -18,6 +18,9 @@ To make things easier on everyone, try to reproduce the issue with a minimal vim
 checkout of vim-perl.  Taking the time to help out with issues you have found makes things easier on all
 of us, and that's the whole reason this is an open project. =)
 
+If you have read and understand these guidelines, add the text "I have read the guidelines" in your issue
+when you create it.
+
 # Helping Out
 
 If you would like to contribute to vim-perl, please be aware that we have a test suite which can
