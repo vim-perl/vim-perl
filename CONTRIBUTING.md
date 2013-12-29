@@ -9,7 +9,7 @@ When submitting an issue relating to highlighting/folding, please attach the fol
 
 These things make issues **much** easier to debug!
 
-*IMPORTANT*
+**IMPORTANT**
 
 Remember that scripts under `contrib` or other third party plugins have the potential to
 break your highlighting/folding; if you find an issue, please try it without any contrib scripts or
