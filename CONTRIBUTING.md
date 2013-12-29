@@ -9,9 +9,14 @@ When submitting an issue relating to highlighting/folding, please attach the fol
 
 These things make issues **much** easier to debug!
 
-Also, remember that scripts under `contrib` or other third party plugins have the potential to
+*IMPORTANT*
+
+Remember that scripts under `contrib` or other third party plugins have the potential to
 break your highlighting/folding; if you find an issue, please try it without any contrib scripts or
-other plugins set up.
+other plugins set up.  This includes any `after/syntax/perl` scripts you have set up yourself, of course.
+To make things easier on everyone, try to reproduce the issue with a minimal vim setup and an up-to-date
+checkout of vim-perl.  Taking the time to help out with issues you have found makes things easier on all
+of us, and that's the whole reason this is an open project. =)
 
 # Helping Out
 
