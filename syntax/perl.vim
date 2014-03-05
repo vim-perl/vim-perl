@@ -513,7 +513,9 @@ HiLink perlStatementIndirObj	perlStatement
 HiLink perlFunctionName		perlIdentifier
 HiLink perlMethod		perlIdentifier
 HiLink perlFunctionPRef		perlType
-HiLink perlPOD			perlComment
+if !get(g:, 'perl_include_pod', 1)
+  HiLink perlPOD		perlComment
+endif
 HiLink perlShellCommand		perlString
 HiLink perlSpecialAscii		perlSpecial
 HiLink perlSpecialDollar	perlSpecial
