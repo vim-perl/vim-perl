@@ -29,8 +29,15 @@ my $fold = Local::VimFolds->new(
     language => 'perl',
 );
 
-my $pm   = Parallel::ForkManager->new(16);
-my $iter = get_blob_iterator('p5-corpus', 'corpus');
+my $pm         = Parallel::ForkManager->new(16);
+my $iter       = get_blob_iterator('p5-corpus', 'corpus');
+my $is_passing = 1;
+
+$pm->run_on_finish(sub {
+    my ( undef, $status ) = @_;
+
+    $is_passing &&= ($status == 0);
+});
 
 while(my ( $filename, $content ) = $iter->()) {
     next unless $filename =~ /(?:pm|pl)\z/;
@@ -46,13 +53,24 @@ while(my ( $filename, $content ) = $iter->()) {
     my $got_html  = $color->color_file($source->filename);
     my @got_folds = $fold->_get_folds($source->filename);
 
-    # XXX children!
     eq_or_diff($got_html, $expected_html, "colors for file '$filename' differ");
     eq_or_diff(\@got_folds, \@expected_folds, "folds for file '$filename' differ");
 
-    $pm->finish;
+    $pm->finish(Test::More->builder->is_passing ? 0 : 1);
 }
 
 $pm->wait_all_children;
+
+unless($is_passing) {
+    diag <<'END_DIAG';
+The corpus test failed!  This means that among the files stored under corpus/ in the p5-corpus
+branch, the syntax highlighting and/or the folding has changed for one or more files.  You need
+to let a vim-perl maintainer know about this!
+
+If you are a vim-perl maintainer, please see whether or not the changes in highlighting/folding
+actually make sense.  If they do, simply run build-corpus.pl to rebuild the corpus and go on your
+merry way.  If they do not, you've got some fixing to do ;)
+END_DIAG
+}
 
 done_testing;
