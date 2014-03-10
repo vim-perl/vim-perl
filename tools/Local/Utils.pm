@@ -18,10 +18,10 @@ my $GIT_LS_TREE = qr{
     \z
 }x;
 
-sub get_blob_iterator {
-    my ( $tree, $starting_path ) = @_;
+sub find_git_object {
+    my ( $tree, $path ) = @_;
 
-    my @paths = split('/', $starting_path);
+    my @paths = split('/', $path);
 
     while(@paths) {
         my $directory = shift @paths;
@@ -48,6 +48,14 @@ sub get_blob_iterator {
             die "Unable to find path component '$directory'";
         }
     }
+
+    return $tree;
+}
+
+sub get_blob_iterator {
+    my ( $tree, $starting_path ) = @_;
+
+    $tree = find_git_object($tree, $starting_path);
 
     open my $pipe, '-|', 'git', 'ls-tree', '-r', $tree;
 
@@ -110,6 +118,6 @@ sub get_folds_for {
     return @{ decode_json($contents) };
 }
 
-our @EXPORT = qw(get_blob_iterator get_corpus_contents get_html_output_for get_folds_for);
+our @EXPORT = qw(get_blob_iterator get_corpus_contents get_html_output_for get_folds_for find_git_object);
 
 1;
