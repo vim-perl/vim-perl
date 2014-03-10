@@ -53,8 +53,8 @@ while(my ( $filename, $content ) = $iter->()) {
     my $got_html  = $color->color_file($source->filename);
     my @got_folds = $fold->_get_folds($source->filename);
 
-    eq_or_diff($got_html, $expected_html, "colors for file '$filename' differ");
-    eq_or_diff(\@got_folds, \@expected_folds, "folds for file '$filename' differ");
+    eq_or_diff($got_html, $expected_html, "colors for file '$filename' match");
+    eq_or_diff(\@got_folds, \@expected_folds, "folds for file '$filename' match");
 
     $pm->finish(Test::More->builder->is_passing ? 0 : 1);
 }
