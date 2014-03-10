@@ -89,7 +89,7 @@ sub get_blob_iterator {
 sub get_corpus_contents {
     my ( $filename ) = @_;
 
-    open my $pipe, '-|', 'git', 'show', 'p5-corpus:' . $filename;
+    open my $pipe, '-|', 'git', 'show', 'origin/p5-corpus:' . $filename;
     my $content = do {
         local $/;
         <$pipe>

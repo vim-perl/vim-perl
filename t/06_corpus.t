@@ -30,7 +30,7 @@ my $fold = Local::VimFolds->new(
 );
 
 my $pm         = Parallel::ForkManager->new(16);
-my $iter       = get_blob_iterator('p5-corpus', 'corpus');
+my $iter       = get_blob_iterator('origin/p5-corpus', 'corpus');
 my $is_passing = 1;
 
 $pm->run_on_finish(sub {
