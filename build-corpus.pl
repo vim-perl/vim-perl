@@ -2,19 +2,111 @@
 
 use strict;
 use warnings;
+use autodie;
 use lib 'tools';
 
 use Local::MissingModule;
 use Local::VimColor;
 use Local::VimFolds;
+use Local::Utils;
 
-use File::Find;
-use File::Path qw(make_path);
-use File::Spec;
-use File::Slurp qw(write_file);
+use File::Temp;
 use JSON qw(encode_json);
-use Parallel::ForkManager;
-use Term::ProgressBar;
+
+sub insert_into_tree {
+    my ( $tree, $path, $content ) = @_;
+
+    my @path_components = split(qr{/}, $path);
+    my $filename        = pop @path_components;
+
+    foreach my $component (@path_components) {
+        unless(exists $tree->{$component}) {
+            $tree->{$component} = {};
+        }
+
+        if(ref($tree->{$component}) ne 'HASH') { # if it's a leaf
+            die 'freak out';
+        }
+
+        $tree = $tree->{$component};
+    }
+    $tree->{$filename} = $content;
+}
+
+sub two_way_pipe {
+    my $input = pop;
+    my @cmd   = @_;
+
+    my ( $child_read, $child_write, $parent_read, $parent_write );
+
+    pipe($child_read, $parent_write);
+    pipe($parent_read, $child_write);
+
+    my $pid = fork;
+
+    if($pid) {
+        close $child_read;
+        close $child_write;
+
+        print { $parent_write } $input;
+        close $parent_write;
+        my $output = do {
+            local $/;
+            <$parent_read>;
+        };
+        close $parent_read;
+
+        waitpid $pid, 0;
+
+        if($? != 0) {
+            local $" = ' ';
+            die "Running @cmd exited with a non-zero status";
+        }
+
+        return $output;
+    } else {
+        close $parent_read;
+        close $parent_write;
+
+        open STDIN, '<&', $child_read;
+        open STDOUT, '>&', $child_write;
+
+        exec @cmd;
+        exit 255;
+    }
+}
+
+sub create_blob {
+    my ( $contents ) = @_;
+    my $blob_id = two_way_pipe('git', 'hash-object', '-w', '--stdin', $contents);
+    chomp $blob_id;
+    return $blob_id;
+}
+
+sub create_tree {
+    my ( $tree ) = @_;
+
+    my @files;
+
+    foreach my $filename (sort keys %$tree) {
+        my $contents = $tree->{$filename};
+
+        if(ref($contents) eq 'HASH') {
+            my $tree_id = create_tree($contents);
+            push @files, "040000 tree $tree_id\t$filename";
+        } else {
+            my $blob_id = create_blob($contents);
+            push @files, "100644 blob $blob_id\t$filename";
+        }
+    }
+
+    my $content = join("\n", @files);
+
+    my $object_id = two_way_pipe('git', 'mktree', $content);
+    chomp $object_id;
+
+    return $object_id;
+}
 
 my $color = Local::VimColor->new(
     language => 'perl',
@@ -29,49 +121,44 @@ my $fold = Local::VimFolds->new(
     language => 'perl',
 );
 
-my @corpus_files;
-my @output_files;
+my $json = JSON->new->utf8->canonical;
 
-find({ wanted => sub {
-    return unless /[.](?:pm|pl)$/;
+my $iter = get_blob_iterator('p5-corpus', 'corpus');
+my $tree = {};
 
-    my $path = $File::Find::name;
+while(my ( $filename, $contents ) = $iter->()) {
+    next unless $filename =~ /(?:pm|pl)\z/;
 
-    push @corpus_files, $path;
+    my $source = File::Temp->new;
+    print { $source } $contents;
+    close $source;
 
-    my ( undef, $dir, $file ) = File::Spec->splitpath($path);
-    my @dirs = File::Spec->splitdir($dir);
-    $dirs[0] = 'corpus_html';
-    push @output_files, File::Spec->catfile(@dirs, $file . '.html');
-    make_path(File::Spec->catdir(@dirs), {
-        verbose => 1,
-    });
-}, no_chdir => 1}, 'corpus');
+    my $html  = $color->color_file($source->filename);
+    my @folds = $fold->_get_folds($source->filename);
 
-# XXX don't allow building when dirty?
-write_file('corpus_html/revision', `git rev-parse HEAD`);
+    my $html_filename = $filename;
+    $html_filename    =~ s{\Acorpus/}{};
+    $html_filename   .= '.html';
 
-my $p  = Term::ProgressBar->new({ count => scalar(@corpus_files) });
-my $pm = Parallel::ForkManager->new(16);
+    my $folds_filename = $filename;
+    $folds_filename    =~ s{\Acorpus/}{};
+    $folds_filename   .= '-folds.json';
 
-for(my $i = 0; $i < @corpus_files; $i++) {
-    my $pid = $pm->start;
-    if($pid) {
-        $p->update($i);
-        next;
-    }
-
-    my $source      = $corpus_files[$i];
-    my $output      = $output_files[$i];
-    my $fold_output = $output_files[$i];
-
-    $fold_output =~ s/[.]html$/-folds.json/;
-
-    write_file($output, $color->color_file($source));
-
-    my @folds = $fold->_get_folds($source);
-
-    write_file($fold_output, encode_json(\@folds));
-
-    $pm->finish;
+    insert_into_tree($tree, $html_filename, $html);
+    insert_into_tree($tree, $folds_filename, $json->encode(\@folds));
 }
+
+$tree = create_tree($tree);
+
+my $corpus_tree = find_git_object('p5-corpus', 'corpus');
+
+$tree = two_way_pipe('git', 'mktree', "040000 tree $tree\tcorpus_html\n040000 tree $corpus_tree\tcorpus\n");
+chomp $tree;
+
+open my $pipe, '-|', 'git', 'commit-tree', '-m', 'Update Perl 5 corpus', $tree;
+my $commit = <$pipe>;
+close $pipe;
+chomp $commit;
+
+system 'git', 'update-ref', 'refs/heads/p5-corpus', $commit;
+system 'git', 'push', 'origin', '--force', 'p5-corpus:p5-corpus';
