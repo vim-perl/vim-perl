@@ -6,6 +6,7 @@ When submitting an issue relating to highlighting/folding, please attach the fol
   - The file used in the screenshot.  If it's proprietary or too big, please try
     to reproduce the issue in a small sample file.
   - A link to your vimrc, if it exists.
+  - The output of `vim --version`.
 
 These things make issues **much** easier to debug!
 
