@@ -123,7 +123,7 @@ my $fold = Local::VimFolds->new(
 
 my $json = JSON->new->utf8->canonical;
 
-my $iter = get_blob_iterator('p5-corpus', 'corpus');
+my $iter = get_blob_iterator('origin/p5-corpus', 'corpus');
 my $tree = {};
 
 while(my ( $filename, $contents ) = $iter->()) {
@@ -150,7 +150,7 @@ while(my ( $filename, $contents ) = $iter->()) {
 
 $tree = create_tree($tree);
 
-my $corpus_tree = find_git_object('p5-corpus', 'corpus');
+my $corpus_tree = find_git_object('origin/p5-corpus', 'corpus');
 
 $tree = two_way_pipe('git', 'mktree', "040000 tree $tree\tcorpus_html\n040000 tree $corpus_tree\tcorpus\n");
 chomp $tree;
