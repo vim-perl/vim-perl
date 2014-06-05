@@ -43,6 +43,9 @@ Credit to Alan Young.
 
 Added "fc" and "evalbytes" keywords.  Thanks, Rafael Kitover.
 
+Added optional highlighting for subroutine signatures, as well
+as highlighting for new postfix dereferencing.   Thanks, mattn!
+
 [FIXES]
 Minor tweak to p6RxCharClass.  Thanks, Arne Skjærholt.
 
