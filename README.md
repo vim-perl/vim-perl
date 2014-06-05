@@ -1,5 +1,7 @@
 # vim-perl
 
+[![Build Status](https://api.travis-ci.org/vim-perl/vim-perl.png?branch=master)](https://travis-ci.org/vim-perl/vim-perl)
+
 This is the aggregation of all the various Perl-related syntax and
 helper files for Perl 5 and Perl 6.
 
