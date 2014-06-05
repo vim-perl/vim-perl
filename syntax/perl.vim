@@ -5,7 +5,7 @@
 " Bugs/requests: http://github.com/vim-perl/vim-perl/issues
 " Last Change:   {{LAST_CHANGE}}
 " Contributors:  Andy Lester <andy@petdance.com>
-"                Hinrik Örn Sigurðsson <hinrik.sig@gmail.com>
+"                Hinrik Orn Sigurdsson <hinrik.sig@gmail.com>
 "                Lukas Mai <l.mai.web.de>
 "                Nick Hibma <nick@van-laarhoven.org>
 "                Sonia Heimann <niania@netsurf.org>
