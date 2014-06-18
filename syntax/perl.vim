@@ -172,7 +172,9 @@ if !exists("perl_no_extended_vars")
   syn region perlVarMember	matchgroup=perlVarPlain start="\%(->\)\=\[" skip="\\]" end="]" contained contains=@perlExpr nextgroup=perlVarMember,perlVarSimpleMember,perlMethod,perlPostDeref extend
   syn match perlPackageConst	"__PACKAGE__" nextgroup=perlMethod,perlPostDeref
   syn match  perlMethod		"->\$*\I\i*" contained nextgroup=perlVarSimpleMember,perlVarMember,perlMethod,perlPostDeref
-  syn match  perlPostDeref	"->\%($#\|[$@%]\)\*" contained nextgroup=perlVarSimpleMember,perlVarMember,perlMethod,perlPostDeref
+  syn match  perlPostDeref	"->\%($#\|[$@%&*]\)\*" contained nextgroup=perlVarSimpleMember,perlVarMember,perlMethod,perlPostDeref
+  syn region  perlPostDeref	start="->\%($#\|[$@%&*]\)\[" skip="\\]" end="]" contained contains=@perlExpr nextgroup=perlVarSimpleMember,perlVarMember,perlMethod,perlPostDeref
+  syn region  perlPostDeref	start="->\%($#\|[$@%&*]\){" skip="\\}" end="}" contained contains=@perlExpr nextgroup=perlVarSimpleMember,perlVarMember,perlMethod,perlPostDeref
 endif
 
 " File Descriptors
