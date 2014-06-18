@@ -9,45 +9,6 @@ use Test::More;
 use Test::Differences;
 use Text::VimColor;
 
-my %LANG_HIGHLIGHT_OPTIONS = (
-    perl  => [
-        [
-            '+let perl_include_pod=1',
-        ],
-        [
-            '+let perl_include_pod=1',
-            '+let perl_fold=1',
-        ],
-        [
-            '+let perl_include_pod=1',
-            '+let perl_fold=1',
-            '+let perl_fold_anonymous_subs=1',
-        ],
-    ],
-    perl6 => [
-        [
-            '+let perl_include_pod=1',
-        ],
-        [
-            '+let perl_include_pod=1',
-            '+let perl_fold=1',
-        ],
-        [
-            '+let perl_include_pod=1',
-            '+let perl_fold=1',
-            '+let perl_fold_anonymous_subs=1',
-        ],
-    ],
-);
-
-my $test_file_count = 0;
-find(sub {
-    return if !/\.(?:pl|pm|pod|t)$/;
-    $test_file_count++;
-}, 't_source/perl', 't_source/perl6');
-
-plan tests => $test_file_count * 3;
-
 # hack to work around a silly limitation in Text::VimColor,
 # will remove it when Text::VimColor has been patched
 {
@@ -57,46 +18,40 @@ plan tests => $test_file_count * 3;
 }
 tie %Text::VimColor::SYNTAX_TYPE, 'TrueHash';
 
-my $color_file = catfile('t', 'define_all.vim');
-my $css_file   = catfile('t', 'vim_syntax.css');
+sub construct_highlighter {
+    my ( $lang, $option_set ) = @_;
 
-for my $lang (qw(perl perl6)) {
+    my $color_file = catfile('t', 'define_all.vim');
+    my $css_file   = catfile('t', 'vim_syntax.css');
+
     my $syntax_file   = catfile('syntax', "$lang.vim");
     my $ftplugin_file = catfile('ftplugin', "$lang.vim");
     my $css_url = join('/', '..', '..', 't', 'vim_syntax.css');
 
-    my $options = $LANG_HIGHLIGHT_OPTIONS{$lang};
+    return Text::VimColor->new(
+        html_full_page         => 1,
+        html_inline_stylesheet => 0,
+        html_stylesheet_url    => $css_url,
+        vim_options            => [
+            qw(-RXZ -i NONE -u NONE -U NONE -N -n), # for performance
+            '+set nomodeline',          # for performance
+            '+set runtimepath=.',       # don't consider system runtime files
+            @$option_set,
+            "+source $ftplugin_file",
+            "+source $syntax_file",
+            "+source $color_file",      # all syntax classes should be defined
+        ],
+    );
+}
 
-    my @highlighters;
-    foreach my $option_set (@$options) {
-        push @highlighters, Text::VimColor->new(
-            html_full_page         => 1,
-            html_inline_stylesheet => 0,
-            html_stylesheet_url    => $css_url,
-            vim_options            => [
-                qw(-RXZ -i NONE -u NONE -U NONE -N -n), # for performance
-                '+set nomodeline',          # for performance
-                '+set runtimepath=.',       # don't consider system runtime files
-                @$option_set,
-                "+source $ftplugin_file",
-                "+source $syntax_file",
-                "+source $color_file",      # all syntax classes should be defined
-            ],
-        );
-    }
+sub get_language_for_file {
+    my ( $filename ) = @_;
 
-    find({
-        wanted   => sub {
-            test_source_file($File::Find::name, \@highlighters)
-        },
-        no_chdir => 1,
-    }, catdir('t_source', $lang));
+    return $filename =~ /perl6/ ? 'perl6' : 'perl';
 }
 
 sub test_source_file {
     my ( $file, $highlighters ) = @_;
-    return if -d $file;
-    return if $file !~ /\.(?:pl|pm|pod|t)$/;
 
     foreach my $hilite (@$highlighters) {
         $hilite->syntax_mark_file($file);
@@ -113,7 +68,7 @@ sub test_source_file {
             # create the corresponding html file if it's missing
             if (!-e $html_file) {
                 open my $markup, '>', $html_file or die "Can't open $html_file: $!\n";
-                print $markup $output;
+                print {$markup} $output;
                 close $markup;
 
                 skip("Created $html_file", 1);
@@ -135,3 +90,38 @@ sub test_source_file {
     }
 }
 
+my %LANG_HIGHLIGHTERS = (
+    perl  => [
+        construct_highlighter('perl', [
+            '+let perl_include_pod=1',
+        ]),
+        construct_highlighter('perl', [
+            '+let perl_include_pod=1',
+            '+let perl_fold=1',
+        ]),
+        construct_highlighter('perl', [
+            '+let perl_include_pod=1',
+            '+let perl_fold=1',
+            '+let perl_fold_anonymous_subs=1',
+        ]),
+    ],
+    perl6 => [
+        construct_highlighter('perl6', [
+            '+let perl_include_pod=1',
+        ]),
+    ],
+);
+
+my @test_files;
+
+find(sub {
+    return if !/\.(?:pl|pm|pod|t)$/;
+
+    push @test_files, $File::Find::name;
+}, 't_source/perl', 't_source/perl6');
+
+plan tests => scalar(map { @{ $LANG_HIGHLIGHTERS{get_language_for_file($_)} } } @test_files);
+
+foreach my $test_file (@test_files) {
+    test_source_file($test_file, $LANG_HIGHLIGHTERS{ get_language_for_file($test_file) });
+}
