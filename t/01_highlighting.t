@@ -114,11 +114,15 @@ my %LANG_HIGHLIGHTERS = (
 
 my @test_files;
 
-find(sub {
-    return if !/\.(?:pl|pm|pod|t)$/;
+if(@ARGV) {
+    @test_files = @ARGV;
+} else {
+    find(sub {
+        return if !/\.(?:pl|pm|pod|t)$/;
 
-    push @test_files, $File::Find::name;
-}, 't_source/perl', 't_source/perl6');
+        push @test_files, $File::Find::name;
+    }, 't_source/perl', 't_source/perl6');
+}
 
 plan tests => scalar(map { @{ $LANG_HIGHLIGHTERS{get_language_for_file($_)} } } @test_files);
 
