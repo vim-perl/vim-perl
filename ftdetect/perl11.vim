@@ -31,3 +31,4 @@ function! s:DetectPerl6()
 endfunction
 
 autocmd BufReadPost *.pl,*.pm,*.t call s:DetectPerl6()
+autocmd BufNew,BufRead *.nqp setf perl6
