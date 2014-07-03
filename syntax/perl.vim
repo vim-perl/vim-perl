@@ -28,7 +28,7 @@
 " unlet perl_fold
 " unlet perl_fold_blocks
 " unlet perl_nofold_packages
-" let perl_nofold_subs = 1
+" unlet perl_nofold_subs
 " unlet perl_fold_anonymous_subs
 " unlet perl_no_subprototype_error
 
