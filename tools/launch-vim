@@ -1,0 +1,30 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use FindBin;
+use File::Spec;
+use Getopt::Long;
+
+sub show_help {
+    print << "END_USAGE";
+Usage: $0 [--help] [vim-options] [files]
+
+Launches an instance of Vim with a clean slate (ie. without considering
+the user's configuration).  Custom configuration can be dropped into
+$FindBin::Bin/config.vim
+END_USAGE
+    exit 0;
+}
+
+my $help;
+
+my $ok = GetOptions(
+    'h|help' => \$help,
+);
+
+show_help if $help || !$ok;
+
+my $config = File::Spec->catfile($FindBin::Bin, 'clean-slate.vim');
+exec 'vim', '-u', $config, @ARGV;
