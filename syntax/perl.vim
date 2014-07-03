@@ -372,9 +372,11 @@ endif
 if !exists("perl_no_subprototype_error") " Set 1 if using signatures feature in perl5.19.9
     syn match perlSubPrototypeError "(\%(\_s*\%(\%(\\\%([$@%&*]\|\[[$@%&*]\+\]\)\|[$&*]\|[@%]\%(\_s*)\)\@=\|;\%(\_s*[)$@%&*\\]\)\@=\|_\%(\_s*[);]\)\@=\)\_s*\)*\)\@>\zs\_[^)]\+" contained
     syn match perlSubPrototype +(\_[^)]*)\_s*+ nextgroup=perlSubAttributes,perlComment contained contains=perlSubPrototypeError
+else
+    syntax match perlSignature "(.\{-})" nextgroup=perlSubAttributes,perlComment contained
 endif
 
-syn match perlSubName +\%(\h\|::\|'\w\)\%(\w\|::\|'\w\)*\_s*\|+ contained nextgroup=perlSubPrototype,perlSubAttributes,perlComment
+syn match perlSubName +\%(\h\|::\|'\w\)\%(\w\|::\|'\w\)*\_s*\|+ contained nextgroup=perlSubPrototype,perlSignature,perlSubAttributes,perlComment
 
 syn match perlFunction +\<sub\>\_s*+ nextgroup=perlSubName
 
@@ -459,6 +461,7 @@ HiLink perlOperator		Operator
 HiLink perlFunction		Keyword
 HiLink perlSubName		Function
 HiLink perlSubPrototype		Type
+HiLink perlSignature		Type
 HiLink perlSubAttributes	PreProc
 HiLink perlSubAttributesCont	perlSubAttributes
 HiLink perlComment		Comment
