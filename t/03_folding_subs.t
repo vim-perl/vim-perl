@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use lib 'tools';
 
-use Test::More tests => 3;
+use Test::More tests => 4;
 use Local::VimFolds;
 
 my $folds = Local::VimFolds->new(
@@ -50,5 +50,24 @@ sub foo { # {{{
     my ( $self, @params ) = @_;
 
     print "hello!\n";
+} # }}}
+END_PERL
+
+$folds = Local::VimFolds->new(
+    language => 'perl',
+    options  => {
+        perl_fold                  => 1,
+        perl_nofold_packages       => 1,
+        perl_no_subprototype_error => 1,
+    },
+);
+
+$folds->folds_match(<<'END_PERL', 'test folds for subs with signatures');
+sub add($x, $y) { # {{{
+    return $x + $y;
+} # }}}
+
+sub subtract($x, $y) { # {{{
+    return $x - $y;
 } # }}}
 END_PERL
