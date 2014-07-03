@@ -18,6 +18,34 @@ use Text::VimColor;
 }
 tie %Text::VimColor::SYNTAX_TYPE, 'TrueHash';
 
+my @PRE_OPTIONS = (
+    qw(-RXZ -i NONE -u NONE -U NONE -N -n), # for performance
+    '+set nomodeline',          # for performance
+    '+set runtimepath=.',       # don't consider system runtime files
+);
+
+my %LANG_HIGHLIGHTERS = (
+    perl  => [
+        construct_highlighter('perl', [
+            '+let perl_include_pod=1',
+        ]),
+        construct_highlighter('perl', [
+            '+let perl_include_pod=1',
+            '+let perl_fold=1',
+        ]),
+        construct_highlighter('perl', [
+            '+let perl_include_pod=1',
+            '+let perl_fold=1',
+            '+let perl_fold_anonymous_subs=1',
+        ]),
+    ],
+    perl6 => [
+        construct_highlighter('perl6', [
+            '+let perl_include_pod=1',
+        ]),
+    ],
+);
+
 sub construct_highlighter {
     my ( $lang, $option_set ) = @_;
 
@@ -33,15 +61,54 @@ sub construct_highlighter {
         html_inline_stylesheet => 0,
         html_stylesheet_url    => $css_url,
         vim_options            => [
-            qw(-RXZ -i NONE -u NONE -U NONE -N -n), # for performance
-            '+set nomodeline',          # for performance
-            '+set runtimepath=.',       # don't consider system runtime files
+            @PRE_OPTIONS,
             @$option_set,
             "+source $ftplugin_file",
             "+source $syntax_file",
             "+source $color_file",      # all syntax classes should be defined
         ],
     );
+}
+
+sub extract_custom_options {
+    my ( $filename ) = @_;
+
+    my @options;
+    open my $fh, '<', $filename or return;
+    while(<$fh>) {
+        chomp;
+        if(/^\s*#\s*extra-option:\s*(.*)/) {
+            push @options, "+$1";
+        }
+    }
+    close $fh;
+
+    return @options;
+}
+
+sub create_custom_highlighter {
+    my ( $orig, @options ) = @_;
+
+    my $lang;
+    my @orig_options = $orig->vim_options;
+
+    my $i = 0;
+    while($i < @PRE_OPTIONS && @orig_options && $PRE_OPTIONS[$i] eq $orig_options[0]) {
+        shift @orig_options;
+        $i++;
+    }
+
+    while(@orig_options && $orig_options[-1] =~ /^[+]source/) {
+        unless(defined $lang) {
+            ( $lang ) = $orig_options[-1] =~ /(\w+)[.]vim$/;
+            undef $lang unless $LANG_HIGHLIGHTERS{$lang};
+        }
+        pop @orig_options;
+    }
+
+    unshift @options, @orig_options;
+
+    return construct_highlighter($lang, \@options);
 }
 
 sub get_language_for_file {
@@ -54,8 +121,17 @@ sub test_source_file {
     my ( $file, $highlighters ) = @_;
 
     foreach my $hilite (@$highlighters) {
-        $hilite->syntax_mark_file($file);
-        my $output = $hilite->html();
+        my @custom_options = extract_custom_options($file);
+        my $output;
+
+        if(@custom_options) {
+            my $custom_hilite = create_custom_highlighter($hilite, @custom_options);
+            $custom_hilite->syntax_mark_file($file);
+            $output = $custom_hilite->html();
+        } else {
+            $hilite->syntax_mark_file($file);
+            $output = $hilite->html();
+        }
 
         my $html_file = $file;
         $html_file .= '.html';
@@ -89,28 +165,6 @@ sub test_source_file {
         }
     }
 }
-
-my %LANG_HIGHLIGHTERS = (
-    perl  => [
-        construct_highlighter('perl', [
-            '+let perl_include_pod=1',
-        ]),
-        construct_highlighter('perl', [
-            '+let perl_include_pod=1',
-            '+let perl_fold=1',
-        ]),
-        construct_highlighter('perl', [
-            '+let perl_include_pod=1',
-            '+let perl_fold=1',
-            '+let perl_fold_anonymous_subs=1',
-        ]),
-    ],
-    perl6 => [
-        construct_highlighter('perl6', [
-            '+let perl_include_pod=1',
-        ]),
-    ],
-);
 
 my @test_files;
 
