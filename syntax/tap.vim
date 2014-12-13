@@ -4,6 +4,7 @@
 " Remark:      Simple syntax highlighting for TAP output
 " License:
 " Copyright:   (c) 2008-2013 Rufus Cable
+" Last Change: {{LAST_CHANGE}}
 
 if exists("b:current_syntax")
   finish
