@@ -39,11 +39,6 @@ endif
 let s:cpo_save = &cpo
 set cpo&vim
 
-if exists('&regexpengine')
-  let s:regexpengine=&regexpengine
-  set regexpengine=1
-endif
-
 " POD starts with ^=<word> and ends with ^=cut
 
 if !exists("perl_include_pod") || perl_include_pod == 1
@@ -582,11 +577,6 @@ syn sync match perlSyncPOD	grouphere perlPOD "^=item"
 syn sync match perlSyncPOD	grouphere NONE "^=cut"
 
 let b:current_syntax = "perl"
-
-if exists('&regexpengine')
-  let &regexpengine=s:regexpengine
-  unlet s:regexpengine
-endif
 
 let &cpo = s:cpo_save
 unlet s:cpo_save
