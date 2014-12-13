@@ -4,40 +4,26 @@ use strict;
 use warnings;
 
 use Cwd qw(getcwd);
-use DateTime;
+use FindBin;
 use File::Path qw(make_path);
 use File::Spec;
 use File::Temp;
 
-sub last_change_for_file {
-    my ( $filename ) = @_;
-
-    my $epoch = qx(git log -1 --format=format:%at -- $filename);
-    chomp $epoch;
-    my $last_change = DateTime->from_epoch(epoch => $epoch);
-    return sprintf('%04d-%02d-%02d', $last_change->year, $last_change->month,
-        $last_change->day);
-}
-
 sub run_template {
     my ( $input, $output ) = @_;
+    my $pid = fork;
 
-    my $in_fh;
-    my $out_fh;
+    die "Unable to fork child process: $!\n" unless defined $pid;
 
-    open $in_fh, '<', $input or die "Unable to open '$input' for reading: $!";
-    unless(open $out_fh, '>', $output) {
-        close $in_fh;
-        die "Unable to open '$output' for writing: $!";
+    if($pid) {
+        waitpid $pid, 0;
+        die "Child process failed\n" unless $? == 0;
+    } else {
+        open STDOUT, '>', $output or die "Unable to open '$output' for writing: $!";
+
+        exec $^X, "$FindBin::Bin/populate-last-change.pl", $input;
+        die "Unable to execute populate-last-change.pl: $!";
     }
-
-    while(<$in_fh>) {
-        s/\Q{{LAST_CHANGE}}\E/last_change_for_file($input)/e;
-        print { $out_fh } $_;
-    }
-
-    close $in_fh;
-    close $out_fh;
 }
 
 my @FILES_TO_COPY = map {
