@@ -355,15 +355,11 @@ syn keyword perlStatementPackage	package contained
 "       sub [name] [(prototype)] {
 "
 syn match perlSubError "[^[:space:];{#]" contained
-if v:version == 701 && !has('patch221')  " XXX I hope that's the right one
-    syn match perlSubAttributes ":" contained
-else
-    syn match perlSubAttributesCont "\h\w*\_s*\%(:\_s*\)\=" nextgroup=@perlSubAttrMaybe contained
-    syn region perlSubAttributesCont matchgroup=perlSubAttributesCont start="\h\w*(" end=")\_s*\%(:\_s*\)\=" nextgroup=@perlSubAttrMaybe contained contains=@perlInterpSQ,perlParensSQ
-    syn cluster perlSubAttrMaybe contains=perlSubAttributesCont,perlSubError,perlFakeGroup
-    syn match perlSubAttributes "" contained nextgroup=perlSubError
-    syn match perlSubAttributes ":\_s*" contained nextgroup=@perlSubAttrMaybe
-endif
+syn match perlSubAttributesCont "\h\w*\_s*\%(:\_s*\)\=" nextgroup=@perlSubAttrMaybe contained
+syn region perlSubAttributesCont matchgroup=perlSubAttributesCont start="\h\w*(" end=")\_s*\%(:\_s*\)\=" nextgroup=@perlSubAttrMaybe contained contains=@perlInterpSQ,perlParensSQ
+syn cluster perlSubAttrMaybe contains=perlSubAttributesCont,perlSubError,perlFakeGroup
+syn match perlSubAttributes "" contained nextgroup=perlSubError
+syn match perlSubAttributes ":\_s*" contained nextgroup=@perlSubAttrMaybe
 if !exists("perl_no_subprototype_error") " Set 1 if using signatures feature in perl5.19.9
     syn match perlSubPrototypeError "(\%(\_s*\%(\%(\\\%([$@%&*]\|\[[$@%&*]\+\]\)\|[$&*]\|[@%]\%(\_s*)\)\@=\|;\%(\_s*[)$@%&*\\]\)\@=\|_\%(\_s*[);]\)\@=\)\_s*\)*\)\@>\zs\_[^)]\+" contained
     syn match perlSubPrototype +(\_[^)]*)\_s*+ nextgroup=perlSubAttributes,perlComment contained contains=perlSubPrototypeError
