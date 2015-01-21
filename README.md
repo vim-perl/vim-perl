@@ -30,7 +30,17 @@ as a screenshot demonstrating the problem.
 ## Can you add highlighting for Moose, Try::Tiny, Test::More, SQL in strings, etc?
 
 We have syntax "extensions" under the `contrib/` directory; you can find custom highlighting
-for these sorts of things there.
+for these sorts of things there. To enable any of them, just drop the relevant
+file in a `after/syntax/perl` directory visible to vim.
+
+    $ cp contrib/dancer.vim ~/.vim/after/syntax/perl/
+
+You can also populate the local `after/syntax/perl/` via `make`:
+
+    $ make dancer moose
+
+    $ ls after/syntax/perl
+    dancer.vim  moose.vim
 
 ## Curly braces inside of regexes/strings are considered when I use %
 
