@@ -23,3 +23,40 @@ tarball:
 
 test:
 	prove -rv t
+
+clean:
+	rm -fr after/syntax/perl
+
+contrib_syntax:
+	mkdir -p after/syntax/perl
+
+carp: contrib_syntax
+	cp contrib/carp.vim after/syntax/perl/
+
+dancer: contrib_syntax
+	cp contrib/dancer.vim after/syntax/perl/
+
+heredoc-sql-mason: contrib_syntax
+	cp contrib/heredoc-sql-mason.vim after/syntax/perl/
+
+heredoc-sql: contrib_syntax
+	cp contrib/heredoc-sql.vim after/syntax/perl/
+
+highlight-all-pragmas: contrib_syntax
+	cp contrib/highlight-all-pragmas.vim after/syntax/perl/
+
+js-css-in-mason: contrib_syntax
+	cp contrib/js-css-in-mason.vim after/syntax/perl/
+
+method-signatures: contrib_syntax
+	cp contrib/method-signatures.vim after/syntax/perl/
+
+moose: contrib_syntax
+	cp contrib/moose.vim after/syntax/perl/
+
+test-more: contrib_syntax
+	cp contrib/test-more.vim after/syntax/perl/
+
+try-tiny: contrib_syntax
+	cp contrib/try-tiny.vim after/syntax/perl/
+
