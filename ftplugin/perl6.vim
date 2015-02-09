@@ -69,7 +69,7 @@ let &l:path=perlpath
 "---------------------------------------------
 
 " Undo the stuff we changed.
-let b:undo_ftplugin = "setlocal fo< com< cms< inc< inex< def< isk<" .
+let b:undo_ftplugin = "setlocal fo< com< cms< inc< inex< def< isf< isk< kp< path<" .
         \         " | unlet! b:browsefilter"
 
 " Restore the saved compatibility options.
