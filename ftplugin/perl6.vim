@@ -65,7 +65,18 @@ if !exists("perlpath")
     endif
 endif
 
-let &l:path=perlpath
+" Append perlpath to the existing path value, if it is set.  Since we don't
+" use += to do it because of the commas in perlpath, we have to handle the
+" global / local settings, too.
+if &l:path == ""
+    if &g:path == ""
+        let &l:path=perlpath
+    else
+        let &l:path=&g:path.",".perlpath
+    endif
+else
+    let &l:path=&l:path.",".perlpath
+endif
 "---------------------------------------------
 
 " Undo the stuff we changed.
