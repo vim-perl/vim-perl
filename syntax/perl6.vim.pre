@@ -81,15 +81,15 @@ set cpo&vim
 " @@IDENTIFIER_Q@@      "\\%(@@IDENT_NONDIGIT_Q@@\\%(@@IDENT_CHAR_Q@@\\|-@@IDENT_NONDIGIT_Q@@\\@=\\)*\\)"
 
 " Identifiers (subroutines, methods, constants, classes, roles, etc)
-syn match p6Identifier display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)"
+syn match p6Identifier display "@@IDENTIFIER@@"
 
 " This is used in the for loops below
 " Don't use the "syn keyword" construct because that always has higher
 " priority than matches/regions, so the words can't be autoquoted with
 " the "=>" and "p5=>" operators. All the lookaround stuff is to make sure
 " we don't match them as part of some other identifier.
-let s:before_keyword = " display \"\\%([A-Za-z_\xC0-\xFF0-9]\\|[A-Za-z_\xC0-\xFF]\\@<=-\\)\\@<!\\%("
-let s:after_keyword = "\\)\\%([A-Za-z_\xC0-\xFF0-9]\\|-[A-Za-z_\xC0-\xFF]\\@=\\)\\@!\""
+let s:before_keyword = " display \"\\%(@@IDENT_CHAR@@\\|@@IDENT_NONDIGIT@@\\@<=-\\)\\@<!\\%("
+let s:after_keyword = "\\)\\%(@@IDENT_CHAR@@\\|-@@IDENT_NONDIGIT@@\\@=\\)\\@!\""
 
 " Billions of keywords
 let s:keywords = {
@@ -184,7 +184,7 @@ syn match p6Operator display "\%(:\@<!::\@!\|::=\|\.::\)"
 " these require whitespace on the left side
 syn match p6Operator display "\%(\s\|^\)\@<=\%(xx=\|p5=>\)"
 " "i" requires a digit to the left, and no identifier char to the right
-syn match p6Operator display "\d\@<=i[A-Za-z_\xC0-\xFF0-9]\@!"
+syn match p6Operator display "\d\@<=i@@IDENT_CHAR@@\@!"
 " index overloading
 syn match p6Operator display "\%(&\.(\@=\|@\.\[\@=\|%\.{\@=\)"
 
@@ -217,7 +217,7 @@ unlet s:infix_a s:infix_a_long s:infix_a_words s:infix_a_pattern
 unlet s:infix_n s:infix_n_pattern s:both
 
 " [+] reduce
-exec "syn match p6ReduceOp display \"[A-Za-z_\xC0-\xFF0-9]\\@<!\\[[R\\\\]\\?!\\?". s:infix_assoc ."]\\%(«\\|<<\\)\\?\""
+exec "syn match p6ReduceOp display \"@@IDENT_CHAR@@\\@<!\\[[R\\\\]\\?!\\?". s:infix_assoc ."]\\%(«\\|<<\\)\\?\""
 unlet s:infix_assoc
 
 " Reverse and cross operators (Rop, Xop)
@@ -260,19 +260,19 @@ exec "syn match p6Routine ". s:before_keyword . s:words . s:after_keyword
 unlet s:before_keyword s:after_keyword s:words_space s:temp s:words s:routines
 
 " packages, must come after all the keywords
-syn match p6Identifier display "\%(::\)\@<=\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)*"
-syn match p6Identifier display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\%(::\)\@="
+syn match p6Identifier display "\%(::\)\@<=@@IDENTIFIER@@*"
+syn match p6Identifier display "@@IDENTIFIER@@\%(::\)\@="
 
 " some standard packages
-syn match p6Type display "\%(::\|[A-Za-z_\xC0-\xFF0-9]\|[A-Za-z_\xC0-\xFF]\@<=[-']\)\@<!\%(Order\%(::Same\|::Increase\|::Decrease\)\?\)\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)\@!"
-syn match p6Type display "\%(::\|[A-Za-z_\xC0-\xFF0-9]\|[A-Za-z_\xC0-\xFF]\@<=[-']\)\@<!\%(Bool\%(::True\|::False\)\?\)\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)\@!"
+syn match p6Type display "\%(::\|@@IDENT_CHAR@@\|@@IDENT_NONDIGIT@@\@<=[-']\)\@<!\%(Order\%(::Same\|::Increase\|::Decrease\)\?\)\%(@@IDENT_CHAR@@\|-@@IDENT_NONDIGIT@@\@=\)\@!"
+syn match p6Type display "\%(::\|@@IDENT_CHAR@@\|@@IDENT_NONDIGIT@@\@<=[-']\)\@<!\%(Bool\%(::True\|::False\)\?\)\%(@@IDENT_CHAR@@\|-@@IDENT_NONDIGIT@@\@=\)\@!"
 
 
 syn match p6Shebang    display "\%^#!.*"
 syn match p6BlockLabel display "\%(^\s*\)\@<=\h\w*\s*::\@!\_s\@="
-syn match p6Number     display "[A-Za-z_\xC0-\xFF0-9]\@<!_\@!\%(\d\|__\@!\)\+_\@<!\%([eE]_\@!+\?\%(\d\|_\)\+\)\?_\@<!"
-syn match p6Float      display "[A-Za-z_\xC0-\xFF0-9]\@<!_\@!\%(\d\|__\@!\)\+_\@<![eE]_\@!-\%(\d\|_\)\+"
-syn match p6Float      display "[A-Za-z_\xC0-\xFF0-9]\@<!_\@<!\%(\d\|__\@!\)*_\@<!\.\@<!\._\@!\.\@!\a\@!\%(\d\|_\)\+_\@<!\%([eE]_\@!\%(\d\|_\)\+\)\?"
+syn match p6Number     display "@@IDENT_CHAR@@\@<!_\@!\%(\d\|__\@!\)\+_\@<!\%([eE]_\@!+\?\%(\d\|_\)\+\)\?_\@<!"
+syn match p6Float      display "@@IDENT_CHAR@@\@<!_\@!\%(\d\|__\@!\)\+_\@<![eE]_\@!-\%(\d\|_\)\+"
+syn match p6Float      display "@@IDENT_CHAR@@\@<!_\@<!\%(\d\|__\@!\)*_\@<!\.\@<!\._\@!\.\@!\a\@!\%(\d\|_\)\+_\@<!\%([eE]_\@!\%(\d\|_\)\+\)\?"
 
 syn match p6NumberBase display "[obxd]" contained
 syn match p6Number     display "\<0\%(o[0-7][0-7_]*\)\@="     nextgroup=p6NumberBase
@@ -289,10 +289,10 @@ syn match p6VersionNum display "\d\+" nextgroup=p6VersionDot contained
 syn match p6VersionDot display "\.\%(\d\|\*\)\@=" nextgroup=p6VersionNum contained
 
 " try to distinguish the "is" function from the "is" trail auxiliary
-syn match p6Routine     display "\%(\%(\S[A-Za-z_\xC0-\xFF0-9]\@<!\|^\)\s*\)\@<=is\>"
+syn match p6Routine     display "\%(\%(\S@@IDENT_CHAR@@\@<!\|^\)\s*\)\@<=is\>"
 
 " does is a type constraint sometimes
-syn match p6TypeConstraint display "does\%(\s*\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)\)\@="
+syn match p6TypeConstraint display "does\%(\s*\%(@@IDENT_CHAR@@\|[-']@@IDENT_NONDIGIT@@\@=\)\)\@="
 
 " int is a type sometimes
 syn match p6Type        display "\<int\>\%(\s*(\|\s\+\d\)\@!"
@@ -321,8 +321,8 @@ syn match p6Context display "\<\%(item\|list\|slice\|hash\)\>"
 syn match p6Context display "\%(\$\|@\|%\|&\)(\@="
 
 " the "$" placeholder in "$var1, $, var2 = @list"
-syn match p6Placeholder display "\%(,\s*\)\@<=\$\%([A-Za-z_\xC0-\xFF]\|\%([.^*?=!~]\|:\@<!::\@!\)\)\@!"
-syn match p6Placeholder display "\$\%([A-Za-z_\xC0-\xFF]\|\%([.^*?=!~]\|:\@<!::\@!\)\)\@!\%(,\s*\)\@="
+syn match p6Placeholder display "\%(,\s*\)\@<=\$\%(@@IDENT_NONDIGIT@@\|\%([.^*?=!~]\|:\@<!::\@!\)\)\@!"
+syn match p6Placeholder display "\$\%(@@IDENT_NONDIGIT@@\|\%([.^*?=!~]\|:\@<!::\@!\)\)\@!\%(,\s*\)\@="
 
 " Quoting
 
@@ -404,8 +404,8 @@ syn cluster p6Interp_double
     \ add=@p6Interp_backslash
 
 syn region p6InterpScalar
-    \ start="\ze\z(\$\%(\%(\%(\d\+\|!\|/\|¢\)\|\%(\%(\%([.^*?=!~]\|:\@<!::\@!\)[A-Za-z_\xC0-\xFF]\@=\)\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\)\%(\.\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\|\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)*\)\.\?\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)\)"
-    \ start="\ze\z(\$\%(\%(\%(\%([.^*?=!~]\|:\@<!::\@!\)[A-Za-z_\xC0-\xFF]\@=\)\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\)\|\%(\d\+\|!\|/\|¢\)\)\)"
+    \ start="\ze\z(\$\%(\%(\%(\d\+\|!\|/\|¢\)\|\%(\%(\%([.^*?=!~]\|:\@<!::\@!\)@@IDENT_NONDIGIT@@\@=\)\?@@IDENTIFIER@@\)\%(\.@@IDENTIFIER@@\|\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)*\)\.\?\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)\)"
+    \ start="\ze\z(\$\%(\%(\%(\%([.^*?=!~]\|:\@<!::\@!\)@@IDENT_NONDIGIT@@\@=\)\?@@IDENTIFIER@@\)\|\%(\d\+\|!\|/\|¢\)\)\)"
     \ end="\z1\zs"
     \ contained
     \ contains=TOP
@@ -420,7 +420,7 @@ syn region p6InterpScalar
     \ contains=TOP
 
 syn region p6InterpArray
-    \ start="\ze\z(@\$*\%(\%(\%(!\|/\|¢\)\|\%(\%(\%([.^*?=!~]\|:\@<!::\@!\)[A-Za-z_\xC0-\xFF]\@=\)\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\)\%(\.\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\|\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)*\)\.\?\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)\)"
+    \ start="\ze\z(@\$*\%(\%(\%(!\|/\|¢\)\|\%(\%(\%([.^*?=!~]\|:\@<!::\@!\)@@IDENT_NONDIGIT@@\@=\)\?@@IDENTIFIER@@\)\%(\.@@IDENTIFIER@@\|\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)*\)\.\?\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)\)"
     \ end="\z1\zs"
     \ contained
     \ contains=TOP
@@ -435,7 +435,7 @@ syn region p6InterpArray
     \ contains=TOP
 
 syn region p6InterpHash
-    \ start="\ze\z(%\$*\%(\%(\%(!\|/\|¢\)\|\%(\%(\%([.^*?=!~]\|:\@<!::\@!\)[A-Za-z_\xC0-\xFF]\@=\)\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\)\%(\.\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\|\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)*\)\.\?\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)\)"
+    \ start="\ze\z(%\$*\%(\%(\%(!\|/\|¢\)\|\%(\%(\%([.^*?=!~]\|:\@<!::\@!\)@@IDENT_NONDIGIT@@\@=\)\?@@IDENTIFIER@@\)\%(\.@@IDENTIFIER@@\|\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)*\)\.\?\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)\)"
     \ end="\z1\zs"
     \ contained
     \ contains=TOP
@@ -450,7 +450,7 @@ syn region p6InterpHash
     \ contains=TOP
 
 syn region p6InterpFunction
-    \ start="\ze\z(&\%(\%(!\|/\|¢\)\|\%(\%(\%([.^*?=!~]\|:\@<!::\@!\)[A-Za-z_\xC0-\xFF]\@=\)\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\%(\.\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\|\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)*\)\.\?\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)\)"
+    \ start="\ze\z(&\%(\%(!\|/\|¢\)\|\%(\%(\%([.^*?=!~]\|:\@<!::\@!\)@@IDENT_NONDIGIT@@\@=\)\?@@IDENTIFIER@@\%(\.@@IDENTIFIER@@\|\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)*\)\.\?\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)\)"
     \ end="\z1\zs"
     \ contained
     \ contains=TOP
@@ -536,8 +536,8 @@ syn region p6OctSequence
 " while capturing the whole adverb into \z1 and then putting it before
 " the match start (\zs) of the end pattern.
 syn region p6Adverb
-    \ start="\ze\z(:!\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\?\)"
-    \ start="\ze\z(:!\?[@$%]\$*\%(::\|\%(\$\@<=\d\+\|!\|/\|¢\)\|\%(\%([.^*?=!~]\|:\@<!::\@!\)[A-Za-z_\xC0-\xFF]\)\|\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\)\)"
+    \ start="\ze\z(:!\?@@IDENTIFIER@@\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\?\)"
+    \ start="\ze\z(:!\?[@$%]\$*\%(::\|\%(\$\@<=\d\+\|!\|/\|¢\)\|\%(\%([.^*?=!~]\|:\@<!::\@!\)@@IDENT_NONDIGIT@@\)\|@@IDENTIFIER@@\)\)"
     \ end="\z1\zs"
     \ contained
     \ contains=TOP
@@ -631,7 +631,7 @@ syn region p6StringDQ
 " Q// and friends.
 
 syn match p6QuoteQ display "\%([Qq]\%(ww\|to\|[qwxsahfcb]\)\?\)\>(\@!" nextgroup=p6QPairs skipwhite skipempty
-syn match p6QPairs contained transparent skipwhite skipempty nextgroup=p6StringQ,p6StringQ_PIR "\%(\_s*:!\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\?\)*"
+syn match p6QPairs contained transparent skipwhite skipempty nextgroup=p6StringQ,p6StringQ_PIR "\%(\_s*:!\?@@IDENTIFIER@@\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\?\)*"
 
 if exists("perl6_embedded_pir")
     syn include @p6PIR syntax/pir.vim
@@ -682,7 +682,7 @@ if !exists("perl6_extended_q") && !exists("perl6_extended_all")
     endif
 else
     let s:before = "syn region p6StringQ matchgroup=p6Quote start=\"\\%("
-    let s:after  = "\\%(\\_s*:!\\?\\%([A-Za-z_\\xC0-\\xFF]\\%([A-Za-z_\\xC0-\\xFF0-9]\\|-[A-Za-z_\\xC0-\\xFF]\\@=\\)*\\)\\%(([^)]*)\\|\\[[^\\]]*]\\|<[^>]*>\\|«[^»]*»\\|{[^}]*}\\)\\?\\)*\\_s*\\)\\@<="
+    let s:after  = "\\%(\\_s*:!\\?@@IDENTIFIER_Q@@\\%(([^)]*)\\|\\[[^\\]]*]\\|<[^>]*>\\|«[^»]*»\\|{[^}]*}\\)\\?\\)*\\_s*\\)\\@<="
 
     let s:adverbs = [
         \ ["s", "scalar"],
@@ -739,17 +739,17 @@ unlet s:delims
 
 " Match these so something else above can't. E.g. the "q" in "role q { }"
 " should not be considered a string
-syn match p6Identifier display "\%(\<\%(role\|grammar\|slang\)\s\+\)\@<=\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)"
+syn match p6Identifier display "\%(\<\%(role\|grammar\|slang\)\s\+\)\@<=@@IDENTIFIER@@"
 
 " :key
 syn match p6Operator display ":\@<!::\@!!\?" nextgroup=p6Key
-syn match p6Key display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)" contained
+syn match p6Key display "@@IDENTIFIER@@" contained
 
 " => and p5=> autoquoting
-syn match p6StringP5Auto display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\ze\s\+p5=>"
-syn match p6StringAuto   display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\ze\%(p5\)\@<!=>"
-syn match p6StringAuto   display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\ze\s\+=>"
-syn match p6StringAuto   display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)p5\ze=>"
+syn match p6StringP5Auto display "@@IDENTIFIER@@\ze\s\+p5=>"
+syn match p6StringAuto   display "@@IDENTIFIER@@\ze\%(p5\)\@<!=>"
+syn match p6StringAuto   display "@@IDENTIFIER@@\ze\s\+=>"
+syn match p6StringAuto   display "@@IDENTIFIER@@p5\ze=>"
 
 " Hyperoperators. Needs to come after the quoting operators (<>, «», etc)
 exec "syn match p6HyperOp display \"»"   .s:infix."»\\?\""
@@ -765,7 +765,7 @@ unlet s:infix
 
 " Regexes and grammars
 
-syn match p6RegexName display "\%(\<\%(regex\|rule\|token\)\s\+\)\@<=\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)" nextgroup=p6RegexBlockCrap skipwhite skipempty
+syn match p6RegexName display "\%(\<\%(regex\|rule\|token\)\s\+\)\@<=@@IDENTIFIER@@" nextgroup=p6RegexBlockCrap skipwhite skipempty
 syn match p6RegexBlockCrap "[^{]*" nextgroup=p6RegexBlock skipwhite skipempty transparent contained
 
 syn region p6RegexBlock
@@ -797,7 +797,7 @@ syn cluster p6Regexen
     \ add=p6RxStringDQ
     \ add=p6Comment
 
-syn match p6RxMeta        display contained ".\%([A-Za-z_\xC0-\xFF0-9]\|\s\)\@<!"
+syn match p6RxMeta        display contained ".\%(@@IDENT_CHAR@@\|\s\)\@<!"
 syn match p6RxAnchor      display contained "[$^]"
 syn match p6RxEscape      display contained "\\\S"
 syn match p6RxCapture     display contained "[()]"
@@ -825,7 +825,7 @@ syn region p6RxAssertion
     \ contains=@p6Regexen,@p6Variables,p6RxCharClass,p6RxAssertCall
 syn region p6RxAssertCall
     \ matchgroup=p6Normal
-    \ start="\%(::\|\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\)\@<=(\@="
+    \ start="\%(::\|@@IDENTIFIER@@\)\@<=(\@="
     \ end=")\@<="
     \ contained
     \ contains=TOP
@@ -842,13 +842,13 @@ syn region p6RxQuoteWords
     \ end=">"
     \ contained
 syn region p6RxAdverb
-    \ start="\ze\z(:!\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\)"
+    \ start="\ze\z(:!\?@@IDENTIFIER@@\)"
     \ end="\z1\zs"
     \ contained
     \ contains=TOP
     \ keepend
 syn region p6RxAdverbArg
-    \ start="\%(:!\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\)\@<=("
+    \ start="\%(:!\?@@IDENTIFIER@@\)\@<=("
     \ skip="([^)]*)"
     \ end=")"
     \ contained
@@ -911,7 +911,7 @@ syn region p6RxP5Named
     \ contained
 syn match p6RxP5Quantifier display contained "\%([+*]\|(\@<!?\)"
 syn match p6RxP5ReadRef    display contained "\\[1-9]\d\@!"
-syn match p6RxP5ReadRef    display contained "\[A-Za-z_\xC0-\xFF0-9]<\@=" nextgroup=p6RxP5ReadRefId
+syn match p6RxP5ReadRef    display contained "\@@IDENT_CHAR@@<\@=" nextgroup=p6RxP5ReadRefId
 syn region p6RxP5ReadRefId
     \ matchgroup=p6RxP5Escape
     \ start="<"
@@ -1015,10 +1015,10 @@ syn match p6VarSlash     display "\$/"
 syn match p6VarExclam    display "\$!"
 syn match p6VarMatch     display "\$¢"
 syn match p6VarNum       display "\$\d\+"
-syn match p6Variable     display "[@&$%]\$*\%(::\|\%(\%([.^*?=!~]\|:\@<!::\@!\)[A-Za-z_\xC0-\xFF]\)\|[A-Za-z_\xC0-\xFF]\)\@=" nextgroup=p6Twigil,p6VarName,p6PackageScope
-syn match p6VarName      display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)" contained
-syn match p6Twigil       display "\%([.^*?=!~]\|:\@<!::\@!\)[A-Za-z_\xC0-\xFF]\@=" nextgroup=p6PackageScope,p6VarName contained
-syn match p6PackageScope display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\?::" nextgroup=p6PackageScope,p6VarName contained
+syn match p6Variable     display "[@&$%]\$*\%(::\|\%(\%([.^*?=!~]\|:\@<!::\@!\)@@IDENT_NONDIGIT@@\)\|@@IDENT_NONDIGIT@@\)\@=" nextgroup=p6Twigil,p6VarName,p6PackageScope
+syn match p6VarName      display "@@IDENTIFIER@@" contained
+syn match p6Twigil       display "\%([.^*?=!~]\|:\@<!::\@!\)@@IDENT_NONDIGIT@@\@=" nextgroup=p6PackageScope,p6VarName contained
+syn match p6PackageScope display "@@IDENTIFIER@@\?::" nextgroup=p6PackageScope,p6VarName contained
 
 " Perl 6 regex regions
 
@@ -1039,7 +1039,7 @@ syn region p6Match
 " m/foo/, mm/foo/, rx/foo/
 syn region p6Match
     \ matchgroup=p6Quote
-    \ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@<!\<\%(mm\?\|rx\)\%(\s*:!\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\%(([^)]*)\)\?\)*\s*\)\@<=//\@!"
+    \ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@<!\<\%(mm\?\|rx\)\%(\s*:!\?@@IDENTIFIER@@\%(([^)]*)\)\?\)*\s*\)\@<=//\@!"
     \ skip="\\/"
     \ end="/"
     \ keepend
@@ -1048,7 +1048,7 @@ syn region p6Match
 " m!foo!, mm!foo!, rx!foo!
 syn region p6Match
     \ matchgroup=p6Quote
-    \ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@<!\<\%(mm\?\|rx\)\%(\s*:!\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\%(([^)]*)\)\?\)*\s*\)\@<=!!\@!"
+    \ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@<!\<\%(mm\?\|rx\)\%(\s*:!\?@@IDENTIFIER@@\%(([^)]*)\)\?\)*\s*\)\@<=!!\@!"
     \ skip="\\!"
     \ end="!"
     \ keepend
@@ -1057,7 +1057,7 @@ syn region p6Match
 " m$foo$, mm$foo$, rx$foo$, m|foo|, mm|foo|, rx|foo|, etc
 syn region p6Match
     \ matchgroup=p6Quote
-    \ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@<!\<\%(mm\?\|rx\)\%(\s*:!\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\%(([^)]*)\)\?\)*\s*\)\@<=\z([\"'`|,$]\)\$\@!"
+    \ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@<!\<\%(mm\?\|rx\)\%(\s*:!\?@@IDENTIFIER@@\%(([^)]*)\)\?\)*\s*\)\@<=\z([\"'`|,$]\)\$\@!"
     \ skip="\\\z1"
     \ end="\z1"
     \ keepend
@@ -1066,7 +1066,7 @@ syn region p6Match
 " m (foo), mm (foo), rx (foo)
 syn region p6Match
     \ matchgroup=p6Quote
-    \ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@<!\<\%(mm\?\|rx\)\%(\s*:!\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\%(([^)]*)\)\?\)*\s\+\)\@<=()\@!)\@!"
+    \ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@<!\<\%(mm\?\|rx\)\%(\s*:!\?@@IDENTIFIER@@\%(([^)]*)\)\?\)*\s\+\)\@<=()\@!)\@!"
     \ skip="\\)"
     \ end=")"
     \ contains=@p6Regexen,@p6Variables
@@ -1074,7 +1074,7 @@ syn region p6Match
 " m[foo], mm[foo], rx[foo]
 syn region p6Match
     \ matchgroup=p6Quote
-    \ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@<!\<\%(mm\?\|rx\)\%(\s*:!\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\%(([^)]*)\)\?\)*\s*\)\@<=\[]\@!]\@!"
+    \ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@<!\<\%(mm\?\|rx\)\%(\s*:!\?@@IDENTIFIER@@\%(([^)]*)\)\?\)*\s*\)\@<=\[]\@!]\@!"
     \ skip="\\]"
     \ end="]"
     \ contains=@p6Regexen,@p6Variables
@@ -1082,7 +1082,7 @@ syn region p6Match
 " m{foo}, mm{foo}, rx{foo}
 syn region p6Match
     \ matchgroup=p6Quote
-    \ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@<!\<\%(mm\?\|rx\)\%(\s*:!\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\%(([^)]*)\)\?\)*\s*\)\@<={}\@!}\@!"
+    \ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@<!\<\%(mm\?\|rx\)\%(\s*:!\?@@IDENTIFIER@@\%(([^)]*)\)\?\)*\s*\)\@<={}\@!}\@!"
     \ skip="\\}"
     \ end="}"
     \ contains=@p6Regexen,@p6Variables
@@ -1090,7 +1090,7 @@ syn region p6Match
 " m<foo>, mm<foo>, rx<foo>
 syn region p6Match
     \ matchgroup=p6Quote
-    \ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@<!\<\%(mm\?\|rx\)\%(\s*:!\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\%(([^)]*)\)\?\)*\s*\)\@<=<>\@!>\@!"
+    \ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@<!\<\%(mm\?\|rx\)\%(\s*:!\?@@IDENTIFIER@@\%(([^)]*)\)\?\)*\s*\)\@<=<>\@!>\@!"
     \ skip="\\>"
     \ end=">"
     \ contains=@p6Regexen,@p6Variables
@@ -1098,7 +1098,7 @@ syn region p6Match
 " m«foo», mm«foo», rx«foo»
 syn region p6Match
     \ matchgroup=p6Quote
-    \ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@<!\<\%(mm\?\|rx\)\%(\s*:!\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\%(([^)]*)\)\?\)*\s*\)\@<=«»\@!»\@!"
+    \ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@<!\<\%(mm\?\|rx\)\%(\s*:!\?@@IDENTIFIER@@\%(([^)]*)\)\?\)*\s*\)\@<=«»\@!»\@!"
     \ skip="\\»"
     \ end="»"
     \ contains=@p6Regexen,@p6Variables
@@ -1108,7 +1108,7 @@ syn region p6Match
 " s/foo/bar/
 syn region p6Match
     \ matchgroup=p6Quote
-    \ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@<!\<s\%(\s*:!\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\%(([^)]*)\)\?\)*\s*\)\@<=/"
+    \ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@<!\<s\%(\s*:!\?@@IDENTIFIER@@\%(([^)]*)\)\?\)*\s*\)\@<=/"
     \ skip="\\/"
     \ end="/"me=e-1
     \ keepend
@@ -1127,7 +1127,7 @@ syn region p6Substitution
 " s!foo!bar!
 syn region p6Match
     \ matchgroup=p6Quote
-    \ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@<!\<s\%(\s*:!\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\%(([^)]*)\)\?\)*\s*\)\@<=!"
+    \ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@<!\<s\%(\s*:!\?@@IDENTIFIER@@\%(([^)]*)\)\?\)*\s*\)\@<=!"
     \ skip="\\!"
     \ end="!"me=e-1
     \ keepend
@@ -1146,7 +1146,7 @@ syn region p6Substitution
 " s$foo$bar$, s|foo|bar, etc
 syn region p6Match
     \ matchgroup=p6Quote
-    \ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@<!\<s\%(\s*:!\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\%(([^)]*)\)\?\)*\s*\)\@<=\z([\"'`|,$]\)"
+    \ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@<!\<s\%(\s*:!\?@@IDENTIFIER@@\%(([^)]*)\)\?\)*\s*\)\@<=\z([\"'`|,$]\)"
     \ skip="\\\z1"
     \ end="\z1"me=e-1
     \ keepend
@@ -1165,7 +1165,7 @@ syn region p6Substitution
 " s{foo}
 syn region p6Match
     \ matchgroup=p6Quote
-    \ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@<!\<s\%(\s*:!\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\%(([^)]*)\)\?\)*\s*\)\@<={}\@!"
+    \ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@<!\<s\%(\s*:!\?@@IDENTIFIER@@\%(([^)]*)\)\?\)*\s*\)\@<={}\@!"
     \ skip="\\}"
     \ end="}"
     \ contains=@p6Regexen,@p6Variables
@@ -1173,7 +1173,7 @@ syn region p6Match
 " s[foo]
 syn region p6Match
     \ matchgroup=p6Quote
-    \ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@<!\<s\%(\s*:!\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\%(([^)]*)\)\?\)*\s*\)\@<=\[]\@!"
+    \ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@<!\<s\%(\s*:!\?@@IDENTIFIER@@\%(([^)]*)\)\?\)*\s*\)\@<=\[]\@!"
     \ skip="\\]"
     \ end="]"
     \ contains=@p6Regexen,@p6Variables
@@ -1181,7 +1181,7 @@ syn region p6Match
 " s<foo>
 syn region p6Match
     \ matchgroup=p6Quote
-    \ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@<!\<s\%(\s*:!\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\%(([^)]*)\)\?\)*\s*\)\@<=<>\@!"
+    \ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@<!\<s\%(\s*:!\?@@IDENTIFIER@@\%(([^)]*)\)\?\)*\s*\)\@<=<>\@!"
     \ skip="\\>"
     \ end=">"
     \ contains=@p6Regexen,@p6Variables
@@ -1189,7 +1189,7 @@ syn region p6Match
 " s«foo»
 syn region p6Match
     \ matchgroup=p6Quote
-    \ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@<!\<s\%(\s*:!\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\%(([^)]*)\)\?\)*\s*\)\@<=«»\@!"
+    \ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@<!\<s\%(\s*:!\?@@IDENTIFIER@@\%(([^)]*)\)\?\)*\s*\)\@<=«»\@!"
     \ skip="\\»"
     \ end="»"
     \ contains=@p6Regexen,@p6Variables
@@ -1197,7 +1197,7 @@ syn region p6Match
 " s (foo)
 syn region p6Match
     \ matchgroup=p6Quote
-    \ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@<!\<s\%(\s*:!\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\%(([^)]*)\)\?\)*\s\+\)\@<=()\@!"
+    \ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@<!\<s\%(\s*:!\?@@IDENTIFIER@@\%(([^)]*)\)\?\)*\s\+\)\@<=()\@!"
     \ skip="\\)"
     \ end=")"
     \ contains=@p6Regexen,@p6Variables
@@ -1273,7 +1273,7 @@ syn region p6Match
 " tr/foo/bar/, tr|foo|bar, etc
 syn region p6String
     \ matchgroup=p6Quote
-    \ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@<!\<tr\%(\s*:!\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\%(([^)]*)\)\?\)*\s*\)\@<=\z([/\"'`|!,$]\)"
+    \ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@<!\<tr\%(\s*:!\?@@IDENTIFIER@@\%(([^)]*)\)\?\)*\s*\)\@<=\z([/\"'`|!,$]\)"
     \ skip="\\\z1"
     \ end="\z1"me=e-1
     \ contains=p6RxRange
@@ -1428,15 +1428,15 @@ endif
 " Abbreviated blocks (implicit code forbidden)
 syn region p6PodAbbrRegion
     \ matchgroup=p6PodPrefix
-    \ start="^=\ze\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)"
-    \ end="^\ze\%(\s*$\|=[A-Za-z_\xC0-\xFF]\)"
+    \ start="^=\ze@@IDENTIFIER@@"
+    \ end="^\ze\%(\s*$\|=@@IDENT_NONDIGIT@@\)"
     \ contains=p6PodAbbrNoCodeType
     \ keepend
 
 syn region p6PodAbbrNoCodeType
     \ matchgroup=p6PodType
-    \ start="\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)"
-    \ end="^\ze\%(\s*$\|=[A-Za-z_\xC0-\xFF]\)"
+    \ start="@@IDENTIFIER@@"
+    \ end="^\ze\%(\s*$\|=@@IDENT_NONDIGIT@@\)"
     \ contained
     \ contains=p6PodName,p6PodAbbrNoCode
 
@@ -1445,7 +1445,7 @@ syn match p6PodComment contained ".\+"
 
 syn region p6PodAbbrNoCode
     \ start="^"
-    \ end="^\ze\%(\s*$\|=[A-Za-z_\xC0-\xFF]\)"
+    \ end="^\ze\%(\s*$\|=@@IDENT_NONDIGIT@@\)"
     \ contained
     \ contains=@p6PodFormat
 
@@ -1453,34 +1453,34 @@ syn region p6PodAbbrNoCode
 syn region p6PodAbbrRegion
     \ matchgroup=p6PodPrefix
     \ start="^=\zecode\>"
-    \ end="^\ze\%(\s*$\|=[A-Za-z_\xC0-\xFF]\)"
+    \ end="^\ze\%(\s*$\|=@@IDENT_NONDIGIT@@\)"
     \ contains=p6PodAbbrCodeType
     \ keepend
 
 syn region p6PodAbbrCodeType
     \ matchgroup=p6PodType
-    \ start="\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)"
-    \ end="^\ze\%(\s*$\|=[A-Za-z_\xC0-\xFF]\)"
+    \ start="@@IDENTIFIER@@"
+    \ end="^\ze\%(\s*$\|=@@IDENT_NONDIGIT@@\)"
     \ contained
     \ contains=p6PodName,p6PodAbbrCode
 
 syn region p6PodAbbrCode
     \ start="^"
-    \ end="^\ze\%(\s*$\|=[A-Za-z_\xC0-\xFF]\)"
+    \ end="^\ze\%(\s*$\|=@@IDENT_NONDIGIT@@\)"
     \ contained
 
 " Abbreviated blocks (everything is a comment)
 syn region p6PodAbbrRegion
     \ matchgroup=p6PodPrefix
     \ start="^=\zecomment\>"
-    \ end="^\ze\%(\s*$\|=[A-Za-z_\xC0-\xFF]\)"
+    \ end="^\ze\%(\s*$\|=@@IDENT_NONDIGIT@@\)"
     \ contains=p6PodAbbrCommentType
     \ keepend
 
 syn region p6PodAbbrCommentType
     \ matchgroup=p6PodType
-    \ start="\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)"
-    \ end="^\ze\%(\s*$\|=[A-Za-z_\xC0-\xFF]\)"
+    \ start="@@IDENTIFIER@@"
+    \ end="^\ze\%(\s*$\|=@@IDENT_NONDIGIT@@\)"
     \ contained
     \ contains=p6PodComment,p6PodAbbrNoCode
 
@@ -1488,20 +1488,20 @@ syn region p6PodAbbrCommentType
 syn region p6PodAbbrRegion
     \ matchgroup=p6PodPrefix
     \ start="^=\ze\%(pod\|item\|nested\|\u\+\)\>"
-    \ end="^\ze\%(\s*$\|=[A-Za-z_\xC0-\xFF]\)"
+    \ end="^\ze\%(\s*$\|=@@IDENT_NONDIGIT@@\)"
     \ contains=p6PodAbbrType
     \ keepend
 
 syn region p6PodAbbrType
     \ matchgroup=p6PodType
-    \ start="\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)"
-    \ end="^\ze\%(\s*$\|=[A-Za-z_\xC0-\xFF]\)"
+    \ start="@@IDENTIFIER@@"
+    \ end="^\ze\%(\s*$\|=@@IDENT_NONDIGIT@@\)"
     \ contained
     \ contains=p6PodName,p6PodAbbr
 
 syn region p6PodAbbr
     \ start="^"
-    \ end="^\ze\%(\s*$\|=[A-Za-z_\xC0-\xFF]\)"
+    \ end="^\ze\%(\s*$\|=@@IDENT_NONDIGIT@@\)"
     \ contained
     \ contains=@p6PodFormat,p6PodImplicitCode
 
@@ -1515,7 +1515,7 @@ syn region p6PodAbbrRegion
 
 syn region p6PodAbbrEOFType
     \ matchgroup=p6PodType
-    \ start="\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)"
+    \ start="@@IDENTIFIER@@"
     \ end="\%$"
     \ contained
     \ contains=p6PodName,p6PodAbbrEOF
@@ -1530,20 +1530,20 @@ syn region p6PodAbbrEOF
 syn region p6PodDirectRegion
     \ matchgroup=p6PodPrefix
     \ start="^=\%(config\|use\)\>"
-    \ end="^\ze\%([^=]\|=[A-Za-z_\xC0-\xFF]\|\s*$\)"
+    \ end="^\ze\%([^=]\|=@@IDENT_NONDIGIT@@\|\s*$\)"
     \ contains=p6PodDirectArgRegion
     \ keepend
 
 syn region p6PodDirectArgRegion
     \ matchgroup=p6PodType
     \ start="\S\+"
-    \ end="^\ze\%([^=]\|=[A-Za-z_\xC0-\xFF]\|\s*$\)"
+    \ end="^\ze\%([^=]\|=@@IDENT_NONDIGIT@@\|\s*$\)"
     \ contained
     \ contains=p6PodDirectConfigRegion
 
 syn region p6PodDirectConfigRegion
     \ start=""
-    \ end="^\ze\%([^=]\|=[A-Za-z_\xC0-\xFF]\|\s*$\)"
+    \ end="^\ze\%([^=]\|=@@IDENT_NONDIGIT@@\|\s*$\)"
     \ contained
     \ contains=@p6PodConfig
 
@@ -1551,41 +1551,41 @@ syn region p6PodDirectConfigRegion
 syn region p6PodDirectRegion
     \ matchgroup=p6PodPrefix
     \ start="^=encoding\>"
-    \ end="^\ze\%([^=]\|=[A-Za-z_\xC0-\xFF]\|\s*$\)"
+    \ end="^\ze\%([^=]\|=@@IDENT_NONDIGIT@@\|\s*$\)"
     \ contains=p6PodEncodingArgRegion
     \ keepend
 
 syn region p6PodEncodingArgRegion
     \ matchgroup=p6PodName
     \ start="\S\+"
-    \ end="^\ze\%([^=]\|=[A-Za-z_\xC0-\xFF]\|\s*$\)"
+    \ end="^\ze\%([^=]\|=@@IDENT_NONDIGIT@@\|\s*$\)"
     \ contained
 
 " Paragraph blocks (implicit code forbidden)
 syn region p6PodParaRegion
     \ matchgroup=p6PodPrefix
     \ start="^=for\>"
-    \ end="^\ze\%(\s*$\|=[A-Za-z_\xC0-\xFF]\)"
+    \ end="^\ze\%(\s*$\|=@@IDENT_NONDIGIT@@\)"
     \ contains=p6PodParaNoCodeTypeRegion
     \ keepend
     \ extend
 
 syn region p6PodParaNoCodeTypeRegion
     \ matchgroup=p6PodType
-    \ start="\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)"
-    \ end="^\ze\%(\s*$\|=[A-Za-z_\xC0-\xFF]\)"
+    \ start="@@IDENTIFIER@@"
+    \ end="^\ze\%(\s*$\|=@@IDENT_NONDIGIT@@\)"
     \ contained
     \ contains=p6PodParaNoCode,p6PodParaConfigRegion
 
 syn region p6PodParaConfigRegion
     \ start=""
-    \ end="^\ze\%([^=]\|=[A-Za-z_\xC0-\xFF]\@<!\)"
+    \ end="^\ze\%([^=]\|=@@IDENT_NONDIGIT@@\@<!\)"
     \ contained
     \ contains=@p6PodConfig
 
 syn region p6PodParaNoCode
     \ start="^[^=]"
-    \ end="^\ze\%(\s*$\|=[A-Za-z_\xC0-\xFF]\)"
+    \ end="^\ze\%(\s*$\|=@@IDENT_NONDIGIT@@\)"
     \ contained
     \ contains=@p6PodFormat
 
@@ -1593,42 +1593,42 @@ syn region p6PodParaNoCode
 syn region p6PodParaRegion
     \ matchgroup=p6PodPrefix
     \ start="^=for\>\ze\s*code\>"
-    \ end="^\ze\%(\s*$\|=[A-Za-z_\xC0-\xFF]\)"
+    \ end="^\ze\%(\s*$\|=@@IDENT_NONDIGIT@@\)"
     \ contains=p6PodParaCodeTypeRegion
     \ keepend
     \ extend
 
 syn region p6PodParaCodeTypeRegion
     \ matchgroup=p6PodType
-    \ start="\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)"
-    \ end="^\ze\%(\s*$\|=[A-Za-z_\xC0-\xFF]\)"
+    \ start="@@IDENTIFIER@@"
+    \ end="^\ze\%(\s*$\|=@@IDENT_NONDIGIT@@\)"
     \ contained
     \ contains=p6PodParaCode,p6PodParaConfigRegion
 
 syn region p6PodParaCode
     \ start="^[^=]"
-    \ end="^\ze\%(\s*$\|=[A-Za-z_\xC0-\xFF]\)"
+    \ end="^\ze\%(\s*$\|=@@IDENT_NONDIGIT@@\)"
     \ contained
 
 " Paragraph blocks (implicit code allowed)
 syn region p6PodParaRegion
     \ matchgroup=p6PodPrefix
     \ start="^=for\>\ze\s*\%(pod\|item\|nested\|\u\+\)\>"
-    \ end="^\ze\%(\s*$\|=[A-Za-z_\xC0-\xFF]\)"
+    \ end="^\ze\%(\s*$\|=@@IDENT_NONDIGIT@@\)"
     \ contains=p6PodParaTypeRegion
     \ keepend
     \ extend
 
 syn region p6PodParaTypeRegion
     \ matchgroup=p6PodType
-    \ start="\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)"
-    \ end="^\ze\%(\s*$\|=[A-Za-z_\xC0-\xFF]\)"
+    \ start="@@IDENTIFIER@@"
+    \ end="^\ze\%(\s*$\|=@@IDENT_NONDIGIT@@\)"
     \ contained
     \ contains=p6PodPara,p6PodParaConfigRegion
 
 syn region p6PodPara
     \ start="^[^=]"
-    \ end="^\ze\%(\s*$\|=[A-Za-z_\xC0-\xFF]\)"
+    \ end="^\ze\%(\s*$\|=@@IDENT_NONDIGIT@@\)"
     \ contained
     \ contains=@p6PodFormat,p6PodImplicitCode
 
@@ -1643,7 +1643,7 @@ syn region p6PodParaRegion
 
 syn region p6PodParaEOFTypeRegion
     \ matchgroup=p6PodType
-    \ start="\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)"
+    \ start="@@IDENTIFIER@@"
     \ end="\%$"
     \ contained
     \ contains=p6PodParaEOF,p6PodParaConfigRegion
@@ -1665,14 +1665,14 @@ syn region p6PodDelimRegion
 
 syn region p6PodDelimNoCodeTypeRegion
     \ matchgroup=p6PodType
-    \ start="\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)"
+    \ start="@@IDENTIFIER@@"
     \ end="^\ze=end\>"
     \ contained
     \ contains=p6PodDelimNoCode,p6PodDelimConfigRegion
 
 syn region p6PodDelimConfigRegion
     \ start=""
-    \ end="^\ze\%([^=]\|=[A-Za-z_\xC0-\xFF]\|\s*$\)"
+    \ end="^\ze\%([^=]\|=@@IDENT_NONDIGIT@@\|\s*$\)"
     \ contained
     \ contains=@p6PodConfig
 
@@ -1693,7 +1693,7 @@ syn region p6PodDelimRegion
 
 syn region p6PodDelimCodeTypeRegion
     \ matchgroup=p6PodType
-    \ start="\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)"
+    \ start="@@IDENTIFIER@@"
     \ end="^\ze=end\>"
     \ contained
     \ contains=p6PodDelimCode,p6PodDelimConfigRegion
@@ -1715,7 +1715,7 @@ syn region p6PodDelimRegion
 
 syn region p6PodDelimTypeRegion
     \ matchgroup=p6PodType
-    \ start="\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)"
+    \ start="@@IDENTIFIER@@"
     \ end="^\ze=end\>"
     \ contained
     \ contains=p6PodDelim,p6PodDelimConfigRegion
@@ -1736,7 +1736,7 @@ syn region p6PodDelimRegion
 
 syn region p6PodDelimEOFTypeRegion
     \ matchgroup=p6PodType
-    \ start="\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)"
+    \ start="@@IDENTIFIER@@"
     \ end="\%$"
     \ contained
     \ contains=p6PodDelimEOF,p6PodDelimConfigRegion
@@ -1773,7 +1773,7 @@ syn match p6PodImplicitCode   display contained "^\s.*"
 syn region p6PodDelimEndRegion
     \ matchgroup=p6PodType
     \ start="\%(^=end\>\)\@<="
-    \ end="\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)"
+    \ end="@@IDENTIFIER@@"
 
 " These may appear inside delimited blocks
 syn cluster p6PodNestedBlocks
@@ -2241,7 +2241,7 @@ if version >= 508 || !exists("did_perl6_syntax_inits")
 endif
 
 " Syncing to speed up processing
-"syn sync match p6SyncPod groupthere p6PodAbbrRegion     "^=\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)*\)\>"
+"syn sync match p6SyncPod groupthere p6PodAbbrRegion     "^=@@IDENTIFIER@@\>"
 "syn sync match p6SyncPod groupthere p6PodDirectRegion   "^=\%(config\|use\|encoding\)\>"
 "syn sync match p6SyncPod groupthere p6PodParaRegion     "^=for\>"
 "syn sync match p6SyncPod groupthere p6PodDelimRegion    "^=begin\>"

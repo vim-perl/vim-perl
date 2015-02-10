@@ -5,9 +5,7 @@ INDENT=$(PREFIX)/indent
 SYNTAX=$(PREFIX)/syntax
 TOOLS=$(PREFIX)/tools
 
-default:
-	@echo There is no default target.
-	@echo Some targets: test, install
+default: preproc
 
 dirs:
 	mkdir -p $(FTPLUGIN) $(INDENT) $(SYNTAX) $(TOOLS)
@@ -21,8 +19,11 @@ install: dirs
 tarball:
 	perl tools/make-tarball.pl
 
-test:
+test: preproc
 	prove -rv t
+
+test6: preproc
+	perl t/01_highlighting.t t_source/perl6/*.t
 
 clean:
 	rm -fr after/syntax/perl
@@ -60,3 +61,5 @@ test-more: contrib_syntax
 try-tiny: contrib_syntax
 	cp contrib/try-tiny.vim after/syntax/perl/
 
+preproc:
+	perl tools/preproc.pl syntax/perl6.vim.pre > syntax/perl6.vim
