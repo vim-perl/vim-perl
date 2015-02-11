@@ -19,6 +19,7 @@
 "     # vim: filetype=perl6
 
 " TODO:
+"   * Fix p6Match region for /pattern/. It shouldn't match (1,2)[*/2]
 "   * Deal with s:Perl5//
 "   * Make these highlight as strings, not operators:
 "       <==> <=:=> <===> <=~> <« »> «>» «<»
