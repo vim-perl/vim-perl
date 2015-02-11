@@ -1,3 +1,5 @@
+#!perl6
+
 use Test;
 say "foo bar";
 @foo.push: "bar";
