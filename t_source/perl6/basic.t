@@ -26,3 +26,7 @@ bla
 =end foo-bar
 
 @foo».++;
+
+$foo, $, $bar = @bla;
+$foo, @, $bar = @bla;
+
