@@ -179,7 +179,7 @@ unlet s:keywords s:words_space s:temp s:words
 " Don't put a "\+" at the end of the character class. That makes it so
 " greedy that the "%" " in "+%foo" won't be allowed to match as a sigil,
 " among other things
-syn match p6Operator display "[-+/*~?|=^!%&,<>.;\\]"
+syn match p6Operator display "[-+/*~?|=^!%&,<>».;\\]"
 syn match p6Operator display "\%(:\@<!::\@!\|::=\|\.::\)"
 " these require whitespace on the left side
 syn match p6Operator display "\%(\s\|^\)\@<=\%(xx=\|p5=>\)"

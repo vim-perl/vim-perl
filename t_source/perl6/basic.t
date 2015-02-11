@@ -24,3 +24,5 @@ role q {
 bla
 
 =end foo-bar
+
+@foo».++;
