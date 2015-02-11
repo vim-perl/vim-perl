@@ -2073,7 +2073,7 @@ if version >= 508 || !exists("did_perl6_syntax_inits")
     HiLink p6ReduceOp        p6Operator
     HiLink p6ReverseCrossOp  p6Operator
     HiLink p6HyperOp         p6Operator
-    HiLink p6QuoteQ          p6Operator
+    HiLink p6QuoteQ          p6Quote
     HiLink p6RxRange         p6StringSpecial
     HiLink p6RxAnchor        p6StringSpecial
     HiLink p6RxP5Anchor      p6StringSpecial
