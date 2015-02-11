@@ -1289,136 +1289,106 @@ syn region p6Transliteration
 " Comments
 
 " normal end-of-line comment
-syn match p6Comment display "#.*" contains=p6Attention
+syn match p6Comment display "#`\@!.*" contains=p6Attention
 
 " Multiline comments. Arbitrary numbers of opening brackets are allowed,
 " but we only define regions for 1 to 3
 syn region p6Comment
     \ matchgroup=p6Comment
-    \ start="^\@<!#("
+    \ start="#`("
     \ skip="([^)]*)"
     \ end=")"
-    \ matchgroup=p6Error
-    \ start="^#("
     \ contains=p6Attention,p6Comment
 syn region p6Comment
     \ matchgroup=p6Comment
-    \ start="^\@<!#\["
+    \ start="#`\["
     \ skip="\[[^\]]*]"
     \ end="]"
-    \ matchgroup=p6Error
-    \ start="^#\["
     \ contains=p6Attention,p6Comment
 syn region p6Comment
     \ matchgroup=p6Comment
-    \ start="^\@<!#{"
+    \ start="#`{"
     \ skip="{[^}]*}"
     \ end="}"
-    \ matchgroup=p6Error
-    \ start="^#{"
     \ contains=p6Attention,p6Comment
 syn region p6Comment
     \ matchgroup=p6Comment
-    \ start="^\@<!#<"
+    \ start="#`<"
     \ skip="<[^>]*>"
     \ end=">"
-    \ matchgroup=p6Error
-    \ start="^#<"
     \ contains=p6Attention,p6Comment
 syn region p6Comment
     \ matchgroup=p6Comment
-    \ start="^\@<!#«"
+    \ start="#`«"
     \ skip="«[^»]*»"
     \ end="»"
-    \ matchgroup=p6Error
-    \ start="^#«"
     \ contains=p6Attention,p6Comment
 
 " double and triple delimiters
 if exists("perl6_extended_comments") || exists("perl6_extended_all")
     syn region p6Comment
         \ matchgroup=p6Comment
-        \ start="^\@<!#(("
+        \ start="#`(("
         \ skip="((\%([^)\|))\@!]\)*))"
         \ end="))"
-        \ matchgroup=p6Error
-        \ start="^#(("
         \ contains=p6Attention,p6Comment
     syn region p6Comment
         \ matchgroup=p6Comment
-        \ start="^\@<!#((("
+        \ start="#`((("
         \ skip="(((\%([^)]\|)\%())\)\@!\)*)))"
         \ end=")))"
-        \ matchgroup=p6Error
-        \ start="^#((("
         \ contains=p6Attention,p6Comment
 
     syn region p6Comment
         \ matchgroup=p6Comment
-        \ start="^\@<!#\[\["
+        \ start="#`\[\["
         \ skip="\[\[\%([^\]]\|]]\@!\)*]]"
         \ end="]]"
-        \ matchgroup=p6Error
-        \ start="^#\[\["
         \ contains=p6Attention,p6Comment
     syn region p6Comment
         \ matchgroup=p6Comment
-        \ start="^\@<!#\[\[\["
+        \ start="#`\[\[\["
         \ skip="\[\[\[\%([^\]]\|]\%(]]\)\@!\)*]]]"
         \ end="]]]"
-        \ matchgroup=p6Error
-        \ start="^#\[\[\["
         \ contains=p6Attention,p6Comment
 
     syn region p6Comment
         \ matchgroup=p6Comment
-        \ start="^\@<!#{{"
+        \ start="#`{{"
         \ skip="{{\%([^}]\|}}\@!\)*}}"
         \ end="}}"
-        \ matchgroup=p6Error
-        \ start="^#{{"
         \ contains=p6Attention,p6Comment
     syn region p6Comment
         \ matchgroup=p6Comment
-        \ start="^\@<!#{{{"
+        \ start="#`{{{"
         \ skip="{{{\%([^}]\|}\%(}}\)\@!\)*}}}"
         \ end="}}}"
-        \ matchgroup=p6Error
-        \ start="^#{{{"
         \ contains=p6Attention,p6Comment
 
     syn region p6Comment
         \ matchgroup=p6Comment
-        \ start="^\@<!#<<"
+        \ start="#`<<"
         \ skip="<<\%([^>]\|>>\@!\)*>>"
         \ end=">>"
-        \ matchgroup=p6Error
-        \ start="^#<<"
         \ contains=p6Attention,p6Comment
     syn region p6Comment
         \ matchgroup=p6Comment
-        \ start="^\@<!#<<<"
+        \ start="#`<<<"
         \ skip="<<<\%([^>]\|>\%(>>\)\@!\)*>>>"
         \ end=">>>"
-        \ matchgroup=p6Error
-        \ start="^#<<<"
         \ contains=p6Attention,p6Comment
 
     syn region p6Comment
         \ matchgroup=p6Comment
-        \ start="^\@<!#««"
+        \ start="#`««"
         \ skip="««\%([^»]\|»»\@!\)*»»"
         \ end="»»"
-        \ matchgroup=p6Error
-        \ start="^#««"
         \ contains=p6Attention,p6Comment
     syn region p6Comment
         \ matchgroup=p6Comment
-        \ start="^\@<!#«««"
+        \ start="#`«««"
         \ skip="«««\%([^»]\|»\%(»»\)\@!\)*»»»"
         \ end="»»»"
-        \ matchgroup=p6Error
-        \ start="^#«««"
         \ contains=p6Attention,p6Comment
 endif
 
