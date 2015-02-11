@@ -1,5 +1,6 @@
 #!perl6
 
+use v6.0.0;
 use Test;
 say "foo bar";
 @foo.push: "bar";

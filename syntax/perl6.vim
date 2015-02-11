@@ -2074,6 +2074,8 @@ if version >= 508 || !exists("did_perl6_syntax_inits")
     HiLink p6ReverseCrossOp  p6Operator
     HiLink p6HyperOp         p6Operator
     HiLink p6QuoteQ          p6Quote
+    HiLink p6VersionNum      p6Version
+    HiLink p6VersionDot      p6Version
     HiLink p6RxRange         p6StringSpecial
     HiLink p6RxAnchor        p6StringSpecial
     HiLink p6RxP5Anchor      p6StringSpecial
@@ -2135,7 +2137,6 @@ if version >= 508 || !exists("did_perl6_syntax_inits")
     HiLink p6Package        Normal
     HiLink p6PackageScope   Normal
     HiLink p6Number         Number
-    HiLink p6VersionNum     Number
     HiLink p6String         String
     HiLink p6Repeat         Repeat
     HiLink p6Keyword        Keyword
@@ -2147,14 +2148,13 @@ if version >= 508 || !exists("did_perl6_syntax_inits")
     HiLink p6NumberBase     Special
     HiLink p6Twigil         Special
     HiLink p6StringSpecial2 Special
-    HiLink p6VersionDot     Special
+    HiLink p6Version        Special
     HiLink p6Comment        Comment
     HiLink p6Include        Include
     HiLink p6Shebang        PreProc
     HiLink p6ClosureTrait   PreProc
     HiLink p6Routine        Function
     HiLink p6Operator       Operator
-    HiLink p6Version        Operator
     HiLink p6Context        Operator
     HiLink p6Quote          Delimiter
     HiLink p6TypeConstraint PreCondit
