@@ -26,6 +26,9 @@
 "   * Allow more keywords to match as function calls(leave() is export(), etc)
 "   * Optimization: use nextgroup instead of lookaround (:help syn-nextgroup)
 "   * Match s/// and m/// better, so things like "$s/" won't match
+"   * Optimization: See if some lookarounds can be bounded with e.g. \@1<=
+"   * Optimization: Try replacing similar regexes with a single, larger one.
+"     See also :help syntime.
 "   * Add more support for folding (:help syn-fold)
 "   * Add more syntax syncing hooks (:help syn-sync)
 "   * Q//:
