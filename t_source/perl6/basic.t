@@ -30,3 +30,5 @@ bla
 $foo, $, $bar = @bla;
 $foo, @, $bar = @bla;
 
+
+my $str = "bla bla &is-cool() yes";

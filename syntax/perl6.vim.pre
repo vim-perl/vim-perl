@@ -344,7 +344,7 @@ syn cluster p6Interp_hash
 
 syn cluster p6Interp_f
     \ add=p6InterpFunction
-syn cluster p6Interp_f
+syn cluster p6Interp_function
     \ add=p6InterpFunction
 
 syn cluster p6Interp_c
