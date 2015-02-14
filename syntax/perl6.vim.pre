@@ -21,6 +21,7 @@
 " TODO:
 "   * Fix p6Match region for /pattern/. It shouldn't match (1,2)[*/2]
 "   * Deal with s:Perl5//
+"   * Heredocs (q:to/END/, etc)
 "   * Make these highlight as strings, not operators:
 "       <==> <=:=> <===> <=~> <« »> «>» «<»
 "   * Allow more keywords to match as function calls(leave() is export(), etc)
@@ -30,9 +31,6 @@
 "     See also :help syntime.
 "   * Add more support for folding (:help syn-fold)
 "   * Add more syntax syncing hooks (:help syn-sync)
-"   * Q//:
-"       :to, :heredoc
-"       interpolate \q:s{$scalar} (though the spec isn't very clear on it)
 "
 " Impossible TODO?:
 "   * Unspace
@@ -41,26 +39,15 @@
 "     expects «*» to be a string or a hyperoperator. The latter is presumably
 "     more common, so that's what we assume.
 "   * Selective highlighting of Pod formatting codes with the :allow option
-"   * Arbitrary number, order, and negation of adverbs to Q//, q//, qq//.
-"     Currently only the first adverb is considered significant. Anything
-"     more would require an exponential amount of regexes, making this
-"     already slow syntax file even slower.
+"
+" To highlight comments with doubled and tripled delimiters (#`<<< >>>, etc):
+"   let perl6_extended_comments=1
 "
 " If you want to have Pir code inside Q:PIR// strings highlighted, do:
-"  let perl6_embedded_pir=1
+"   let perl6_embedded_pir=1
 "
 " The above requires pir.vim, which you can find in Parrot's repository:
-" https://svn.parrot.org/parrot/trunk/editor/
-"
-" Some less than crucial things have been made optional to speed things up.
-" Look at the comments near the if/else branches in this file to see exactly
-" which features are affected. "perl6_extended_all" enables everything.
-"
-" The defaults are:
-"
-"  unlet perl6_extended_comments
-"  unlet perl6_extended_q
-"  unlet perl6_extended_all
+" https://github.com/parrot/parrot/tree/master/editor
 
 " For version 5.x: Clear all syntax items
 " For version 6.x: Quit when a syntax file was already loaded
@@ -329,57 +316,25 @@ syn match p6Placeholder display "\$\%(@@IDENT_NONDIGIT@@\|\%([.^*?=!~]\|:\@<!::\
 " Quoting
 
 " one cluster for every quote adverb
-syn cluster p6Interp_s
-    \ add=p6InterpScalar
 syn cluster p6Interp_scalar
     \ add=p6InterpScalar
 
-syn cluster p6Interp_a
-    \ add=p6InterpArray
 syn cluster p6Interp_array
     \ add=p6InterpArray
 
-syn cluster p6Interp_h
-    \ add=p6InterpHash
 syn cluster p6Interp_hash
     \ add=p6InterpHash
 
-syn cluster p6Interp_f
-    \ add=p6InterpFunction
 syn cluster p6Interp_function
     \ add=p6InterpFunction
 
-syn cluster p6Interp_c
-    \ add=p6InterpClosure
 syn cluster p6Interp_closure
     \ add=p6InterpClosure
 
-
-if exists("perl6_extended_q") || exists("perl6_extended_all")
-    syn cluster p6Interp_ww
-        \ add=p6StringSQ
-        \ add=p6StringDQ
-    syn cluster p6Interp_quotewords
-        \ add=p6StringSQ
-        \ add=p6StringDQ
-endif
-
-syn cluster p6Interp_q
-    \ add=p6EscQQ
-    \ add=p6EscBackSlash
 syn cluster p6Interp_single
     \ add=p6EscQQ
     \ add=p6EscBackSlash
 
-syn cluster p6Interp_b
-    \ add=@p6Interp_q
-    \ add=p6Escape
-    \ add=p6EscOpenCurly
-    \ add=p6EscCodePoint
-    \ add=p6EscHex
-    \ add=p6EscOct
-    \ add=p6EscOctOld
-    \ add=p6EscNull
 syn cluster p6Interp_backslash
     \ add=@p6Interp_q
     \ add=p6Escape
@@ -391,13 +346,6 @@ syn cluster p6Interp_backslash
     \ add=p6EscNull
 
 syn cluster p6Interp_qq
-    \ add=@p6Interp_scalar
-    \ add=@p6Interp_array
-    \ add=@p6Interp_hash
-    \ add=@p6Interp_function
-    \ add=@p6Interp_closure
-    \ add=@p6Interp_backslash
-syn cluster p6Interp_double
     \ add=@p6Interp_scalar
     \ add=@p6Interp_array
     \ add=@p6Interp_hash
@@ -632,13 +580,6 @@ syn region p6StringDQ
 
 " Q// and friends.
 
-syn match p6QuoteQ display "\%([Qq]\%(ww\|to\|[qwxsahfcb]\)\?\)\>(\@!" nextgroup=p6QPairs skipwhite skipempty
-syn match p6QPairs contained transparent skipwhite skipempty nextgroup=p6StringQ,p6StringQ_PIR "\%(\_s*:!\?@@IDENTIFIER@@\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\?\)*"
-
-if exists("perl6_embedded_pir")
-    syn include @p6PIR syntax/pir.vim
-endif
-
 " hardcoded set of delimiters
 let s:delims = [
   \ ["\\\"",         "\\\"", "p6EscDoubleQuote",  "\\\\\\@<!\\\\\\\""],
@@ -656,87 +597,29 @@ let s:delims = [
   \ ["\\s\\@<=(",    ")",    "p6EscCloseParen",   "\\%(\\\\\\@<!\\\\)\\|([^)]*)\\)"],
 \ ]
 
-" double and triple delimiters too
-if exists("perl6_extended_q") || exists("perl6_extended_all")
-    call add(s:delims, ["««",           "»»",  "p6EscCloseFrench",  "\\%(\\\\\\@<!\\\\»»\\|««\\%([^»]\\|»»\\@!\\)*»»\\)"])
-    call add(s:delims, ["«««",          "»»»", "p6EscCloseFrench",  "\\%(\\\\\\@<!\\\\»»»\\|«««\\%([^»]\\|»\\%(»»\\)\\@!\\)*»»»\\)"])
-    call add(s:delims, ["{{",           "}}",  "p6EscCloseCurly",   "\\%(\\\\\\@<!\\\\}}\\|{{\\%([^}]\\|}}\\@!\\)*}}\\)"])
-    call add(s:delims, ["{{{",          "}}}", "p6EscCloseCurly",   "\\%(\\\\\\@<!\\\\}}}\\|{{{\\%([^}]\\|}\\%(}}\\)\\@!\\)*}}}\\)"])
-    call add(s:delims, ["\\\[\\\[",     "]]",  "p6EscCloseBracket", "\\%(\\\\\\@<!\\\\]]\\|\\[\\[\\%([^\\]]\\|]]\\@!\\)*]]\\)"])
-    call add(s:delims, ["\\\[\\\[\\\[", "]]]", "p6EscCloseBracket", "\\%(\\\\\\@<!\\\\]]]\\|\\[\\[\\[\\%([^\\]]\\|]\\%(]]\\)\\@!\\)*]]]\\)"])
-    call add(s:delims, ["\\s\\@<=((",   "))",  "p6EscCloseParen",   "\\%(\\\\\\@<!\\\\))\\|((\\%([^)]\\|))\\@!\\)*))\\)"])
-    call add(s:delims, ["\\s\\@<=(((",  ")))", "p6EscCloseParen",   "\\%(\\\\\\@<!\\\\)))\\|(((\\%([^)]\\|)\\%())\\)\\@!\\)*)))\\)"])
-    call add(s:delims, ["\\s\\@<=<<",   ">>",  "p6EscCloseAngle",   "\\%(\\\\\\@<!\\\\>>\\|<<\\%([^>]\\|>>\\@!\\)*>>\\)"])
-    call add(s:delims, ["\\s\\@<=<<<",  ">>>", "p6EscCloseAngle",   "\\%(\\\\\\@<!\\\\>>>\\|<<<\\%([^>]\\|>\\%(>>\\)\\@!\\)*>>>\\)"])
+syn match p6Quote_Q  display "Q[A-z(]\@!" nextgroup=p6Pairs_Q skipwhite skipempty
+syn match p6Quote_q  display "q[wx]\?[A-z(]\@!" nextgroup=p6Pairs_q skipwhite skipempty
+syn match p6Quote_qq display "qq[wx]\?[A-z(]\@!" nextgroup=p6Pairs_qq skipwhite skipempty
+syn match p6Pairs_Q  contained transparent skipwhite skipempty nextgroup=p6String_Q "\%(\_s*:!\?@@IDENTIFIER@@\%(([^)]*)\)\?\)*"
+syn match p6Pairs_q  contained transparent skipwhite skipempty nextgroup=p6String_q "\%(\_s*:!\?@@IDENTIFIER@@\%(([^)]*)\)\?\)*"
+syn match p6Pairs_qq contained transparent skipwhite skipempty nextgroup=p6String_qq "\%(\_s*:!\?@@IDENTIFIER@@\%(([^)]*)\)\?\)*"
+
+if exists("perl6_embedded_pir")
+    syn include @p6PIR syntax/pir.vim
+    syn match p6Quote_QPIR  display "Q[A-z(]\@!\%(\_s*:PIR\)\@=" nextgroup=p6Pairs_QPIR skipwhite skipempty
+    syn match p6Pairs_QPIR contained "\_s*:PIR" transparent skipwhite skipempty nextgroup=p6String_QPIR
 endif
 
-if !exists("perl6_extended_q") && !exists("perl6_extended_all")
-    " simple version, no special highlighting within the string
-    for [start_delim, end_delim, end_group, skip] in s:delims
-        exec "syn region p6StringQ matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contains=".end_group." contained"
-    endfor
+for [start_delim, end_delim, end_group, skip] in s:delims
+    exec "syn region p6String_Q matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contains=".end_group." contained"
+    exec "syn region p6String_q matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contains=@p6Interp_q,".end_group." contained"
+    exec "syn region p6String_qq matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contains=@p6Interp_qq,".end_group." contained"
 
     if exists("perl6_embedded_pir")
-        " highlight embedded PIR code
-        for [start_delim, end_delim, end_group, skip] in s:delims
-            exec "syn region p6StringQ_PIR matchgroup=p6Quote start=\"\\%(Q\\s*:PIR\\s*\\)\\@<=".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contains=@p6PIR,".end_group." contained"
-        endfor
+        exec "syn region p6String_QPIR matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contains=@p6PIR,".end_group." contained"
     endif
-else
-    let s:before = "syn region p6StringQ matchgroup=p6Quote start=\"\\%("
-    let s:after  = "\\%(\\_s*:!\\?@@IDENTIFIER_Q@@\\%(([^)]*)\\|\\[[^\\]]*]\\|<[^>]*>\\|«[^»]*»\\|{[^}]*}\\)\\?\\)*\\_s*\\)\\@<="
+endfor
 
-    let s:adverbs = [
-        \ ["s", "scalar"],
-        \ ["a", "array"],
-        \ ["h", "hash"],
-        \ ["f", "function"],
-        \ ["c", "closure"],
-        \ ["b", "backslash"],
-        \ ["w", "words"],
-        \ ["ww", "quotewords"],
-        \ ["x", "exec"],
-    \ ]
-
-    " these can't be conjoined with q and qq (e.g. as qqq and qqqq)
-    let s:q_adverbs = [
-        \ ["q", "single"],
-        \ ["qq", "double"],
-    \ ]
-
-    for [start_delim, end_delim, end_group, skip] in s:delims
-        " Q, q, and qq with any number of (ignored) adverbs
-        exec s:before ."Q". s:after .start_delim."\" end=\"". end_delim ."\""." contained"
-        exec s:before ."q". s:after .start_delim ."\" skip=\"". skip ."\" end=\"". end_delim ."\" contains=". end_group .",@p6Interp_q"." contained"
-        exec s:before ."qq". s:after .start_delim ."\" skip=\"". skip ."\" end=\"". end_delim ."\" contains=". end_group .",@p6Interp_qq"." contained"
-
-        for [short, long] in s:adverbs
-            " Qs, qs, qqs, Qa, qa, qqa, etc, with ignored adverbs
-            exec s:before ."Q".short. s:after .start_delim ."\" end=\"". end_delim ."\" contains=@p6Interp_".long." contained"
-            exec s:before ."q".short. s:after .start_delim ."\" skip=\"". skip ."\" end=\"". end_delim ."\" contains=". end_group .",@p6Interp_q,@p6Interp_".long." contained"
-            exec s:before ."qq".short. s:after .start_delim ."\" skip=\"". skip ."\" end=\"". end_delim ."\" contains=". end_group .",@p6Interp_qq,@p6Interp_".long." contained"
-
-            " Q, q, and qq, with one significant adverb
-            exec s:before ."Q\\s*:\\%(".short."\\|".long."\\)". s:after .start_delim ."\" end=\"". end_delim ."\" contains=@p6Interp_".long." contained"
-            for [q_short, q_long] in s:q_adverbs
-                exec s:before ."Q\\s*:\\%(".q_short."\\|".q_long."\\)". s:after .start_delim ."\" end=\"". end_delim ."\" contains=@p6Interp_".q_long." contained"
-            endfor
-            exec s:before ."q\\s*:\\%(".short."\\|".long."\\)". s:after .start_delim ."\" skip=\"". skip ."\" end=\"". end_delim ."\" contains=". end_group .",@p6Interp_q,@p6Interp_".long." contained"
-            exec s:before ."qq\\s*:\\%(".short."\\|".long."\\)". s:after .start_delim ."\" skip=\"". skip ."\" end=\"". end_delim ."\" contains=". end_group .",@p6Interp_qq,@p6Interp_".long." contained"
-
-            for [short2, long2] in s:adverbs
-                " Qs, qs, qqs, Qa, qa, qqa, etc, with one significant adverb
-                exec s:before ."Q".short."\\s*:\\%(".short2."\\|".long2."\\)". s:after .start_delim ."\" end=\"". end_delim ."\" contains=@p6Interp_".long.",@p6Interp_".long2." contained"
-                for [q_short2, q_long2] in s:q_adverbs
-                    exec s:before ."Q".short."\\s*:\\%(".q_short2."\\|".q_long2."\\)". s:after .start_delim ."\" end=\"". end_delim ."\" contains=@p6Interp_".long.",@p6Interp_".q_long2." contained"
-                endfor
-                exec s:before ."q".short."\\s*:\\%(".short2."\\|".long2."\\)". s:after .start_delim ."\" skip=\"". skip ."\" end=\"". end_delim ."\" contains=". end_group .",@p6Interp_q,@p6Interp_".long.",@p6Interp_".long2." contained"
-                exec s:before ."qq".short."\\s*:\\%(".short2."\\|".long2."\\)". s:after .start_delim ."\" skip=\"". skip ."\" end=\"". end_delim ."\" contains=". end_group .",@p6Interp_qq,@p6Interp_".long.",@p6Interp_".long2." contained"
-            endfor
-        endfor
-    endfor
-    unlet s:before s:after s:adverbs s:q_adverbs
-endif
 unlet s:delims
 
 " Match these so something else above can't. E.g. the "q" in "role q { }"
@@ -2060,7 +1943,9 @@ if version >= 508 || !exists("did_perl6_syntax_inits")
     HiLink p6StringAngles    p6String
     HiLink p6StringSQ        p6String
     HiLink p6StringDQ        p6String
-    HiLink p6StringQ         p6String
+    HiLink p6String_Q        p6String
+    HiLink p6String_q        p6String
+    HiLink p6String_qq       p6String
     HiLink p6RxStringSQ      p6String
     HiLink p6RxStringDQ      p6String
     HiLink p6Substitution    p6String
@@ -2077,7 +1962,10 @@ if version >= 508 || !exists("did_perl6_syntax_inits")
     HiLink p6ReduceOp        p6Operator
     HiLink p6ReverseCrossOp  p6Operator
     HiLink p6HyperOp         p6Operator
-    HiLink p6QuoteQ          p6Quote
+    HiLink p6Quote_Q         p6Quote
+    HiLink p6Quote_q         p6Quote
+    HiLink p6Quote_qQ        p6Quote
+    HiLink p6Quote_QPIR      p6Quote
     HiLink p6VersionNum      p6Version
     HiLink p6VersionDot      p6Version
     HiLink p6VariableStub    p6Variable
