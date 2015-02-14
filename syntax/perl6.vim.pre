@@ -1181,31 +1181,26 @@ syn match p6Comment display "#`\@!.*" contains=p6Attention
 " Multiline comments. Arbitrary numbers of opening brackets are allowed,
 " but we only define regions for 1 to 3
 syn region p6Comment
-    \ matchgroup=p6Comment
     \ start="#`("
     \ skip="([^)]*)"
     \ end=")"
     \ contains=p6Attention,p6Comment
 syn region p6Comment
-    \ matchgroup=p6Comment
     \ start="#`\["
     \ skip="\[[^\]]*]"
     \ end="]"
     \ contains=p6Attention,p6Comment
 syn region p6Comment
-    \ matchgroup=p6Comment
     \ start="#`{"
     \ skip="{[^}]*}"
     \ end="}"
     \ contains=p6Attention,p6Comment
 syn region p6Comment
-    \ matchgroup=p6Comment
     \ start="#`<"
     \ skip="<[^>]*>"
     \ end=">"
     \ contains=p6Attention,p6Comment
 syn region p6Comment
-    \ matchgroup=p6Comment
     \ start="#`«"
     \ skip="«[^»]*»"
     \ end="»"
@@ -1214,65 +1209,55 @@ syn region p6Comment
 " double and triple delimiters
 if exists("perl6_extended_comments") || exists("perl6_extended_all")
     syn region p6Comment
-        \ matchgroup=p6Comment
         \ start="#`(("
         \ skip="((\%([^)\|))\@!]\)*))"
         \ end="))"
         \ contains=p6Attention,p6Comment
     syn region p6Comment
-        \ matchgroup=p6Comment
         \ start="#`((("
         \ skip="(((\%([^)]\|)\%())\)\@!\)*)))"
         \ end=")))"
         \ contains=p6Attention,p6Comment
 
     syn region p6Comment
-        \ matchgroup=p6Comment
         \ start="#`\[\["
         \ skip="\[\[\%([^\]]\|]]\@!\)*]]"
         \ end="]]"
         \ contains=p6Attention,p6Comment
     syn region p6Comment
-        \ matchgroup=p6Comment
         \ start="#`\[\[\["
         \ skip="\[\[\[\%([^\]]\|]\%(]]\)\@!\)*]]]"
         \ end="]]]"
         \ contains=p6Attention,p6Comment
 
     syn region p6Comment
-        \ matchgroup=p6Comment
         \ start="#`{{"
         \ skip="{{\%([^}]\|}}\@!\)*}}"
         \ end="}}"
         \ contains=p6Attention,p6Comment
     syn region p6Comment
-        \ matchgroup=p6Comment
         \ start="#`{{{"
         \ skip="{{{\%([^}]\|}\%(}}\)\@!\)*}}}"
         \ end="}}}"
         \ contains=p6Attention,p6Comment
 
     syn region p6Comment
-        \ matchgroup=p6Comment
         \ start="#`<<"
         \ skip="<<\%([^>]\|>>\@!\)*>>"
         \ end=">>"
         \ contains=p6Attention,p6Comment
     syn region p6Comment
-        \ matchgroup=p6Comment
         \ start="#`<<<"
         \ skip="<<<\%([^>]\|>\%(>>\)\@!\)*>>>"
         \ end=">>>"
         \ contains=p6Attention,p6Comment
 
     syn region p6Comment
-        \ matchgroup=p6Comment
         \ start="#`««"
         \ skip="««\%([^»]\|»»\@!\)*»»"
         \ end="»»"
         \ contains=p6Attention,p6Comment
     syn region p6Comment
-        \ matchgroup=p6Comment
         \ start="#`«««"
         \ skip="«««\%([^»]\|»\%(»»\)\@!\)*»»»"
         \ end="»»»"
