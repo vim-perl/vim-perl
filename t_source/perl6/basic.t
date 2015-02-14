@@ -39,3 +39,11 @@ qx//;
 q//
 qw«hey there»
 qqw<yes>
+
+class Foo-Bar {
+    method bla { say "foo" }
+}
+
+class Bla'Bla {
+    method boo { say "bar" }
+}
