@@ -48,6 +48,9 @@ bla
 $foo, $, $bar = @bla;
 $foo, @, $bar = @bla;
 
+isa_ok NaN + 1i, Complex, "NaN + 1i is a Complex number";
+ok NaN + 1i ~~ NaN, "NaN + 1i ~~ NaN";
+ok NaN ~~ NaN + 1i, "NaN ~~ NaN + 1i";
 
 my $str = "bla bla &is-cool() yes";
 

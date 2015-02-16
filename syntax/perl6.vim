@@ -175,7 +175,7 @@ syn match p6Operator display "\%(:\@<!::\@!\|::=\|\.::\)"
 " these require whitespace on the left side
 syn match p6Operator display "\%(\s\|^\)\@<=\%(xx=\|p5=>\)"
 " "i" requires a digit to the left, and no identifier char to the right
-syn match p6Operator display "\d\@<=i[A-Za-z_\xC0-\xFF0-9]\@!"
+syn match p6Operator display "[A-Za-z_\xC0-\xFF]\@<!i[A-Za-z_\xC0-\xFF0-9]\@!"
 " index overloading
 syn match p6Operator display "\%(&\.(\@=\|@\.\[\@=\|%\.{\@=\)"
 
