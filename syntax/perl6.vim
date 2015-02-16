@@ -138,7 +138,7 @@ let s:keywords = {
  \   "Grammar Scalar Array Hash KeyHash KeySet KeyBag",
  \   "Pair List Seq Range Set Bag Mapping Void Undef",
  \   "Failure Exception Code Block Routine Sub Macro",
- \   "Method Submethod Regex Str Blob Char Byte",
+ \   "Method Submethod Regex Str Blob Char Byte Parcel",
  \   "Codepoint Grapheme StrPos StrLen Version Num",
  \   "Complex num complex Bit bit bool True False",
  \   "Increasing Decreasing Ordered Callable AnyChar",
@@ -148,7 +148,8 @@ let s:keywords = {
  \   "Rat rat rat1 rat2 rat4 rat8 rat16 rat32 rat64",
  \   "Buf buf buf1 buf2 buf4 buf8 buf16 buf32 buf64",
  \   "UInt uint uint1 uint2 uint4 uint8 uint16 uint32",
- \   "uint64 Abstraction utf8 utf16 utf32",
+ \   "uint64 Abstraction utf8 utf16 utf32 Numeric Real",
+ \   "Order Same Less More",
  \ ],
  \ "p6Operator": [
  \   "div x xx mod also leg cmp before after eq ne le lt",
@@ -227,8 +228,8 @@ let s:routines = [
  \ "localtime gethost getpw chroot getlogin getpeername kill fork wait",
  \ "perl graphs codes bytes clone print open read write readline say seek",
  \ "close opendir readdir slurp pos fmt vec link unlink symlink uniq pair",
- \ "asin atan sec cosec cotan asec acosec acotan sinh cosh tanh asinh",
- \ "acos acosh atanh sech cosech cotanh sech acosech acotanh asech ok",
+ \ "asin atan sec cosec cotan asec acosec acotan sinh cosh tanh asinh done",
+ \ "acos acosh atanh sech cosech cotanh sech acosech acotanh asech ok nok",
  \ "plan_ok dies_ok lives_ok skip todo pass flunk force_todo use_ok isa_ok",
  \ "diag is_deeply isnt like skip_rest unlike cmp_ok eval_dies_ok nok_error",
  \ "eval_lives_ok approx is_approx throws_ok version_lt plan EVAL succ pred",
@@ -238,7 +239,7 @@ let s:routines = [
  \ "can isa flush arity assuming rewind callwith callsame nextwith nextsame",
  \ "attr eval_elsewhere none srand trim trim_start trim_end lastcall WHAT",
  \ "WHERE HOW WHICH VAR WHO WHENCE ACCEPTS REJECTS does not true iterator by",
- \ "re im invert flip",
+ \ "re im invert flip gist flat tree is-prime throws_like trans",
 \ ]
 
 " we want to highlight builtins like split() though, so this comes afterwards
@@ -254,7 +255,7 @@ syn match p6Identifier display "\%(::\)\@<=\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-
 syn match p6Identifier display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)\%(::\)\@="
 
 " some standard packages
-syn match p6Type display "\%(::\|[A-Za-z_\xC0-\xFF0-9]\|[A-Za-z_\xC0-\xFF]\@<=[-']\)\@<!\%(Order\%(::Same\|::Increase\|::Decrease\)\?\)\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)\@!"
+syn match p6Type display "\%(::\|[A-Za-z_\xC0-\xFF0-9]\|[A-Za-z_\xC0-\xFF]\@<=[-']\)\@<!\%(Order\%(::Same\|::More\|::Less\)\?\)\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)\@!"
 syn match p6Type display "\%(::\|[A-Za-z_\xC0-\xFF0-9]\|[A-Za-z_\xC0-\xFF]\@<=[-']\)\@<!\%(Bool\%(::True\|::False\)\?\)\%([A-Za-z_\xC0-\xFF0-9]\|-[A-Za-z_\xC0-\xFF]\@=\)\@!"
 
 
