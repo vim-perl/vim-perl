@@ -714,10 +714,10 @@ syn region p6RxGroup
     \ contains=@p6Regexen,@p6Variables
 syn region p6RxAssertion
     \ matchgroup=p6StringSpecial2
-    \ start="<"
+    \ start="<\%(\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)=\)\?\%([?*.]\)\?"
     \ end=">"
     \ contained
-    \ contains=@p6Regexen,@p6Variables,p6RxCharClass,p6RxAssertCall
+    \ contains=@p6Regexen,p6Identifier,@p6Variables,p6RxCharClass,p6RxAssertCall
 syn region p6RxAssertCall
     \ matchgroup=p6Normal
     \ start="\%(::\|\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)\)\@<=(\@="

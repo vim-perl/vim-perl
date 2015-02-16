@@ -1,5 +1,14 @@
 #!perl6
 
+token foo {
+    <*foo-bar>
+    (<-[:]>*)
+    <foo=.file>
+}
+
+token foo {
+    <* < foo bar > >
+}
 use v6.0.0;
 use Test;
 say "foo bar";
