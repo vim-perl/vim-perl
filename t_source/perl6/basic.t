@@ -21,6 +21,9 @@ say "foo bar";
 
 $sum += $num if $num.is-prime;
 
+sub if'a($x) {$x}
+is if'a(5), 5, "if'a is a valid sub name";
+
 ok (my % = baz => "luhrman"), 'initialized bare sigil hash %';
 if ($foo % 3 == 0) {
 }

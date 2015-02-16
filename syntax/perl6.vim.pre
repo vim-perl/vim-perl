@@ -78,8 +78,8 @@ syn match p6Identifier display "@@IDENTIFIER@@"
 " priority than matches/regions, so the words can't be autoquoted with
 " the "=>" and "p5=>" operators. All the lookaround stuff is to make sure
 " we don't match them as part of some other identifier.
-let s:before_keyword = " display \"\\%(@@IDENT_CHAR@@\\|@@IDENT_NONDIGIT@@\\@<=-\\)\\@<!\\%("
-let s:after_keyword = "\\)\\%(@@IDENT_CHAR@@\\|-@@IDENT_NONDIGIT@@\\@=\\)\\@!\""
+let s:before_keyword = " display \"\\%(@@IDENT_CHAR@@\\|@@IDENT_NONDIGIT@@\\@<=[-']\\)\\@<!\\%("
+let s:after_keyword = "\\)\\%(@@IDENT_CHAR@@\\|[-']@@IDENT_NONDIGIT@@\\@=\\)\\@!\""
 
 " Billions of keywords
 let s:keywords = {

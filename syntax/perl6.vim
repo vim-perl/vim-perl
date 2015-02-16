@@ -78,8 +78,8 @@ syn match p6Identifier display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[
 " priority than matches/regions, so the words can't be autoquoted with
 " the "=>" and "p5=>" operators. All the lookaround stuff is to make sure
 " we don't match them as part of some other identifier.
-let s:before_keyword = " display \"\\%([A-Za-z_\xC0-\xFF0-9]\\|[A-Za-z_\xC0-\xFF]\\@<=-\\)\\@<!\\%("
-let s:after_keyword = "\\)\\%([A-Za-z_\xC0-\xFF0-9]\\|-[A-Za-z_\xC0-\xFF]\\@=\\)\\@!\""
+let s:before_keyword = " display \"\\%([A-Za-z_\xC0-\xFF0-9]\\|[A-Za-z_\xC0-\xFF]\\@<=[-']\\)\\@<!\\%("
+let s:after_keyword = "\\)\\%([A-Za-z_\xC0-\xFF0-9]\\|[-'][A-Za-z_\xC0-\xFF]\\@=\\)\\@!\""
 
 " Billions of keywords
 let s:keywords = {
