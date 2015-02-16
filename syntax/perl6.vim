@@ -507,7 +507,7 @@ syn region p6Adverb
 "
 " It never matches when:
 "
-" * Preceded by [<+~=] (e.g. <<foo>>, =<$foo>)
+" * Preceded by [<+~=!] (e.g. <<foo>>, =<$foo>, * !< 3)
 " * Followed by [-=] (e.g. <--, <=, <==)
 syn region p6StringAngle
     \ matchgroup=p6Quote
