@@ -906,7 +906,7 @@ syn cluster p6Variables
     \ add=p6VarNum
     \ add=p6Variable
 
-syn match p6VariableStub display "[@$]"
+syn match p6BareSigil    display "[@$%]\%(\s*[,)=]\)\@="
 syn match p6VarSlash     display "\$/"
 syn match p6VarExclam    display "\$!"
 syn match p6VarMatch     display "\$¢"
@@ -1969,7 +1969,7 @@ if version >= 508 || !exists("did_perl6_syntax_inits")
     HiLink p6QuoteQ_PIR      p6Quote
     HiLink p6VersionNum      p6Version
     HiLink p6VersionDot      p6Version
-    HiLink p6VariableStub    p6Variable
+    HiLink p6BareSigil       p6Variable
     HiLink p6RxRange         p6StringSpecial
     HiLink p6RxAnchor        p6StringSpecial
     HiLink p6RxP5Anchor      p6StringSpecial

@@ -21,6 +21,10 @@ say "foo bar";
 
 $sum += $num if $num.is-prime;
 
+ok (my % = baz => "luhrman"), 'initialized bare sigil hash %';
+if ($foo % 3 == 0) {
+}
+
 my $quote = q//;
 my $call = q();
 
