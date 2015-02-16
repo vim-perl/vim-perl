@@ -28,6 +28,9 @@ ok (my % = baz => "luhrman"), 'initialized bare sigil hash %';
 if ($foo % 3 == 0) {
 }
 
+my $f = * !< 3;
+isa_ok $f, Code, 'Whatever-currying !< (1)';
+
 my $quote = q//;
 my $call = q();
 
