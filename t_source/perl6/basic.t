@@ -64,3 +64,9 @@ class Bla'Bla {
 "\123"
 # ascii nul is ok though
 "\040"
+
+# TODO: highlighting of // and grammars in general is still not good enough
+#for ('/foo/bar/baz/' ~~ m/^ $<dirname>=(.* '/'+)? $<basename>=(<-[\/]>+) '/'* $ /).gist.lines {
+#    %count{$0}++ if / ^ \s+ (\w+) \s+ '=>' /;   ## extract key
+#};
+#throws_like "my Int a = 10;", X::Syntax::Malformed, message => / sigilless /;

@@ -72,6 +72,12 @@
 <span class="synDelimiter">&quot;</span><span class="synError">\123</span><span class="synDelimiter">&quot;</span>
 <span class="synComment"># ascii nul is ok though</span>
 <span class="synDelimiter">&quot;</span><span class="synSpecial">\0</span><span class="synString">40</span><span class="synDelimiter">&quot;</span>
+
+<span class="synComment"># </span><span class="synTodo">TODO</span><span class="synComment">: highlighting of // and grammars in general is still not good enough</span>
+<span class="synComment">#for ('/foo/bar/baz/' ~~ m/^ $&lt;dirname&gt;=(.* '/'+)? $&lt;basename&gt;=(&lt;-[\/]&gt;+) '/'* $ /).gist.lines {</span>
+<span class="synComment">#    %count{$0}++ if / ^ \s+ (\w+) \s+ '=&gt;' /;   ## extract key</span>
+<span class="synComment">#};</span>
+<span class="synComment">#throws_like &quot;my Int a = 10;&quot;, X::Syntax::Malformed, message =&gt; / sigilless /;</span>
 </pre>
 
  </body>
