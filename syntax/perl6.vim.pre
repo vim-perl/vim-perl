@@ -604,8 +604,8 @@ syn match p6QuoteQ      display "Q\%(qq\|ww\|[abcfhpsqvwx]\)\?[A-Za-z(]\@!" next
 syn match p6QuoteQ_q    display "q\%(ww\|[abcfhpsvwx]\)\?[A-Za-z(]\@!" nextgroup=p6PairsQ_q skipwhite skipempty
 syn match p6QuoteQ_qww  display "qww[A-Za-z(]\@!" nextgroup=p6PairsQ_qww skipwhite skipempty
 syn match p6QuoteQ_qq   display "qq[pwx]\?[A-Za-z(]\@!" nextgroup=p6PairsQ_qq skipwhite skipempty
-syn match p6QuoteQ_qto  display "qto[A-Za-z(]\@!" nextgroup=p6StringQ_qto skipwhite skipempty
-syn match p6QuoteQ_qqto display "qqto[A-Za-z(]\@!" nextgroup=p6StringQ_qqto skipwhite skipempty
+syn match p6QuoteQ_qto  display "q:\?to[A-Za-z(]\@!" nextgroup=p6StringQ_qto skipwhite skipempty
+syn match p6QuoteQ_qqto display "qq:\?to[A-Za-z(]\@!" nextgroup=p6StringQ_qqto skipwhite skipempty
 syn match p6PairsQ      contained transparent skipwhite skipempty nextgroup=p6StringQ "\%(\_s*:!\?@@IDENTIFIER@@\%(([^)]*)\)\?\)*"
 syn match p6PairsQ_q    contained transparent skipwhite skipempty nextgroup=p6StringQ_q "\%(\_s*:!\?@@IDENTIFIER@@\%(([^)]*)\)\?\)*"
 syn match p6PairsQ_qww  contained transparent skipwhite skipempty nextgroup=p6StringQ_qww "\%(\_s*:!\?@@IDENTIFIER@@\%(([^)]*)\)\?\)*"

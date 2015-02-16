@@ -26,3 +26,9 @@ my %hih;
 my @empty = <>;
 my @empty = < >;
 
+
+my $here = qq:to/GOO/
+SDFSDF
+sdfsdfsdf
+sdfsdf
+GOO
