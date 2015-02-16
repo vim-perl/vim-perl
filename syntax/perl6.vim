@@ -21,6 +21,7 @@
 " TODO:
 "   * Fix p6Match region for /pattern/. It shouldn't match (1,2)[*/2]
 "   * Deal with s:Perl5//
+"   * Highlight interpolated $() and related constructs
 "   * Make these highlight as strings, not operators:
 "       <==> <=:=> <===> <=~> <« »> «>» «<»
 "   * Allow more keywords to match as function calls(leave() is export(), etc)
