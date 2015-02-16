@@ -22,3 +22,7 @@ my $heredoc = qqto/foo bar/;
     foo bar
 
 my %hih;
+
+my @empty = <>;
+my @empty = < >;
+

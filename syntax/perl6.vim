@@ -501,6 +501,7 @@ syn region p6Adverb
 " * It comes after "enum", "for", "any", "all", or "none"
 " * It's the first or last thing on a line (ignoring whitespace)
 " * It's preceded by "= "
+" * It's empty and terminated on the same line (e.g. <> and < >)
 "
 " It never matches when:
 "
@@ -514,6 +515,7 @@ syn region p6StringAngle
     \ start="\%(^\s*\)\@<=<\%(<\|=>\|[-=]\{1,2}>\@!\)\@!"
     \ start="[<+~=]\@<!<\%(\s*$\)\@="
     \ start="\%(=\s\+\)\@=<\%(<\|=>\|[-=]\{1,2}>\@!\)\@!"
+    \ start="<\%(\s*>\)\@="
     \ skip="\\\@<!\\>"
     \ end=">"
     \ contains=p6InnerAnglesOne,p6EscBackSlash,p6EscCloseAngle
