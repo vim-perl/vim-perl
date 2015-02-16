@@ -78,8 +78,8 @@ syn match p6Identifier display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[
 " priority than matches/regions, so the words can't be autoquoted with
 " the "=>" and "p5=>" operators. All the lookaround stuff is to make sure
 " we don't match them as part of some other identifier.
-let s:before_keyword = " display \"\\%([A-Za-z_\xC0-\xFF0-9]\\|[A-Za-z_\xC0-\xFF]\\@<=[-']\\)\\@<!\\%("
-let s:after_keyword = "\\)\\%([A-Za-z_\xC0-\xFF0-9]\\|[-'][A-Za-z_\xC0-\xFF]\\@=\\)\\@!\""
+let s:before_keyword = " display \"\\%([A-Za-z_\\xC0-\\xFF0-9]\\|[A-Za-z_\\xC0-\\xFF][-']\\)\\@<!\\%("
+let s:after_keyword = "\\)\\%([A-Za-z_\\xC0-\\xFF0-9]\\|[-'][A-Za-z_\\xC0-\\xFF]\\@=\\)\\@!\""
 
 " Billions of keywords
 let s:keywords = {
@@ -208,7 +208,7 @@ unlet s:infix_a s:infix_a_long s:infix_a_words s:infix_a_pattern
 unlet s:infix_n s:infix_n_pattern s:both
 
 " [+] reduce
-exec "syn match p6ReduceOp display \"[A-Za-z_\xC0-\xFF0-9]\\@<!\\[[R\\\\]\\?!\\?". s:infix_assoc ."]\\%(«\\|<<\\)\\?\""
+exec "syn match p6ReduceOp display \"[A-Za-z_\\xC0-\\xFF0-9]\\@<!\\[[R\\\\]\\?!\\?". s:infix_assoc ."]\\%(«\\|<<\\)\\?\""
 unlet s:infix_assoc
 
 " Reverse and cross operators (Rop, Xop)

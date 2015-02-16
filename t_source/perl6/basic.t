@@ -16,8 +16,8 @@ say "foo bar";
 
 # Commented out since it correctly highlights "chars" in Vim 7.4,
 # but the Travis-CI machines have Vim 7.3 which does it wrong.
-#for 0..$string.chars-1 -> $pos {
-#}
+for 0..$string.chars-1 -> $pos {
+}
 
 $sum += $num if $num.is-prime;
 
@@ -58,6 +58,8 @@ class Foo-Bar {
 class Bla'Bla {
     method boo { say "bar" }
 }
+
+Inf, -Inf, NaN, +Inf
 
 # old-style octals are bad
 "\10"
