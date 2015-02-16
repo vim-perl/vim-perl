@@ -48,6 +48,12 @@
 <span class="synKeyword">class</span> <span class="synNormal">Bla'Bla</span> {
     <span class="synKeyword">method</span> <span class="synNormal">boo</span> { <span class="synFunction">say</span> <span class="synDelimiter">&quot;</span><span class="synString">bar</span><span class="synDelimiter">&quot;</span> }
 }
+
+<span class="synComment"># old-style octals are bad</span>
+<span class="synDelimiter">&quot;</span><span class="synError">\10</span><span class="synDelimiter">&quot;</span>
+<span class="synDelimiter">&quot;</span><span class="synError">\123</span><span class="synDelimiter">&quot;</span>
+<span class="synComment"># ascii nul is ok though</span>
+<span class="synDelimiter">&quot;</span><span class="synSpecial">\0</span><span class="synString">40</span><span class="synDelimiter">&quot;</span>
 </pre>
 
  </body>

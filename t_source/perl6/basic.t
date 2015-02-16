@@ -40,3 +40,9 @@ class Foo-Bar {
 class Bla'Bla {
     method boo { say "bar" }
 }
+
+# old-style octals are bad
+"\10"
+"\123"
+# ascii nul is ok though
+"\040"
