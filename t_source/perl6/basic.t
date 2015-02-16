@@ -14,8 +14,10 @@ use Test;
 say "foo bar";
 @foo.push: "bar";
 
-for 0..$string.chars-1 -> $pos {
-}
+# Commented out since it correctly highlights "chars" in Vim 7.4,
+# but the Travis-CI machines have Vim 7.3 which does it wrong.
+#for 0..$string.chars-1 -> $pos {
+#}
 
 $sum += $num if $num.is-prime;
 
