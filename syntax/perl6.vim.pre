@@ -21,7 +21,6 @@
 " TODO:
 "   * Fix p6Match region for /pattern/. It shouldn't match (1,2)[*/2]
 "   * Deal with s:Perl5//
-"   * Heredocs (q:to/END/, etc)
 "   * Make these highlight as strings, not operators:
 "       <==> <=:=> <===> <=~> <« »> «>» «<»
 "   * Allow more keywords to match as function calls(leave() is export(), etc)
@@ -331,7 +330,7 @@ syn cluster p6Interp_function
 syn cluster p6Interp_closure
     \ add=p6InterpClosure
 
-syn cluster p6Interp_single
+syn cluster p6Interp_q
     \ add=p6EscQQ
     \ add=p6EscBackSlash
 
@@ -597,26 +596,33 @@ let s:delims = [
   \ ["\\s\\@<=(",    ")",    "p6EscCloseParen",   "\\%(\\\\\\@<!\\\\)\\|([^)]*)\\)"],
 \ ]
 
-syn match p6Quote_Q  display "Q[A-z(]\@!" nextgroup=p6Pairs_Q skipwhite skipempty
-syn match p6Quote_q  display "q[wx]\?[A-z(]\@!" nextgroup=p6Pairs_q skipwhite skipempty
-syn match p6Quote_qq display "qq[wx]\?[A-z(]\@!" nextgroup=p6Pairs_qq skipwhite skipempty
-syn match p6Pairs_Q  contained transparent skipwhite skipempty nextgroup=p6String_Q "\%(\_s*:!\?@@IDENTIFIER@@\%(([^)]*)\)\?\)*"
-syn match p6Pairs_q  contained transparent skipwhite skipempty nextgroup=p6String_q "\%(\_s*:!\?@@IDENTIFIER@@\%(([^)]*)\)\?\)*"
-syn match p6Pairs_qq contained transparent skipwhite skipempty nextgroup=p6String_qq "\%(\_s*:!\?@@IDENTIFIER@@\%(([^)]*)\)\?\)*"
+syn match p6QuoteQ      display "Q\%(qq\|ww\|[abcfhpsqvwx]\)\?[A-Za-z(]\@!" nextgroup=p6PairsQ skipwhite skipempty
+syn match p6QuoteQ_q    display "q\%(ww\|[abcfhpsvwx]\)\?[A-Za-z(]\@!" nextgroup=p6PairsQ_q skipwhite skipempty
+syn match p6QuoteQ_qww  display "qww[A-Za-z(]\@!" nextgroup=p6PairsQ_qww skipwhite skipempty
+syn match p6QuoteQ_qq   display "qq[pwx]\?[A-Za-z(]\@!" nextgroup=p6PairsQ_qq skipwhite skipempty
+syn match p6QuoteQ_qto  display "qto[A-Za-z(]\@!" nextgroup=p6StringQ_qto skipwhite skipempty
+syn match p6QuoteQ_qqto display "qqto[A-Za-z(]\@!" nextgroup=p6StringQ_qqto skipwhite skipempty
+syn match p6PairsQ      contained transparent skipwhite skipempty nextgroup=p6StringQ "\%(\_s*:!\?@@IDENTIFIER@@\%(([^)]*)\)\?\)*"
+syn match p6PairsQ_q    contained transparent skipwhite skipempty nextgroup=p6StringQ_q "\%(\_s*:!\?@@IDENTIFIER@@\%(([^)]*)\)\?\)*"
+syn match p6PairsQ_qww  contained transparent skipwhite skipempty nextgroup=p6StringQ_qww "\%(\_s*:!\?@@IDENTIFIER@@\%(([^)]*)\)\?\)*"
+syn match p6PairsQ_qq   contained transparent skipwhite skipempty nextgroup=p6StringQ_qq "\%(\_s*:!\?@@IDENTIFIER@@\%(([^)]*)\)\?\)*"
 
 if exists("perl6_embedded_pir")
     syn include @p6PIR syntax/pir.vim
-    syn match p6Quote_QPIR  display "Q[A-z(]\@!\%(\_s*:PIR\)\@=" nextgroup=p6Pairs_QPIR skipwhite skipempty
-    syn match p6Pairs_QPIR contained "\_s*:PIR" transparent skipwhite skipempty nextgroup=p6String_QPIR
+    syn match p6Quote_QPIR display "Q[A-Za-z(]\@!\%(\_s*:PIR\)\@=" nextgroup=p6PairsQ_PIR skipwhite skipempty
+    syn match p6Pairs_QPIR contained "\_s*:PIR" transparent skipwhite skipempty nextgroup=p6StringQ_PIR
 endif
 
 for [start_delim, end_delim, end_group, skip] in s:delims
-    exec "syn region p6String_Q matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contains=".end_group." contained"
-    exec "syn region p6String_q matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contains=@p6Interp_q,".end_group." contained"
-    exec "syn region p6String_qq matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contains=@p6Interp_qq,".end_group." contained"
+    exec "syn region p6StringQ matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contains=".end_group." contained"
+    exec "syn region p6StringQ_q matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contains=@p6Interp_q,".end_group." contained"
+    exec "syn region p6StringQ_qww matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contains=@p6Interp_q,p6StringSQ,p6StringDQ".end_group." contained"
+    exec "syn region p6StringQ_qq matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contains=@p6Interp_qq,".end_group." contained"
+    exec "syn region p6StringQ_qto matchgroup=p6Quote start=\"".start_delim."\\z([^".end_delim."]\\+\\)".end_delim."\" skip=\"".skip."\" end=\"^\\s*\\z1$\" contains=@p6Interp_q,".end_group." contained"
+    exec "syn region p6StringQ_qqto matchgroup=p6Quote start=\"".start_delim."\\z(\[^".end_delim."]\\+\\)".end_delim."\" skip=\"".skip."\" end=\"^\\s*\\z1$\" contains=@p6Interp_qq,".end_group." contained"
 
     if exists("perl6_embedded_pir")
-        exec "syn region p6String_QPIR matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contains=@p6PIR,".end_group." contained"
+        exec "syn region p6StringQ_PIR matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contains=@p6PIR,".end_group." contained"
     endif
 endfor
 
@@ -624,7 +630,7 @@ unlet s:delims
 
 " Match these so something else above can't. E.g. the "q" in "role q { }"
 " should not be considered a string
-syn match p6Identifier display "\%(\<\%(role\|grammar\|slang\)\s\+\)\@<=@@IDENTIFIER@@"
+syn match p6Identifier display "\%(\<\%(role\|grammar\|rule\|token\|slang\|sub\|method\)\s\+\)\@<=@@IDENTIFIER@@"
 
 " :key
 syn match p6Operator display ":\@<!::\@!!\?" nextgroup=p6Key
@@ -1928,9 +1934,12 @@ if version >= 508 || !exists("did_perl6_syntax_inits")
     HiLink p6StringAngles    p6String
     HiLink p6StringSQ        p6String
     HiLink p6StringDQ        p6String
-    HiLink p6String_Q        p6String
-    HiLink p6String_q        p6String
-    HiLink p6String_qq       p6String
+    HiLink p6StringQ         p6String
+    HiLink p6StringQ_q       p6String
+    HiLink p6StringQ_qww     p6String
+    HiLink p6StringQ_qq      p6String
+    HiLink p6StringQ_qto     p6String
+    HiLink p6StringQ_qqto    p6String
     HiLink p6RxStringSQ      p6String
     HiLink p6RxStringDQ      p6String
     HiLink p6Substitution    p6String
@@ -1947,10 +1956,13 @@ if version >= 508 || !exists("did_perl6_syntax_inits")
     HiLink p6ReduceOp        p6Operator
     HiLink p6ReverseCrossOp  p6Operator
     HiLink p6HyperOp         p6Operator
-    HiLink p6Quote_Q         p6Quote
-    HiLink p6Quote_q         p6Quote
-    HiLink p6Quote_qQ        p6Quote
-    HiLink p6Quote_QPIR      p6Quote
+    HiLink p6QuoteQ          p6Quote
+    HiLink p6QuoteQ_q        p6Quote
+    HiLink p6QuoteQ_qww      p6Quote
+    HiLink p6QuoteQ_qq       p6Quote
+    HiLink p6QuoteQ_qto      p6Quote
+    HiLink p6QuoteQ_qqto     p6Quote
+    HiLink p6QuoteQ_PIR      p6Quote
     HiLink p6VersionNum      p6Version
     HiLink p6VersionDot      p6Version
     HiLink p6VariableStub    p6Variable

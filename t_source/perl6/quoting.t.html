@@ -1,0 +1,36 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre>
+<span class="synSpecial">my</span> <span class="synIdentifier">$double</span> <span class="synOperator">=</span> <span class="synDelimiter">qq/</span><span class="synString">foo </span><span class="synIdentifier">$bar</span><span class="synString"> </span><span class="synIdentifier">@baz</span><span class="synp6InterpArray">[]</span><span class="synString"> bla</span><span class="synDelimiter">/</span><span class="synOperator">;</span>
+<span class="synSpecial">my</span> <span class="synIdentifier">$ex</span> <span class="synOperator">=</span> <span class="synDelimiter">qqx{</span><span class="synString">foo </span><span class="synIdentifier">$bar</span><span class="synDelimiter">}</span><span class="synOperator">;</span>
+<span class="synDelimiter">qx//</span><span class="synOperator">;</span>
+<span class="synDelimiter">q//</span>
+<span class="synDelimiter">qw«</span><span class="synString">hey there</span><span class="synDelimiter">»</span>
+<span class="synDelimiter">qww&lt;</span><span class="synString">yes </span><span class="synDelimiter">'</span><span class="synString">no</span><span class="synDelimiter">'</span><span class="synString"> foo</span><span class="synDelimiter">&gt;</span>
+
+<span class="synSpecial">my</span> <span class="synIdentifier">$hlagh</span> <span class="synOperator">=</span> <span class="synDelimiter">qq[</span><span class="synString">foo bar </span><span class="synIdentifier">$baz</span><span class="synDelimiter">]</span>
+<span class="synSpecial">my</span> <span class="synIdentifier">$hlagh</span> <span class="synOperator">=</span> <span class="synDelimiter">q[</span><span class="synString">foo bar $baz</span><span class="synDelimiter">]</span>
+
+<span class="synSpecial">my</span> <span class="synIdentifier">$here</span> <span class="synOperator">=</span> <span class="synDelimiter">qto/foo/</span><span class="synString">;</span>
+<span class="synString">dsfsdfsdf</span>
+<span class="synDelimiter">foo</span>
+<span class="synFunction">say</span> <span class="synIdentifier">$here</span><span class="synOperator">;</span>
+
+<span class="synSpecial">my</span> <span class="synIdentifier">$heredoc</span> <span class="synOperator">=</span> <span class="synDelimiter">qqto/foo bar/</span><span class="synString">;</span>
+<span class="synString">    dsfdsfsdfdsf</span>
+<span class="synString">    dsfsdfsdfsd</span>
+<span class="synString">    </span><span class="synIdentifier">$foo</span>
+<span class="synString">        sdfsdfsdfds</span>
+<span class="synDelimiter">    foo bar</span>
+
+<span class="synSpecial">my</span> <span class="synIdentifier">%hih</span><span class="synOperator">;</span>
+</pre>
+
+ </body>
+</html>

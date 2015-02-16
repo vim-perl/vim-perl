@@ -33,13 +33,6 @@ $foo, @, $bar = @bla;
 
 my $str = "bla bla &is-cool() yes";
 
-my $double = qq/foo $bar @baz[] bla/;
-my $ex = qqx{foo $bar};
-qx//;
-q//
-qw«hey there»
-qqw<yes>
-
 class Foo-Bar {
     method bla { say "foo" }
 }
