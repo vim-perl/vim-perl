@@ -310,10 +310,6 @@ syn region p6MatchVar
 syn match p6Context display "\<\%(item\|list\|slice\|hash\)\>"
 syn match p6Context display "\%(\$\|@\|%\|&\)(\@="
 
-" the "$" placeholder in "$var1, $, var2 = @list"
-syn match p6Placeholder display "\%(,\s*\)\@<=\$\%(@@IDENT_NONDIGIT@@\|\%([.^*?=!~]\|:\@<!::\@!\)\)\@!"
-syn match p6Placeholder display "\$\%(@@IDENT_NONDIGIT@@\|\%([.^*?=!~]\|:\@<!::\@!\)\)\@!\%(,\s*\)\@="
-
 " Quoting
 
 " one cluster for every quote adverb
@@ -2053,7 +2049,6 @@ if version >= 508 || !exists("did_perl6_syntax_inits")
     HiLink p6Quote          Delimiter
     HiLink p6TypeConstraint PreCondit
     HiLink p6Exception      Exception
-    HiLink p6Placeholder    Identifier
     HiLink p6Variable       Identifier
     HiLink p6VarSlash       Identifier
     HiLink p6VarNum         Identifier

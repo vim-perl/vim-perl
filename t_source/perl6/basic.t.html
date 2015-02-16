@@ -42,6 +42,8 @@
 <span class="synSpecial">my</span> <span class="synIdentifier">$quote</span> <span class="synOperator">=</span> <span class="synDelimiter">q//</span><span class="synOperator">;</span>
 <span class="synSpecial">my</span> <span class="synIdentifier">$call</span> <span class="synOperator">=</span> <span class="synNormal">q</span>()<span class="synOperator">;</span>
 
+<span class="synIdentifier">@data</span> <span class="synOperator">==&gt;</span> <span class="synFunction">grep</span> {<span class="synDelimiter">/</span><span class="synSpecial">&lt;[</span><span class="synString">aeiouy</span><span class="synSpecial">]&gt;</span><span class="synDelimiter">/</span>} <span class="synOperator">==&gt;</span> <span class="synFunction">is</span>(<span class="synOperator">$</span>(<span class="synOperator">*</span>)<span class="synOperator">,</span> <span class="synOperator">$</span>(<span class="synIdentifier">@out</span>)<span class="synOperator">,</span> <span class="synDelimiter">'</span><span class="synString">basic test for $(*)</span><span class="synDelimiter">'</span>)<span class="synOperator">;</span>
+
 <span class="synKeyword">sub</span> <span class="synNormal">is-cool</span> {
 }
 

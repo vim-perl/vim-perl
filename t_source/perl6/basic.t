@@ -34,6 +34,8 @@ isa_ok $f, Code, 'Whatever-currying !< (1)';
 my $quote = q//;
 my $call = q();
 
+@data ==> grep {/<[aeiouy]>/} ==> is($(*), $(@out), 'basic test for $(*)');
+
 sub is-cool {
 }
 
