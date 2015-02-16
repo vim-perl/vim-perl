@@ -149,7 +149,7 @@ let s:keywords = {
  \   "Buf buf buf1 buf2 buf4 buf8 buf16 buf32 buf64",
  \   "UInt uint uint1 uint2 uint4 uint8 uint16 uint32",
  \   "uint64 Abstraction utf8 utf16 utf32 Numeric Real",
- \   "Order Same Less More",
+ \   "Order Same Less More Nil Mu",
  \ ],
  \ "p6Operator": [
  \   "div x xx mod also leg cmp before after eq ne le lt",
