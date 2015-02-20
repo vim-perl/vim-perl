@@ -20,20 +20,16 @@
 
 " TODO:
 "   * Fix p6Match region for /pattern/. It shouldn't match (1,2)[*/2]
-"   * Deal with s:Perl5//
 "   * Highlight interpolated $() and related constructs
 "   * Allow more keywords to match as function calls(leave() is export(), etc)
+"   * Go over the list of keywords/routines to see what's deprecated/missing
+"   * Highlight indented Pod blocks
 "   * Optimization: use nextgroup instead of lookaround (:help syn-nextgroup)
 "   * Optimization: See if some lookarounds can be bounded with e.g. \@1<=
 "   * Optimization: Try replacing similar regexes with a single, larger one.
 "     See also :help syntime.
 "   * Add more support for folding (:help syn-fold)
 "   * Add more syntax syncing hooks (:help syn-sync)
-"
-" Impossible TODO?:
-"   * Unspace
-"   * Unicode bracketing characters for quoting (there are so many)
-"   * Selective highlighting of Pod formatting codes with the :allow option
 "
 " To highlight comments with doubled and tripled delimiters (#`<<< >>>, etc):
 "   let perl6_extended_comments=1
