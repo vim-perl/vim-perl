@@ -22,8 +22,6 @@
 "   * Fix p6Match region for /pattern/. It shouldn't match (1,2)[*/2]
 "   * Deal with s:Perl5//
 "   * Highlight interpolated $() and related constructs
-"   * Make these highlight as strings, not operators:
-"       <==> <=:=> <===> <=~> <« »> «>» «<»
 "   * Allow more keywords to match as function calls(leave() is export(), etc)
 "   * Optimization: use nextgroup instead of lookaround (:help syn-nextgroup)
 "   * Optimization: See if some lookarounds can be bounded with e.g. \@1<=
@@ -35,9 +33,6 @@
 " Impossible TODO?:
 "   * Unspace
 "   * Unicode bracketing characters for quoting (there are so many)
-"   * Various tricks depending on context. I.e. we can't know when Perl
-"     expects «*» to be a string or a hyperoperator. The latter is presumably
-"     more common, so that's what we assume.
 "   * Selective highlighting of Pod formatting codes with the :allow option
 "
 " To highlight comments with doubled and tripled delimiters (#`<<< >>>, etc):
@@ -178,41 +173,9 @@ syn match p6Operator display "\%(\s\|^\)\@<=\%(xx=\|p5=>\)"
 syn match p6Operator display "@@IDENT_NONDIGIT@@\@<!i@@IDENT_CHAR@@\@!"
 " index overloading
 syn match p6Operator display "\%(&\.(\@=\|@\.\[\@=\|%\.{\@=\)"
-
-" all infix operators except nonassocative ones
-let s:infix_a = [
-    \ "div % mod +& +< +> \\~& ?& \\~< \\~> +| +\\^ \\~| \\~\\^ ?| ?\\^ xx x",
-    \ "\\~ && & also <== ==> <<== ==>> == != < <= > >= \\~\\~ eq ne lt le gt",
-    \ "ge =:= === eqv before after \\^\\^ min max \\^ff ff\\^ \\^ff\\^",
-    \ "\\^fff fff\\^ \\^fff\\^ fff ff ::= := \\.= => , : p5=> Z minmax",
-    \ "\\.\\.\\. and andthen or orelse xor \\^ += -= /= \\*= \\~= //= ||=",
-    \ "+ - \\*\\* \\* // / \\~ || |",
-\ ]
-" nonassociative infix operators
-let s:infix_n = "but does <=> leg cmp \\.\\. \\.\\.\\^\\^ \\^\\.\\. \\^\\.\\.\\^"
-
-let s:infix_a_long = join(s:infix_a, " ")
-let s:infix_a_words = split(s:infix_a_long)
-let s:infix_a_pattern = join(s:infix_a_words, "\\|")
-
-let s:infix_n_words = split(s:infix_n)
-let s:infix_n_pattern = join(s:infix_n_words, "\\|")
-
-let s:both = [s:infix_a_pattern, s:infix_n_pattern]
-let s:infix = join(s:both, "\\|")
-
-let s:infix_assoc = "!\\?\\%(" . s:infix_a_pattern . "\\)"
-let s:infix = "!\\?\\%(" . s:infix . "\\)"
-
-unlet s:infix_a s:infix_a_long s:infix_a_words s:infix_a_pattern
-unlet s:infix_n s:infix_n_pattern s:both
-
-" [+] reduce
-exec "syn match p6ReduceOp display \"@@IDENT_CHAR_Q@@\\@<!\\[[R\\\\]\\?!\\?". s:infix_assoc ."]\\%(«\\|<<\\)\\?\""
-unlet s:infix_assoc
-
-" Reverse and cross operators (Rop, Xop)
-exec "syn match p6ReverseCrossOp display \"[RX]". s:infix ."\""
+" reduce, reverse, and cross metaoperators
+syn match p6ReduceOp display "\%(^\|\s\|(\)\@<=\[\d\@![^,[:space:]]\+]"
+syn match p6ReverseCrossOp display "[RX]\S\+"
 
 " basically all builtins that can be followed by parentheses
 let s:routines = [
@@ -561,6 +524,18 @@ syn region p6InnerFrench
     \ contained
     \ contains=p6InnerFrench
 
+" Hyperops. They need to come after "<>" and "«»" strings in order to override
+" them, but before other types of strings, to avoid matching those delimiters
+" as parts of hyperops.
+syn match p6HyperOp display "»\S\+»\?"
+syn match p6HyperOp display "«\?\S\+«"
+syn match p6HyperOp display "»\S\+«"
+syn match p6HyperOp display "«\S\+»"
+syn match p6HyperOp display ">>\S\+\%(>>\)\?"
+syn match p6HyperOp display "\%(<<\)\?\S\+<<"
+syn match p6HyperOp display ">>\S\+<<"
+syn match p6HyperOp display "<<\S\+>>"
+
 " 'string'
 syn region p6StringSQ
     \ matchgroup=p6Quote
@@ -641,18 +616,6 @@ syn match p6StringP5Auto display "@@IDENTIFIER@@\ze\s\+p5=>"
 syn match p6StringAuto   display "@@IDENTIFIER@@\ze\%(p5\)\@<!=>"
 syn match p6StringAuto   display "@@IDENTIFIER@@\ze\s\+=>"
 syn match p6StringAuto   display "@@IDENTIFIER@@p5\ze=>"
-
-" Hyperoperators. Needs to come after the quoting operators (<>, «», etc)
-exec "syn match p6HyperOp display \"»"   .s:infix."»\\?\""
-exec "syn match p6HyperOp display \"«\\?".s:infix."«\""
-exec "syn match p6HyperOp display \"»"   .s:infix."«\""
-exec "syn match p6HyperOp display \"«"   .s:infix. "»\""
-
-exec "syn match p6HyperOp display \">>"          .s:infix."\\%(>>\\)\\?\""
-exec "syn match p6HyperOp display \"\\%(<<\\)\\?".s:infix."<<\""
-exec "syn match p6HyperOp display \">>"          .s:infix."<<\""
-exec "syn match p6HyperOp display \"<<"          .s:infix.">>\""
-unlet s:infix
 
 " Regexes and grammars
 
