@@ -22,7 +22,7 @@
 "   * Fix p6Match region for /pattern/. It shouldn't match (1,2)[*/2]
 "   * Highlight interpolated $() and related constructs
 "   * Allow more keywords to match as function calls(leave() is export(), etc)
-"   * Go over the list of keywords/routines to see what's deprecated/missing
+"   * Go over the list of keywords/builtins to see what's deprecated/missing
 "   * Highlight indented Pod blocks
 "   * Optimization: use nextgroup instead of lookaround (:help syn-nextgroup)
 "   * Optimization: See if some lookarounds can be bounded with e.g. \@1<=
@@ -141,24 +141,7 @@ let s:keywords = {
  \ ],
 \ }
 
-" We don't use the "syn keyword" construct here because that always has
-" higher priority than matches/regions, which would ruin our chance of
-" matching these words later on as strings with the autoquote ("=>", "p5=>")
-" operators.
-let s:before_keyword = "\\%([A-Za-z_\\xC0-\\xFF0-9]\\|[A-Za-z_\\xC0-\\xFF][-']\\)\\@<!\\%("
-let s:after_keyword = "\\)\\%([A-Za-z_\\xC0-\\xFF0-9]\\|[-'][A-Za-z_\\xC0-\\xFF]\\@=\\)\\@!"
-let s:no_open_paren = "\\%((\\)\\@!"
-
-for [group, words] in items(s:keywords)
-    let s:words_space = join(words, " ")
-    let s:temp = split(s:words_space)
-    let s:words = join(s:temp, "\\|")
-    exec "syn match ". group ." display \"". s:before_keyword . s:words . s:after_keyword . s:no_open_paren . "\""
-endfor
-unlet s:keywords s:words_space s:temp s:words s:no_open_paren
-
-" Basically all builtins that can be followed by parentheses
-let s:routines = [
+let s:builtins = [
  \ "eager hyper substr index rindex grep map sort join lines hints chmod",
  \ "split reduce min max reverse truncate zip cat roundrobin classify",
  \ "first sum keys values pairs defined delete exists elems end kv any",
@@ -185,16 +168,32 @@ let s:routines = [
  \ "re im invert flip gist flat tree is-prime throws_like trans",
 \ ]
 
-let s:words_space = join(s:routines, " ")
+" We don't use "syn keyword" here because that always has higher priority
+" than matches/regions, which would prevent these words from matching as
+" autoquoted strings before "=>" or "p5=>".
+syn match p6KeywordStart display "\%(\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)\@!\)\@=\%([A-Za-z_\xC0-\xFF0-9]\|[A-Za-z_\xC0-\xFF][-']\)\@<!"
+    \ nextgroup=p6Attention,p6DeclareRoutine,p6Module,p6Variable,p6Include,p6Conditional,p6VarStorage,p6Repeat,p6FlowControl,p6TypeConstraint,p6ClosureTrait,p6Exception,p6Property,p6Number,p6Pragma,p6Type,p6Operator,p6Builtin,p6Identifier
+
+let s:after_keyword = "\\%((\\|[A-Za-z_\\xC0-\\xFF0-9]\\|[-'][A-Za-z_\\xC0-\\xFF]\\@=\\)\\@!"
+for [group, words] in items(s:keywords)
+    let s:words_space = join(words, " ")
+    let s:temp = split(s:words_space)
+    let s:words = join(s:temp, "\\|")
+    exec "syn match ". group ." display \"\\%(". s:words . "\\)" . s:after_keyword . "\" contained"
+endfor
+
+" Builtins are special because they can be immediately followed by parentheses
+let s:after_builtin = "\\%([A-Za-z_\\xC0-\\xFF0-9]\\|[-'][A-Za-z_\\xC0-\\xFF]\\@=\\)\\@!"
+let s:words_space = join(s:builtins, " ")
 let s:temp = split(s:words_space)
 let s:words = join(s:temp, "\\|")
-exec "syn match p6Routine display \"". s:before_keyword . s:words . s:after_keyword . "\""
-unlet s:before_keyword s:after_keyword s:words_space s:temp s:words s:routines
+exec "syn match p6Builtin display \"\\%(". s:words . "\\)" . s:after_builtin . "\" contained"
+unlet s:keywords s:builtins s:after_keyword s:after_builtin s:words_space s:temp s:words
 
 " try to distinguish the is/does functions from the type constraints
-syn match p6Routine     display "\%(\%(\S[A-Za-z_\xC0-\xFF0-9]\@<!\|^\)\s*\)\@<=\%(is\|does\)\>"
+syn match p6Builtin     display "\%(\%(\S[A-Za-z_\xC0-\xFF0-9]\@<!\|^\)\s*\)\@<=\%(is\|does\)\>"
 
-" these Routine names are also Properties, if preceded by "is"
+" these function names are also Properties, if preceded by "is"
 syn match p6Property    display "\%(is\s\+\)\@<=\%(signature\|context\|also\|shape\)"
 
 " packages, must come after all the keywords
@@ -1978,7 +1977,6 @@ if version >= 508 || !exists("did_perl6_syntax_inits")
     HiLink p6Number         Number
     HiLink p6String         String
     HiLink p6Repeat         Repeat
-    HiLink p6Keyword        Keyword
     HiLink p6Pragma         Keyword
     HiLink p6Module         Keyword
     HiLink p6DeclareRoutine Keyword
@@ -1992,7 +1990,7 @@ if version >= 508 || !exists("did_perl6_syntax_inits")
     HiLink p6Include        Include
     HiLink p6Shebang        PreProc
     HiLink p6ClosureTrait   PreProc
-    HiLink p6Routine        Function
+    HiLink p6Builtin        Function
     HiLink p6Operator       Operator
     HiLink p6Context        Operator
     HiLink p6Quote          Delimiter
