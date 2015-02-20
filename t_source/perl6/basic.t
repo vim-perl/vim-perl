@@ -80,3 +80,8 @@ Inf, -Inf, NaN, +Inf
 #    %count{$0}++ if / ^ \s+ (\w+) \s+ '=>' /;   ## extract key
 #};
 #throws_like "my Int a = 10;", X::Syntax::Malformed, message => / sigilless /;
+
+my()
+BEGIN()
+
+# vim: ft=perl6
