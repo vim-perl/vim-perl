@@ -223,19 +223,20 @@ syn match p6ReduceOp display "\%(^\|\s\|(\)\@<=\[\d\@![^,[:space:]]\+]"
 syn match p6ReverseCrossOp display "[RX]\S\+"
 
 syn match p6BlockLabel display "\%(^\s*\)\@<=\h\w*\s*::\@!\_s\@="
-syn match p6Number     display "[A-Za-z_\xC0-\xFF0-9]\@<!_\@!\%(\d\|__\@!\)\+_\@<!\%([eE]_\@!+\?\%(\d\|_\)\+\)\?_\@<!"
-syn match p6Float      display "[A-Za-z_\xC0-\xFF0-9]\@<!_\@!\%(\d\|__\@!\)\+_\@<![eE]_\@!-\%(\d\|_\)\+"
-syn match p6Float      display "[A-Za-z_\xC0-\xFF0-9]\@<!_\@<!\%(\d\|__\@!\)*_\@<!\.\@<!\._\@!\.\@!\a\@!\%(\d\|_\)\+_\@<!\%([eE]_\@!\%(\d\|_\)\+\)\?"
 
-syn match p6NumberBase display "[obxd]" contained
-syn match p6Number     display "\<0\%(o[0-7][0-7_]*\)\@="     nextgroup=p6NumberBase
-syn match p6Number     display "\<0\%(b[01][01_]*\)\@="       nextgroup=p6NumberBase
-syn match p6Number     display "\<0\%(x\x[[:xdigit:]_]*\)\@=" nextgroup=p6NumberBase
-syn match p6Number     display "\<0\%(d\d[[:digit:]_]*\)\@="  nextgroup=p6NumberBase
-syn match p6Number     display "\%(\<0o\)\@<=[0-7][0-7_]*"
-syn match p6Number     display "\%(\<0b\)\@<=[01][01_]*"
-syn match p6Number     display "\%(\<0x\)\@<=\x[[:xdigit:]_]*"
-syn match p6Number     display "\%(\<0d\)\@<=\d[[:digit:]_]*"
+syn match p6Number     display "[A-Za-z_\xC0-\xFF0-9]\@1<!_\@!\%(\d\|__\@!\)\+_\@<!\%([eE]_\@!+\?\%(\d\|_\)\+\)\?_\@<!"
+syn match p6Float      display "[A-Za-z_\xC0-\xFF0-9]\@1<!_\@!\%(\d\|__\@!\)\+_\@<![eE]_\@!-\%(\d\|_\)\+"
+syn match p6Float      display "[A-Za-z_\xC0-\xFF0-9]\@1<!_\@<!\%(\d\|__\@!\)*_\@<!\.\@<!\._\@!\.\@!\a\@!\%(\d\|_\)\+_\@<!\%([eE]_\@!\%(\d\|_\)\+\)\?"
+
+syn match p6Number     display "\%([A-Za-z_\xC0-\xFF0-9]\)\@1<!0"  nextgroup=p6OctBase,p6BinBase,p6HexBase,p6DecBase
+syn match p6OctBase    display "o" contained nextgroup=p6OctNumber
+syn match p6BinBase    display "b" contained nextgroup=p6BinNumber
+syn match p6HexBase    display "x" contained nextgroup=p6HexNumber
+syn match p6DecBase    display "d" contained nextgroup=p6DecNumber
+syn match p6OctNumber  display "[0-7][0-7_]*" contained
+syn match p6BinNumber  display "[01][01_]*" contained
+syn match p6HexNumber  display "\x[[:xdigit:]_]*" contained
+syn match p6DecNumber  display "\d[[:digit:]_]*" contained
 
 syn match p6Version    display "\<v\d\@=" nextgroup=p6VersionNum
 syn match p6VersionNum display "\d\+" nextgroup=p6VersionDot contained
@@ -1975,6 +1976,10 @@ if version >= 508 || !exists("did_perl6_syntax_inits")
     HiLink p6Package        Normal
     HiLink p6PackageScope   Normal
     HiLink p6Number         Number
+    HiLink p6OctNumber      Number
+    HiLink p6BinNumber      Number
+    HiLink p6HexNumber      Number
+    HiLink p6DecNumber      Number
     HiLink p6String         String
     HiLink p6Repeat         Repeat
     HiLink p6Pragma         Keyword
@@ -1982,7 +1987,10 @@ if version >= 508 || !exists("did_perl6_syntax_inits")
     HiLink p6DeclareRoutine Keyword
     HiLink p6VarStorage     Special
     HiLink p6FlowControl    Special
-    HiLink p6NumberBase     Special
+    HiLink p6OctBase        Special
+    HiLink p6BinBase        Special
+    HiLink p6HexBase        Special
+    HiLink p6DecBase        Special
     HiLink p6Twigil         Special
     HiLink p6StringSpecial2 Special
     HiLink p6Version        Special
