@@ -38,6 +38,9 @@
 " To highlight Perl 5 regexes (m:P5//):
 "   let perl6_perl5_regexes=1
 "
+" To enable folding:
+"   let perl6_fold=1
+"
 " The above requires pir.vim, which you can find in Parrot's repository:
 " https://github.com/parrot/parrot/tree/master/editor
 
@@ -1929,6 +1932,14 @@ endif
 " Let's just sync whole file, the other methods aren't reliable (or I don't
 " know how to use them reliably)
 syn sync fromstart
+
+if exists("perl6_fold") || exists("perl6_extended_all")
+    setl foldmethod=syntax
+    syn region p6BlockFold
+        \ start="^\z(\s*\)\%(my\|our\|augment\|multi\|proto\|only\)\?\s*\%(@@IDENTIFIER@@\s\+\)\?\<\%(CATCH\|try\|ENTER\|LEAVE\|CHECK\|INIT\|BEGIN\|END\|KEEP\|UNDO\|PRE\|POST\|module\|class\|sub\%(method\)\?\|multi\|method\|slang\|grammar\|regex\|token\|rule\)\>[^{]\+{\%(\s+\|#.*\)\?$"
+        \ end="^\z1}"
+        \ transparent fold keepend extend
+endif
 
 let b:current_syntax = "perl6"
 
