@@ -740,7 +740,9 @@ syn match p6VarExclam    display "\$!"
 syn match p6VarMatch     display "\$¢"
 syn match p6VarNum       display "\$\d\+"
 syn match p6Variable     display "[@&$%]\$*\%(::\|\%(\%([.^*?=!~]\|:\@1<!::\@!\)[A-Za-z_\xC0-\xFF]\)\|[A-Za-z_\xC0-\xFF]\)\@=" nextgroup=p6Twigil,p6VarName,p6PackageScope
-syn match p6VarName      display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)" contained
+syn match p6VarName      display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)" nextgroup=p6PostHyperOp contained
+syn match p6Close        display "[\])]" nextgroup=p6PostHyperOp
+syn match p6PostHyperOp  display "\%(»\|>>\)" contained
 syn match p6Twigil       display "\%([.^*?=!~]\|:\@1<!::\@!\)[A-Za-z_\xC0-\xFF]\@=" nextgroup=p6PackageScope,p6VarName contained
 syn match p6PackageScope display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)\?::" nextgroup=p6PackageScope,p6VarName contained
 
@@ -1791,6 +1793,7 @@ if version >= 508 || !exists("did_perl6_syntax_inits")
     HiLink p6ReduceOp        p6Operator
     HiLink p6ReverseCrossOp  p6Operator
     HiLink p6HyperOp         p6Operator
+    HiLink p6PostHyperOp     p6Operator
     HiLink p6QuoteQ          p6Quote
     HiLink p6QuoteQ_q        p6Quote
     HiLink p6QuoteQ_qww      p6Quote

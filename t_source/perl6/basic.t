@@ -6,6 +6,9 @@ token foo {
     <foo=.file>
 }
 
+method info { [~] ' -- ', $.name,
+                    (' [', @.vars»<name>.join(', '), ']' if @.vars) }
+
 my $foo ~~ /foobar/;
 $foo /= 4;
 $foo // $bar;
