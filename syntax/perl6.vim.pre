@@ -305,9 +305,8 @@ syn region p6InterpScalar
     \ start="\ze\z(\$\%(\%(\%(\d\+\|!\|/\|¢\)\|\%(\%(\%([.^*?=!~]\|:\@1<!::\@!\)@@IDENT_NONDIGIT@@\@=\)\?@@IDENTIFIER@@\)\%(\.@@IDENTIFIER@@\|\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)*\)\.\?\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)\)"
     \ start="\ze\z(\$\%(\%(\%(\%([.^*?=!~]\|:\@1<!::\@!\)@@IDENT_NONDIGIT@@\@=\)\?@@IDENTIFIER@@\)\|\%(\d\+\|!\|/\|¢\)\)\)"
     \ end="\z1\zs"
-    \ contained
+    \ contained keepend
     \ contains=TOP
-    \ keepend
 
 syn region p6InterpScalar
     \ matchgroup=p6Context
@@ -320,9 +319,8 @@ syn region p6InterpScalar
 syn region p6InterpArray
     \ start="\ze\z(@\$*\%(\%(\%(!\|/\|¢\)\|\%(\%(\%([.^*?=!~]\|:\@1<!::\@!\)@@IDENT_NONDIGIT@@\@=\)\?@@IDENTIFIER@@\)\%(\.@@IDENTIFIER@@\|\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)*\)\.\?\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)\)"
     \ end="\z1\zs"
-    \ contained
+    \ contained keepend
     \ contains=TOP
-    \ keepend
 
 syn region p6InterpArray
     \ matchgroup=p6Context
@@ -335,9 +333,8 @@ syn region p6InterpArray
 syn region p6InterpHash
     \ start="\ze\z(%\$*\%(\%(\%(!\|/\|¢\)\|\%(\%(\%([.^*?=!~]\|:\@1<!::\@!\)@@IDENT_NONDIGIT@@\@=\)\?@@IDENTIFIER@@\)\%(\.@@IDENTIFIER@@\|\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)*\)\.\?\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)\)"
     \ end="\z1\zs"
-    \ contained
+    \ contained keepend
     \ contains=TOP
-    \ keepend
 
 syn region p6InterpHash
     \ matchgroup=p6Context
@@ -350,9 +347,8 @@ syn region p6InterpHash
 syn region p6InterpFunction
     \ start="\ze\z(&\%(\%(!\|/\|¢\)\|\%(\%(\%([.^*?=!~]\|:\@1<!::\@!\)@@IDENT_NONDIGIT@@\@=\)\?@@IDENTIFIER@@\%(\.@@IDENTIFIER@@\|\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)*\)\.\?\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)\)"
     \ end="\z1\zs"
-    \ contained
+    \ contained keepend
     \ contains=TOP
-    \ keepend
 
 syn region p6InterpFunction
     \ matchgroup=p6Context
@@ -366,9 +362,8 @@ syn region p6InterpClosure
     \ start="\\\@1<!{}\@!"
     \ skip="{[^}]*}"
     \ end="}"
-    \ contained
+    \ contained keepend
     \ contains=TOP
-    \ keepend
 
 " generic escape
 syn match p6Escape          display "\\\S" contained
@@ -403,8 +398,7 @@ syn region p6QQSequence
     \ start="\["
     \ skip="\[[^\]]*]"
     \ end="]"
-    \ contained
-    \ transparent
+    \ contained transparent
     \ contains=@p6Interp_qq
 
 syn match p6CodePoint   display "\%(\d\+\|\S\)" contained
@@ -437,9 +431,8 @@ syn region p6Adverb
     \ start="\ze\z(:!\?@@IDENTIFIER@@\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\?\)"
     \ start="\ze\z(:!\?[@$%]\$*\%(::\|\%(\$\@1<=\d\+\|!\|/\|¢\)\|\%(\%([.^*?=!~]\|:\@1<!::\@!\)@@IDENT_NONDIGIT@@\)\|@@IDENTIFIER@@\)\)"
     \ end="\z1\zs"
-    \ contained
+    \ contained keepend
     \ contains=TOP
-    \ keepend
 
 " <words>
 " FIXME: not sure how to distinguish this from the "less than" operator
@@ -474,8 +467,7 @@ syn region p6InnerAnglesOne
     \ start="<"
     \ skip="\\\@1<!\\>"
     \ end=">"
-    \ transparent
-    \ contained
+    \ transparent contained
     \ contains=p6InnerAnglesOne
 
 " <<words>>
@@ -491,8 +483,7 @@ syn region p6InnerAnglesTwo
     \ start="<<"
     \ skip="\\\@1<!\\>"
     \ end=">>"
-    \ transparent
-    \ contained
+    \ transparent contained
     \ contains=p6InnerAnglesTwo
 
 " «words»
@@ -508,8 +499,7 @@ syn region p6InnerFrench
     \ start="«"
     \ skip="\\\@1<!\\»"
     \ end="»"
-    \ transparent
-    \ contained
+    \ transparent contained
     \ contains=p6InnerFrench
 
 " Hyperops. They need to come after "<>" and "«»" strings in order to override
@@ -690,9 +680,8 @@ syn region p6RxQuoteWords
 syn region p6RxAdverb
     \ start="\ze\z(:!\?@@IDENTIFIER@@\)"
     \ end="\z1\zs"
-    \ contained
+    \ contained keepend
     \ contains=TOP
-    \ keepend
 syn region p6RxAdverbArg
     \ start="\%(:!\?@@IDENTIFIER@@\)\@<=("
     \ skip="([^)]*)"
@@ -765,9 +754,8 @@ syn region p6Match
     \ start=+@@IDENTIFIER_START@@\%(mm\?\|rx\)\z([/!$,|`'"]\)+
     \ skip="\\\z1"
     \ end="\z1"
-    \ keepend
+    \ contained keepend
     \ contains=@p6Regexen,p6Variable,p6VarNum
-    \ contained
 
 " m<foo>, m«foo», m{foo}, etc
 for [start_delim, end_delim, end_group, skip] in s:bracketing_delims
@@ -782,18 +770,16 @@ syn region p6Substitution
     \ start=+@@IDENTIFIER_START@@s\z([/!$,|`'"]\)+
     \ skip="\\\z1"
     \ end="\z1"me=e-1
-    \ keepend
+    \ contained keepend
     \ contains=@p6Regexen,p6Variable,p6VarNum
     \ nextgroup=p6Replacement
-    \ contained
 
 syn region p6Replacement
     \ matchgroup=p6Quote
     \ start="\z(.\)"
     \ skip="\\\z1"
     \ end="\z1"
-    \ contained
-    \ keepend
+    \ contained keepend
     \ contains=@p6Interp_qq
 
 " s<foo>, s«foo», s{foo}, etc
@@ -813,7 +799,6 @@ syn region p6Transliteration
     \ contains=p6RxRange
     \ nextgroup=p6Transliteration
     \ contained
-    "\ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@2<!\<tr\%(\s*:!\?@@IDENTIFIER@@\%(([^)]*)\)\?\)*\s*\)\@<=\z([/\"'`|!,$]\)"
 
 syn region p6TransRepl
     \ matchgroup=p6Quote
@@ -1251,8 +1236,7 @@ syn region p6PodParaRegion
     \ start="^=for\>"
     \ end="^\ze\%(\s*$\|=@@IDENT_NONDIGIT@@\)"
     \ contains=p6PodParaNoCodeTypeRegion
-    \ keepend
-    \ extend
+    \ keepend extend
 
 syn region p6PodParaNoCodeTypeRegion
     \ matchgroup=p6PodType
@@ -1279,8 +1263,7 @@ syn region p6PodParaRegion
     \ start="^=for\>\ze\s*code\>"
     \ end="^\ze\%(\s*$\|=@@IDENT_NONDIGIT@@\)"
     \ contains=p6PodParaCodeTypeRegion
-    \ keepend
-    \ extend
+    \ keepend extend
 
 syn region p6PodParaCodeTypeRegion
     \ matchgroup=p6PodType
@@ -1300,8 +1283,7 @@ syn region p6PodParaRegion
     \ start="^=for\>\ze\s*\%(pod\|item\|nested\|\u\+\)\>"
     \ end="^\ze\%(\s*$\|=@@IDENT_NONDIGIT@@\)"
     \ contains=p6PodParaTypeRegion
-    \ keepend
-    \ extend
+    \ keepend extend
 
 syn region p6PodParaTypeRegion
     \ matchgroup=p6PodType
@@ -1322,8 +1304,7 @@ syn region p6PodParaRegion
     \ start="^=for\>\ze\s\+END\>"
     \ end="\%$"
     \ contains=p6PodParaEOFTypeRegion
-    \ keepend
-    \ extend
+    \ keepend extend
 
 syn region p6PodParaEOFTypeRegion
     \ matchgroup=p6PodType
@@ -1344,8 +1325,7 @@ syn region p6PodDelimRegion
     \ start="^=begin\>"
     \ end="^=end\>"
     \ contains=p6PodDelimNoCodeTypeRegion
-    \ keepend
-    \ extend
+    \ keepend extend
 
 syn region p6PodDelimNoCodeTypeRegion
     \ matchgroup=p6PodType
@@ -1372,8 +1352,7 @@ syn region p6PodDelimRegion
     \ start="^=begin\>\ze\s*code\>"
     \ end="^=end\>"
     \ contains=p6PodDelimCodeTypeRegion
-    \ keepend
-    \ extend
+    \ keepend extend
 
 syn region p6PodDelimCodeTypeRegion
     \ matchgroup=p6PodType
@@ -1394,8 +1373,7 @@ syn region p6PodDelimRegion
     \ start="^=begin\>\ze\s*\%(pod\|item\|nested\|\u\+\)\>"
     \ end="^=end\>"
     \ contains=p6PodDelimTypeRegion
-    \ keepend
-    \ extend
+    \ keepend extend
 
 syn region p6PodDelimTypeRegion
     \ matchgroup=p6PodType
@@ -1415,8 +1393,8 @@ syn region p6PodDelimRegion
     \ matchgroup=p6PodPrefix
     \ start="^=begin\>\ze\s\+END\>"
     \ end="\%$"
-    \ contains=p6PodDelimEOFTypeRegion
     \ extend
+    \ contains=p6PodDelimEOFTypeRegion
 
 syn region p6PodDelimEOFTypeRegion
     \ matchgroup=p6PodType
@@ -1482,8 +1460,7 @@ syn region p6PodFormatAnglesOne
     \ start="<"
     \ skip="<[^>]*>"
     \ end=">"
-    \ transparent
-    \ contained
+    \ transparent contained
     \ contains=p6PodFormatAnglesFrench,p6PodFormatAnglesOne
 
 syn region p6PodFormatAnglesTwo
@@ -1491,8 +1468,7 @@ syn region p6PodFormatAnglesTwo
     \ start="<<"
     \ skip="<<[^>]*>>"
     \ end=">>"
-    \ transparent
-    \ contained
+    \ transparent contained
     \ contains=p6PodFormatAnglesFrench,p6PodFormatAnglesOne,p6PodFormatAnglesTwo
 
 syn region p6PodFormatAnglesThree
@@ -1500,8 +1476,7 @@ syn region p6PodFormatAnglesThree
     \ start="<<<"
     \ skip="<<<[^>]*>>>"
     \ end=">>>"
-    \ transparent
-    \ contained
+    \ transparent contained
     \ contains=p6PodFormatAnglesFrench,p6PodFormatAnglesOne,p6PodFormatAnglesTwo,p6PodFormatAnglesThree
 
 syn region p6PodFormatAnglesFrench
@@ -1509,8 +1484,7 @@ syn region p6PodFormatAnglesFrench
     \ start="«"
     \ skip="«[^»]*»"
     \ end="»"
-    \ transparent
-    \ contained
+    \ transparent contained
     \ contains=p6PodFormatAnglesFrench,p6PodFormatAnglesOne,p6PodFormatAnglesTwo,p6PodFormatAnglesThree
 
 " All formatting codes
