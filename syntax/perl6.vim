@@ -19,7 +19,6 @@
 "     # vim: filetype=perl6
 
 " TODO:
-"   * Fix p6Match region for /pattern/. It shouldn't match (1,2)[*/2]
 "   * Highlight interpolated $() and related constructs
 "   * Allow more keywords to match as function calls(leave() is export(), etc)
 "   * Go over the list of keywords/builtins to see what's deprecated/missing
@@ -744,15 +743,9 @@ syn match p6PackageScope display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\
 " Perl 6 regex regions
 
 " /foo/
-" Below some hacks to recognise the // variant. This is virtually impossible
-" to catch in all cases as the / is used in so many other ways, but these
-" should be the most obvious ones.
-" TODO: mostly stolen from perl.vim, might need more work
 syn region p6Match
     \ matchgroup=p6Quote
-    \ start="\%(\%(::\|[$@%&][.!^:*?]\?\|\.\)\@2<!\%(\<\%(split\|while\|until\|if\|unless\)\|\.\.\|[-+*!~(\[{=]\)\s*\)\@<=//\@!"
-    \ start="^//\@!"
-    \ start=+\s\@1<=/[^[:space:][:digit:]$@%=]\@=\%(/\_s*\%([([{$@%&*[:digit:]"'`]\|\_s\w\|[[:upper:]_abd-fhjklnqrt-wyz]\)\)\@!/\@!+
+    \ start="/\@1<!\%(^\s*\|\%([=~|&/:({]\|\%(::\|[$@%&][.!^:*?]\?\)\@<![A-Za-z_\xC0-\xFF0-9]\@1<!\%([A-Za-z_\xC0-\xFF][-']\)\@2<!\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)\)\s*\)\@<=/[/=]\@!"
     \ skip="\\/"
     \ end="/"
     \ contains=@p6Regexen,p6Variable,p6VarExclam,p6VarMatch,p6VarNum

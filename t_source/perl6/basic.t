@@ -6,6 +6,14 @@ token foo {
     <foo=.file>
 }
 
+my $foo ~~ /foobar/;
+$foo /= 4;
+$foo // $bar;
+(1,2)[*/2];
+while /foobar/ {
+}
+$a = $bla / 5;
+
 token foo {
     <* < foo bar > >
 }
