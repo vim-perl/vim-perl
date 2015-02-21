@@ -32,3 +32,5 @@ SDFSDF
 sdfsdfsdf
 sdfsdf
 GOO
+
+# vim: ft=perl6
