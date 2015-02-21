@@ -22,6 +22,28 @@
 }
 <span class="synIdentifier">$a</span> <span class="synOperator">=</span> <span class="synIdentifier">$bla</span> <span class="synOperator">/</span> <span class="synNumber">5</span><span class="synOperator">;</span>
 
+<span class="synIdentifier">$foo</span> <span class="synOperator">~~</span> <span class="synDelimiter">m«</span><span class="synString">sdfdfsdf</span><span class="synDelimiter">»</span>
+<span class="synIdentifier">$foo</span> <span class="synOperator">~~</span> <span class="synDelimiter">s/</span><span class="synString">foo</span><span class="synDelimiter">/</span><span class="synIdentifier">$bar</span><span class="synDelimiter">/</span><span class="synOperator">;</span>
+
+<span class="synIdentifier">$foo</span> <span class="synOperator">~~</span> <span class="synDelimiter">m/</span><span class="synString">sd</span><span class="synSpecialChar">$</span><span class="synDelimiter">/</span>
+<span class="synIdentifier">$foo</span> <span class="synOperator">~~</span> <span class="synDelimiter">s/</span><span class="synString">sd</span><span class="synSpecialChar">$</span><span class="synDelimiter">/</span><span class="synString">foo</span><span class="synIdentifier">$bar</span><span class="synDelimiter">/</span>
+<span class="synIdentifier">$foo</span> <span class="synOperator">~~</span> <span class="synDelimiter">s{</span><span class="synString">sdfsdf</span><span class="synDelimiter">}</span>
+<span class="synIdentifier">$foo</span> <span class="synOperator">~~</span> <span class="synDelimiter">tr/</span><span class="synString">dsf</span><span class="synDelimiter">/</span><span class="synString">sdf</span><span class="synDelimiter">/</span>
+
+<span class="synIdentifier">$</span><span class="synSpecial">&lt;</span><span class="synIdentifier">bar</span><span class="synSpecial">&gt;</span>
+<span class="synType">Order::Same</span>
+<span class="synType">Bool::True</span>
+<span class="synDelimiter">/</span><span class="synString">sdfdsf</span><span class="synDelimiter">/</span>
+<span class="synRepeat">given</span> <span class="synIdentifier">$foo</span> {
+    <span class="synSpecial">when</span> <span class="synDelimiter">/</span><span class="synString">dsfsdf</span><span class="synDelimiter">/</span> {
+    }
+}
+<span class="synNormal">foo</span>::<span class="synNormal">bar</span> <span class="synOperator">/</span> <span class="synNumber">4</span><span class="synOperator">;</span>
+<span class="synRepeat">while</span> <span class="synDelimiter">/</span><span class="synString">foo</span><span class="synDelimiter">/</span><span class="synOperator">;</span>
+<span class="synFunction">say</span> <span class="synIdentifier">@foo</span><span class="synOperator">.</span><span class="synFunction">grep</span><span class="synOperator">:</span> <span class="synDelimiter">/</span><span class="synString">dsfsdf</span><span class="synDelimiter">/</span>
+<span class="synFunction">say</span> <span class="synIdentifier">@foo</span><span class="synOperator">.</span><span class="synFunction">grep</span>(<span class="synDelimiter">/</span><span class="synString">dsfsdf</span><span class="synDelimiter">/</span>)
+<span class="synIdentifier">$bla</span> <span class="synOperator">/</span> <span class="synNumber">3</span><span class="synOperator">;</span>
+
 <span class="synKeyword">token</span> <span class="synp6RegexName">foo</span> <span class="synNormal">{</span>
 <span class="synString">    </span><span class="synSpecial">&lt;*</span><span class="synp6RxAssertion"> </span><span class="synSpecial">&lt; </span><span class="synString">foo bar </span><span class="synSpecial">&gt;</span><span class="synp6RxAssertion"> </span><span class="synSpecial">&gt;</span>
 <span class="synNormal">}</span>
@@ -60,7 +82,7 @@
 <span class="synKeyword">sub</span> <span class="synNormal">is-cool</span> {
 }
 
-<span class="synKeyword">role</span> <span class="synNormal">q</span> {
+<span class="synKeyword">sub</span> <span class="synNormal">q</span> {
 }
 
 <span class="synStatement">=begin</span><span class="synp6PodDelimRegion"> </span><span class="synType">foo-bar</span>

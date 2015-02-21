@@ -14,6 +14,28 @@ while /foobar/ {
 }
 $a = $bla / 5;
 
+$foo ~~ m«sdfdfsdf»
+$foo ~~ s/foo/$bar/;
+
+$foo ~~ m/sd$/
+$foo ~~ s/sd$/foo$bar/
+$foo ~~ s{sdfsdf}
+$foo ~~ tr/dsf/sdf/
+
+$<bar>
+Order::Same
+Bool::True
+/sdfdsf/
+given $foo {
+    when /dsfsdf/ {
+    }
+}
+foo::bar / 4;
+while /foo/;
+say @foo.grep: /dsfsdf/
+say @foo.grep(/dsfsdf/)
+$bla / 3;
+
 token foo {
     <* < foo bar > >
 }
@@ -52,7 +74,7 @@ my $call = q();
 sub is-cool {
 }
 
-role q {
+sub q {
 }
 
 =begin foo-bar
