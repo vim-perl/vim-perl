@@ -20,6 +20,11 @@ is('ababab'.trans([/ab/, 'aba', 'bab', /baba/] =>
 method info { [~] ' -- ', $.name,
                     (' [', @.vars»<name>.join(', '), ']' if @.vars) }
 
+s[foo][bar $baz]
+tr|a..c|A..C|;
+$japh ~~ tr[a..zA..Z][n..za..mN..ZA..M];
+tr/$123/X\x20\o40\t/;
+
 my $foo ~~ /foobar/;
 $foo /= 4;
 $foo // $bar;

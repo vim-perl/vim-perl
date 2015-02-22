@@ -555,25 +555,25 @@ endif
 
 " hardcoded set of delimiters
 let s:plain_delims = [
-  \ ["\\\"",         "\\\"", "p6EscDoubleQuote",  "\\\\\\@1<!\\\\\\\""],
-  \ ["'",            "'",    "p6EscQuote",        "\\\\\\@1<!\\\\'"],
-  \ ["/",            "/",    "p6EscForwardSlash", "\\\\\\@1<!\\\\/"],
-  \ ["`",            "`",    "p6EscBackTick",     "\\\\\\@1<!\\\\`"],
-  \ ["|",            "|",    "p6EscVerticalBar",  "\\\\\\@1<!\\\\|"],
-  \ ["!",            "!",    "p6EscExclamation",  "\\\\\\@1<!\\\\!"],
-  \ [",",            ",",    "p6EscComma",        "\\\\\\@1<!\\\\,"],
-  \ ["\\$",          "\\$",  "p6EscDollar",       "\\\\\\@1<!\\\\\\$"],
+  \ ["DQ",          "\\\"",         "\\\"", "p6EscDoubleQuote",  "\\\\\\@1<!\\\\\\\""],
+  \ ["SQ",          "'",            "'",    "p6EscQuote",        "\\\\\\@1<!\\\\'"],
+  \ ["Slash",       "/",            "/",    "p6EscForwardSlash", "\\\\\\@1<!\\\\/"],
+  \ ["BackTick",    "`",            "`",    "p6EscBackTick",     "\\\\\\@1<!\\\\`"],
+  \ ["Bar",         "|",            "|",    "p6EscVerticalBar",  "\\\\\\@1<!\\\\|"],
+  \ ["Exclamation", "!",            "!",    "p6EscExclamation",  "\\\\\\@1<!\\\\!"],
+  \ ["Comma",       ",",            ",",    "p6EscComma",        "\\\\\\@1<!\\\\,"],
+  \ ["Dollar",      "\\$",          "\\$",  "p6EscDollar",       "\\\\\\@1<!\\\\\\$"],
 \ ]
 let s:bracketing_delims = [
-  \ ["{",            "}",    "p6EscCloseCurly",   "\\%(\\\\\\@1<!\\\\}\\|{[^}]*}\\)"],
-  \ ["<",            ">",    "p6EscCloseAngle",   "\\%(\\\\\\@1<!\\\\>\\|<[^>]*>\\)"],
-  \ ["«",            "»",    "p6EscCloseFrench",  "\\%(\\\\\\@1<!\\\\»\\|«[^»]*»\\)"],
-  \ ["\\\[",         "]",    "p6EscCloseBracket", "\\%(\\\\\\@1<!\\\\]\\|\\[^\\]]*]\\)"],
-  \ ["\\s\\1@<=(",   ")",    "p6EscCloseParen",   "\\%(\\\\\\@1<!\\\\)\\|([^)]*)\\)"],
+  \ ["Curly",   "{",            "}",    "p6EscCloseCurly",   "\\%(\\\\\\@1<!\\\\}\\|{[^}]*}\\)"],
+  \ ["Angle",   "<",            ">",    "p6EscCloseAngle",   "\\%(\\\\\\@1<!\\\\>\\|<[^>]*>\\)"],
+  \ ["French",  "«",            "»",    "p6EscCloseFrench",  "\\%(\\\\\\@1<!\\\\»\\|«[^»]*»\\)"],
+  \ ["Bracket", "\\\[",         "]",    "p6EscCloseBracket", "\\%(\\\\\\@1<!\\\\]\\|\\[^\\]]*]\\)"],
+  \ ["Paren",   "\\s\\1@<=(",   ")",    "p6EscCloseParen",   "\\%(\\\\\\@1<!\\\\)\\|([^)]*)\\)"],
 \ ]
 let s:all_delims = s:plain_delims + s:bracketing_delims
 
-for [start_delim, end_delim, end_group, skip] in s:all_delims
+for [name, start_delim, end_delim, end_group, skip] in s:all_delims
     exec "syn region p6StringQ matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contains=".end_group." contained"
     exec "syn region p6StringQ_q matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contains=@p6Interp_q,".end_group." contained"
     exec "syn region p6StringQ_qww matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contains=@p6Interp_q,p6StringSQ,p6StringDQ".end_group." contained"
@@ -761,8 +761,8 @@ syn region p6Match
     \ contains=@p6Regexen,p6Variable,p6VarNum
 
 " m<foo>, m«foo», m{foo}, etc
-for [start_delim, end_delim, end_group, skip] in s:bracketing_delims
-    exec "syn region p6Match matchgroup=p6Quote start=\"[A-Za-z_\\xC0-\\xFF0-9]\\@1<!\\%([A-Za-z_\\xC0-\\xFF][-']\\)\\@2<!\\%(mm\\?\\|rx\\)".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" keepend contains=@p6Regexen,@p6Variables contained"
+for [name, start_delim, end_delim, end_group, skip] in s:bracketing_delims
+    exec "syn region p6Match matchgroup=p6Quote start=\"[A-Za-z_\\xC0-\\xFF0-9]\\@1<!\\%([A-Za-z_\\xC0-\\xFF][-']\\)\\@2<!\\%(mm\\?\\|rx\\)".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contained keepend contains=@p6Regexen,@p6Variables"
 endfor
 
 " Substitutions
@@ -785,11 +785,11 @@ syn region p6Replacement
     \ contained keepend
     \ contains=@p6Interp_qq
 
-" s<foo>, s«foo», s{foo}, etc
-for [start_delim, end_delim, end_group, skip] in s:bracketing_delims
-    exec "syn region p6Substitution matchgroup=p6Quote start=\"[A-Za-z_\\xC0-\\xFF0-9]\\@1<!\\%([A-Za-z_\\xC0-\\xFF][-']\\)\\@2<!s".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" keepend contains=@p6Regexen,@p6Variables contained"
+" s<foo><bar>, s«foo»«bar», s{foo}{bar}, etc
+for [name, start_delim, end_delim, end_group, skip] in s:bracketing_delims
+    exec "syn region p6Substitution matchgroup=p6Quote start=\"[A-Za-z_\\xC0-\\xFF0-9]\\@1<!\\%([A-Za-z_\\xC0-\\xFF][-']\\)\\@2<!s".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contained keepend contains=@p6Regexen,@p6Variables nextgroup=p6Repl".name
+    exec "syn region p6Repl".name." matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contained keepend contains=@p6Interp_qq"
 endfor
-unlet s:bracketing_delims
 
 " Transliteration
 
@@ -799,17 +799,24 @@ syn region p6Transliteration
     \ start=+[A-Za-z_\xC0-\xFF0-9]\@1<!\%([A-Za-z_\xC0-\xFF][-']\)\@2<!tr\z([/!$,|`'"]\)+
     \ skip="\\\z1"
     \ end="\z1"me=e-1
-    \ contains=p6RxRange
-    \ nextgroup=p6Transliteration
     \ contained
+    \ contains=p6RxRange
+    \ nextgroup=p6TransRepl
 
 syn region p6TransRepl
     \ matchgroup=p6Quote
-    \ start="\z([/\"'`|!,$]\)"
+    \ start="\z(.\)"
     \ skip="\\\z1"
     \ end="\z1"
     \ contained
-    \ contains=@p6Interp_qq
+    \ contains=@p6Interp_qq,p6RxRange
+
+" tr<foo><bar>, tr«foo»«bar», tr{foo}{bar}, etc
+for [name, start_delim, end_delim, end_group, skip] in s:bracketing_delims
+    exec "syn region p6Transliteration matchgroup=p6Quote start=\"[A-Za-z_\\xC0-\\xFF0-9]\\@1<!\\%([A-Za-z_\\xC0-\\xFF][-']\\)\\@2<!tr".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contained keepend contains=p6RxRange nextgroup=p6TransRepl".name
+    exec "syn region p6TransRepl".name." matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contained keepend contains=@p6Interp_qq,p6RxRange"
+endfor
+unlet s:bracketing_delims
 
 if exists("perl6_perl5_regexes") || exists("perl6_extended_all")
 
@@ -1739,97 +1746,108 @@ if version >= 508 || !exists("did_perl6_syntax_inits")
         command -nargs=+ HiLink hi def link <args>
     endif
 
-    HiLink p6EscOctOld       p6Error
-    HiLink p6PackageTwigil   p6Twigil
-    HiLink p6StringAngle     p6String
-    HiLink p6StringFrench    p6String
-    HiLink p6StringAngles    p6String
-    HiLink p6StringSQ        p6String
-    HiLink p6StringDQ        p6String
-    HiLink p6StringQ         p6String
-    HiLink p6StringQ_q       p6String
-    HiLink p6StringQ_qww     p6String
-    HiLink p6StringQ_qq      p6String
-    HiLink p6StringQ_qto     p6String
-    HiLink p6StringQ_qqto    p6String
-    HiLink p6RxStringSQ      p6String
-    HiLink p6RxStringDQ      p6String
-    HiLink p6Replacement     p6String
-    HiLink p6Transliteration p6String
-    HiLink p6StringAuto      p6String
-    HiLink p6StringP5Auto    p6String
-    HiLink p6Key             p6String
-    HiLink p6Match           p6String
-    HiLink p6Substitution    p6String
-    HiLink p6MatchBare       p6String
-    HiLink p6RegexBlock      p6String
-    HiLink p6RxP5CharClass   p6String
-    HiLink p6RxP5QuoteMeta   p6String
-    HiLink p6RxCharClass     p6String
-    HiLink p6RxQuoteWords    p6String
-    HiLink p6ReduceOp        p6Operator
-    HiLink p6ReverseCrossOp  p6Operator
-    HiLink p6HyperOp         p6Operator
-    HiLink p6PostHyperOp     p6Operator
-    HiLink p6QuoteQ          p6Quote
-    HiLink p6QuoteQ_q        p6Quote
-    HiLink p6QuoteQ_qww      p6Quote
-    HiLink p6QuoteQ_qq       p6Quote
-    HiLink p6QuoteQ_qto      p6Quote
-    HiLink p6QuoteQ_qqto     p6Quote
-    HiLink p6QuoteQ_PIR      p6Quote
-    HiLink p6VersionNum      p6Version
-    HiLink p6VersionDot      p6Version
-    HiLink p6BareSigil       p6Variable
-    HiLink p6RxRange         p6StringSpecial
-    HiLink p6RxAnchor        p6StringSpecial
-    HiLink p6RxP5Anchor      p6StringSpecial
-    HiLink p6CodePoint       p6StringSpecial
-    HiLink p6RxMeta          p6StringSpecial
-    HiLink p6RxP5Range       p6StringSpecial
-    HiLink p6RxP5CPId        p6StringSpecial
-    HiLink p6RxP5Posix       p6StringSpecial
-    HiLink p6RxP5Mod         p6StringSpecial
-    HiLink p6RxP5HexSeq      p6StringSpecial
-    HiLink p6RxP5OctSeq      p6StringSpecial
-    HiLink p6RxP5WriteRefId  p6StringSpecial
-    HiLink p6HexSequence     p6StringSpecial
-    HiLink p6OctSequence     p6StringSpecial
-    HiLink p6RxP5Named       p6StringSpecial
-    HiLink p6RxP5PropId      p6StringSpecial
-    HiLink p6RxP5Quantifier  p6StringSpecial
-    HiLink p6RxP5CountId     p6StringSpecial
-    HiLink p6RxP5Verb        p6StringSpecial
-    HiLink p6Escape          p6StringSpecial2
-    HiLink p6EscNull         p6StringSpecial2
-    HiLink p6EscHash         p6StringSpecial2
-    HiLink p6EscQQ           p6StringSpecial2
-    HiLink p6EscQuote        p6StringSpecial2
-    HiLink p6EscDoubleQuote  p6StringSpecial2
-    HiLink p6EscBackTick     p6StringSpecial2
-    HiLink p6EscForwardSlash p6StringSpecial2
-    HiLink p6EscVerticalBar  p6StringSpecial2
-    HiLink p6EscExclamation  p6StringSpecial2
-    HiLink p6EscDollar       p6StringSpecial2
-    HiLink p6EscOpenCurly    p6StringSpecial2
-    HiLink p6EscCloseCurly   p6StringSpecial2
-    HiLink p6EscCloseBracket p6StringSpecial2
-    HiLink p6EscCloseAngle   p6StringSpecial2
-    HiLink p6EscCloseFrench  p6StringSpecial2
-    HiLink p6EscBackSlash    p6StringSpecial2
-    HiLink p6RxEscape        p6StringSpecial2
-    HiLink p6RxCapture       p6StringSpecial2
-    HiLink p6RxAlternation   p6StringSpecial2
-    HiLink p6RxP5            p6StringSpecial2
-    HiLink p6RxP5ReadRef     p6StringSpecial2
-    HiLink p6RxP5Oct         p6StringSpecial2
-    HiLink p6RxP5Hex         p6StringSpecial2
-    HiLink p6RxP5EscMeta     p6StringSpecial2
-    HiLink p6RxP5Meta        p6StringSpecial2
-    HiLink p6RxP5Escape      p6StringSpecial2
-    HiLink p6RxP5CodePoint   p6StringSpecial2
-    HiLink p6RxP5WriteRef    p6StringSpecial2
-    HiLink p6RxP5Prop        p6StringSpecial2
+    HiLink p6EscOctOld        p6Error
+    HiLink p6PackageTwigil    p6Twigil
+    HiLink p6StringAngle      p6String
+    HiLink p6StringFrench     p6String
+    HiLink p6StringAngles     p6String
+    HiLink p6StringSQ         p6String
+    HiLink p6StringDQ         p6String
+    HiLink p6StringQ          p6String
+    HiLink p6StringQ_q        p6String
+    HiLink p6StringQ_qww      p6String
+    HiLink p6StringQ_qq       p6String
+    HiLink p6StringQ_qto      p6String
+    HiLink p6StringQ_qqto     p6String
+    HiLink p6RxStringSQ       p6String
+    HiLink p6RxStringDQ       p6String
+    HiLink p6Replacement      p6String
+    HiLink p6ReplCurly        p6String
+    HiLink p6ReplAngle        p6String
+    HiLink p6ReplFrench       p6String
+    HiLink p6ReplBracket      p6String
+    HiLink p6ReplParen        p6String
+    HiLink p6Transliteration  p6String
+    HiLink p6TransRepl        p6String
+    HiLink p6TransReplCurly   p6String
+    HiLink p6TransReplAngle   p6String
+    HiLink p6TransReplFrench  p6String
+    HiLink p6TransReplBracket p6String
+    HiLink p6TransReplParen   p6String
+    HiLink p6StringAuto       p6String
+    HiLink p6StringP5Auto     p6String
+    HiLink p6Key              p6String
+    HiLink p6Match            p6String
+    HiLink p6Substitution     p6String
+    HiLink p6MatchBare        p6String
+    HiLink p6RegexBlock       p6String
+    HiLink p6RxP5CharClass    p6String
+    HiLink p6RxP5QuoteMeta    p6String
+    HiLink p6RxCharClass      p6String
+    HiLink p6RxQuoteWords     p6String
+    HiLink p6ReduceOp         p6Operator
+    HiLink p6ReverseCrossOp   p6Operator
+    HiLink p6HyperOp          p6Operator
+    HiLink p6PostHyperOp      p6Operator
+    HiLink p6QuoteQ           p6Quote
+    HiLink p6QuoteQ_q         p6Quote
+    HiLink p6QuoteQ_qww       p6Quote
+    HiLink p6QuoteQ_qq        p6Quote
+    HiLink p6QuoteQ_qto       p6Quote
+    HiLink p6QuoteQ_qqto      p6Quote
+    HiLink p6QuoteQ_PIR       p6Quote
+    HiLink p6VersionNum       p6Version
+    HiLink p6VersionDot       p6Version
+    HiLink p6BareSigil        p6Variable
+    HiLink p6RxRange          p6StringSpecial
+    HiLink p6RxAnchor         p6StringSpecial
+    HiLink p6RxP5Anchor       p6StringSpecial
+    HiLink p6CodePoint        p6StringSpecial
+    HiLink p6RxMeta           p6StringSpecial
+    HiLink p6RxP5Range        p6StringSpecial
+    HiLink p6RxP5CPId         p6StringSpecial
+    HiLink p6RxP5Posix        p6StringSpecial
+    HiLink p6RxP5Mod          p6StringSpecial
+    HiLink p6RxP5HexSeq       p6StringSpecial
+    HiLink p6RxP5OctSeq       p6StringSpecial
+    HiLink p6RxP5WriteRefId   p6StringSpecial
+    HiLink p6HexSequence      p6StringSpecial
+    HiLink p6OctSequence      p6StringSpecial
+    HiLink p6RxP5Named        p6StringSpecial
+    HiLink p6RxP5PropId       p6StringSpecial
+    HiLink p6RxP5Quantifier   p6StringSpecial
+    HiLink p6RxP5CountId      p6StringSpecial
+    HiLink p6RxP5Verb         p6StringSpecial
+    HiLink p6Escape           p6StringSpecial2
+    HiLink p6EscNull          p6StringSpecial2
+    HiLink p6EscHash          p6StringSpecial2
+    HiLink p6EscQQ            p6StringSpecial2
+    HiLink p6EscQuote         p6StringSpecial2
+    HiLink p6EscDoubleQuote   p6StringSpecial2
+    HiLink p6EscBackTick      p6StringSpecial2
+    HiLink p6EscForwardSlash  p6StringSpecial2
+    HiLink p6EscVerticalBar   p6StringSpecial2
+    HiLink p6EscExclamation   p6StringSpecial2
+    HiLink p6EscDollar        p6StringSpecial2
+    HiLink p6EscOpenCurly     p6StringSpecial2
+    HiLink p6EscCloseCurly    p6StringSpecial2
+    HiLink p6EscCloseBracket  p6StringSpecial2
+    HiLink p6EscCloseAngle    p6StringSpecial2
+    HiLink p6EscCloseFrench   p6StringSpecial2
+    HiLink p6EscBackSlash     p6StringSpecial2
+    HiLink p6RxEscape         p6StringSpecial2
+    HiLink p6RxCapture        p6StringSpecial2
+    HiLink p6RxAlternation    p6StringSpecial2
+    HiLink p6RxP5             p6StringSpecial2
+    HiLink p6RxP5ReadRef      p6StringSpecial2
+    HiLink p6RxP5Oct          p6StringSpecial2
+    HiLink p6RxP5Hex          p6StringSpecial2
+    HiLink p6RxP5EscMeta      p6StringSpecial2
+    HiLink p6RxP5Meta         p6StringSpecial2
+    HiLink p6RxP5Escape       p6StringSpecial2
+    HiLink p6RxP5CodePoint    p6StringSpecial2
+    HiLink p6RxP5WriteRef     p6StringSpecial2
+    HiLink p6RxP5Prop         p6StringSpecial2
 
     HiLink p6Property       Tag
     HiLink p6Attention      Todo
