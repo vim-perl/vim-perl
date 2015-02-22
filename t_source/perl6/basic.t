@@ -6,6 +6,17 @@ token foo {
     <foo=.file>
 }
 
+is( # vowels become 'y' and whitespace becomes '_'
+    "ab\ncd\tef gh".trans(/<[aeiou]>/ => 'y', /\s/ => '_'),
+    'yb_cd_yf_gh',
+    'regexes pairs work',
+);
+
+is('ababab'.trans([/ab/, 'aba', 'bab', /baba/] =>
+                   ['1',  '2',   '3',   '4'   ]),
+   '23',
+   'longest token still holds, even between constant strings and regexes');
+
 method info { [~] ' -- ', $.name,
                     (' [', @.vars»<name>.join(', '), ']' if @.vars) }
 
