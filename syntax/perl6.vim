@@ -754,7 +754,7 @@ syn region p6MatchBare
 " m/foo/, m$foo$, m!foo!, etc
 syn region p6Match
     \ matchgroup=p6Quote
-    \ start=+[A-Za-z_\xC0-\xFF0-9]\@1<!\%([A-Za-z_\xC0-\xFF][-']\)\@2<!\%(mm\?\|rx\)\z([/!$,|`'"]\)+
+    \ start=+\%(mm\?\|rx\)\z([/!$,|`'"]\)+
     \ skip="\\\z1"
     \ end="\z1"
     \ contained keepend
@@ -762,7 +762,7 @@ syn region p6Match
 
 " m<foo>, m«foo», m{foo}, etc
 for [name, start_delim, end_delim, end_group, skip] in s:bracketing_delims
-    exec "syn region p6Match matchgroup=p6Quote start=\"[A-Za-z_\\xC0-\\xFF0-9]\\@1<!\\%([A-Za-z_\\xC0-\\xFF][-']\\)\\@2<!\\%(mm\\?\\|rx\\)".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contained keepend contains=@p6Regexen,@p6Variables"
+    exec "syn region p6Match matchgroup=p6Quote start=\"\\%(mm\\?\\|rx\\)".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contained keepend contains=@p6Regexen,@p6Variables"
 endfor
 
 " Substitutions
@@ -770,7 +770,7 @@ endfor
 " s!foo!bar!
 syn region p6Substitution
     \ matchgroup=p6Quote
-    \ start=+[A-Za-z_\xC0-\xFF0-9]\@1<!\%([A-Za-z_\xC0-\xFF][-']\)\@2<!s\z([/!$,|`'"]\)+
+    \ start=+s\z([/!$,|`'"]\)+
     \ skip="\\\z1"
     \ end="\z1"me=e-1
     \ contained keepend
@@ -787,7 +787,7 @@ syn region p6Replacement
 
 " s<foo><bar>, s«foo»«bar», s{foo}{bar}, etc
 for [name, start_delim, end_delim, end_group, skip] in s:bracketing_delims
-    exec "syn region p6Substitution matchgroup=p6Quote start=\"[A-Za-z_\\xC0-\\xFF0-9]\\@1<!\\%([A-Za-z_\\xC0-\\xFF][-']\\)\\@2<!s".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contained keepend contains=@p6Regexen,@p6Variables nextgroup=p6Repl".name
+    exec "syn region p6Substitution matchgroup=p6Quote start=\"s".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contained keepend contains=@p6Regexen,@p6Variables nextgroup=p6Repl".name
     exec "syn region p6Repl".name." matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contained keepend contains=@p6Interp_qq"
 endfor
 
@@ -796,7 +796,7 @@ endfor
 " tr/foo/bar/, tr|foo|bar, etc
 syn region p6Transliteration
     \ matchgroup=p6Quote
-    \ start=+[A-Za-z_\xC0-\xFF0-9]\@1<!\%([A-Za-z_\xC0-\xFF][-']\)\@2<!tr\z([/!$,|`'"]\)+
+    \ start=+tr\z([/!$,|`'"]\)+
     \ skip="\\\z1"
     \ end="\z1"me=e-1
     \ contained
@@ -813,7 +813,7 @@ syn region p6TransRepl
 
 " tr<foo><bar>, tr«foo»«bar», tr{foo}{bar}, etc
 for [name, start_delim, end_delim, end_group, skip] in s:bracketing_delims
-    exec "syn region p6Transliteration matchgroup=p6Quote start=\"[A-Za-z_\\xC0-\\xFF0-9]\\@1<!\\%([A-Za-z_\\xC0-\\xFF][-']\\)\\@2<!tr".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contained keepend contains=p6RxRange nextgroup=p6TransRepl".name
+    exec "syn region p6Transliteration matchgroup=p6Quote start=\"tr".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contained keepend contains=p6RxRange nextgroup=p6TransRepl".name
     exec "syn region p6TransRepl".name." matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contained keepend contains=@p6Interp_qq,p6RxRange"
 endfor
 unlet s:bracketing_delims
