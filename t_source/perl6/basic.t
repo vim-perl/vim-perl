@@ -68,8 +68,6 @@ say "foo bar";
 -0x500
 0d500
 
-# Commented out since it correctly highlights "chars" in Vim 7.4,
-# but the Travis-CI machines have Vim 7.3 which does it wrong.
 for 0..$string.chars-1 -> $pos {
 }
 
