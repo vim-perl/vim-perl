@@ -1,5 +1,7 @@
 #!perl6
 
+when :(Str $ where /^The \s \S+ \s \w+$/) { }
+
 token foo {
     <*foo-bar>
     (<-[:]>*)
