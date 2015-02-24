@@ -6,4 +6,6 @@ dsfsdfsdfsdf ) +3;
 # bar
 say "foo";
 
+# TODO: foo
+
 # vim: ft=perl6

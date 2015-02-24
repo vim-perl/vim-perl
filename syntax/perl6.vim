@@ -75,9 +75,6 @@ syn match p6Identifier display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[
 
 " Billions of keywords
 let s:keywords = {
- \ "p6Attention": [
- \   "ACHTUNG ATTN ATTENTION FIXME NB TODO TBD WTF XXX NOTE",
- \ ],
  \ "p6DeclareRoutine": [
  \   "macro sub submethod method multi proto only category",
  \ ],
@@ -1022,6 +1019,8 @@ syn region p6Match
 endif
 
 " Comments
+
+syn match p6Attention display "\<\%(ACHTUNG\|ATTN\|ATTENTION\|FIXME\|NB\|TODO\|TBD\|WTF\|XXX\|NOTE\)" contained
 
 " normal end-of-line comment
 syn match p6Comment display "#`\@!.*" contains=p6Attention
