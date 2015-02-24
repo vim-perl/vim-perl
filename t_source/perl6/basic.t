@@ -27,6 +27,8 @@ is( # vowels become 'y' and whitespace becomes '_'
     'regexes pairs work',
 );
 
+if $subkinds ∋ 'method' { }
+
 is('ababab'.trans([/ab/, 'aba', 'bab', /baba/] =>
                    ['1',  '2',   '3',   '4'   ]),
    '23',
