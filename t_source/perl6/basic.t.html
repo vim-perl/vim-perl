@@ -10,11 +10,24 @@
 
 <span class="synSpecial">when</span> <span class="synOperator">:</span>(<span class="synType">Str</span> <span class="synIdentifier">$</span> <span class="synPreCondit">where</span> <span class="synDelimiter">/</span><span class="synSpecialChar">^</span><span class="synString">The </span><span class="synSpecial">\s</span><span class="synString"> </span><span class="synSpecial">\S</span><span class="synSpecialChar">+</span><span class="synString"> </span><span class="synSpecial">\s</span><span class="synString"> </span><span class="synSpecial">\w</span><span class="synSpecialChar">+$</span><span class="synDelimiter">/</span><span class="synp6Close">)</span> { }
 
+<span class="synIdentifier">@definitions</span> <span class="synOperator">=</span> [<span class="synOperator">.</span>[<span class="synNumber">0</span><span class="synp6Close">]</span><span class="synOperator">.</span><span class="synNormal">words</span>[<span class="synNumber">0</span><span class="synp6Close">]</span><span class="synOperator">,</span> <span class="synOperator">.</span>[<span class="synNumber">1</span><span class="synp6Close">]</span><span class="synOperator">.</span><span class="synNormal">contents</span>[<span class="synNumber">0</span><span class="synp6Close">]]</span><span class="synOperator">;</span>
+
+[[<span class="synDelimiter">'</span><span class="synString">foo</span><span class="synDelimiter">'</span><span class="synp6Close">]]</span><span class="synOperator">;</span>
+
+<span class="synOperator">.&gt;&gt;</span>[<span class="synNumber">0</span><span class="synp6Close">]</span><span class="synOperator">&gt;&gt;.</span><span class="synType">Str</span><span class="synOperator">.</span><span class="synNormal">unique</span><span class="synOperator">;</span>
+
+<span class="synInclude">use</span> <span class="synNormal">Foo</span>::<span class="synNormal">Xbar</span><span class="synOperator">;</span> <span class="synComment"># not a cross-operator</span>
+
+<span class="synNormal">Zfoobar</span><span class="synOperator">.</span><span class="synFunction">new</span><span class="synOperator">;</span>
+<span class="synOperator">Rcmp</span>
+
 <span class="synKeyword">token</span> <span class="synp6RegexName">foo</span> <span class="synNormal">{</span>
 <span class="synString">    </span><span class="synSpecial">&lt;*</span><span class="synNormal">foo-bar</span><span class="synSpecial">&gt;</span>
 <span class="synString">    </span><span class="synSpecial">(&lt;</span><span class="synSpecialChar">-</span><span class="synSpecial">[</span><span class="synString">:</span><span class="synSpecial">]&gt;</span><span class="synSpecialChar">*</span><span class="synSpecial">)</span>
 <span class="synString">    </span><span class="synSpecial">&lt;foo=.</span><span class="synNormal">file</span><span class="synSpecial">&gt;</span>
 <span class="synNormal">}</span>
+
+<span class="synSpecial">state</span> <span class="synIdentifier">%sub-menus</span> <span class="synOperator">=</span> <span class="synIdentifier">@menu</span><span class="synOperator">&gt;&gt;.</span><span class="synFunction">key</span><span class="synOperator">&gt;&gt;</span>[<span class="synNumber">0</span><span class="synp6Close">]</span> <span class="synOperator">Z=&gt;</span> <span class="synIdentifier">@menu</span><span class="synOperator">&gt;&gt;.</span><span class="synFunction">value</span><span class="synOperator">;</span>
 
 <span class="synFunction">is</span>( <span class="synComment"># vowels become 'y' and whitespace becomes '_'</span>
     <span class="synDelimiter">&quot;</span><span class="synString">ab</span><span class="synSpecial">\n</span><span class="synString">cd</span><span class="synSpecial">\t</span><span class="synString">ef gh</span><span class="synDelimiter">&quot;</span><span class="synOperator">.</span><span class="synFunction">trans</span>(<span class="synDelimiter">/</span><span class="synSpecial">&lt;[</span><span class="synString">aeiou</span><span class="synSpecial">]&gt;</span><span class="synDelimiter">/</span> <span class="synOperator">=&gt;</span> <span class="synDelimiter">'</span><span class="synString">y</span><span class="synDelimiter">'</span><span class="synOperator">,</span> <span class="synDelimiter">/</span><span class="synSpecial">\s</span><span class="synDelimiter">/</span> <span class="synOperator">=&gt;</span> <span class="synDelimiter">'</span><span class="synString">_</span><span class="synDelimiter">'</span><span class="synp6Close">)</span><span class="synOperator">,</span>

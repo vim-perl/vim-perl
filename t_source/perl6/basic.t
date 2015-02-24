@@ -2,11 +2,24 @@
 
 when :(Str $ where /^The \s \S+ \s \w+$/) { }
 
+@definitions = [.[0].words[0], .[1].contents[0]];
+
+[['foo']];
+
+.>>[0]>>.Str.unique;
+
+use Foo::Xbar; # not a cross-operator
+
+Zfoobar.new;
+Rcmp
+
 token foo {
     <*foo-bar>
     (<-[:]>*)
     <foo=.file>
 }
+
+state %sub-menus = @menu>>.key>>[0] Z=> @menu>>.value;
 
 is( # vowels become 'y' and whitespace becomes '_'
     "ab\ncd\tef gh".trans(/<[aeiou]>/ => 'y', /\s/ => '_'),

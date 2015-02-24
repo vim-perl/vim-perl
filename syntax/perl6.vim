@@ -61,6 +61,7 @@ set cpo&vim
 " @@IDENTIFIER@@         "\%(@@IDENT_NONDIGIT@@\%(@@IDENT_CHAR@@\|[-']@@IDENT_NONDIGIT@@\@=\)*\)"
 " @@IDENTIFIER_START@@   "@@IDENT_CHAR@@\@1<!\%(@@IDENT_NONDIGIT@@[-']\)\@2<!"
 " @@IDENTIFIER_END@@     "\%(@@IDENT_CHAR@@\|[-']@@IDENT_NONDIGIT@@\)\@!"
+" @@METAOP@@             "\d\@!\%(\.\|[^[,.[:space:]]\)\+"
 "
 " Same but escaped, for use in string eval
 " @@IDENT_NONDIGIT_Q@@   "[A-Za-z_\\xC0-\\xFF]"
@@ -144,8 +145,7 @@ let s:keywords = {
  \ ],
  \ "p6Operator": [
  \   "div x xx mod also leg cmp before after eq ne le lt",
- \   "gt ge eqv ff fff and andthen Z X or xor",
- \   "orelse extra",
+ \   "gt ge eqv ff fff and andthen or xor orelse extra",
  \ ],
 \ }
 
@@ -175,6 +175,16 @@ let s:builtins = [
  \ "WHERE HOW WHICH VAR WHO WHENCE ACCEPTS REJECTS not true iterator by",
  \ "re im invert flip gist flat tree is-prime throws_like trans",
 \ ]
+
+" We explicitly enumerate the alphanumeric infix operators allowed after [RXZ]
+" to avoid match package names that start with those letters.
+let s:alpha_metaops = [
+ \ "div mod gcd lcm xx x does but cmp leg eq ne gt ge lt le before after eqv",
+ \ "min max not so andthen and or orelse",
+\ ]
+let s:words_space = join(s:alpha_metaops, " ")
+let s:temp = split(s:words_space)
+let s:alpha_metaops_or = join(s:temp, "\\|")
 
 " We don't use "syn keyword" here because that always has higher priority
 " than matches/regions, which would prevent these words from matching as
@@ -223,9 +233,12 @@ syn match p6Operator display "\%(\s\|^\)\@1<=\%(xx=\|p5=>\)"
 syn match p6Operator display "\d\@1<=i[A-Za-z_\xC0-\xFF0-9]\@!"
 " index overloading
 syn match p6Operator display "\%(&\.(\@=\|@\.\[\@=\|%\.{\@=\)"
-" reduce, reverse, and cross metaoperators
-syn match p6ReduceOp display "\%(^\|\s\|(\)\@1<=\[\d\@![^,[:space:]]\+]"
-syn match p6ReverseCrossOp display "[RX]\S\+"
+
+" Reduce metaoperators like [+]
+syn match p6ReduceOp display "\%(^\|\s\|(\)\@1<=\[\d\@!\%(\.\|[^[,.[:space:]]\)\+]"
+
+" Reverse, cross, and zip metaoperators
+exec "syn match p6RXZOp display \"[RXZ]\\%(\\a\\@=\\%(". s:alpha_metaops_or . "\\)\\|[[:alnum:]]\\@!\\%(\\.\\|[^[,.[:space:]]\\)\\+\\)\""
 
 syn match p6BlockLabel display "\%(^\s*\)\@<=\h\w*\s*::\@!\_s\@="
 
@@ -508,14 +521,14 @@ syn region p6InnerFrench
 " Hyperops. They need to come after "<>" and "«»" strings in order to override
 " them, but before other types of strings, to avoid matching those delimiters
 " as parts of hyperops.
-syn match p6HyperOp display "»\S\+»\?"
-syn match p6HyperOp display "«\?\S\+«"
-syn match p6HyperOp display "»\S\+«"
-syn match p6HyperOp display "«\S\+»"
-syn match p6HyperOp display ">>\S\+\%(>>\)\?"
-syn match p6HyperOp display "\%(<<\)\?\S\+<<"
-syn match p6HyperOp display ">>\S\+<<"
-syn match p6HyperOp display "<<\S\+>>"
+syn match p6HyperOp display "»\d\@!\%(\.\|[^[,.[:space:]]\)\+»\?"
+syn match p6HyperOp display "«\?\d\@!\%(\.\|[^[,.[:space:]]\)\+«"
+syn match p6HyperOp display "»\d\@!\%(\.\|[^[,.[:space:]]\)\+«"
+syn match p6HyperOp display "«\d\@!\%(\.\|[^[,.[:space:]]\)\+»"
+syn match p6HyperOp display ">>\d\@!\%(\.\|[^[,.[:space:]]\)\+\%(>>\)\?"
+syn match p6HyperOp display "\%(<<\)\?\d\@!\%(\.\|[^[,.[:space:]]\)\+<<"
+syn match p6HyperOp display ">>\d\@!\%(\.\|[^[,.[:space:]]\)\+<<"
+syn match p6HyperOp display "<<\d\@!\%(\.\|[^[,.[:space:]]\)\+>>"
 
 " 'string'
 syn region p6StringSQ
@@ -597,7 +610,7 @@ syn match p6Key display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Z
 
 " => and p5=> autoquoting
 syn match p6StringP5Auto display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)\ze\s\+p5=>"
-syn match p6StringAuto   display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)\ze\%(p5\)\@2<!=>"
+syn match p6StringAuto   display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)\ze\%(p5\)\@2<![RXZ]\@1<!=>"
 syn match p6StringAuto   display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)\ze\s\+=>"
 syn match p6StringAuto   display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)p5\ze=>"
 
@@ -1786,7 +1799,7 @@ if version >= 508 || !exists("did_perl6_syntax_inits")
     HiLink p6RxCharClass      p6String
     HiLink p6RxQuoteWords     p6String
     HiLink p6ReduceOp         p6Operator
-    HiLink p6ReverseCrossOp   p6Operator
+    HiLink p6RXZOp            p6Operator
     HiLink p6HyperOp          p6Operator
     HiLink p6PostHyperOp      p6Operator
     HiLink p6QuoteQ           p6Quote
