@@ -13,6 +13,8 @@ use Foo::Xbar; # not a cross-operator
 Zfoobar.new;
 Rcmp
 
+[1,2] xx 3;
+
 token foo {
     <*foo-bar>
     (<-[:]>*)

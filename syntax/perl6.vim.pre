@@ -138,7 +138,7 @@ let s:keywords = {
  \   "Order Same Less More Nil Mu",
  \ ],
  \ "p6Operator": [
- \   "div x xx mod also leg cmp before after eq ne le lt",
+ \   "div xx x mod also leg cmp before after eq ne le lt",
  \   "gt ge eqv ff fff and andthen or xor orelse extra",
  \ ],
 \ }
