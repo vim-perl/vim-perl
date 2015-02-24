@@ -29,9 +29,6 @@
 "   * Add more support for folding (:help syn-fold)
 "   * Add more syntax syncing hooks (:help syn-sync)
 "
-" To highlight comments with doubled and tripled delimiters (#`<<< >>>, etc):
-"   let perl6_extended_comments=1
-"
 " If you want to have Pir code inside Q:PIR// strings highlighted, do:
 "   let perl6_embedded_pir=1
 "
@@ -1053,63 +1050,71 @@ syn region p6Comment
     \ end="»"
     \ contains=p6Attention,p6Comment
 
-" double and triple delimiters
-if exists("perl6_extended_comments") || exists("perl6_extended_all")
-    syn region p6Comment
-        \ start="#`(("
-        \ skip="((\%([^)\|))\@!]\)*))"
-        \ end="))"
-        \ contains=p6Attention,p6Comment
-    syn region p6Comment
-        \ start="#`((("
-        \ skip="(((\%([^)]\|)\%())\)\@!\)*)))"
-        \ end=")))"
-        \ contains=p6Attention,p6Comment
+" Comments with double and triple delimiters
+syn region p6Comment
+    \ matchgroup=p6Comment
+    \ start="#`(("
+    \ skip="((\%([^)\|))\@!]\)*))"
+    \ end="))"
+    \ contains=p6Attention,p6Comment
+syn region p6Comment
+    \ matchgroup=p6Comment
+    \ start="#`((("
+    \ skip="(((\%([^)]\|)\%())\)\@!\)*)))"
+    \ end=")))"
+    \ contains=p6Attention,p6Comment
 
-    syn region p6Comment
-        \ start="#`\[\["
-        \ skip="\[\[\%([^\]]\|]]\@!\)*]]"
-        \ end="]]"
-        \ contains=p6Attention,p6Comment
-    syn region p6Comment
-        \ start="#`\[\[\["
-        \ skip="\[\[\[\%([^\]]\|]\%(]]\)\@!\)*]]]"
-        \ end="]]]"
-        \ contains=p6Attention,p6Comment
+syn region p6Comment
+    \ matchgroup=p6Comment
+    \ start="#`\[\["
+    \ skip="\[\[\%([^\]]\|]]\@!\)*]]"
+    \ end="]]"
+    \ contains=p6Attention,p6Comment
+syn region p6Comment
+    \ matchgroup=p6Comment
+    \ start="#`\[\[\["
+    \ skip="\[\[\[\%([^\]]\|]\%(]]\)\@!\)*]]]"
+    \ end="]]]"
+    \ contains=p6Attention,p6Comment
 
-    syn region p6Comment
-        \ start="#`{{"
-        \ skip="{{\%([^}]\|}}\@!\)*}}"
-        \ end="}}"
-        \ contains=p6Attention,p6Comment
-    syn region p6Comment
-        \ start="#`{{{"
-        \ skip="{{{\%([^}]\|}\%(}}\)\@!\)*}}}"
-        \ end="}}}"
-        \ contains=p6Attention,p6Comment
+syn region p6Comment
+    \ matchgroup=p6Comment
+    \ start="#`{{"
+    \ skip="{{\%([^}]\|}}\@!\)*}}"
+    \ end="}}"
+    \ contains=p6Attention,p6Comment
+syn region p6Comment
+    \ matchgroup=p6Comment
+    \ start="#`{{{"
+    \ skip="{{{\%([^}]\|}\%(}}\)\@!\)*}}}"
+    \ end="}}}"
+    \ contains=p6Attention,p6Comment
 
-    syn region p6Comment
-        \ start="#`<<"
-        \ skip="<<\%([^>]\|>>\@!\)*>>"
-        \ end=">>"
-        \ contains=p6Attention,p6Comment
-    syn region p6Comment
-        \ start="#`<<<"
-        \ skip="<<<\%([^>]\|>\%(>>\)\@!\)*>>>"
-        \ end=">>>"
-        \ contains=p6Attention,p6Comment
+syn region p6Comment
+    \ matchgroup=p6Comment
+    \ start="#`<<"
+    \ skip="<<\%([^>]\|>>\@!\)*>>"
+    \ end=">>"
+    \ contains=p6Attention,p6Comment
+syn region p6Comment
+    \ matchgroup=p6Comment
+    \ start="#`<<<"
+    \ skip="<<<\%([^>]\|>\%(>>\)\@!\)*>>>"
+    \ end=">>>"
+    \ contains=p6Attention,p6Comment
 
-    syn region p6Comment
-        \ start="#`««"
-        \ skip="««\%([^»]\|»»\@!\)*»»"
-        \ end="»»"
-        \ contains=p6Attention,p6Comment
-    syn region p6Comment
-        \ start="#`«««"
-        \ skip="«««\%([^»]\|»\%(»»\)\@!\)*»»»"
-        \ end="»»»"
-        \ contains=p6Attention,p6Comment
-endif
+syn region p6Comment
+    \ matchgroup=p6Comment
+    \ start="#`««"
+    \ skip="««\%([^»]\|»»\@!\)*»»"
+    \ end="»»"
+    \ contains=p6Attention,p6Comment
+syn region p6Comment
+    \ matchgroup=p6Comment
+    \ start="#`«««"
+    \ skip="«««\%([^»]\|»\%(»»\)\@!\)*»»»"
+    \ end="»»»"
+    \ contains=p6Attention,p6Comment
 
 syn match p6Shebang display "\%^#!.*"
 

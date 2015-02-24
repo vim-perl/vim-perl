@@ -6,6 +6,14 @@ dsfsdfsdfsdf ) +3;
 # bar
 say "foo";
 
+#`«
+long comment
+is long >>foo»
+
+#`{{
+bla {{foo}} bla }} foo()
+
+foo
 # TODO: foo
 
 # vim: ft=perl6
