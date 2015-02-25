@@ -13,6 +13,15 @@ use Foo::Xbar; # not a cross-operator
 Zfoobar.new;
 Rcmp
 
+proto sub infix:«>»(Any, Any) returns Bool:D is assoc<chain>
+multi sub infix:«>»(Int:D, Int:D)
+multi sub infix:«>»(Num:D, Num:D)
+multi sub infix:«>»(Real:D, Real:D)
+
+proto sub infix:<<lt>>(Mu, Mu) returns Bool:D is assoc<chain>
+multi sub infix:<lt>(Mu,    Mu)
+multi sub infix:<lt>(Str:D, Str:D)
+
 [1,2] xx 3;
 
 token foo {

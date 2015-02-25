@@ -472,6 +472,14 @@ syn region p6StringAngle
     \ end=">"
     \ contains=p6InnerAnglesOne,p6EscBackSlash,p6EscCloseAngle
 
+syn region p6StringAngleFixed
+    \ matchgroup=p6Quote
+    \ start="<"
+    \ skip="\\\@1<!\\>"
+    \ end=">"
+    \ contains=p6InnerAnglesOne,p6EscBackSlash,p6EscCloseAngle
+    \ contained
+
 syn region p6InnerAnglesOne
     \ matchgroup=p6StringAngle
     \ start="<"
@@ -515,14 +523,11 @@ syn region p6InnerFrench
 " Hyperops. They need to come after "<>" and "«»" strings in order to override
 " them, but before other types of strings, to avoid matching those delimiters
 " as parts of hyperops.
-syn match p6HyperOp display "»\d\@!\%(\.\|[^[,.[:space:]]\)\+»\?"
-syn match p6HyperOp display "«\?\d\@!\%(\.\|[^[,.[:space:]]\)\+«"
-syn match p6HyperOp display "»\d\@!\%(\.\|[^[,.[:space:]]\)\+«"
-syn match p6HyperOp display "«\d\@!\%(\.\|[^[,.[:space:]]\)\+»"
-syn match p6HyperOp display ">>\d\@!\%(\.\|[^[,.[:space:]]\)\+\%(>>\)\?"
-syn match p6HyperOp display "\%(<<\)\?\d\@!\%(\.\|[^[,.[:space:]]\)\+<<"
-syn match p6HyperOp display ">>\d\@!\%(\.\|[^[,.[:space:]]\)\+<<"
-syn match p6HyperOp display "<<\d\@!\%(\.\|[^[,.[:space:]]\)\+>>"
+syn match p6HyperOp display "\d\@!\%(\.\|[^[,.:[:space:]]\)\+\%(«\|<<\)"
+syn match p6HyperOp display "«\d\@!\%(\.\|[^[,.[:space:]]\)\+[«»]"
+syn match p6HyperOp display "»\d\@!\%(\.\|[^[,.[:space:]]\)\+\%(«\|»\?\)"
+syn match p6HyperOp display "<<\d\@!\%(\.\|[^[,.[:space:]]\)\+\%(<<\|>>\)"
+syn match p6HyperOp display ">>\d\@!\%(\.\|[^[,.[:space:]]\)\+\%(<<\|\%(>>\)\?\)"
 
 " 'string'
 syn region p6StringSQ
@@ -599,7 +604,7 @@ unlet s:plain_delims s:all_delims
 "syn match p6Identifier display "\%(\<\%(role\|grammar\|rule\|token\|slang\|sub\|method\)\s\+\)\@<=\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)"
 
 " :key
-syn match p6Operator display ":\@1<!::\@!!\?" nextgroup=p6Key
+syn match p6Operator display ":\@1<!::\@!!\?" nextgroup=p6Key,p6StringAngleFixed,p6StringAngles,p6StringFrench
 syn match p6Key display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)" contained
 
 " => and p5=> autoquoting
@@ -1765,6 +1770,7 @@ if version >= 508 || !exists("did_perl6_syntax_inits")
     HiLink p6EscOctOld        p6Error
     HiLink p6PackageTwigil    p6Twigil
     HiLink p6StringAngle      p6String
+    HiLink p6StringAngleFixed p6String
     HiLink p6StringFrench     p6String
     HiLink p6StringAngles     p6String
     HiLink p6StringSQ         p6String
