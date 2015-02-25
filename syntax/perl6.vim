@@ -234,7 +234,7 @@ syn match p6ReduceOp display "\%(^\|\s\|(\)\@1<=\[\d\@!\%(\.\|[^[,.[:space:]]\)\
 " Reverse, cross, and zip metaoperators
 exec "syn match p6RXZOp display \"[RXZ]\\%(\\a\\@=\\%(". s:alpha_metaops_or . "\\)\\|[[:alnum:]]\\@!\\%(\\.\\|[^[,.[:space:]]\\)\\+\\)\""
 
-syn match p6BlockLabel display "\%(^\s*\)\@<=\h\w*\s*::\@!\_s\@="
+syn match p6BlockLabel display "^\s*\zs\h\w*\s*::\@!\_s\@="
 
 syn match p6Number     display "[A-Za-z_\xC0-\xFF0-9]\@1<!_\@!\%(\d\|__\@!\)\+_\@1<!\%([eE]_\@!+\?\%(\d\|_\)\+\)\?_\@1<!"
 syn match p6Float      display "[A-Za-z_\xC0-\xFF0-9]\@1<!_\@!\%(\d\|__\@!\)\+_\@1<![eE]_\@!-\%(\d\|_\)\+"

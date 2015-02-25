@@ -96,7 +96,7 @@ say "foo bar";
 -0x500
 0d500
 
-for 0..$string.chars-1 -> $pos {
+LABEL: for 0..$string.chars-1 -> $pos {
 }
 
 $sum += $num if $num.is-prime;
