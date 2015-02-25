@@ -549,8 +549,8 @@ syn match p6QuoteQ      display "Q\%(qq\|ww\|[abcfhpsqvwx]\)\?[A-Za-z(]\@!" next
 syn match p6QuoteQ_q    display "q\%(ww\|[abcfhpsvwx]\)\?[A-Za-z(]\@!" nextgroup=p6PairsQ_q skipwhite skipempty contained
 syn match p6QuoteQ_qww  display "qww[A-Za-z(]\@!" nextgroup=p6PairsQ_qww skipwhite skipempty contained
 syn match p6QuoteQ_qq   display "qq[pwx]\?[A-Za-z(]\@!" nextgroup=p6PairsQ_qq skipwhite skipempty contained
-syn match p6QuoteQ_qto  display "q:\?to[A-Za-z(]\@!" nextgroup=p6StringQ_qto skipwhite skipempty contained
-syn match p6QuoteQ_qqto display "qq:\?to[A-Za-z(]\@!" nextgroup=p6StringQ_qqto skipwhite skipempty contained
+syn match p6QuoteQ_qto  display "q\%(:\?to\|:heredoc\)[A-Za-z(]\@!" nextgroup=p6StringQ_qto skipwhite skipempty contained
+syn match p6QuoteQ_qqto display "qq\%(:\?to\|:heredoc\)[A-Za-z(]\@!" nextgroup=p6StringQ_qqto skipwhite skipempty contained
 syn match p6PairsQ      contained transparent skipwhite skipempty nextgroup=p6StringQ "\%(\_s*:!\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)\%(([^)]*)\)\?\)*"
 syn match p6PairsQ_q    contained transparent skipwhite skipempty nextgroup=p6StringQ_q "\%(\_s*:!\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)\%(([^)]*)\)\?\)*"
 syn match p6PairsQ_qww  contained transparent skipwhite skipempty nextgroup=p6StringQ_qww "\%(\_s*:!\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)\%(([^)]*)\)\?\)*"

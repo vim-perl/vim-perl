@@ -33,4 +33,11 @@ sdfsdfsdf
 sdfsdf
 GOO
 
+
+my $str = q:heredoc/bla/
+dfgdfgdfg
+dfg
+bla
+
+
 # vim: ft=perl6
