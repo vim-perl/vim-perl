@@ -236,11 +236,8 @@ exec "syn match p6RXZOp display \"[RXZ]\\%(\\a\\@=\\%(". s:alpha_metaops_or . "\
 
 syn match p6BlockLabel display "^\s*\zs\h\w*\s*::\@!\_s\@="
 
-syn match p6Number     display "[A-Za-z_\xC0-\xFF0-9]\@1<!_\@!\%(\d\|__\@!\)\+_\@1<!\%([eE]_\@!+\?\%(\d\|_\)\+\)\?_\@1<!"
-syn match p6Float      display "[A-Za-z_\xC0-\xFF0-9]\@1<!_\@!\%(\d\|__\@!\)\+_\@1<![eE]_\@!-\%(\d\|_\)\+"
-syn match p6Float      display "[A-Za-z_\xC0-\xFF0-9]\@1<!_\@1<!\%(\d\|__\@!\)*_\@1<!\.\@1<!\._\@!\.\@!\a\@!\%(\d\|_\)\+_\@1<!\%([eE]_\@!\%(\d\|_\)\+\)\?"
-
-syn match p6Number     display "[A-Za-z_\xC0-\xFF0-9]\@1<!0"  nextgroup=p6OctBase,p6BinBase,p6HexBase,p6DecBase
+syn match p6Number     display "[A-Za-z_\xC0-\xFF0-9]\@1<!-\?\%(\%(\d\|__\@!\)*_\@1<!\.\)\?_\@!\%(\d\|_\)\+_\@1<!\%([eE]-\?_\@!\%(\d\|_\)\+\)\?"
+syn match p6Number     display "[A-Za-z_\xC0-\xFF0-9]\@1<!-\?0[obxd]\@="  nextgroup=p6OctBase,p6BinBase,p6HexBase,p6DecBase
 syn match p6OctBase    display "o" contained nextgroup=p6OctNumber
 syn match p6BinBase    display "b" contained nextgroup=p6BinNumber
 syn match p6HexBase    display "x" contained nextgroup=p6HexNumber

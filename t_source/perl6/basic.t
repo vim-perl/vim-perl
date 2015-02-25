@@ -83,6 +83,13 @@ say @foo.grep: /dsfsdf/
 say @foo.grep(/dsfsdf/)
 $bla / 3;
 
+-3.340404
+0.3
+.3
+100_000
+1.2e7_000
+1.2e-7
+
 token foo {
     <* < foo bar > >
 }
