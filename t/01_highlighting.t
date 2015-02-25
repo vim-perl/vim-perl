@@ -40,9 +40,7 @@ my %LANG_HIGHLIGHTERS = (
         ]),
     ],
     perl6 => [
-        construct_highlighter('perl6', [
-            '+let perl_include_pod=1',
-        ]),
+        construct_highlighter('perl6', []),
     ],
 );
 
