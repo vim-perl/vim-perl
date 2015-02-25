@@ -1,5 +1,7 @@
 #!perl6
 
+[@(@foo)]
+[@bar]
 when :(Str $ where /^The \s \S+ \s \w+$/) { }
 
 @definitions = [.[0].words[0], .[1].contents[0]];
