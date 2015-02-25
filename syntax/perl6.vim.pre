@@ -1873,7 +1873,6 @@ if version >= 508 || !exists("did_perl6_syntax_inits")
     HiLink p6Type           Type
     HiLink p6Error          Error
     HiLink p6BlockLabel     Label
-    HiLink p6Float          Float
     HiLink p6Normal         Normal
     HiLink p6Identifier     Normal
     HiLink p6Package        Normal
