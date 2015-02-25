@@ -112,9 +112,6 @@ let s:keywords = {
  \   "readonly defequiv will ref copy inline tighter looser equiv assoc",
  \   "required",
  \ ],
- \ "p6Number": [
- \   "NaN Inf",
- \ ],
  \ "p6Pragma": [
  \   "oo fatal",
  \ ],
@@ -223,8 +220,6 @@ syn match p6Operator display "[-+/*~?|=^!%&,<>».;\\∈∉∋∌∩∪≼≽⊂�
 syn match p6Operator display "\%(:\@1<!::\@2!\|::=\|\.::\)"
 " these require whitespace on the left side
 syn match p6Operator display "\%(\s\|^\)\@1<=\%(xx=\|p5=>\)"
-" "i" requires a digit to the left, and no identifier char to the right
-syn match p6Operator display "\d\@1<=i[A-Za-z_\xC0-\xFF0-9]\@!"
 " index overloading
 syn match p6Operator display "\%(&\.(\@=\|@\.\[\@=\|%\.{\@=\)"
 
@@ -236,8 +231,9 @@ exec "syn match p6RXZOp display \"[RXZ]\\%(\\a\\@=\\%(". s:alpha_metaops_or . "\
 
 syn match p6BlockLabel display "^\s*\zs\h\w*\s*::\@!\_s\@="
 
-syn match p6Number     display "[A-Za-z_\xC0-\xFF0-9]\@1<!-\?\%(\%(\d\|__\@!\)*_\@1<!\.\)\?_\@!\%(\d\|_\)\+_\@1<!\%([eE]-\?_\@!\%(\d\|_\)\+\)\?"
-syn match p6Number     display "[A-Za-z_\xC0-\xFF0-9]\@1<!-\?0[obxd]\@="  nextgroup=p6OctBase,p6BinBase,p6HexBase,p6DecBase
+syn match p6Number     display "[A-Za-z_\xC0-\xFF0-9]\@1<!\%([-+]\?Inf\|NaN\)"
+syn match p6Number     display "[A-Za-z_\xC0-\xFF0-9]\@1<![-+]\?\%(\%(\d\|__\@!\)*_\@1<!\.\)\?_\@!\%(\d\|_\)\+_\@1<!\%([eE]-\?_\@!\%(\d\|_\)\+\)\?i\?"
+syn match p6Number     display "[A-Za-z_\xC0-\xFF0-9]\@1<![-+]\?0[obxd]\@="  nextgroup=p6OctBase,p6BinBase,p6HexBase,p6DecBase
 syn match p6OctBase    display "o" contained nextgroup=p6OctNumber
 syn match p6BinBase    display "b" contained nextgroup=p6BinNumber
 syn match p6HexBase    display "x" contained nextgroup=p6HexNumber

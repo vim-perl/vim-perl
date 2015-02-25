@@ -91,6 +91,11 @@
 <span class="synFunction">say</span> <span class="synIdentifier">@foo</span><span class="synOperator">.</span><span class="synFunction">grep</span>(<span class="synDelimiter">/</span><span class="synString">dsfsdf</span><span class="synDelimiter">/</span><span class="synp6Close">)</span>
 <span class="synIdentifier">$bla</span> <span class="synOperator">/</span> <span class="synNumber">3</span><span class="synOperator">;</span>
 
+<span class="synNumber">Inf</span>
+<span class="synNumber">-Inf</span>
+<span class="synNumber">+Inf</span>
+<span class="synNumber">NaN</span>
+<span class="synOperator">-</span><span class="synNumber">NaN</span>
 <span class="synNumber">-3.340404</span>
 <span class="synNumber">0.3</span>
 <span class="synNumber">.3</span>
@@ -148,9 +153,9 @@
 <span class="synIdentifier">$foo</span><span class="synOperator">,</span> <span class="synIdentifier">$</span><span class="synOperator">,</span> <span class="synIdentifier">$bar</span> <span class="synOperator">=</span> <span class="synIdentifier">@bla</span><span class="synOperator">;</span>
 <span class="synIdentifier">$foo</span><span class="synOperator">,</span> <span class="synIdentifier">@</span><span class="synOperator">,</span> <span class="synIdentifier">$bar</span> <span class="synOperator">=</span> <span class="synIdentifier">@bla</span><span class="synOperator">;</span>
 
-<span class="synFunction">isa_ok</span> <span class="synNumber">NaN</span> <span class="synOperator">+</span> <span class="synNumber">1</span><span class="synOperator">i,</span> <span class="synType">Complex</span><span class="synOperator">,</span> <span class="synDelimiter">&quot;</span><span class="synString">NaN + 1i is a Complex number</span><span class="synDelimiter">&quot;</span><span class="synOperator">;</span>
-<span class="synFunction">ok</span> <span class="synNumber">NaN</span> <span class="synOperator">+</span> <span class="synNumber">1</span><span class="synOperator">i</span> <span class="synOperator">~~</span> <span class="synNumber">NaN</span><span class="synOperator">,</span> <span class="synDelimiter">&quot;</span><span class="synString">NaN + 1i ~~ NaN</span><span class="synDelimiter">&quot;</span><span class="synOperator">;</span>
-<span class="synFunction">ok</span> <span class="synNumber">NaN</span> <span class="synOperator">~~</span> <span class="synNumber">NaN</span> <span class="synOperator">+</span> <span class="synNumber">1</span><span class="synOperator">i,</span> <span class="synDelimiter">&quot;</span><span class="synString">NaN ~~ NaN + 1i</span><span class="synDelimiter">&quot;</span><span class="synOperator">;</span>
+<span class="synFunction">isa_ok</span> <span class="synNumber">NaN</span> <span class="synOperator">+</span> <span class="synNumber">1i</span><span class="synOperator">,</span> <span class="synType">Complex</span><span class="synOperator">,</span> <span class="synDelimiter">&quot;</span><span class="synString">NaN + 1i is a Complex number</span><span class="synDelimiter">&quot;</span><span class="synOperator">;</span>
+<span class="synFunction">ok</span> <span class="synNumber">NaN</span> <span class="synOperator">+</span> <span class="synNumber">1i</span> <span class="synOperator">~~</span> <span class="synNumber">NaN</span><span class="synOperator">,</span> <span class="synDelimiter">&quot;</span><span class="synString">NaN + 1i ~~ NaN</span><span class="synDelimiter">&quot;</span><span class="synOperator">;</span>
+<span class="synFunction">ok</span> <span class="synNumber">NaN</span> <span class="synOperator">~~</span> <span class="synNumber">NaN</span> <span class="synOperator">+</span> <span class="synNumber">1i</span><span class="synOperator">,</span> <span class="synDelimiter">&quot;</span><span class="synString">NaN ~~ NaN + 1i</span><span class="synDelimiter">&quot;</span><span class="synOperator">;</span>
 
 <span class="synSpecial">my</span> <span class="synIdentifier">$str</span> <span class="synOperator">=</span> <span class="synDelimiter">&quot;</span><span class="synString">bla bla </span><span class="synIdentifier">&amp;is-cool</span><span class="synp6InterpFunction">(</span><span class="synp6Close">)</span><span class="synString"> yes</span><span class="synDelimiter">&quot;</span><span class="synOperator">;</span>
 
@@ -162,7 +167,7 @@
     <span class="synKeyword">method</span> <span class="synNormal">boo</span> { <span class="synFunction">say</span> <span class="synDelimiter">&quot;</span><span class="synString">bar</span><span class="synDelimiter">&quot;</span> }
 }
 
-<span class="synNumber">Inf</span><span class="synOperator">,</span> <span class="synOperator">-</span><span class="synNumber">Inf</span><span class="synOperator">,</span> <span class="synNumber">NaN</span><span class="synOperator">,</span> <span class="synOperator">+</span><span class="synNumber">Inf</span>
+<span class="synNumber">Inf</span><span class="synOperator">,</span> <span class="synNumber">-Inf</span><span class="synOperator">,</span> <span class="synNumber">NaN</span><span class="synOperator">,</span> <span class="synNumber">+Inf</span>
 
 <span class="synComment"># old-style octals are bad</span>
 <span class="synDelimiter">&quot;</span><span class="synError">\10</span><span class="synDelimiter">&quot;</span>

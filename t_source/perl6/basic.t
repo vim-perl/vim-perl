@@ -83,6 +83,11 @@ say @foo.grep: /dsfsdf/
 say @foo.grep(/dsfsdf/)
 $bla / 3;
 
+Inf
+-Inf
++Inf
+NaN
+-NaN
 -3.340404
 0.3
 .3
