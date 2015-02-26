@@ -224,7 +224,7 @@ syn match p6Operator display "\%(\s\|^\)\@1<=\%(xx=\|p5=>\)"
 syn match p6Operator display "\%(&\.(\@=\|@\.\[\@=\|%\.{\@=\)"
 
 " Reduce metaoperators like [+]
-syn match p6ReduceOp display "\%(^\|\s\|(\)\@1<=&\?\[@@METAOP@@]"
+syn match p6ReduceOp display "\%(^\|\s\|(\)\@1<=[&RXZ]\?\[@@METAOP@@]"
 
 " Reverse, cross, and zip metaoperators
 exec "syn match p6RXZOp display \"[RXZ]\\%(\\a\\@=\\%(". s:alpha_metaops_or . "\\)\\|[[:alnum:]]\\@!\\%(\\.\\|[^[,.[:space:]]\\)\\+\\)\""

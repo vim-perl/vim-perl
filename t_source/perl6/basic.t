@@ -156,6 +156,8 @@ bla
 
 @foo».++;
 
+[&sprintf]
+X[&sprintf]
 $foo, $, $bar = @bla;
 $foo, @, $bar = @bla;
 
