@@ -1957,10 +1957,6 @@ endif
 "syn sync match p6SyncPod groupthere p6PodDelimRegion    "^=begin\>"
 "syn sync match p6SyncPod groupthere p6PodDelimEndRegion "^=end\>"
 
-" Let's just sync whole file, the other methods aren't reliable (or I don't
-" know how to use them reliably)
-syn sync fromstart
-
 if exists("perl6_fold") || exists("perl6_extended_all")
     setl foldmethod=syntax
     syn region p6BlockFold
