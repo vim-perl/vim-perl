@@ -7,7 +7,7 @@ use File::Find;
 use File::Spec::Functions qw<catfile catdir>;
 use Test::More;
 use Test::Differences;
-use Text::VimColor;
+use Text::VimColor 0.24;
 
 # hack to work around a silly limitation in Text::VimColor,
 # will remove it when Text::VimColor has been patched
@@ -19,17 +19,9 @@ use Text::VimColor;
     SpecialComment Debug
 );
 
-my @PRE_OPTIONS = (
-    qw(-RXZ -i NONE -u NONE -U NONE -N -n), # for performance
-    '+set nomodeline',          # for performance
-    '+set runtimepath=.',       # don't consider system runtime files
-);
-
 my %LANG_HIGHLIGHTERS = (
     perl  => [
-        construct_highlighter('perl', [
-            '+let perl_include_pod=1',
-        ]),
+        construct_highlighter('perl', ['+let perl_include_pod=1']),
         construct_highlighter('perl', [
             '+let perl_include_pod=1',
             '+let perl_fold=1',
@@ -59,12 +51,13 @@ sub construct_highlighter {
         html_full_page         => 1,
         html_inline_stylesheet => 0,
         html_stylesheet_url    => $css_url,
-        vim_options            => [
-            @PRE_OPTIONS,
+        extra_vim_options      => [
             @$option_set,
+            '+set runtimepath=.',
             "+source $ftplugin_file",
             "+source $syntax_file",
             "+source $color_file",      # all syntax classes should be defined
+            "+syn sync fromstart",
         ],
     );
 }
@@ -88,25 +81,9 @@ sub extract_custom_options {
 sub create_custom_highlighter {
     my ( $orig, @options ) = @_;
 
-    my $lang;
-    my @orig_options = $orig->vim_options;
-
-    my $i = 0;
-    while($i < @PRE_OPTIONS && @orig_options && $PRE_OPTIONS[$i] eq $orig_options[0]) {
-        shift @orig_options;
-        $i++;
-    }
-
-    while(@orig_options && $orig_options[-1] =~ /^[+]source/) {
-        unless(defined $lang) {
-            ( $lang ) = $orig_options[-1] =~ /(\w+)[.]vim$/;
-            undef $lang unless $LANG_HIGHLIGHTERS{$lang};
-        }
-        pop @orig_options;
-    }
-
-    unshift @options, @orig_options;
-
+    unshift @options, grep { /^\+let/ } $orig->vim_options;
+    my ($syntax) = grep { /^\+source syntax/ } $orig->vim_options;
+    my ($lang) = $syntax =~ /(\w+)\.vim/;
     return construct_highlighter($lang, \@options);
 }
 
