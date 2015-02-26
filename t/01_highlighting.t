@@ -11,12 +11,13 @@ use Text::VimColor;
 
 # hack to work around a silly limitation in Text::VimColor,
 # will remove it when Text::VimColor has been patched
-{
-    package TrueHash;
-    use base 'Tie::StdHash';
-    sub EXISTS { return 1 };
-}
-tie %Text::VimColor::SYNTAX_TYPE, 'TrueHash';
+%Text::VimColor::SYNTAX_TYPE = map { $_ => 1 } qw(
+    Comment Constant Identifier Statement PreProc Type Special Underlined
+    Ignore Error Todo String Character Number Boolean Float Function
+    Conditional Repeat Label Operator Keyword Exception Include Define Macro
+    PreCondit StorageClass Structure Typedef Tag SpecialChar Delimiter
+    SpecialComment Debug
+);
 
 my @PRE_OPTIONS = (
     qw(-RXZ -i NONE -u NONE -U NONE -N -n), # for performance

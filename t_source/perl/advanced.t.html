@@ -39,28 +39,28 @@
 <span class="synComment"># depending on whether perl_string_as_statement is set.</span>
 <span class="synComment"># </span><span class="synTodo">XXX</span><span class="synComment"> 'if $true' is highlighted incorrectly</span>
 <span class="synIdentifier">$true</span> = <span class="synNumber">1</span>;
-<span class="synStatement">print</span> <span class="synString">&lt;&lt;EOF</span><span class="synperlHereDocStart"> </span><span class="synConditional">if</span><span class="synperlHereDocStart"> </span><span class="synIdentifier">$true</span><span class="synperlHereDocStart">;</span>
+<span class="synStatement">print</span> <span class="synString">&lt;&lt;EOF</span> <span class="synConditional">if</span> <span class="synIdentifier">$true</span>;
 <span class="synString">Here document</span>
 <span class="synString">EOF</span>
-<span class="synStatement">print</span> <span class="synString">&lt;&lt;&quot;EOF&quot;</span><span class="synperlHereDocStart"> </span><span class="synConditional">if</span><span class="synperlHereDocStart"> </span><span class="synIdentifier">$true</span><span class="synperlHereDocStart">;</span>
+<span class="synStatement">print</span> <span class="synString">&lt;&lt;&quot;EOF&quot;</span> <span class="synConditional">if</span> <span class="synIdentifier">$true</span>;
 <span class="synString">Here document</span>
 <span class="synString">EOF</span>
-<span class="synStatement">print</span> <span class="synString">&lt;&lt;'EOF'</span><span class="synperlHereDocStart"> </span><span class="synConditional">if</span><span class="synperlHereDocStart"> </span><span class="synIdentifier">$true</span><span class="synperlHereDocStart">;</span>
+<span class="synStatement">print</span> <span class="synString">&lt;&lt;'EOF'</span> <span class="synConditional">if</span> <span class="synIdentifier">$true</span>;
 <span class="synString">Here document</span>
 <span class="synString">EOF</span>
 
 <span class="synComment"># Here documents finishing with an empty line. Note the Error colour because of</span>
 <span class="synComment"># the line with only a space in it.</span>
-<span class="synStatement">print</span> <span class="synString">&lt;&lt;&quot;&quot;</span><span class="synperlHereDocStart"> </span><span class="synConditional">if</span><span class="synperlHereDocStart"> </span><span class="synIdentifier">$true</span><span class="synperlHereDocStart">;</span>
+<span class="synStatement">print</span> <span class="synString">&lt;&lt;&quot;&quot;</span> <span class="synConditional">if</span> <span class="synIdentifier">$true</span>;
 <span class="synString">Here document</span>
 <span class="synError"> </span>
 
-<span class="synStatement">print</span> <span class="synString">&lt;&lt;''</span><span class="synperlHereDocStart"> </span><span class="synConditional">if</span><span class="synperlHereDocStart"> </span><span class="synIdentifier">$true</span><span class="synperlHereDocStart">;</span>
+<span class="synStatement">print</span> <span class="synString">&lt;&lt;''</span> <span class="synConditional">if</span> <span class="synIdentifier">$true</span>;
 <span class="synString">Here document</span>
 <span class="synError"> </span>
 
 <span class="synComment"># Here document with a different. Only works in 6.0.</span>
-<span class="synStatement">print</span> <span class="synString">&lt;&lt;RandomID</span><span class="synperlHereDocStart">;</span>
+<span class="synStatement">print</span> <span class="synString">&lt;&lt;RandomID</span>;
 <span class="synString">here document</span>
 <span class="synString">RandomID</span>
 

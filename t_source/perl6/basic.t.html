@@ -10,65 +10,65 @@
 
 <span class="synRepeat">for</span> <span class="synIdentifier">@foo</span> <span class="synOperator">&lt;-&gt;</span> <span class="synIdentifier">$value</span> {
 }
-<span class="synKeyword">sub</span> <span class="synFunction">infix</span><span class="synOperator">:</span><span class="synDelimiter">&lt;</span><span class="synString">-</span><span class="synDelimiter">&gt;</span>(<span class="synNormal">Foo</span><span class="synp6Close">)</span> {
+<span class="synKeyword">sub</span> <span class="synFunction">infix</span><span class="synOperator">:</span><span class="synDelimiter">&lt;</span><span class="synString">-</span><span class="synDelimiter">&gt;</span>(Foo) {
 }
 
-[<span class="synOperator">@</span>(<span class="synIdentifier">@foo</span><span class="synp6Close">)]</span>
-[<span class="synIdentifier">@bar</span><span class="synp6Close">]</span>
-<span class="synSpecial">when</span> <span class="synOperator">:</span>(<span class="synType">Str</span> <span class="synIdentifier">$</span> <span class="synPreCondit">where</span> <span class="synDelimiter">/</span><span class="synSpecialChar">^</span><span class="synString">The </span><span class="synSpecial">\s</span><span class="synString"> </span><span class="synSpecial">\S</span><span class="synSpecialChar">+</span><span class="synString"> </span><span class="synSpecial">\s</span><span class="synString"> </span><span class="synSpecial">\w</span><span class="synSpecialChar">+$</span><span class="synDelimiter">/</span><span class="synp6Close">)</span> { }
+[<span class="synOperator">@</span>(<span class="synIdentifier">@foo</span>)]
+[<span class="synIdentifier">@bar</span>]
+<span class="synSpecial">when</span> <span class="synOperator">:</span>(<span class="synType">Str</span> <span class="synIdentifier">$</span> <span class="synPreCondit">where</span> <span class="synDelimiter">/</span><span class="synSpecialChar">^</span><span class="synString">The </span><span class="synSpecial">\s</span><span class="synString"> </span><span class="synSpecial">\S</span><span class="synSpecialChar">+</span><span class="synString"> </span><span class="synSpecial">\s</span><span class="synString"> </span><span class="synSpecial">\w</span><span class="synSpecialChar">+$</span><span class="synDelimiter">/</span>) { }
 
-<span class="synIdentifier">@definitions</span> <span class="synOperator">=</span> [<span class="synOperator">.</span>[<span class="synNumber">0</span><span class="synp6Close">]</span><span class="synOperator">.</span><span class="synNormal">words</span>[<span class="synNumber">0</span><span class="synp6Close">]</span><span class="synOperator">,</span> <span class="synOperator">.</span>[<span class="synNumber">1</span><span class="synp6Close">]</span><span class="synOperator">.</span><span class="synNormal">contents</span>[<span class="synNumber">0</span><span class="synp6Close">]]</span><span class="synOperator">;</span>
+<span class="synIdentifier">@definitions</span> <span class="synOperator">=</span> [<span class="synOperator">.</span>[<span class="synNumber">0</span>]<span class="synOperator">.</span>words[<span class="synNumber">0</span>]<span class="synOperator">,</span> <span class="synOperator">.</span>[<span class="synNumber">1</span>]<span class="synOperator">.</span>contents[<span class="synNumber">0</span>]]<span class="synOperator">;</span>
 
-[[<span class="synDelimiter">'</span><span class="synString">foo</span><span class="synDelimiter">'</span><span class="synp6Close">]]</span><span class="synOperator">;</span>
+[[<span class="synDelimiter">'</span><span class="synString">foo</span><span class="synDelimiter">'</span>]]<span class="synOperator">;</span>
 
-<span class="synOperator">.&gt;&gt;</span>[<span class="synNumber">0</span><span class="synp6Close">]</span><span class="synOperator">&gt;&gt;.</span><span class="synType">Str</span><span class="synOperator">.</span><span class="synNormal">unique</span><span class="synOperator">;</span>
+<span class="synOperator">.&gt;&gt;</span>[<span class="synNumber">0</span>]<span class="synOperator">&gt;&gt;.</span><span class="synType">Str</span><span class="synOperator">.</span>unique<span class="synOperator">;</span>
 
-<span class="synKeyword">sub</span> <span class="synNormal">process-pod-dir</span>(<span class="synIdentifier">$dir</span><span class="synOperator">,</span> <span class="synOperator">:</span><span class="synIdentifier">&amp;sorted-by</span> <span class="synOperator">=</span> <span class="synOperator">&amp;[cmp],</span> <span class="synOperator">:</span><span class="synIdentifier">$sparse</span><span class="synp6Close">)</span> { }
+<span class="synKeyword">sub</span> process-pod-dir(<span class="synIdentifier">$dir</span><span class="synOperator">,</span> <span class="synOperator">:</span><span class="synIdentifier">&amp;sorted-by</span> <span class="synOperator">=</span> <span class="synOperator">&amp;[cmp],</span> <span class="synOperator">:</span><span class="synIdentifier">$sparse</span>) { }
 
-<span class="synInclude">use</span> <span class="synNormal">Foo</span>::<span class="synNormal">Xbar</span><span class="synOperator">;</span> <span class="synComment"># not a cross-operator</span>
+<span class="synInclude">use</span> Foo::Xbar<span class="synOperator">;</span> <span class="synComment"># not a cross-operator</span>
 
-<span class="synNormal">Zfoobar</span><span class="synOperator">.</span><span class="synFunction">new</span><span class="synOperator">;</span>
+Zfoobar<span class="synOperator">.</span><span class="synFunction">new</span><span class="synOperator">;</span>
 <span class="synOperator">Rcmp</span>
 
-<span class="synKeyword">proto</span> <span class="synKeyword">sub</span> <span class="synFunction">infix</span><span class="synOperator">:</span><span class="synDelimiter">«</span><span class="synString">&gt;</span><span class="synDelimiter">»</span>(<span class="synType">Any</span><span class="synOperator">,</span> <span class="synType">Any</span><span class="synp6Close">)</span> <span class="synPreCondit">returns</span> <span class="synType">Bool</span><span class="synOperator">:</span><span class="synString">D</span> <span class="synPreCondit">is</span> <span class="synTag">assoc</span><span class="synDelimiter">&lt;</span><span class="synString">chain</span><span class="synDelimiter">&gt;</span>
-<span class="synKeyword">multi</span> <span class="synKeyword">sub</span> <span class="synFunction">infix</span><span class="synOperator">:</span><span class="synDelimiter">«</span><span class="synString">&gt;</span><span class="synDelimiter">»</span>(<span class="synType">Int</span><span class="synOperator">:</span><span class="synString">D</span><span class="synOperator">,</span> <span class="synType">Int</span><span class="synOperator">:</span><span class="synString">D</span><span class="synp6Close">)</span>
-<span class="synKeyword">multi</span> <span class="synKeyword">sub</span> <span class="synFunction">infix</span><span class="synOperator">:</span><span class="synDelimiter">«</span><span class="synString">&gt;</span><span class="synDelimiter">»</span>(<span class="synType">Num</span><span class="synOperator">:</span><span class="synString">D</span><span class="synOperator">,</span> <span class="synType">Num</span><span class="synOperator">:</span><span class="synString">D</span><span class="synp6Close">)</span>
-<span class="synKeyword">multi</span> <span class="synKeyword">sub</span> <span class="synFunction">infix</span><span class="synOperator">:</span><span class="synDelimiter">«</span><span class="synString">&gt;</span><span class="synDelimiter">»</span>(<span class="synType">Real</span><span class="synOperator">:</span><span class="synString">D</span><span class="synOperator">,</span> <span class="synType">Real</span><span class="synOperator">:</span><span class="synString">D</span><span class="synp6Close">)</span>
+<span class="synKeyword">proto</span> <span class="synKeyword">sub</span> <span class="synFunction">infix</span><span class="synOperator">:</span><span class="synDelimiter">«</span><span class="synString">&gt;</span><span class="synDelimiter">»</span>(<span class="synType">Any</span><span class="synOperator">,</span> <span class="synType">Any</span>) <span class="synPreCondit">returns</span> <span class="synType">Bool</span><span class="synOperator">:</span><span class="synString">D</span> <span class="synPreCondit">is</span> <span class="synTag">assoc</span><span class="synDelimiter">&lt;</span><span class="synString">chain</span><span class="synDelimiter">&gt;</span>
+<span class="synKeyword">multi</span> <span class="synKeyword">sub</span> <span class="synFunction">infix</span><span class="synOperator">:</span><span class="synDelimiter">«</span><span class="synString">&gt;</span><span class="synDelimiter">»</span>(<span class="synType">Int</span><span class="synOperator">:</span><span class="synString">D</span><span class="synOperator">,</span> <span class="synType">Int</span><span class="synOperator">:</span><span class="synString">D</span>)
+<span class="synKeyword">multi</span> <span class="synKeyword">sub</span> <span class="synFunction">infix</span><span class="synOperator">:</span><span class="synDelimiter">«</span><span class="synString">&gt;</span><span class="synDelimiter">»</span>(<span class="synType">Num</span><span class="synOperator">:</span><span class="synString">D</span><span class="synOperator">,</span> <span class="synType">Num</span><span class="synOperator">:</span><span class="synString">D</span>)
+<span class="synKeyword">multi</span> <span class="synKeyword">sub</span> <span class="synFunction">infix</span><span class="synOperator">:</span><span class="synDelimiter">«</span><span class="synString">&gt;</span><span class="synDelimiter">»</span>(<span class="synType">Real</span><span class="synOperator">:</span><span class="synString">D</span><span class="synOperator">,</span> <span class="synType">Real</span><span class="synOperator">:</span><span class="synString">D</span>)
 
-<span class="synKeyword">proto</span> <span class="synKeyword">sub</span> <span class="synFunction">infix</span><span class="synOperator">:</span><span class="synDelimiter">&lt;&lt;</span><span class="synString">lt</span><span class="synDelimiter">&gt;&gt;</span>(<span class="synType">Mu</span><span class="synOperator">,</span> <span class="synType">Mu</span><span class="synp6Close">)</span> <span class="synPreCondit">returns</span> <span class="synType">Bool</span><span class="synOperator">:</span><span class="synString">D</span> <span class="synPreCondit">is</span> <span class="synTag">assoc</span><span class="synDelimiter">&lt;</span><span class="synString">chain</span><span class="synDelimiter">&gt;</span>
-<span class="synKeyword">multi</span> <span class="synKeyword">sub</span> <span class="synFunction">infix</span><span class="synOperator">:</span><span class="synDelimiter">&lt;</span><span class="synString">lt</span><span class="synDelimiter">&gt;</span>(<span class="synType">Mu</span><span class="synOperator">,</span>    <span class="synType">Mu</span><span class="synp6Close">)</span>
-<span class="synKeyword">multi</span> <span class="synKeyword">sub</span> <span class="synFunction">infix</span><span class="synOperator">:</span><span class="synDelimiter">&lt;</span><span class="synString">lt</span><span class="synDelimiter">&gt;</span>(<span class="synType">Str</span><span class="synOperator">:</span><span class="synString">D</span><span class="synOperator">,</span> <span class="synType">Str</span><span class="synOperator">:</span><span class="synString">D</span><span class="synp6Close">)</span>
+<span class="synKeyword">proto</span> <span class="synKeyword">sub</span> <span class="synFunction">infix</span><span class="synOperator">:</span><span class="synDelimiter">&lt;&lt;</span><span class="synString">lt</span><span class="synDelimiter">&gt;&gt;</span>(<span class="synType">Mu</span><span class="synOperator">,</span> <span class="synType">Mu</span>) <span class="synPreCondit">returns</span> <span class="synType">Bool</span><span class="synOperator">:</span><span class="synString">D</span> <span class="synPreCondit">is</span> <span class="synTag">assoc</span><span class="synDelimiter">&lt;</span><span class="synString">chain</span><span class="synDelimiter">&gt;</span>
+<span class="synKeyword">multi</span> <span class="synKeyword">sub</span> <span class="synFunction">infix</span><span class="synOperator">:</span><span class="synDelimiter">&lt;</span><span class="synString">lt</span><span class="synDelimiter">&gt;</span>(<span class="synType">Mu</span><span class="synOperator">,</span>    <span class="synType">Mu</span>)
+<span class="synKeyword">multi</span> <span class="synKeyword">sub</span> <span class="synFunction">infix</span><span class="synOperator">:</span><span class="synDelimiter">&lt;</span><span class="synString">lt</span><span class="synDelimiter">&gt;</span>(<span class="synType">Str</span><span class="synOperator">:</span><span class="synString">D</span><span class="synOperator">,</span> <span class="synType">Str</span><span class="synOperator">:</span><span class="synString">D</span>)
 
 <span class="synSpecial">v5.2.*</span>
 <span class="synSpecial">v1.2+</span>
 <span class="synSpecial">v1.2.0.0.0.0.0</span>
 <span class="synSpecial">v1</span>
 
-[<span class="synNumber">1</span><span class="synOperator">,</span><span class="synNumber">2</span><span class="synp6Close">]</span> <span class="synOperator">xx</span> <span class="synNumber">3</span><span class="synOperator">;</span>
+[<span class="synNumber">1</span><span class="synOperator">,</span><span class="synNumber">2</span>] <span class="synOperator">xx</span> <span class="synNumber">3</span><span class="synOperator">;</span>
 
-<span class="synKeyword">token</span> <span class="synp6RegexName">foo</span> <span class="synNormal">{</span>
-<span class="synString">    </span><span class="synSpecial">&lt;*</span><span class="synNormal">foo-bar</span><span class="synSpecial">&gt;</span>
+<span class="synKeyword">token</span> foo {
+<span class="synString">    </span><span class="synSpecial">&lt;*</span>foo-bar<span class="synSpecial">&gt;</span>
 <span class="synString">    </span><span class="synSpecial">(&lt;</span><span class="synSpecialChar">-</span><span class="synSpecial">[</span><span class="synString">:</span><span class="synSpecial">]&gt;</span><span class="synSpecialChar">*</span><span class="synSpecial">)</span>
-<span class="synString">    </span><span class="synSpecial">&lt;foo=.</span><span class="synNormal">file</span><span class="synSpecial">&gt;</span>
-<span class="synNormal">}</span>
+<span class="synString">    </span><span class="synSpecial">&lt;foo=.</span>file<span class="synSpecial">&gt;</span>
+}
 
-<span class="synSpecial">state</span> <span class="synIdentifier">%sub-menus</span> <span class="synOperator">=</span> <span class="synIdentifier">@menu</span><span class="synOperator">&gt;&gt;.</span><span class="synFunction">key</span><span class="synOperator">&gt;&gt;</span>[<span class="synNumber">0</span><span class="synp6Close">]</span> <span class="synOperator">Z=&gt;</span> <span class="synIdentifier">@menu</span><span class="synOperator">&gt;&gt;.</span><span class="synFunction">value</span><span class="synOperator">;</span>
+<span class="synSpecial">state</span> <span class="synIdentifier">%sub-menus</span> <span class="synOperator">=</span> <span class="synIdentifier">@menu</span><span class="synOperator">&gt;&gt;.</span><span class="synFunction">key</span><span class="synOperator">&gt;&gt;</span>[<span class="synNumber">0</span>] <span class="synOperator">Z=&gt;</span> <span class="synIdentifier">@menu</span><span class="synOperator">&gt;&gt;.</span><span class="synFunction">value</span><span class="synOperator">;</span>
 
 <span class="synFunction">is</span>( <span class="synComment"># vowels become 'y' and whitespace becomes '_'</span>
-    <span class="synDelimiter">&quot;</span><span class="synString">ab</span><span class="synSpecial">\n</span><span class="synString">cd</span><span class="synSpecial">\t</span><span class="synString">ef gh</span><span class="synDelimiter">&quot;</span><span class="synOperator">.</span><span class="synFunction">trans</span>(<span class="synDelimiter">/</span><span class="synSpecial">&lt;[</span><span class="synString">aeiou</span><span class="synSpecial">]&gt;</span><span class="synDelimiter">/</span> <span class="synOperator">=&gt;</span> <span class="synDelimiter">'</span><span class="synString">y</span><span class="synDelimiter">'</span><span class="synOperator">,</span> <span class="synDelimiter">/</span><span class="synSpecial">\s</span><span class="synDelimiter">/</span> <span class="synOperator">=&gt;</span> <span class="synDelimiter">'</span><span class="synString">_</span><span class="synDelimiter">'</span><span class="synp6Close">)</span><span class="synOperator">,</span>
+    <span class="synDelimiter">&quot;</span><span class="synString">ab</span><span class="synSpecial">\n</span><span class="synString">cd</span><span class="synSpecial">\t</span><span class="synString">ef gh</span><span class="synDelimiter">&quot;</span><span class="synOperator">.</span><span class="synFunction">trans</span>(<span class="synDelimiter">/</span><span class="synSpecial">&lt;[</span><span class="synString">aeiou</span><span class="synSpecial">]&gt;</span><span class="synDelimiter">/</span> <span class="synOperator">=&gt;</span> <span class="synDelimiter">'</span><span class="synString">y</span><span class="synDelimiter">'</span><span class="synOperator">,</span> <span class="synDelimiter">/</span><span class="synSpecial">\s</span><span class="synDelimiter">/</span> <span class="synOperator">=&gt;</span> <span class="synDelimiter">'</span><span class="synString">_</span><span class="synDelimiter">'</span>)<span class="synOperator">,</span>
     <span class="synDelimiter">'</span><span class="synString">yb_cd_yf_gh</span><span class="synDelimiter">'</span><span class="synOperator">,</span>
     <span class="synDelimiter">'</span><span class="synString">regexes pairs work</span><span class="synDelimiter">'</span><span class="synOperator">,</span>
-<span class="synp6Close">)</span><span class="synOperator">;</span>
+)<span class="synOperator">;</span>
 
 <span class="synConditional">if</span> <span class="synIdentifier">$subkinds</span> <span class="synOperator">∋</span> <span class="synDelimiter">'</span><span class="synString">method</span><span class="synDelimiter">'</span> { }
 
-<span class="synFunction">is</span>(<span class="synDelimiter">'</span><span class="synString">ababab</span><span class="synDelimiter">'</span><span class="synOperator">.</span><span class="synFunction">trans</span>([<span class="synDelimiter">/</span><span class="synString">ab</span><span class="synDelimiter">/</span><span class="synOperator">,</span> <span class="synDelimiter">'</span><span class="synString">aba</span><span class="synDelimiter">'</span><span class="synOperator">,</span> <span class="synDelimiter">'</span><span class="synString">bab</span><span class="synDelimiter">'</span><span class="synOperator">,</span> <span class="synDelimiter">/</span><span class="synString">baba</span><span class="synDelimiter">/</span><span class="synp6Close">]</span> <span class="synOperator">=&gt;</span>
-                   [<span class="synDelimiter">'</span><span class="synString">1</span><span class="synDelimiter">'</span><span class="synOperator">,</span>  <span class="synDelimiter">'</span><span class="synString">2</span><span class="synDelimiter">'</span><span class="synOperator">,</span>   <span class="synDelimiter">'</span><span class="synString">3</span><span class="synDelimiter">'</span><span class="synOperator">,</span>   <span class="synDelimiter">'</span><span class="synString">4</span><span class="synDelimiter">'</span>   <span class="synp6Close">])</span><span class="synOperator">,</span>
+<span class="synFunction">is</span>(<span class="synDelimiter">'</span><span class="synString">ababab</span><span class="synDelimiter">'</span><span class="synOperator">.</span><span class="synFunction">trans</span>([<span class="synDelimiter">/</span><span class="synString">ab</span><span class="synDelimiter">/</span><span class="synOperator">,</span> <span class="synDelimiter">'</span><span class="synString">aba</span><span class="synDelimiter">'</span><span class="synOperator">,</span> <span class="synDelimiter">'</span><span class="synString">bab</span><span class="synDelimiter">'</span><span class="synOperator">,</span> <span class="synDelimiter">/</span><span class="synString">baba</span><span class="synDelimiter">/</span>] <span class="synOperator">=&gt;</span>
+                   [<span class="synDelimiter">'</span><span class="synString">1</span><span class="synDelimiter">'</span><span class="synOperator">,</span>  <span class="synDelimiter">'</span><span class="synString">2</span><span class="synDelimiter">'</span><span class="synOperator">,</span>   <span class="synDelimiter">'</span><span class="synString">3</span><span class="synDelimiter">'</span><span class="synOperator">,</span>   <span class="synDelimiter">'</span><span class="synString">4</span><span class="synDelimiter">'</span>   ])<span class="synOperator">,</span>
    <span class="synDelimiter">'</span><span class="synString">23</span><span class="synDelimiter">'</span><span class="synOperator">,</span>
-   <span class="synDelimiter">'</span><span class="synString">longest token still holds, even between constant strings and regexes</span><span class="synDelimiter">'</span><span class="synp6Close">)</span><span class="synOperator">;</span>
+   <span class="synDelimiter">'</span><span class="synString">longest token still holds, even between constant strings and regexes</span><span class="synDelimiter">'</span>)<span class="synOperator">;</span>
 
-<span class="synKeyword">method</span> <span class="synNormal">info</span> { <span class="synOperator">[~]</span> <span class="synDelimiter">'</span><span class="synString"> -- </span><span class="synDelimiter">'</span><span class="synOperator">,</span> <span class="synIdentifier">$</span><span class="synSpecial">.</span><span class="synIdentifier">name</span><span class="synOperator">,</span>
-                    (<span class="synDelimiter">'</span><span class="synString"> [</span><span class="synDelimiter">'</span><span class="synOperator">,</span> <span class="synIdentifier">@</span><span class="synSpecial">.</span><span class="synIdentifier">vars</span><span class="synOperator">»</span><span class="synDelimiter">&lt;</span><span class="synString">name</span><span class="synDelimiter">&gt;</span><span class="synOperator">.</span><span class="synFunction">join</span>(<span class="synDelimiter">'</span><span class="synString">, </span><span class="synDelimiter">'</span><span class="synp6Close">)</span><span class="synOperator">,</span> <span class="synDelimiter">'</span><span class="synString">]</span><span class="synDelimiter">'</span> <span class="synConditional">if</span> <span class="synIdentifier">@</span><span class="synSpecial">.</span><span class="synIdentifier">vars</span><span class="synp6Close">)</span> }
+<span class="synKeyword">method</span> info { <span class="synOperator">[~]</span> <span class="synDelimiter">'</span><span class="synString"> -- </span><span class="synDelimiter">'</span><span class="synOperator">,</span> <span class="synIdentifier">$</span><span class="synSpecial">.</span><span class="synIdentifier">name</span><span class="synOperator">,</span>
+                    (<span class="synDelimiter">'</span><span class="synString"> [</span><span class="synDelimiter">'</span><span class="synOperator">,</span> <span class="synIdentifier">@</span><span class="synSpecial">.</span><span class="synIdentifier">vars</span><span class="synOperator">»</span><span class="synDelimiter">&lt;</span><span class="synString">name</span><span class="synDelimiter">&gt;</span><span class="synOperator">.</span><span class="synFunction">join</span>(<span class="synDelimiter">'</span><span class="synString">, </span><span class="synDelimiter">'</span>)<span class="synOperator">,</span> <span class="synDelimiter">'</span><span class="synString">]</span><span class="synDelimiter">'</span> <span class="synConditional">if</span> <span class="synIdentifier">@</span><span class="synSpecial">.</span><span class="synIdentifier">vars</span>) }
 
 <span class="synDelimiter">s[</span><span class="synString">foo</span><span class="synDelimiter">][</span><span class="synString">bar </span><span class="synIdentifier">$baz</span><span class="synDelimiter">]</span>
 <span class="synDelimiter">tr|</span><span class="synString">a</span><span class="synSpecialChar">..</span><span class="synString">c</span><span class="synDelimiter">|</span><span class="synString">A</span><span class="synSpecialChar">..</span><span class="synString">C</span><span class="synDelimiter">|</span><span class="synOperator">;</span>
@@ -78,7 +78,7 @@
 <span class="synSpecial">my</span> <span class="synIdentifier">$foo</span> <span class="synOperator">~~</span> <span class="synDelimiter">/</span><span class="synString">foobar</span><span class="synDelimiter">/</span><span class="synOperator">;</span>
 <span class="synIdentifier">$foo</span> <span class="synOperator">/=</span> <span class="synNumber">4</span><span class="synOperator">;</span>
 <span class="synIdentifier">$foo</span> <span class="synOperator">//</span> <span class="synIdentifier">$bar</span><span class="synOperator">;</span>
-(<span class="synNumber">1</span><span class="synOperator">,</span><span class="synNumber">2</span><span class="synp6Close">)</span>[<span class="synOperator">*/</span><span class="synNumber">2</span><span class="synp6Close">]</span><span class="synOperator">;</span>
+(<span class="synNumber">1</span><span class="synOperator">,</span><span class="synNumber">2</span>)[<span class="synOperator">*/</span><span class="synNumber">2</span>]<span class="synOperator">;</span>
 <span class="synRepeat">while</span> <span class="synDelimiter">/</span><span class="synString">foobar</span><span class="synDelimiter">/</span> {
 }
 <span class="synIdentifier">$a</span> <span class="synOperator">=</span> <span class="synIdentifier">$bla</span> <span class="synOperator">/</span> <span class="synNumber">5</span><span class="synOperator">;</span>
@@ -99,10 +99,10 @@
     <span class="synSpecial">when</span> <span class="synDelimiter">/</span><span class="synString">dsfsdf</span><span class="synDelimiter">/</span> {
     }
 }
-<span class="synNormal">foo</span>::<span class="synNormal">bar</span> <span class="synOperator">/</span> <span class="synNumber">4</span><span class="synOperator">;</span>
+foo::bar <span class="synOperator">/</span> <span class="synNumber">4</span><span class="synOperator">;</span>
 <span class="synRepeat">while</span> <span class="synDelimiter">/</span><span class="synString">foo</span><span class="synDelimiter">/</span><span class="synOperator">;</span>
 <span class="synFunction">say</span> <span class="synIdentifier">@foo</span><span class="synOperator">.</span><span class="synFunction">grep</span><span class="synOperator">:</span> <span class="synDelimiter">/</span><span class="synString">dsfsdf</span><span class="synDelimiter">/</span>
-<span class="synFunction">say</span> <span class="synIdentifier">@foo</span><span class="synOperator">.</span><span class="synFunction">grep</span>(<span class="synDelimiter">/</span><span class="synString">dsfsdf</span><span class="synDelimiter">/</span><span class="synp6Close">)</span>
+<span class="synFunction">say</span> <span class="synIdentifier">@foo</span><span class="synOperator">.</span><span class="synFunction">grep</span>(<span class="synDelimiter">/</span><span class="synString">dsfsdf</span><span class="synDelimiter">/</span>)
 <span class="synIdentifier">$bla</span> <span class="synOperator">/</span> <span class="synNumber">3</span><span class="synOperator">;</span>
 
 <span class="synNumber">Inf</span>
@@ -117,11 +117,11 @@
 <span class="synNumber">1.2e7_000</span>
 <span class="synNumber">1.2e-7</span>
 
-<span class="synKeyword">token</span> <span class="synp6RegexName">foo</span> <span class="synNormal">{</span>
-<span class="synString">    </span><span class="synSpecial">&lt;*</span><span class="synp6RxAssertion"> </span><span class="synSpecial">&lt; </span><span class="synString">foo bar </span><span class="synSpecial">&gt;</span><span class="synp6RxAssertion"> </span><span class="synSpecial">&gt;</span>
-<span class="synNormal">}</span>
+<span class="synKeyword">token</span> foo {
+<span class="synString">    </span><span class="synSpecial">&lt;*</span> <span class="synSpecial">&lt; </span><span class="synString">foo bar </span><span class="synSpecial">&gt;</span> <span class="synSpecial">&gt;</span>
+}
 <span class="synInclude">use</span> <span class="synSpecial">v6.0.0</span><span class="synOperator">;</span>
-<span class="synInclude">use</span> <span class="synNormal">Test</span><span class="synOperator">;</span>
+<span class="synInclude">use</span> Test<span class="synOperator">;</span>
 <span class="synFunction">say</span> <span class="synDelimiter">&quot;</span><span class="synString">foo bar</span><span class="synDelimiter">&quot;</span><span class="synOperator">;</span>
 <span class="synIdentifier">@foo</span><span class="synOperator">.</span><span class="synFunction">push</span><span class="synOperator">:</span> <span class="synDelimiter">&quot;</span><span class="synString">bar</span><span class="synDelimiter">&quot;</span><span class="synOperator">;</span>
 
@@ -135,30 +135,30 @@
 
 <span class="synIdentifier">$sum</span> <span class="synOperator">+=</span> <span class="synIdentifier">$num</span> <span class="synConditional">if</span> <span class="synIdentifier">$num</span><span class="synOperator">.</span><span class="synFunction">is-prime</span><span class="synOperator">;</span>
 
-<span class="synKeyword">sub</span> <span class="synNormal">if'a</span>(<span class="synIdentifier">$x</span><span class="synp6Close">)</span> {<span class="synIdentifier">$x</span>}
-<span class="synFunction">is</span> <span class="synNormal">if'a</span>(<span class="synNumber">5</span><span class="synp6Close">)</span><span class="synOperator">,</span> <span class="synNumber">5</span><span class="synOperator">,</span> <span class="synDelimiter">&quot;</span><span class="synString">if'a is a valid sub name</span><span class="synDelimiter">&quot;</span><span class="synOperator">;</span>
+<span class="synKeyword">sub</span> if'a(<span class="synIdentifier">$x</span>) {<span class="synIdentifier">$x</span>}
+<span class="synFunction">is</span> if'a(<span class="synNumber">5</span>)<span class="synOperator">,</span> <span class="synNumber">5</span><span class="synOperator">,</span> <span class="synDelimiter">&quot;</span><span class="synString">if'a is a valid sub name</span><span class="synDelimiter">&quot;</span><span class="synOperator">;</span>
 
-<span class="synFunction">ok</span> (<span class="synSpecial">my</span> <span class="synIdentifier">%</span> <span class="synOperator">=</span> <span class="synString">baz</span> <span class="synOperator">=&gt;</span> <span class="synDelimiter">&quot;</span><span class="synString">luhrman</span><span class="synDelimiter">&quot;</span><span class="synp6Close">)</span><span class="synOperator">,</span> <span class="synDelimiter">'</span><span class="synString">initialized bare sigil hash %</span><span class="synDelimiter">'</span><span class="synOperator">;</span>
-<span class="synConditional">if</span> (<span class="synIdentifier">$foo</span> <span class="synOperator">%</span> <span class="synNumber">3</span> <span class="synOperator">==</span> <span class="synNumber">0</span><span class="synp6Close">)</span> {
+<span class="synFunction">ok</span> (<span class="synSpecial">my</span> <span class="synIdentifier">%</span> <span class="synOperator">=</span> <span class="synString">baz</span> <span class="synOperator">=&gt;</span> <span class="synDelimiter">&quot;</span><span class="synString">luhrman</span><span class="synDelimiter">&quot;</span>)<span class="synOperator">,</span> <span class="synDelimiter">'</span><span class="synString">initialized bare sigil hash %</span><span class="synDelimiter">'</span><span class="synOperator">;</span>
+<span class="synConditional">if</span> (<span class="synIdentifier">$foo</span> <span class="synOperator">%</span> <span class="synNumber">3</span> <span class="synOperator">==</span> <span class="synNumber">0</span>) {
 }
 
 <span class="synSpecial">my</span> <span class="synIdentifier">$f</span> <span class="synOperator">=</span> <span class="synOperator">*</span> <span class="synOperator">!&lt;</span> <span class="synNumber">3</span><span class="synOperator">;</span>
 <span class="synFunction">isa_ok</span> <span class="synIdentifier">$f</span><span class="synOperator">,</span> <span class="synType">Code</span><span class="synOperator">,</span> <span class="synDelimiter">'</span><span class="synString">Whatever-currying !&lt; (1)</span><span class="synDelimiter">'</span><span class="synOperator">;</span>
 
 <span class="synSpecial">my</span> <span class="synIdentifier">$quote</span> <span class="synOperator">=</span> <span class="synDelimiter">q//</span><span class="synOperator">;</span>
-<span class="synSpecial">my</span> <span class="synIdentifier">$call</span> <span class="synOperator">=</span> <span class="synNormal">q</span>(<span class="synp6Close">)</span><span class="synOperator">;</span>
+<span class="synSpecial">my</span> <span class="synIdentifier">$call</span> <span class="synOperator">=</span> q()<span class="synOperator">;</span>
 
-<span class="synIdentifier">@data</span> <span class="synOperator">==&gt;</span> <span class="synFunction">grep</span> {<span class="synDelimiter">/</span><span class="synSpecial">&lt;[</span><span class="synString">aeiouy</span><span class="synSpecial">]&gt;</span><span class="synDelimiter">/</span>} <span class="synOperator">==&gt;</span> <span class="synFunction">is</span>(<span class="synOperator">$</span>(<span class="synOperator">*</span><span class="synp6Close">)</span><span class="synOperator">,</span> <span class="synOperator">$</span>(<span class="synIdentifier">@out</span><span class="synp6Close">)</span><span class="synOperator">,</span> <span class="synDelimiter">'</span><span class="synString">basic test for $(*)</span><span class="synDelimiter">'</span><span class="synp6Close">)</span><span class="synOperator">;</span>
+<span class="synIdentifier">@data</span> <span class="synOperator">==&gt;</span> <span class="synFunction">grep</span> {<span class="synDelimiter">/</span><span class="synSpecial">&lt;[</span><span class="synString">aeiouy</span><span class="synSpecial">]&gt;</span><span class="synDelimiter">/</span>} <span class="synOperator">==&gt;</span> <span class="synFunction">is</span>(<span class="synOperator">$</span>(<span class="synOperator">*</span>)<span class="synOperator">,</span> <span class="synOperator">$</span>(<span class="synIdentifier">@out</span>)<span class="synOperator">,</span> <span class="synDelimiter">'</span><span class="synString">basic test for $(*)</span><span class="synDelimiter">'</span>)<span class="synOperator">;</span>
 
-<span class="synKeyword">sub</span> <span class="synNormal">is-cool</span> {
+<span class="synKeyword">sub</span> is-cool {
 }
 
-<span class="synKeyword">sub</span> <span class="synNormal">q</span> {
+<span class="synKeyword">sub</span> q {
 }
 
-<span class="synStatement">=begin</span><span class="synp6PodDelimRegion"> </span><span class="synType">foo-bar</span>
+<span class="synStatement">=begin</span> <span class="synType">foo-bar</span>
 
-<span class="synNormal">bla</span>
+bla
 
 <span class="synStatement">=</span><span class="synType">end</span><span class="synIdentifier"> foo-bar</span>
 
@@ -173,14 +173,14 @@
 <span class="synFunction">ok</span> <span class="synNumber">NaN</span> <span class="synOperator">+</span> <span class="synNumber">1i</span> <span class="synOperator">~~</span> <span class="synNumber">NaN</span><span class="synOperator">,</span> <span class="synDelimiter">&quot;</span><span class="synString">NaN + 1i ~~ NaN</span><span class="synDelimiter">&quot;</span><span class="synOperator">;</span>
 <span class="synFunction">ok</span> <span class="synNumber">NaN</span> <span class="synOperator">~~</span> <span class="synNumber">NaN</span> <span class="synOperator">+</span> <span class="synNumber">1i</span><span class="synOperator">,</span> <span class="synDelimiter">&quot;</span><span class="synString">NaN ~~ NaN + 1i</span><span class="synDelimiter">&quot;</span><span class="synOperator">;</span>
 
-<span class="synSpecial">my</span> <span class="synIdentifier">$str</span> <span class="synOperator">=</span> <span class="synDelimiter">&quot;</span><span class="synString">bla bla </span><span class="synIdentifier">&amp;is-cool</span><span class="synp6InterpFunction">(</span><span class="synp6Close">)</span><span class="synString"> yes</span><span class="synDelimiter">&quot;</span><span class="synOperator">;</span>
+<span class="synSpecial">my</span> <span class="synIdentifier">$str</span> <span class="synOperator">=</span> <span class="synDelimiter">&quot;</span><span class="synString">bla bla </span><span class="synIdentifier">&amp;is-cool</span>()<span class="synString"> yes</span><span class="synDelimiter">&quot;</span><span class="synOperator">;</span>
 
-<span class="synKeyword">class</span> <span class="synNormal">Foo-Bar</span> {
-    <span class="synKeyword">method</span> <span class="synNormal">bla</span> { <span class="synFunction">say</span> <span class="synDelimiter">&quot;</span><span class="synString">foo</span><span class="synDelimiter">&quot;</span> }
+<span class="synKeyword">class</span> Foo-Bar {
+    <span class="synKeyword">method</span> bla { <span class="synFunction">say</span> <span class="synDelimiter">&quot;</span><span class="synString">foo</span><span class="synDelimiter">&quot;</span> }
 }
 
-<span class="synKeyword">class</span> <span class="synNormal">Bla'Bla</span> {
-    <span class="synKeyword">method</span> <span class="synNormal">boo</span> { <span class="synFunction">say</span> <span class="synDelimiter">&quot;</span><span class="synString">bar</span><span class="synDelimiter">&quot;</span> }
+<span class="synKeyword">class</span> Bla'Bla {
+    <span class="synKeyword">method</span> boo { <span class="synFunction">say</span> <span class="synDelimiter">&quot;</span><span class="synString">bar</span><span class="synDelimiter">&quot;</span> }
 }
 
 <span class="synNumber">Inf</span><span class="synOperator">,</span> <span class="synNumber">-Inf</span><span class="synOperator">,</span> <span class="synNumber">NaN</span><span class="synOperator">,</span> <span class="synNumber">+Inf</span>
@@ -197,8 +197,8 @@
 <span class="synComment">#};</span>
 <span class="synComment">#throws_like &quot;my Int a = 10;&quot;, X::Syntax::Malformed, message =&gt; / sigilless /;</span>
 
-<span class="synNormal">my</span>(<span class="synp6Close">)</span>
-<span class="synNormal">BEGIN</span>(<span class="synp6Close">)</span>
+my()
+BEGIN()
 
 <span class="synComment"># vim: ft=perl6</span>
 </pre>
