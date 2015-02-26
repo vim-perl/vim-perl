@@ -10,6 +10,8 @@ when :(Str $ where /^The \s \S+ \s \w+$/) { }
 
 .>>[0]>>.Str.unique;
 
+sub process-pod-dir($dir, :&sorted-by = &[cmp], :$sparse) { }
+
 use Foo::Xbar; # not a cross-operator
 
 Zfoobar.new;
