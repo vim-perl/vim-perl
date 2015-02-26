@@ -243,9 +243,7 @@ syn match p6BinNumber  display "[01][01_]*" contained
 syn match p6HexNumber  display "\x[[:xdigit:]_]*" contained
 syn match p6DecNumber  display "\d[[:digit:]_]*" contained
 
-syn match p6Version    display "\<v\d\@=" nextgroup=p6VersionNum
-syn match p6VersionNum display "\d\+" nextgroup=p6VersionDot contained
-syn match p6VersionDot display "\.\%(\d\|\*\)\@=" nextgroup=p6VersionNum contained
+syn match p6Version    display "\<v\d\+\%(\.[*[:digit:]]\+\)*+\?"
 
 " $<match>
 syn region p6MatchVarSigil
@@ -1811,8 +1809,6 @@ if version >= 508 || !exists("did_perl6_syntax_inits")
     HiLink p6QuoteQ_qto       p6Quote
     HiLink p6QuoteQ_qqto      p6Quote
     HiLink p6QuoteQ_PIR       p6Quote
-    HiLink p6VersionNum       p6Version
-    HiLink p6VersionDot       p6Version
     HiLink p6BareSigil        p6Variable
     HiLink p6RxRange          p6StringSpecial
     HiLink p6RxAnchor         p6StringSpecial

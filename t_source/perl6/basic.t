@@ -26,6 +26,11 @@ proto sub infix:<<lt>>(Mu, Mu) returns Bool:D is assoc<chain>
 multi sub infix:<lt>(Mu,    Mu)
 multi sub infix:<lt>(Str:D, Str:D)
 
+v5.2.*
+v1.2+
+v1.2.0.0.0.0.0
+v1
+
 [1,2] xx 3;
 
 token foo {
