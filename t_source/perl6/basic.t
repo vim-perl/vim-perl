@@ -1,5 +1,10 @@
 #!perl6
 
+for @foo <-> $value {
+}
+sub infix:<->(Foo) {
+}
+
 [@(@foo)]
 [@bar]
 when :(Str $ where /^The \s \S+ \s \w+$/) { }
