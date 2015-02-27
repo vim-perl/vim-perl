@@ -14,6 +14,8 @@ when :(Str $ where /^The \s \S+ \s \w+$/) { }
 @foo Z @bar
 is (1 R[R[R-]] 2), 1, 'R[R[R-]] works';
 
+is test_ff({/B/ fff^ /B/ }, <A B A B A>), 'xBAxx', '/B/ fff^ /B/, lhs == rhs';
+
 -100
 is Inf / 100, Inf;
 is Inf*-100, -Inf;
