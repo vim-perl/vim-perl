@@ -17,6 +17,9 @@ is (1 R[R[R-]] 2), 1, 'R[R[R-]] works';
 my @seq = map { $_ ~ ++$ }, <a b c>;
 $c++ for $@a;
 
+nok $mh (<+) $m, "Our MixHash is not a msubset of our Mix (texas)";
+ok $b (<) $bub, "(<) - {$b.gist} is a strict submix of {$bub.gist} (texas)";
+
 is test_ff({/B/ fff^ /B/ }, <A B A B A>), 'xBAxx', '/B/ fff^ /B/, lhs == rhs';
 
 -100

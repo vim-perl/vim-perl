@@ -224,6 +224,7 @@ syn match p6Operator display "\%(&\.(\@=\|@\.\[\@=\|%\.{\@=\)"
 
 " Reduce metaoperators like [+]
 syn match p6ReduceOp display "\%(^\|\s\|(\)\@1<=\%([RSXZ\[]\)*[&RSXZ]\?\[\+(\?\%(\d\|[@%$][.?^=[:alpha:]]\)\@!\%(\.\|[^['.([:space:]]\"\@1<!\)\+)\?]\+"
+syn match p6SetOp    display "R\?(\%([-^.+|&]\|[<>][=+]\?\|cont\|elem\))"
 
 " Reverse, cross, and zip metaoperators
 exec "syn match p6RSXZOp display \"[RSXZ]:\\@!\\%(\\a\\@=\\%(". s:alpha_metaops_or . "\\)\\|[[:alnum:]]\\@!\\%(\\.\\|[^[,.[:space:]]\\)\\+\\|\\s\\@=\\|$\\)\""
@@ -1798,6 +1799,7 @@ if version >= 508 || !exists("did_perl6_syntax_inits")
     HiLink p6RxCharClass      p6String
     HiLink p6RxQuoteWords     p6String
     HiLink p6ReduceOp         p6Operator
+    HiLink p6SetOp            p6Operator
     HiLink p6RSXZOp           p6Operator
     HiLink p6HyperOp          p6Operator
     HiLink p6PostHyperOp      p6Operator
