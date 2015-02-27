@@ -9,6 +9,7 @@ sub infix:<->(Foo) {
 [@bar]
 when :(Str $ where /^The \s \S+ \s \w+$/) { }
 
+-100
 is Inf / 100, Inf;
 is Inf*-100, -Inf;
 is Inf / -100, -Inf;
