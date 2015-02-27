@@ -11,6 +11,9 @@ when :(Str $ where /^The \s \S+ \s \w+$/) { }
 
 @p = $x [[+]]= 6, 7;
 
+@foo Z @bar
+is (1 R[R[R-]] 2), 1, 'R[R[R-]] works';
+
 -100
 is Inf / 100, Inf;
 is Inf*-100, -Inf;
