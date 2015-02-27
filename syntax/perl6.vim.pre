@@ -110,6 +110,40 @@ let s:keywords = {
  \ "p6Pragma": [
  \   "oo fatal",
  \ ],
+ \ "p6Operator": [
+ \   "div xx x mod also leg cmp before after eq ne le lt",
+ \   "gt ge eqv ff fff and andthen or xor orelse extra lcm gcd",
+ \ ],
+\ }
+
+" These can be immediately followed by parentheses
+let s:functions = {
+ \ "p6Builtin": [
+ \   "eager hyper substr index rindex grep map sort join lines hints chmod",
+ \   "split reduce min max reverse truncate zip cat roundrobin classify",
+ \   "first sum keys values pairs defined delete exists elems end kv any",
+ \   "all one wrap shape key value name pop push shift splice unshift floor",
+ \   "ceiling abs exp log log10 rand sign sqrt sin cos tan round strand",
+ \   "roots cis unpolar polar atan2 pick chop p5chop chomp p5chomp lc tc",
+ \   "lcfirst uc ucfirst capitalize normalize pack unpack quotemeta comb",
+ \   "samecase sameaccent chars nfd nfc nfkd nfkc printf sprintf caller",
+ \   "evalfile run runinstead nothing want bless chr ord gmtime time eof",
+ \   "localtime gethost getpw chroot getlogin getpeername kill fork wait",
+ \   "perl graphs codes bytes clone print open read write readline say seek",
+ \   "close opendir readdir slurp pos fmt vec link unlink symlink uniq pair",
+ \   "asin atan sec cosec cotan asec acosec acotan sinh cosh tanh asinh done",
+ \   "acos acosh atanh sech cosech cotanh sech acosech acotanh asech ok nok",
+ \   "plan_ok dies_ok lives_ok skip todo pass flunk force_todo use_ok isa_ok",
+ \   "diag is_deeply isnt like skip_rest unlike cmp_ok eval_dies_ok nok_error",
+ \   "eval_lives_ok approx is_approx throws_ok version_lt plan EVAL succ pred",
+ \   "times nonce once signature new connect operator undef undefine sleep",
+ \   "from to infix postfix prefix circumfix postcircumfix minmax lazy count",
+ \   "unwrap getc pi e context void quasi body each contains rewinddir subst",
+ \   "can isa flush arity assuming rewind callwith callsame nextwith nextsame",
+ \   "attr eval_elsewhere none srand trim trim_start trim_end lastcall WHAT",
+ \   "WHERE HOW WHICH VAR WHO WHENCE ACCEPTS REJECTS not true iterator by",
+ \   "re im invert flip gist flat tree is-prime throws_like trans so",
+ \ ],
  \ "p6Type": [
  \   "Object Any Junction Whatever Capture Match",
  \   "Signature Proxy Matcher Package Module Class",
@@ -127,40 +161,9 @@ let s:keywords = {
  \   "Buf buf buf1 buf2 buf4 buf8 buf16 buf32 buf64",
  \   "UInt uint uint1 uint2 uint4 uint8 uint16 uint32",
  \   "uint64 Abstraction utf8 utf16 utf32 Numeric Real",
- \   "Order Same Less More Nil Mu",
- \ ],
- \ "p6Operator": [
- \   "div xx x mod also leg cmp before after eq ne le lt",
- \   "gt ge eqv ff fff and andthen or xor orelse extra",
+ \   "Order Same Less More Nil Mu bag set",
  \ ],
 \ }
-
-let s:builtins = [
- \ "eager hyper substr index rindex grep map sort join lines hints chmod",
- \ "split reduce min max reverse truncate zip cat roundrobin classify",
- \ "first sum keys values pairs defined delete exists elems end kv any",
- \ "all one wrap shape key value name pop push shift splice unshift floor",
- \ "ceiling abs exp log log10 rand sign sqrt sin cos tan round strand",
- \ "roots cis unpolar polar atan2 pick chop p5chop chomp p5chomp lc",
- \ "lcfirst uc ucfirst capitalize normalize pack unpack quotemeta comb",
- \ "samecase sameaccent chars nfd nfc nfkd nfkc printf sprintf caller",
- \ "evalfile run runinstead nothing want bless chr ord gmtime time eof",
- \ "localtime gethost getpw chroot getlogin getpeername kill fork wait",
- \ "perl graphs codes bytes clone print open read write readline say seek",
- \ "close opendir readdir slurp pos fmt vec link unlink symlink uniq pair",
- \ "asin atan sec cosec cotan asec acosec acotan sinh cosh tanh asinh done",
- \ "acos acosh atanh sech cosech cotanh sech acosech acotanh asech ok nok",
- \ "plan_ok dies_ok lives_ok skip todo pass flunk force_todo use_ok isa_ok",
- \ "diag is_deeply isnt like skip_rest unlike cmp_ok eval_dies_ok nok_error",
- \ "eval_lives_ok approx is_approx throws_ok version_lt plan EVAL succ pred",
- \ "times nonce once signature new connect operator undef undefine sleep",
- \ "from to infix postfix prefix circumfix postcircumfix minmax lazy count",
- \ "unwrap getc pi e context void quasi body each contains rewinddir subst",
- \ "can isa flush arity assuming rewind callwith callsame nextwith nextsame",
- \ "attr eval_elsewhere none srand trim trim_start trim_end lastcall WHAT",
- \ "WHERE HOW WHICH VAR WHO WHENCE ACCEPTS REJECTS not true iterator by",
- \ "re im invert flip gist flat tree is-prime throws_like trans",
-\ ]
 
 " We explicitly enumerate the alphanumeric infix operators allowed after [RSXZ]
 " to avoid match package names that start with those letters.
@@ -185,12 +188,13 @@ for [group, words] in items(s:keywords)
     exec "syn match ". group ." display \"\\%(". s:words . "\\)(\\@!@@IDENTIFIER_END_Q@@\" contained"
 endfor
 
-" Builtins are special because they can be immediately followed by parentheses
-let s:words_space = join(s:builtins, " ")
-let s:temp = split(s:words_space)
-let s:words = join(s:temp, "\\|")
-exec "syn match p6Builtin display \"\\%(". s:words . "\\)@@IDENTIFIER_END_Q@@\" contained"
-unlet s:keywords s:builtins s:words_space s:temp s:words
+for [group, words] in items(s:functions)
+    let s:words_space = join(words, " ")
+    let s:temp = split(s:words_space)
+    let s:words = join(s:temp, "\\|")
+    exec "syn match ". group ." display \"\\%(". s:words . "\\)@@IDENTIFIER_END_Q@@\" contained"
+endfor
+unlet s:keywords s:functions s:words_space s:temp s:words
 
 " try to distinguish the is/does functions from the type constraints
 syn match p6Builtin     display "\%(\%(\S@@IDENT_CHAR@@\@1<!\|^\)\s*\)\@<=\%(is\|does\)\>"

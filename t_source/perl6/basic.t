@@ -22,6 +22,8 @@ is 100 / Inf, 0;
 [['foo']];
 
 X::Foo::Bar
+bag()
+Str()
 
 is showkv([(.)] @d), showkv(∅), "Bag multiply reduce works on nothing";
 
