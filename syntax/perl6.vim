@@ -19,14 +19,10 @@
 "     # vim: filetype=perl6
 
 " TODO:
-"   * Highlight interpolated $() and related constructs
+"   * Overhaul the highlighting of grammars, it's a bit flaky
 "   * Allow more keywords to match as function calls(leave() is export(), etc)
 "   * Go over the list of keywords/builtins to see what's deprecated/missing
-"   * Optimization: use nextgroup instead of lookaround (:help syn-nextgroup)
-"   * Optimization: Try replacing similar regexes with a single, larger one.
-"     See also :help syntime.
 "   * Add more support for folding (:help syn-fold)
-"   * Add more syntax syncing hooks (:help syn-sync)
 "
 " If you want to have Pir code inside Q:PIR// strings highlighted, do:
 "   let perl6_embedded_pir=1
