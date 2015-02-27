@@ -9,6 +9,11 @@ sub infix:<->(Foo) {
 [@bar]
 when :(Str $ where /^The \s \S+ \s \w+$/) { }
 
+is Inf / 100, Inf;
+is Inf*-100, -Inf;
+is Inf / -100, -Inf;
+is 100 / Inf, 0;
+
 @definitions = [.[0].words[0], .[1].contents[0]];
 
 [['foo']];

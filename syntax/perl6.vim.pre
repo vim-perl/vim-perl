@@ -742,7 +742,7 @@ syn match p6MatchStart display "\<\%(\%(mm\?\|rx\|s\|tr\)\A\)\@=" nextgroup=p6Ma
 " /foo/
 syn region p6MatchBare
     \ matchgroup=p6Quote
-    \ start="/\@1<!\%(^\s*\|\%([\[,=~|&/:({]\|\%(::\|[$@%&][.!^:*?]\?\)\@<!@@IDENTIFIER_START@@@@IDENTIFIER@@\)\s*\)\@<=/[/=]\@!"
+    \ start="/\@1<!\%(\%(\_^\|[!\[,=~|&/:({]\|\<\%(if\|unless\|while\|when\|where\|so\)\)\s*\)\@<=/[/=]\@!"
     \ skip="\\/"
     \ end="/"
     \ keepend
