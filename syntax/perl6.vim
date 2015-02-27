@@ -727,12 +727,12 @@ syn cluster p6Variables
     \ add=p6VarNum
     \ add=p6Variable
 
-syn match p6BareSigil    display "[@$%]\%(\s*\%([,)}=]\|where\>\)\)\@="
+syn match p6BareSigil    display "[@$%&]\%(\s*\%([,)}=]\|where\>\)\)\@="
 syn match p6VarSlash     display "\$/"
 syn match p6VarExclam    display "\$!"
 syn match p6VarMatch     display "\$¢"
 syn match p6VarNum       display "\$\d\+"
-syn match p6Variable     display "[@&$%]\$*\%(::\|\%(\%([.^*?=!~]\|:\@1<!::\@!\)[A-Za-z_\xC0-\xFF]\)\|[A-Za-z_\xC0-\xFF]\)\@=" nextgroup=p6Twigil,p6VarName,p6PackageScope
+syn match p6Variable     display "[@$%&]\?[@&$%]\$*\%(::\|\%(\%([.^*?=!~]\|:\@1<!::\@!\)[A-Za-z_\xC0-\xFF]\)\|[A-Za-z_\xC0-\xFF]\)\@=" nextgroup=p6Twigil,p6VarName,p6PackageScope
 syn match p6VarName      display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)" nextgroup=p6PostHyperOp contained
 syn match p6Close        display "[\])]" nextgroup=p6PostHyperOp
 syn match p6PostHyperOp  display "\%(»\|>>\)" contained

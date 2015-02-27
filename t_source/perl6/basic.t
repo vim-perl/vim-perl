@@ -15,6 +15,7 @@ when :(Str $ where /^The \s \S+ \s \w+$/) { }
 is (1 R[R[R-]] 2), 1, 'R[R[R-]] works';
 
 my @seq = map { $_ ~ ++$ }, <a b c>;
+$c++ for $@a;
 
 is test_ff({/B/ fff^ /B/ }, <A B A B A>), 'xBAxx', '/B/ fff^ /B/, lhs == rhs';
 
