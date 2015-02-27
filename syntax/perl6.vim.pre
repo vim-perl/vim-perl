@@ -222,7 +222,7 @@ syn match p6Operator display "\%(&\.(\@=\|@\.\[\@=\|%\.{\@=\)"
 syn match p6ReduceOp display "\%(^\|\s\|(\)\@1<=[&RSXZ]\?\[\+@@METAOP@@]\+"
 
 " Reverse, cross, and zip metaoperators
-exec "syn match p6RSXZOp display \"[RSXZ]\\%(\\a\\@=\\%(". s:alpha_metaops_or . "\\)\\|[[:alnum:]]\\@!\\%(\\.\\|[^[,.[:space:]]\\)\\+\\)\""
+exec "syn match p6RSXZOp display \"[RSXZ]\\%(\\a\\@=\\%(". s:alpha_metaops_or . "\\)\\|[:[:alnum:]]\\@!\\%(\\.\\|[^[,.[:space:]]\\)\\+\\)\""
 
 syn match p6BlockLabel display "^\s*\zs\h\w*\s*::\@!\_s\@="
 

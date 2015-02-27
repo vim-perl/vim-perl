@@ -21,6 +21,8 @@ is 100 / Inf, 0;
 
 [['foo']];
 
+X::Foo::Bar
+
 .>>[0]>>.Str.unique;
 
 sub process-pod-dir($dir, :&sorted-by = &[cmp], :$sparse) { }
