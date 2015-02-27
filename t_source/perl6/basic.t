@@ -19,6 +19,7 @@ $c++ for $@a;
 
 ok "a" ![!eq] "a", '![!eq] is legal and works (1)';
 is A.new.m, 'aaa',  '[~] works in first class';
+my $l = (1,2,3 Z, 4,5,6 Z, 7,8,9);
 
 nok $mh (<+) $m, "Our MixHash is not a msubset of our Mix (texas)";
 ok $b (<) $bub, "(<) - {$b.gist} is a strict submix of {$bub.gist} (texas)";
