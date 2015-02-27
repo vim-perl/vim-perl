@@ -162,7 +162,7 @@ let s:builtins = [
  \ "re im invert flip gist flat tree is-prime throws_like trans",
 \ ]
 
-" We explicitly enumerate the alphanumeric infix operators allowed after [RXZ]
+" We explicitly enumerate the alphanumeric infix operators allowed after [RSXZ]
 " to avoid match package names that start with those letters.
 let s:alpha_metaops = [
  \ "div mod gcd lcm xx x does but cmp leg eq ne gt ge lt le before after eqv",
@@ -219,10 +219,10 @@ syn match p6Operator display "\%(\s\|^\)\@1<=\%(xx=\|p5=>\)"
 syn match p6Operator display "\%(&\.(\@=\|@\.\[\@=\|%\.{\@=\)"
 
 " Reduce metaoperators like [+]
-syn match p6ReduceOp display "\%(^\|\s\|(\)\@1<=[&RXZ]\?\[\%(\d\|[@%$][.?^=[:alpha:]]\)\@!\%(\.\|[^[,.([:space:]]\)\+]"
+syn match p6ReduceOp display "\%(^\|\s\|(\)\@1<=[&RSXZ]\?\[\%(\d\|[@%$][.?^=[:alpha:]]\)\@!\%(\.\|[^[,.([:space:]]\)\+]"
 
 " Reverse, cross, and zip metaoperators
-exec "syn match p6RXZOp display \"[RXZ]\\%(\\a\\@=\\%(". s:alpha_metaops_or . "\\)\\|[[:alnum:]]\\@!\\%(\\.\\|[^[,.[:space:]]\\)\\+\\)\""
+exec "syn match p6RSXZOp display \"[RSXZ]\\%(\\a\\@=\\%(". s:alpha_metaops_or . "\\)\\|[[:alnum:]]\\@!\\%(\\.\\|[^[,.[:space:]]\\)\\+\\)\""
 
 syn match p6BlockLabel display "^\s*\zs\h\w*\s*::\@!\_s\@="
 
@@ -595,7 +595,7 @@ syn match p6Key display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Z
 
 " => and p5=> autoquoting
 syn match p6StringP5Auto display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)\ze\s\+p5=>"
-syn match p6StringAuto   display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)\ze\%(p5\)\@2<![RXZ]\@1<!=>"
+syn match p6StringAuto   display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)\ze\%(p5\)\@2<![RSXZ]\@1<!=>"
 syn match p6StringAuto   display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)\ze\s\+=>"
 syn match p6StringAuto   display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)p5\ze=>"
 
@@ -1794,7 +1794,7 @@ if version >= 508 || !exists("did_perl6_syntax_inits")
     HiLink p6RxCharClass      p6String
     HiLink p6RxQuoteWords     p6String
     HiLink p6ReduceOp         p6Operator
-    HiLink p6RXZOp            p6Operator
+    HiLink p6RSXZOp           p6Operator
     HiLink p6HyperOp          p6Operator
     HiLink p6PostHyperOp      p6Operator
     HiLink p6QuoteQ           p6Quote

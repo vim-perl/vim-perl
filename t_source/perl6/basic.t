@@ -22,6 +22,8 @@ use Foo::Xbar; # not a cross-operator
 Zfoobar.new;
 Rcmp
 
+S|
+
 proto sub infix:«>»(Any, Any) returns Bool:D is assoc<chain>
 multi sub infix:«>»(Int:D, Int:D)
 multi sub infix:«>»(Num:D, Num:D)
