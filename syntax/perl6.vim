@@ -727,7 +727,7 @@ syn cluster p6Variables
     \ add=p6VarNum
     \ add=p6Variable
 
-syn match p6BareSigil    display "[@$%]\%(\s*\%([,)=]\|where\>\)\)\@="
+syn match p6BareSigil    display "[@$%]\%(\s*\%([,)}=]\|where\>\)\)\@="
 syn match p6VarSlash     display "\$/"
 syn match p6VarExclam    display "\$!"
 syn match p6VarMatch     display "\$¢"

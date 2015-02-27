@@ -14,6 +14,8 @@ when :(Str $ where /^The \s \S+ \s \w+$/) { }
 @foo Z @bar
 is (1 R[R[R-]] 2), 1, 'R[R[R-]] works';
 
+my @seq = map { $_ ~ ++$ }, <a b c>;
+
 is test_ff({/B/ fff^ /B/ }, <A B A B A>), 'xBAxx', '/B/ fff^ /B/, lhs == rhs';
 
 -100
