@@ -742,7 +742,7 @@ syn match p6PackageScope display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\
 
 " Perl 6 regex regions
 
-syn match p6MatchStart display "\<\%(\%(mm\?\|rx\|s\|tr\)\A\)\@=" nextgroup=p6Match,p6Substitution,p6Transliteration,p6Identifier
+syn match p6MatchStart display "\.\@1<!\<\%(\%(mm\?\|rx\|s\|tr\)\A\)\@=" nextgroup=p6Match,p6Substitution,p6Transliteration,p6Identifier
 
 " /foo/
 syn region p6MatchBare
