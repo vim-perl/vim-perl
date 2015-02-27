@@ -24,6 +24,16 @@ sdfsdfsdf
     #=pod
     #foobar
 
+=begin bla
+foo
+    bar
+=end bla
+
+=begin pod
+foo
+    bar
+=end pod
+
 =begin foo :nested(3)
 and so,  all  of  the  villages chased
 Albi,   The   Racist  Dragon, into the
