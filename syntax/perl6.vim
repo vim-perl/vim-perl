@@ -27,14 +27,14 @@
 " If you want to have Pir code inside Q:PIR// strings highlighted, do:
 "   let perl6_embedded_pir=1
 "
+" The above requires pir.vim, which you can find in Parrot's repository:
+" https://github.com/parrot/parrot/tree/master/editor
+"
 " To highlight Perl 5 regexes (m:P5//):
 "   let perl6_perl5_regexes=1
 "
 " To enable folding:
 "   let perl6_fold=1
-"
-" The above requires pir.vim, which you can find in Parrot's repository:
-" https://github.com/parrot/parrot/tree/master/editor
 
 " For version 5.x: Clear all syntax items
 " For version 6.x: Quit when a syntax file was already loaded
