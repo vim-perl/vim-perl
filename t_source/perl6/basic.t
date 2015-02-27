@@ -23,6 +23,8 @@ is 100 / Inf, 0;
 
 X::Foo::Bar
 
+is showkv([(.)] @d), showkv(∅), "Bag multiply reduce works on nothing";
+
 .>>[0]>>.Str.unique;
 
 sub process-pod-dir($dir, :&sorted-by = &[cmp], :$sparse) { }
