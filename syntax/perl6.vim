@@ -223,7 +223,7 @@ syn match p6Operator display "\%(\s\|^\)\@1<=\%(xx=\|p5=>\)"
 syn match p6Operator display "\%(&\.(\@=\|@\.\[\@=\|%\.{\@=\)"
 
 " Reduce metaoperators like [+]
-syn match p6ReduceOp display "\%(^\|\s\|(\)\@1<=\%([RSXZ\[]\)*[&RSXZ]\?\[\+(\?\%(\d\|[@%$][.?^=[:alpha:]]\)\@!\%(\.\|[^['.([:space:]]\"\@1<!\)\+)\?]\+"
+syn match p6ReduceOp display "\%(^\|\s\|(\)\@1<=!*\%([RSXZ\[]\)*[&RSXZ]\?\[\+(\?\%(\d\|[@%$][.?^=[:alpha:]]\)\@!\%(\.\|[^['.([:space:]]\"\@1<!\)\+)\?]\+"
 syn match p6SetOp    display "R\?(\%([-^.+|&]\|[<>][=+]\?\|cont\|elem\))"
 
 " Reverse, cross, and zip metaoperators
