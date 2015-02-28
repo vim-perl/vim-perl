@@ -51,6 +51,7 @@ set cpo&vim
 " @@IDENTIFIER_START@@   "@@IDENT_CHAR@@\@1<!\%(@@IDENT_NONDIGIT@@[-']\)\@2<!"
 " @@IDENTIFIER_END@@     "\%(@@IDENT_CHAR@@\|[-']@@IDENT_NONDIGIT@@\)\@!"
 " @@METAOP@@             "\%(\d\|[@%$][.?^=[:alpha:]]\)\@!\%(\.\|[^[{'.([:space:]]\"\@1<!\)\+"
+" @@ADVERBS@@            "\%(\_s*:!\?@@IDENTIFIER@@\%(([^)]*)\)\?\)*"
 "
 " Same but escaped, for use in string eval
 " @@IDENT_NONDIGIT_Q@@   "[A-Za-z_\\xC0-\\xFF]"
@@ -490,10 +491,10 @@ syn match p6QuoteQ_qww  display "qww[A-Za-z(]\@!" nextgroup=p6PairsQ_qww skipwhi
 syn match p6QuoteQ_qq   display "qq[pwx]\?[A-Za-z(]\@!" nextgroup=p6PairsQ_qq skipwhite skipempty contained
 syn match p6QuoteQ_qto  display "q\%(:\?to\|:heredoc\)[A-Za-z(]\@!" nextgroup=p6StringQ_qto skipwhite skipempty contained
 syn match p6QuoteQ_qqto display "qq\%(:\?to\|:heredoc\)[A-Za-z(]\@!" nextgroup=p6StringQ_qqto skipwhite skipempty contained
-syn match p6PairsQ      contained transparent skipwhite skipempty nextgroup=p6StringQ "\%(\_s*:!\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)\%(([^)]*)\)\?\)*"
-syn match p6PairsQ_q    contained transparent skipwhite skipempty nextgroup=p6StringQ_q "\%(\_s*:!\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)\%(([^)]*)\)\?\)*"
-syn match p6PairsQ_qww  contained transparent skipwhite skipempty nextgroup=p6StringQ_qww "\%(\_s*:!\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)\%(([^)]*)\)\?\)*"
-syn match p6PairsQ_qq   contained transparent skipwhite skipempty nextgroup=p6StringQ_qq "\%(\_s*:!\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)\%(([^)]*)\)\?\)*"
+syn match p6PairsQ      "\%(\_s*:!\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)\%(([^)]*)\)\?\)*" contained transparent skipwhite skipempty nextgroup=p6StringQ
+syn match p6PairsQ_q    "\%(\_s*:!\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)\%(([^)]*)\)\?\)*" contained transparent skipwhite skipempty nextgroup=p6StringQ_q
+syn match p6PairsQ_qww  "\%(\_s*:!\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)\%(([^)]*)\)\?\)*" contained transparent skipwhite skipempty nextgroup=p6StringQ_qww
+syn match p6PairsQ_qq   "\%(\_s*:!\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)\%(([^)]*)\)\?\)*" contained transparent skipwhite skipempty nextgroup=p6StringQ_qq
 
 if exists("perl6_embedded_pir") || exists("perl6_extended_all")
     syn include @p6PIR syntax/pir.vim
@@ -713,7 +714,12 @@ syn match p6PackageScope display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\
 
 " Perl 6 regex regions
 
-syn match p6MatchStart display "\.\@1<!\<\%(\%(mm\?\|rx\|s\|tr\)\A\)\@=" nextgroup=p6Match,p6Substitution,p6Transliteration,p6Identifier
+syn match p6MatchStart_m    display "\.\@1<!\<\%(mm\?\|rx\)\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\)\@!" skipwhite skipempty nextgroup=p6MatchAdverbs_m
+syn match p6MatchStart_s    display "\.\@1<!\<s\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\)\@!" skipwhite skipempty nextgroup=p6MatchAdverbs_s
+syn match p6MatchStart_tr   display "\.\@1<!\<tr\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\)\@!" skipwhite skipempty nextgroup=p6MatchAdverbs_tr
+syn match p6MatchAdverbs_m  "\%(\_s*:!\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)\%(([^)]*)\)\?\)*" contained transparent skipwhite skipempty nextgroup=p6Match
+syn match p6MatchAdverbs_s  "\%(\_s*:!\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)\%(([^)]*)\)\?\)*" contained transparent skipwhite skipempty nextgroup=p6Substitution
+syn match p6MatchAdverbs_tr "\%(\_s*:!\?\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)\%(([^)]*)\)\?\)*" contained transparent skipwhite skipempty nextgroup=p6Transliteration
 
 " /foo/
 syn region p6MatchBare
@@ -726,7 +732,7 @@ syn region p6MatchBare
 " m/foo/, m$foo$, m!foo!, etc
 syn region p6Match
     \ matchgroup=p6Quote
-    \ start=+\%(mm\?\|rx\)\z([/!$,|`'"]\)+
+    \ start=+\z([/!$,|`'"]\)+
     \ skip="\\\z1"
     \ end="\z1"
     \ contained
@@ -734,7 +740,7 @@ syn region p6Match
 
 " m<foo>, m«foo», m{foo}, etc
 for [name, start_delim, end_delim, end_group, skip] in s:bracketing_delims
-    exec "syn region p6Match matchgroup=p6Quote start=\"\\%(mm\\?\\|rx\\)".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contained keepend contains=@p6Regexen,@p6Variables"
+    exec "syn region p6Match matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contained keepend contains=@p6Regexen,@p6Variables"
 endfor
 
 " Substitutions
@@ -742,7 +748,7 @@ endfor
 " s/foo//, s$foo$$, s!foo!!, etc
 syn region p6Substitution
     \ matchgroup=p6Quote
-    \ start=+s\z([/!$,|`'"]\)+
+    \ start=+\z([/!$,|`'"]\)+
     \ skip="\\\z1"
     \ end="\z1"me=e-1
     \ contained
@@ -759,7 +765,7 @@ syn region p6Replacement
 
 " s<foo><bar>, s«foo»«bar», s{foo}{bar}, etc
 for [name, start_delim, end_delim, end_group, skip] in s:bracketing_delims
-    exec "syn region p6Substitution matchgroup=p6Quote start=\"s".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contained keepend contains=@p6Regexen,@p6Variables nextgroup=p6Repl".name
+    exec "syn region p6Substitution matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contained keepend contains=@p6Regexen,@p6Variables nextgroup=p6Repl".name
     exec "syn region p6Repl".name." matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contained keepend contains=@p6Interp_qq"
 endfor
 
@@ -768,7 +774,7 @@ endfor
 " tr/foo/bar/, tr|foo|bar, etc
 syn region p6Transliteration
     \ matchgroup=p6Quote
-    \ start=+tr\z([/!$,|`'"]\)+
+    \ start=+\z([/!$,|`'"]\)+
     \ skip="\\\z1"
     \ end="\z1"me=e-1
     \ contained
@@ -785,7 +791,7 @@ syn region p6TransRepl
 
 " tr<foo><bar>, tr«foo»«bar», tr{foo}{bar}, etc
 for [name, start_delim, end_delim, end_group, skip] in s:bracketing_delims
-    exec "syn region p6Transliteration matchgroup=p6Quote start=\"tr".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contained keepend contains=p6RxRange nextgroup=p6TransRepl".name
+    exec "syn region p6Transliteration matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contained keepend contains=p6RxRange nextgroup=p6TransRepl".name
     exec "syn region p6TransRepl".name." matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contained keepend contains=@p6Interp_qq,p6RxRange"
 endfor
 unlet s:bracketing_delims
@@ -1780,6 +1786,9 @@ if version >= 508 || !exists("did_perl6_syntax_inits")
     HiLink p6QuoteQ_qto       p6Quote
     HiLink p6QuoteQ_qqto      p6Quote
     HiLink p6QuoteQ_PIR       p6Quote
+    HiLink p6MatchStart_m     p6Quote
+    HiLink p6MatchStart_s     p6Quote
+    HiLink p6MatchStart_tr    p6Quote
     HiLink p6BareSigil        p6Variable
     HiLink p6RxRange          p6StringSpecial
     HiLink p6RxAnchor         p6StringSpecial
