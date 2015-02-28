@@ -5,6 +5,10 @@ for @foo <-> $value {
 sub infix:<->(Foo) is required {
 }
 
+is 'aa'.trans(/ <after a> ./ => 'b'), 'ab', 'trans with look-around regex';
+is ("!$_!" for (1, 2)>>.trans((1..26) => (14..26,1..13))), <!14! !15!>, "same with explicit for";
+is $s.trans([<X Y>] => [{++$x},{++$y}]), 'a3b3c4d4', 'can use closures in pairs of arrays';
+
 token twigil:sym<=> { <sym> }
 %*LANG<Q>       = ::STD::Q ;
 [@(@foo)]
