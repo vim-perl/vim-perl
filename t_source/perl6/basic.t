@@ -17,6 +17,8 @@ token twigil:sym<=> { <sym> }
 [@bar]
 when :(Str $ where /^The \s \S+ \s \w+$/) { }
 
+$foo.state
+$foo.die
 @p = $x [[+]]= 6, 7;
 
 @foo Z @bar

@@ -146,7 +146,7 @@ for [group, words] in items(s:keywords)
     let s:words_space = join(words, " ")
     let s:temp = split(s:words_space)
     let s:words = join(s:temp, "\\|")
-    exec "syn match ". group ." display \"\\%(". s:words . "\\)(\\@!\\%([A-Za-z_\\xC0-\\xFF0-9]\\|[-'][A-Za-z_\\xC0-\\xFF]\\)\\@!\" contained"
+    exec "syn match ". group ." display \"\\.\\@1<!\\%(". s:words . "\\)(\\@!\\%([A-Za-z_\\xC0-\\xFF0-9]\\|[-'][A-Za-z_\\xC0-\\xFF]\\)\\@!\" contained"
 endfor
 
 let s:words_space = join(s:types, " ")
