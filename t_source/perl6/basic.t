@@ -106,6 +106,14 @@ tr|a..c|A..C|;
 $japh ~~ tr[a..zA..Z][n..za..mN..ZA..M];
 tr/$123/X\x20\o40\t/;
 
+ok("  a b\tc" ~~ m/@<chars>=( \s+ \S+ )+/, 'Named simple array capture');
+ok("abcxyd" ~~ m/a  @<foo>=(.(.))+ d/, 'Repeated hypothetical array capture');
+ok("  a b\tc" ~~ m/@<chars>=[ (<?spaces>) (\S+)]+/, 'Nested multiple array capture');
+
+isa_ok(regex {oo}, Regex);
+isa_ok(rx (o), Regex)
+my @delims = < ^ ° ! " § $ % @ € & / = ? ` * + ~ ; , . | >;
+
 my $foo ~~ /foobar/;
 $foo /= 4;
 $foo // $bar;

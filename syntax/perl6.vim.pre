@@ -327,46 +327,6 @@ syn match p6EscDollar       display "\\\$" contained
 syn match p6EscCloseCurly   display "\\}" contained
 syn match p6EscCloseBracket display "\\\]" contained
 
-" misc escapes
-syn match p6EscOctOld    display "\\[1-9]\d\{1,2}" contained
-syn match p6EscNull      display "\\0\d\@!" contained
-syn match p6EscCodePoint display "\%(\\c\)\@2<=\%(\d\|\S\|\[\)\@=" contained nextgroup=p6CodePoint
-syn match p6EscHex       display "\%(\\x\)\@2<=\%(\x\|\[\)\@=" contained nextgroup=p6HexSequence
-syn match p6EscOct       display "\%(\\o\)\@2<=\%(\o\|\[\)\@=" contained nextgroup=p6OctSequence
-syn match p6EscQQ        display "\\qq" contained nextgroup=p6QQSequence
-syn match p6EscOpenCurly display "\\{" contained
-syn match p6EscHash      display "\\#" contained
-syn match p6EscBackSlash display "\\\\" contained
-
-syn region p6QQSequence
-    \ matchgroup=p6Escape
-    \ start="\["
-    \ skip="\[[^\]]*]"
-    \ end="]"
-    \ contained transparent
-    \ contains=@p6Interp_qq
-
-syn match p6CodePoint   display "\%(\d\+\|\S\)" contained
-syn region p6CodePoint
-    \ matchgroup=p6Escape
-    \ start="\["
-    \ end="]"
-    \ contained
-
-syn match p6HexSequence display "\x\+" contained
-syn region p6HexSequence
-    \ matchgroup=p6Escape
-    \ start="\["
-    \ end="]"
-    \ contained
-
-syn match p6OctSequence display "\o\+" contained
-syn region p6OctSequence
-    \ matchgroup=p6Escape
-    \ start="\["
-    \ end="]"
-    \ contained
-
 " matches :key, :!key, :$var, :key<var>, etc
 " Since we don't know in advance how the adverb ends, we use a trick.
 " Consume nothing with the start pattern (\ze at the beginning),
@@ -384,7 +344,8 @@ syn region p6Adverb
 " it matches if any of the following is true:
 "
 " * There is whitespace missing on either side of the "<", since
-"   people tend to put spaces around "less than"
+"   people tend to put spaces around "less than". We make an exception
+"   for " = < ... >" assignments though.
 " * It comes after "enum", "for", "any", "all", or "none"
 " * It's the first or last thing on a line (ignoring whitespace)
 " * It's preceded by "= "
@@ -401,7 +362,7 @@ syn region p6StringAngle
     \ start="[<+~=!]\@1<!<\%(\s\|<\|=>\|[-=]\{1,2}\)\@!"
     \ start="\%(^\s*\)\@<=<\%(<\|=>\|[-=]\{1,2}>\@!\)\@!"
     \ start="[<+~=!]\@1<!<\%(\s*$\)\@="
-    \ start="\%(=\s\+\)\@=<\%(<\|=>\|[-=]\{1,2}>\@!\)\@!"
+    \ start="\%(=\s\+\)\@<=<\%(<\|=>\|[-=]\{1,2}>\@!\)\@!"
     \ start="<\%(\s*>\)\@="
     \ skip="\\\@1<!\\>"
     \ end=">"
@@ -518,7 +479,7 @@ let s:bracketing_delims = [
   \ ["Angle",   "<",            ">",    "p6EscCloseAngle",   "\\%(\\\\\\@1<!\\\\>\\|<[^>]*>\\)"],
   \ ["French",  "«",            "»",    "p6EscCloseFrench",  "\\%(\\\\\\@1<!\\\\»\\|«[^»]*»\\)"],
   \ ["Bracket", "\\\[",         "]",    "p6EscCloseBracket", "\\%(\\\\\\@1<!\\\\]\\|\\[^\\]]*]\\)"],
-  \ ["Paren",   "\\s\\1@<=(",   ")",    "p6EscCloseParen",   "\\%(\\\\\\@1<!\\\\)\\|([^)]*)\\)"],
+  \ ["Paren",   "\\s\\@1<=(",   ")",    "p6EscCloseParen",   "\\%(\\\\\\@1<!\\\\)\\|([^)]*)\\)"],
 \ ]
 let s:all_delims = s:plain_delims + s:bracketing_delims
 
@@ -549,7 +510,7 @@ syn match p6StringAuto   display "@@IDENTIFIER@@p5\ze=>"
 " Regexes and grammars
 
 syn match p6DeclareRegex display "\%(regex\|rule\|token\)" nextgroup=p6RegexName skipwhite skipempty
-syn match p6RegexName    display "@@IDENTIFIER@@" nextgroup=p6RegexBlockCrap skipwhite skipempty contained
+syn match p6RegexName    display "@@IDENTIFIER@@\?" nextgroup=p6RegexBlockCrap skipwhite skipempty contained
 syn match p6RegexBlockCrap "[^{]*" nextgroup=p6RegexBlock skipwhite skipempty transparent contained
 
 syn region p6RegexBlock
@@ -564,6 +525,7 @@ syn region p6RegexBlock
 syn cluster p6Regexen
     \ add=p6RxMeta
     \ add=p6RxEscape
+    \ add=p6EscCodePoint
     \ add=p6EscHex
     \ add=p6EscOct
     \ add=p6EscNull
@@ -571,6 +533,7 @@ syn cluster p6Regexen
     \ add=p6RxCapture
     \ add=p6RxGroup
     \ add=p6RxAlternation
+    \ add=p6RxBoundary
     \ add=p6RxAdverb
     \ add=p6RxAdverbArg
     \ add=p6RxStorage
@@ -590,10 +553,50 @@ syn match p6RxCapture     display contained "[()]"
 syn match p6RxAlternation display contained "|"
 syn match p6RxRange       display contained "\.\."
 
-" $<match>
+" misc escapes
+syn match p6EscOctOld    display "\\[1-9]\d\{1,2}" contained
+syn match p6EscNull      display "\\0\d\@!" contained
+syn match p6EscCodePoint display "\\[cC]" contained nextgroup=p6CodePoint
+syn match p6EscHex       display "\\[xX]" contained nextgroup=p6HexSequence
+syn match p6EscOct       display "\\o" contained nextgroup=p6OctSequence
+syn match p6EscQQ        display "\\qq" contained nextgroup=p6QQSequence
+syn match p6EscOpenCurly display "\\{" contained
+syn match p6EscHash      display "\\#" contained
+syn match p6EscBackSlash display "\\\\" contained
+
+syn region p6QQSequence
+    \ matchgroup=p6Escape
+    \ start="\["
+    \ skip="\[[^\]]*]"
+    \ end="]"
+    \ contained transparent
+    \ contains=@p6Interp_qq
+
+syn match p6CodePoint   display "\%(\d\+\|\S\)" contained
+syn region p6CodePoint
+    \ matchgroup=p6Escape
+    \ start="\["
+    \ end="]"
+    \ contained
+
+syn match p6HexSequence display "\x\+" contained
+syn region p6HexSequence
+    \ matchgroup=p6Escape
+    \ start="\["
+    \ end="]"
+    \ contained
+
+syn match p6OctSequence display "\o\+" contained
+syn region p6OctSequence
+    \ matchgroup=p6Escape
+    \ start="\["
+    \ end="]"
+    \ contained
+
+" $<match>, @<match>
 syn region p6MatchVarSigil
     \ matchgroup=p6Variable
-    \ start="\$\%(<<\@!\)\@="
+    \ start="[$@]\%(<<\@!\)\@="
     \ end=">\@1<="
     \ contains=p6MatchVar
 
@@ -618,7 +621,7 @@ syn region p6RxGroup
     \ contains=@p6Regexen,@p6Variables,p6MatchVarSigil
 syn region p6RxAssertion
     \ matchgroup=p6StringSpecial2
-    \ start="<\%(?\?\%(before\|after\)\|\%(@@IDENTIFIER@@=\)\|*\)\?"
+    \ start="<\%(?\?\%(before\|after\)\|\%(@@IDENTIFIER@@=\)\|[+?*]\)\?"
     \ end=">"
     \ contained
     \ contains=@p6Regexen,p6Identifier,@p6Variables,p6RxCharClass,p6RxAssertCall
@@ -639,17 +642,18 @@ syn region p6RxAssertArgs
     \ end="\ze>"
     \ contained keepend
     \ contains=TOP
+syn match p6RxBoundary display contained "\%([«»]\|<<\|>>\)"
 syn region p6RxCharClass
     \ matchgroup=p6StringSpecial2
     \ start="\%(<[-!+?]\?\)\@2<=\["
     \ skip="\\]"
     \ end="]"
     \ contained
-    \ contains=p6RxRange,p6RxEscape,p6EscHex,p6EscOct,p6EscNull
+    \ contains=p6RxRange,p6RxEscape,p6EscHex,p6EscOct,p6EscCodePoint,p6EscNull
 syn region p6RxQuoteWords
     \ matchgroup=p6StringSpecial2
-    \ start="< "
-    \ end=">"
+    \ start="<\s"
+    \ end="\s\?>"
     \ contained
 syn region p6RxAdverb
     \ start="\ze\z(:!\?@@IDENTIFIER@@\)"
@@ -1792,6 +1796,7 @@ if version >= 508 || !exists("did_perl6_syntax_inits")
     HiLink p6BareSigil        p6Variable
     HiLink p6RxRange          p6StringSpecial
     HiLink p6RxAnchor         p6StringSpecial
+    HiLink p6RxBoundary       p6StringSpecial
     HiLink p6RxP5Anchor       p6StringSpecial
     HiLink p6CodePoint        p6StringSpecial
     HiLink p6RxMeta           p6StringSpecial
@@ -1827,6 +1832,9 @@ if version >= 508 || !exists("did_perl6_syntax_inits")
     HiLink p6EscCloseAngle    p6StringSpecial2
     HiLink p6EscCloseFrench   p6StringSpecial2
     HiLink p6EscBackSlash     p6StringSpecial2
+    HiLink p6EscCodePoint     p6StringSpecial2
+    HiLink p6EscOct           p6StringSpecial2
+    HiLink p6EscHex           p6StringSpecial2
     HiLink p6RxEscape         p6StringSpecial2
     HiLink p6RxCapture        p6StringSpecial2
     HiLink p6RxAlternation    p6StringSpecial2

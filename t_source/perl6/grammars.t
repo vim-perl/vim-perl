@@ -32,4 +32,18 @@ token TOP {
 }
 
 ok('aaab' ~~ / "$!pattern" /, 'Interpolation of instance member');
+ok("\x[c]\x[a]" ~~ m/<[\c[FORM FEED (FF), LINE FEED (LF)]]>/, 'Charclass multiple FORM FEED (FF), LINE FEED (LF)');
+is('aaaaa' ~~ /<	a aa aaaa >/, 'aaaa', 'leading whitespace quotes words (tab)');
+
+#ok("\c[DIGIT ZERO]" ~~ m/^<:bc<EN>>$/, q{Match (European Number)} );
+#ok("abc" ~~ m/a(bc){$0 = uc $0}/, 'Numeric match');
+#ok("abc" ~~ m/a(bc){make uc $0}/ , 'Zero match');
+#'whatever' ~~ /w <test complicated . regex '<goes here>'>/;
+#is('foo456bar' ~~ /foo <(\d+ bar/, '456bar', '<( match');
+#is('foo123bar' ~~ /foo <( bar || ....../, 'foo123', '<( in backtracking');
+#is('foo123bar' ~~ /foo <( 123 [ <( xyz ]?/, '123', 'multiple <( backtracking');
+#ok(!( "a" ~~ m/(<[a..z]-[aeiou]>)/ ), 'Difference set failure');
+#ok(!('a0' ~~ m/$aref[0]/), 'Array ref stringifies before matching'); #OK
+#ok(!( "abcd f" ~~ m/abc <!before d <.ws> f>/ ), 'Negative lookahead failure');
+
 # vim: ft=perl6
