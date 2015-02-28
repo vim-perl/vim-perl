@@ -6,6 +6,7 @@ sub infix:<->(Foo) {
 }
 
 token twigil:sym<=> { <sym> }
+%*LANG<Q>       = ::STD::Q ;
 [@(@foo)]
 [@bar]
 when :(Str $ where /^The \s \S+ \s \w+$/) { }
