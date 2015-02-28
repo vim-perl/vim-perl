@@ -12,16 +12,13 @@
 " This is a big undertaking. Perl 6 is the sort of language that only Perl
 " can parse. But I'll do my best to get vim to.
 "
-" You can associate the extension ".pl" with the filetype "perl6" by setting
-"     autocmd BufNewFile,BufRead *.pl setf perl6
-" in your ~/.vimrc. But that will infringe on Perl 5, so you might want to
-" put a modeline near the beginning or end of your Perl 6 files instead:
-"     # vim: filetype=perl6
+" The ftdetect/perl11.vim file in this repository takes care of setting the
+" right filetype for Perl 6 files. To set it explicitly you can also add this
+" line near the bottom of your source file:
+"   # vim: filetype=perl6
 
 " TODO:
-"   * Overhaul the highlighting of grammars, it's a bit flaky
-"   * Allow more keywords to match as function calls(leave() is export(), etc)
-"   * Go over the list of keywords/builtins to see what's deprecated/missing
+"   * Go over the list of keywords/types to see what's deprecated/missing
 "   * Add more support for folding (:help syn-fold)
 "
 " If you want to have Pir code inside Q:PIR// strings highlighted, do:
@@ -99,7 +96,7 @@ let s:keywords = {
  \   "oo fatal",
  \ ],
  \ "p6Operator": [
- \   "div xx x mod also leg cmp before after eq ne le lt",
+ \   "div xx x mod also leg cmp before after eq ne le lt not",
  \   "gt ge eqv ff fff and andthen or xor orelse extra lcm gcd",
  \ ],
  \ "p6Type": [
@@ -203,19 +200,6 @@ syn match p6HexNumber  display "\x[[:xdigit:]_]*" contained
 syn match p6DecNumber  display "\d[[:digit:]_]*" contained
 
 syn match p6Version    display "\<v\d\+\%(\.[*[:digit:]]\+\)*+\?"
-
-" $<match>
-syn region p6MatchVarSigil
-    \ matchgroup=p6Variable
-    \ start="\$\%(<<\@!\)\@="
-    \ end=">\@1<="
-    \ contains=p6MatchVar
-
-syn region p6MatchVar
-    \ matchgroup=p6Twigil
-    \ start="<"
-    \ end=">"
-    \ contained
 
 " Contextualizers
 syn match p6Context display "\<\%(item\|list\|slice\|hash\)\>"
@@ -395,8 +379,8 @@ syn region p6Adverb
     \ contains=TOP
 
 " <words>
-" FIXME: not sure how to distinguish this from the "less than" operator
-" in all cases. For now, it matches if any of the following is true:
+" Distinguishing this from the "less than" operator is tricky. For now,
+" it matches if any of the following is true:
 "
 " * There is whitespace missing on either side of the "<", since
 "   people tend to put spaces around "less than"
@@ -432,7 +416,7 @@ syn region p6StringAngleFixed
 
 syn region p6InnerAnglesOne
     \ matchgroup=p6StringAngle
-    \ start="<"
+    \ start="\\\@1<!<"
     \ skip="\\\@1<!\\>"
     \ end=">"
     \ transparent contained
@@ -464,7 +448,7 @@ syn region p6StringFrench
 
 syn region p6InnerFrench
     \ matchgroup=p6StringFrench
-    \ start="«"
+    \ start="\\\@1<!«"
     \ skip="\\\@1<!\\»"
     \ end="»"
     \ transparent contained
@@ -473,7 +457,7 @@ syn region p6InnerFrench
 " Hyperops. They need to come after "<>" and "«»" strings in order to override
 " them, but before other types of strings, to avoid matching those delimiters
 " as parts of hyperops.
-syn match p6HyperOp display "\d\@!\%(\.\|[^[,.:[:space:]]\)\+\%(«\|<<\)"
+syn match p6HyperOp display "\d\@!\%(\.\|[^[',.:[:space:]]\"\@1<!\)\+\%(«\|<<\)"
 syn match p6HyperOp display "«@@METAOP@@[«»]"
 syn match p6HyperOp display "»@@METAOP@@\%(«\|»\?\)"
 syn match p6HyperOp display "<<@@METAOP@@\%(<<\|>>\)"
@@ -486,6 +470,7 @@ syn region p6StringSQ
     \ skip="\\\@1<!\\'"
     \ end="'"
     \ contains=@p6Interp_q,p6EscQuote
+    \ extend
 
 " "string"
 syn region p6StringDQ
@@ -494,10 +479,11 @@ syn region p6StringDQ
     \ skip=+\\\@1<!\\"+
     \ end=+"+
     \ contains=@p6Interp_qq,p6EscDoubleQuote
+    \ extend
 
 " Q// and friends
 
-syn match p6QuoteQStart display "\%(:\|sub\s\)\@4<![Qq]\@=" nextgroup=p6QuoteQ,p6QuoteQ_q,p6QuoteQ_qww,p6QuoteQ_qq,p6QuoteQ_qto,p6QuoteQ_qqto,p6Identifier
+syn match p6QuoteQStart display "\%(:\|\%(sub\|role\)\s\)\@5<![Qq]\@=" nextgroup=p6QuoteQ,p6QuoteQ_q,p6QuoteQ_qww,p6QuoteQ_qq,p6QuoteQ_qto,p6QuoteQ_qqto,p6Identifier
 syn match p6QuoteQ      display "Q\%(qq\|ww\|[abcfhpsqvwx]\)\?[A-Za-z(]\@!" nextgroup=p6PairsQ skipwhite skipempty contained
 syn match p6QuoteQ_q    display "q\%(ww\|[abcfhpsvwx]\)\?[A-Za-z(]\@!" nextgroup=p6PairsQ_q skipwhite skipempty contained
 syn match p6QuoteQ_qww  display "qww[A-Za-z(]\@!" nextgroup=p6PairsQ_qww skipwhite skipempty contained
@@ -588,11 +574,13 @@ syn cluster p6Regexen
     \ add=p6RxAdverbArg
     \ add=p6RxStorage
     \ add=p6RxAssertion
+    \ add=p6RxAssertGroup
     \ add=p6RxQuoteWords
     \ add=p6RxClosure
     \ add=p6RxStringSQ
     \ add=p6RxStringDQ
     \ add=p6Comment
+    \ add=p6MatchVarSigil
 
 syn match p6RxMeta        display contained ".\%(@@IDENT_CHAR@@\|\s\)\@1<!"
 syn match p6RxAnchor      display contained "[$^]"
@@ -600,6 +588,19 @@ syn match p6RxEscape      display contained "\\\S"
 syn match p6RxCapture     display contained "[()]"
 syn match p6RxAlternation display contained "|"
 syn match p6RxRange       display contained "\.\."
+
+" $<match>
+syn region p6MatchVarSigil
+    \ matchgroup=p6Variable
+    \ start="\$\%(<<\@!\)\@="
+    \ end=">\@1<="
+    \ contains=p6MatchVar
+
+syn region p6MatchVar
+    \ matchgroup=p6Twigil
+    \ start="<"
+    \ end=">"
+    \ contained
 
 syn region p6RxClosure
     \ matchgroup=p6Normal
@@ -613,17 +614,24 @@ syn region p6RxGroup
     \ start="\["
     \ end="]"
     \ contained
-    \ contains=@p6Regexen,@p6Variables
+    \ contains=@p6Regexen,@p6Variables,p6MatchVarSigil
 syn region p6RxAssertion
     \ matchgroup=p6StringSpecial2
-    \ start="<\%(@@IDENTIFIER@@=\)\?\%([?*.]\)\?"
+    \ start="<\%(?\%(@@IDENTIFIER@@\)\|\%(@@IDENTIFIER@@=\)\|*\)\?"
     \ end=">"
     \ contained
     \ contains=@p6Regexen,p6Identifier,@p6Variables,p6RxCharClass,p6RxAssertCall
-syn region p6RxAssertCall
-    \ start="\%(::\|@@IDENTIFIER@@\)("
-    \ end=")\@1<="
+syn region p6RxAssertGroup
+    \ matchgroup=p6StringSpecial2
+    \ start="<@@IDENTIFIER@@=\["
+    \ skip="\\\@1<!\\]"
+    \ end="]"
     \ contained
+syn match p6RxAssertCall display "\%(::\|@@IDENTIFIER@@\)" contained nextgroup=p6RxAssertArgs
+syn region p6RxAssertArgs
+    \ start="("
+    \ end=")"
+    \ contained keepend
     \ contains=TOP
 syn region p6RxCharClass
     \ matchgroup=p6StringSpecial2
@@ -644,9 +652,10 @@ syn region p6RxAdverb
     \ contains=TOP
 syn region p6RxAdverbArg
     \ start="\%(:!\?@@IDENTIFIER@@\)\@<=("
-    \ skip="([^)]*)"
+    \ skip="([^)]\{-})"
     \ end=")"
     \ contained
+    \ keepend
     \ contains=TOP
 syn region p6RxStorage
     \ matchgroup=p6Operator
@@ -654,6 +663,7 @@ syn region p6RxStorage
     \ end="$"
     \ contains=TOP
     \ contained
+    \ keepend
 
 " 'string' inside a regex
 syn region p6RxStringSQ
@@ -703,10 +713,9 @@ syn match p6MatchStart display "\.\@1<!\<\%(\%(mm\?\|rx\|s\|tr\)\A\)\@=" nextgro
 " /foo/
 syn region p6MatchBare
     \ matchgroup=p6Quote
-    \ start="/\@1<!\%(\%(\_^\|[!\[,=~|&/:({]\|\^\?fff\?\^\?\|\<\%(if\|unless\|while\|when\|where\|so\)\)\s*\)\@<=/[/=]\@!"
+    \ start="/\@1<!\%(\%(\_^\|[!\[,=~|&/:({]\|\^\?fff\?\^\?\|=>\|\<\%(if\|unless\|while\|when\|where\|so\)\)\s*\)\@<=/[/=]\@!"
     \ skip="\\/"
     \ end="/"
-    \ keepend
     \ contains=@p6Regexen,p6Variable,p6VarExclam,p6VarMatch,p6VarNum
 
 " m/foo/, m$foo$, m!foo!, etc
@@ -715,7 +724,7 @@ syn region p6Match
     \ start=+\%(mm\?\|rx\)\z([/!$,|`'"]\)+
     \ skip="\\\z1"
     \ end="\z1"
-    \ contained keepend
+    \ contained
     \ contains=@p6Regexen,p6Variable,p6VarNum
 
 " m<foo>, m«foo», m{foo}, etc
@@ -725,13 +734,13 @@ endfor
 
 " Substitutions
 
-" s!foo!bar!
+" s/foo//, s$foo$$, s!foo!!, etc
 syn region p6Substitution
     \ matchgroup=p6Quote
     \ start=+s\z([/!$,|`'"]\)+
     \ skip="\\\z1"
     \ end="\z1"me=e-1
-    \ contained keepend
+    \ contained
     \ contains=@p6Regexen,p6Variable,p6VarNum
     \ nextgroup=p6Replacement
 
@@ -740,7 +749,7 @@ syn region p6Replacement
     \ start="\z(.\)"
     \ skip="\\\z1"
     \ end="\z1"
-    \ contained keepend
+    \ contained
     \ contains=@p6Interp_qq
 
 " s<foo><bar>, s«foo»«bar», s{foo}{bar}, etc
@@ -1786,6 +1795,7 @@ if version >= 508 || !exists("did_perl6_syntax_inits")
     HiLink p6RxP5Quantifier   p6StringSpecial
     HiLink p6RxP5CountId      p6StringSpecial
     HiLink p6RxP5Verb         p6StringSpecial
+    HiLink p6RxAssertGroup    p6StringSpecial2
     HiLink p6Escape           p6StringSpecial2
     HiLink p6EscNull          p6StringSpecial2
     HiLink p6EscHash          p6StringSpecial2
@@ -1905,13 +1915,6 @@ if version >= 508 || !exists("did_perl6_syntax_inits")
 
     delcommand HiLink
 endif
-
-" Syncing to speed up processing
-"syn sync match p6SyncPod groupthere p6PodAbbrRegion     "^=@@IDENTIFIER@@\>"
-"syn sync match p6SyncPod groupthere p6PodDirectRegion   "^=\%(config\|use\|encoding\)\>"
-"syn sync match p6SyncPod groupthere p6PodParaRegion     "^=for\>"
-"syn sync match p6SyncPod groupthere p6PodDelimRegion    "^=begin\>"
-"syn sync match p6SyncPod groupthere p6PodDelimEndRegion "^=end\>"
 
 if exists("perl6_fold") || exists("perl6_extended_all")
     setl foldmethod=syntax
