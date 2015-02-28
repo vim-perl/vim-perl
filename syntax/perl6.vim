@@ -686,7 +686,7 @@ syn region p6RxStringDQ
     \ skip=+\\\@1<!\\"+
     \ end=+"+
     \ contained
-    \ contains=p6EscDoubleQuote,p6EscBackSlash
+    \ contains=p6EscDoubleQuote,p6EscBackSlash,@p6Interp_qq
 
 " $!, $var, $!var, $::var, $package::var $*::package::var, etc
 " Thus must come after the matches for the "$" regex anchor, but before

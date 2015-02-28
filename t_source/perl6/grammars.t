@@ -31,4 +31,5 @@ token TOP {
     <fred: 2, 3>
 }
 
+ok('aaab' ~~ / "$!pattern" /, 'Interpolation of instance member');
 # vim: ft=perl6
