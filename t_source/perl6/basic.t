@@ -2,7 +2,7 @@
 
 for @foo <-> $value {
 }
-sub infix:<->(Foo) {
+sub infix:<->(Foo) is required {
 }
 
 token twigil:sym<=> { <sym> }

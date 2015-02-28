@@ -65,16 +65,12 @@ set cpo&vim
 " Identifiers (subroutines, methods, constants, classes, roles, etc)
 syn match p6Identifier display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)"
 
-" Billions of keywords
 let s:keywords = {
  \ "p6DeclareRoutine": [
  \   "macro sub submethod method multi proto only category",
  \ ],
  \ "p6Module": [
  \   "module class role package enum grammar slang subset",
- \ ],
- \ "p6Variable": [
- \   "self",
  \ ],
  \ "p6Include": [
  \   "use require",
@@ -89,11 +85,8 @@ let s:keywords = {
  \   "for loop repeat while until gather given",
  \ ],
  \ "p6FlowControl": [
- \   "take do when next last redo return contend maybe defer",
+ \   "take do when next last redo return contend maybe defer start",
  \   "default exit make continue break goto leave async lift",
- \ ],
- \ "p6TypeConstraint": [
- \   "is does as but trusts of returns handles where augment supersede",
  \ ],
  \ "p6ClosureTrait": [
  \   "BEGIN CHECK INIT START FIRST ENTER LEAVE KEEP",
@@ -102,11 +95,6 @@ let s:keywords = {
  \ "p6Exception": [
  \   "die fail try warn",
  \ ],
- \ "p6Property": [
- \   "prec irs ofs ors export deep binary unary reparsed rw parsed cached",
- \   "readonly defequiv will ref copy inline tighter looser equiv assoc",
- \   "required",
- \ ],
  \ "p6Pragma": [
  \   "oo fatal",
  \ ],
@@ -114,59 +102,34 @@ let s:keywords = {
  \   "div xx x mod also leg cmp before after eq ne le lt",
  \   "gt ge eqv ff fff and andthen or xor orelse extra lcm gcd",
  \ ],
+ \ "p6Type": [
+ \   "int int1 int2 int4 int8 int16 int32 int64",
+ \   "rat rat1 rat2 rat4 rat8 rat16 rat32 rat64",
+ \   "buf buf1 buf2 buf4 buf8 buf16 buf32 buf64",
+ \   "uint uint1 uint2 uint4 uint8 uint16 uint32 bit bool",
+ \   "uint64 utf8 utf16 utf32 bag set mix num complex",
+ \ ],
 \ }
 
 " These can be immediately followed by parentheses
-let s:functions = {
- \ "p6Builtin": [
- \   "eager hyper substr index rindex grep map sort join lines hints chmod",
- \   "split reduce min max reverse truncate zip cat roundrobin classify",
- \   "first sum keys values pairs defined delete exists elems end kv any",
- \   "all one wrap shape key value name pop push shift splice unshift floor",
- \   "ceiling abs exp log log10 rand sign sqrt sin cos tan round strand",
- \   "roots cis unpolar polar atan2 pick chop p5chop chomp p5chomp lc tc",
- \   "lcfirst uc ucfirst capitalize normalize pack unpack quotemeta comb",
- \   "samecase sameaccent chars nfd nfc nfkd nfkc printf sprintf caller",
- \   "evalfile run runinstead nothing want bless chr ord gmtime time eof",
- \   "localtime gethost getpw chroot getlogin getpeername kill fork wait",
- \   "perl graphs codes bytes clone print open read write readline say seek",
- \   "close opendir readdir slurp pos fmt vec link unlink symlink uniq pair",
- \   "asin atan sec cosec cotan asec acosec acotan sinh cosh tanh asinh done",
- \   "acos acosh atanh sech cosech cotanh sech acosech acotanh asech ok nok",
- \   "plan_ok dies_ok lives_ok skip todo pass flunk force_todo use_ok isa_ok",
- \   "diag is_deeply isnt like skip_rest unlike cmp_ok eval_dies_ok nok_error",
- \   "eval_lives_ok approx is_approx throws_ok version_lt plan EVAL succ pred",
- \   "times nonce once signature new connect operator undef undefine sleep",
- \   "from to infix postfix prefix circumfix postcircumfix minmax lazy count",
- \   "unwrap getc pi e context void quasi body each contains rewinddir subst",
- \   "can isa flush arity assuming rewind callwith callsame nextwith nextsame",
- \   "attr eval_elsewhere none srand trim trim_start trim_end lastcall WHAT",
- \   "WHERE HOW WHICH VAR WHO WHENCE ACCEPTS REJECTS not true iterator by",
- \   "re im invert flip gist flat tree is-prime throws_like trans so",
- \ ],
- \ "p6Type": [
- \   "Object Any Junction Whatever Capture Match",
- \   "Signature Proxy Matcher Package Module Class",
- \   "Grammar Scalar Array Hash KeyHash KeySet KeyBag",
- \   "Pair List Seq Range Set Bag Mapping Void Undef",
- \   "Failure Exception Code Block Routine Sub Macro",
- \   "Method Submethod Regex Str Blob Char Byte Parcel",
- \   "Codepoint Grapheme StrPos StrLen Version Num",
- \   "Complex num complex Bit bit bool True False",
- \   "Increasing Decreasing Ordered Callable AnyChar",
- \   "Positional Associative Ordering KeyExtractor",
- \   "Comparator OrderingPair IO KitchenSink Role",
- \   "Int int int1 int2 int4 int8 int16 int32 int64",
- \   "Rat rat rat1 rat2 rat4 rat8 rat16 rat32 rat64",
- \   "Buf buf buf1 buf2 buf4 buf8 buf16 buf32 buf64",
- \   "UInt uint uint1 uint2 uint4 uint8 uint16 uint32",
- \   "uint64 Abstraction utf8 utf16 utf32 Numeric Real",
- \   "Order Same Less More Nil Mu bag set",
- \ ],
-\ }
+let s:types = [
+ \ "Object Any Junction Whatever Capture Match",
+ \ "Signature Proxy Matcher Package Module Class",
+ \ "Grammar Scalar Array Hash KeyHash KeySet KeyBag",
+ \ "Pair List Seq Range Set Bag Mapping Void Undef",
+ \ "Failure Exception Code Block Routine Sub Macro",
+ \ "Method Submethod Regex Str Blob Char Byte Parcel",
+ \ "Codepoint Grapheme StrPos StrLen Version Num",
+ \ "Complex Bit True False Order Same Less More",
+ \ "Increasing Decreasing Ordered Callable AnyChar",
+ \ "Positional Associative Ordering KeyExtractor",
+ \ "Comparator OrderingPair IO KitchenSink Role",
+ \ "Int Rat Buf UInt Abstraction Numeric Real",
+ \ "Nil Mu",
+\ ]
 
 " We explicitly enumerate the alphanumeric infix operators allowed after [RSXZ]
-" to avoid match package names that start with those letters.
+" to avoid matching package names that start with those letters.
 let s:alpha_metaops = [
  \ "div mod gcd lcm xx x does but cmp leg eq ne gt ge lt le before after eqv",
  \ "min max not so andthen and or orelse",
@@ -179,7 +142,7 @@ let s:alpha_metaops_or = join(s:temp, "\\|")
 " than matches/regions, which would prevent these words from matching as
 " autoquoted strings before "=>" or "p5=>".
 syn match p6KeywordStart display "\%(\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\)\@!\)\@=[A-Za-z_\xC0-\xFF0-9]\@1<!\%([A-Za-z_\xC0-\xFF][-']\)\@2<!"
-    \ nextgroup=p6Attention,p6DeclareRoutine,p6Module,p6Variable,p6Include,p6Conditional,p6VarStorage,p6Repeat,p6FlowControl,p6TypeConstraint,p6ClosureTrait,p6Exception,p6Property,p6Number,p6Pragma,p6Type,p6Operator,p6Builtin,p6Identifier
+    \ nextgroup=p6Attention,p6DeclareRoutine,p6Module,p6Variable,p6Include,p6Conditional,p6VarStorage,p6Repeat,p6FlowControl,p6ClosureTrait,p6Exception,p6Number,p6Pragma,p6Type,p6Operator,p6Identifier
 
 for [group, words] in items(s:keywords)
     let s:words_space = join(words, " ")
@@ -188,19 +151,15 @@ for [group, words] in items(s:keywords)
     exec "syn match ". group ." display \"\\%(". s:words . "\\)(\\@!\\%([A-Za-z_\\xC0-\\xFF0-9]\\|[-'][A-Za-z_\\xC0-\\xFF]\\)\\@!\" contained"
 endfor
 
-for [group, words] in items(s:functions)
-    let s:words_space = join(words, " ")
-    let s:temp = split(s:words_space)
-    let s:words = join(s:temp, "\\|")
-    exec "syn match ". group ." display \"\\%(". s:words . "\\)\\%([A-Za-z_\\xC0-\\xFF0-9]\\|[-'][A-Za-z_\\xC0-\\xFF]\\)\\@!\" contained"
-endfor
-unlet s:keywords s:functions s:words_space s:temp s:words
+let s:words_space = join(s:types, " ")
+let s:temp = split(s:words_space)
+let s:words = join(s:temp, "\\|")
+exec "syn match p6Type display \"\\%(". s:words . "\\)\\%([A-Za-z_\\xC0-\\xFF0-9]\\|[-'][A-Za-z_\\xC0-\\xFF]\\)\\@!\" contained"
+unlet s:keywords s:types s:words_space s:temp s:words
 
-" try to distinguish the is/does functions from the type constraints
-syn match p6Builtin     display "\%(\%(\S[A-Za-z_\xC0-\xFF0-9]\@1<!\|^\)\s*\)\@<=\%(is\|does\)\>"
-
-" these function names are also Properties, if preceded by "is"
-syn match p6Property    display "\%(is\s\+\)\@<=\%(signature\|context\|also\|shape\)"
+syn match p6TypeConstraint  display "\%(\.\|^\s*\)\@<!\a\@=\%(does\|as\|but\|trusts\|of\|returns\|handles\|where\|augment\|supersede\)\>"
+syn match p6TypeConstraint  display "\%(\.\|^\s*\)\@<![A-Za-z_\xC0-\xFF0-9]\@1<!\%([A-Za-z_\xC0-\xFF][-']\)\@2<!is\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\)\@!" skipwhite skipempty nextgroup=p6Property
+syn match p6Property        display "\a\@=\%(signature\|context\|also\|shape\|prec\|irs\|ofs\|ors\|export\|deep\|binary\|unary\|reparsed\|rw\|parsed\|cached\|readonly\|defequiv\|will\|ref\|copy\|inline\|tighter\|looser\|equiv\|assoc\|required\)" contained
 
 " packages, must come after all the keywords
 syn match p6Identifier display "\%(::\)\@2<=\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)*"
@@ -590,10 +549,6 @@ for [name, start_delim, end_delim, end_group, skip] in s:all_delims
 endfor
 unlet s:plain_delims s:all_delims
 
-" Match these so something else above can't. E.g. the "q" in "role q { }"
-" should not be considered a string
-"syn match p6Identifier display "\%(\<\%(role\|grammar\|rule\|token\|slang\|sub\|method\)\s\+\)\@<=\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)"
-
 " :key
 syn match p6Operator display ":\@1<!::\@!!\?" nextgroup=p6Key,p6StringAngleFixed,p6StringAngles,p6StringFrench
 syn match p6Key display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)" contained nextgroup=p6StringAngleFixed,p6StringAngles,p6StringFrench
@@ -733,6 +688,7 @@ syn match p6VarSlash     display "\$/"
 syn match p6VarExclam    display "\$!"
 syn match p6VarMatch     display "\$¢"
 syn match p6VarNum       display "\$\d\+"
+syn match p6Variable     display "self"
 syn match p6Variable     display "[@$%&]\?[@&$%]\$*\%(::\|\%(\%([.^*?=!~]\|:\@1<!::\@!\)[A-Za-z_\xC0-\xFF]\)\|[A-Za-z_\xC0-\xFF]\)\@=" nextgroup=p6Twigil,p6VarName,p6PackageScope
 syn match p6VarName      display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)" nextgroup=p6PostHyperOp contained
 syn match p6Close        display "[\])]" nextgroup=p6PostHyperOp
@@ -1894,7 +1850,6 @@ if version >= 508 || !exists("did_perl6_syntax_inits")
     HiLink p6Include        Include
     HiLink p6Shebang        PreProc
     HiLink p6ClosureTrait   PreProc
-    HiLink p6Builtin        Function
     HiLink p6Operator       Operator
     HiLink p6Context        Operator
     HiLink p6Quote          Delimiter
