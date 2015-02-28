@@ -5,6 +5,7 @@ for @foo <-> $value {
 sub infix:<->(Foo) {
 }
 
+token twigil:sym<=> { <sym> }
 [@(@foo)]
 [@bar]
 when :(Str $ where /^The \s \S+ \s \w+$/) { }
