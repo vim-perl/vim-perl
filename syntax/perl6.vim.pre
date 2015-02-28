@@ -633,6 +633,11 @@ syn region p6RxAssertArgs
     \ end=")"
     \ contained keepend
     \ contains=TOP
+syn region p6RxAssertArgs
+    \ start=":"
+    \ end="\ze>"
+    \ contained keepend
+    \ contains=TOP
 syn region p6RxCharClass
     \ matchgroup=p6StringSpecial2
     \ start="\%(<[-!+?]\?\)\@2<=\["

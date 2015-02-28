@@ -26,4 +26,9 @@ token sibble ($l, $lang2) {
     ]
 }
 
+token TOP {
+    <fred(1)>
+    <fred: 2, 3>
+}
+
 # vim: ft=perl6
