@@ -10,7 +10,7 @@ default: preproc
 dirs:
 	mkdir -p $(FTPLUGIN) $(INDENT) $(SYNTAX) $(TOOLS)
 
-install: dirs
+install: dirs fix_old_vim
 	cp ftplugin/*.vim    $(FTPLUGIN)/
 	cp indent/*.vim      $(INDENT)/
 	cp syntax/*.vim      $(SYNTAX)/
@@ -63,3 +63,7 @@ try-tiny: contrib_syntax
 
 preproc:
 	tools/preproc.pl syntax/perl6.vim.pre > syntax/perl6.vim
+
+# this gets rid of a regex optimization introduced in Vim 7.4
+fix_old_vim:
+	expr `vim --version|head -n1|grep -Poh '\d\.\d'|head -n1` \< 7.4 >/dev/null && sed -i 's/\\@[0-9]\+/\\@/g; /version < 740/d' syntax/perl6.vim; true
