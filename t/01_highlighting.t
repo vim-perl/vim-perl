@@ -7,17 +7,7 @@ use File::Find;
 use File::Spec::Functions qw<catfile catdir>;
 use Test::More;
 use Test::Differences;
-use Text::VimColor 0.24;
-
-# hack to work around a silly limitation in Text::VimColor,
-# will remove it when Text::VimColor has been patched
-%Text::VimColor::SYNTAX_TYPE = map { $_ => 1 } qw(
-    Comment Constant Identifier Statement PreProc Type Special Underlined
-    Ignore Error Todo String Character Number Boolean Float Function
-    Conditional Repeat Label Operator Keyword Exception Include Define Macro
-    PreCondit StorageClass Structure Typedef Tag SpecialChar Delimiter
-    SpecialComment Debug
-);
+use Text::VimColor 0.25;
 
 my %LANG_HIGHLIGHTERS = (
     perl  => [
@@ -40,23 +30,21 @@ my %LANG_HIGHLIGHTERS = (
 sub construct_highlighter {
     my ( $lang, $option_set ) = @_;
 
-    my $color_file = catfile('t', 'define_all.vim');
-    my $css_file   = catfile('t', 'vim_syntax.css');
-
     my $syntax_file   = catfile('syntax', "$lang.vim");
     my $ftplugin_file = catfile('ftplugin', "$lang.vim");
-    my $css_url = join('/', '..', '..', 't', 'vim_syntax.css');
+    my $css_file      = catfile('t', 'vim_syntax.css');
+    my $css_url       = join('/', '..', '..', 't', 'vim_syntax.css');
 
     return Text::VimColor->new(
         html_full_page         => 1,
         html_inline_stylesheet => 0,
         html_stylesheet_url    => $css_url,
+        all_syntax_groups      => 1,
         extra_vim_options      => [
             @$option_set,
             '+set runtimepath=.',
             "+source $ftplugin_file",
             "+source $syntax_file",
-            "+source $color_file",      # all syntax classes should be defined
             "+syn sync fromstart",
         ],
     );
