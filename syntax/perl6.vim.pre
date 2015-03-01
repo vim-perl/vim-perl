@@ -432,7 +432,7 @@ syn region p6StringSQ
     \ skip="\\\@1<!\\'"
     \ end="'"
     \ contains=@p6Interp_q,p6EscQuote
-    \ extend
+    \ keepend extend
 
 " "string"
 syn region p6StringDQ
@@ -441,7 +441,7 @@ syn region p6StringDQ
     \ skip=+\\\@1<!\\"+
     \ end=+"+
     \ contains=@p6Interp_qq,p6EscDoubleQuote
-    \ extend
+    \ keepend extend
 
 " Q// and friends
 
