@@ -62,4 +62,4 @@ try-tiny: contrib_syntax
 	cp contrib/try-tiny.vim after/syntax/perl/
 
 preproc:
-	perl tools/preproc.pl syntax/perl6.vim.pre > syntax/perl6.vim
+	tools/preproc.pl syntax/perl6.vim.pre > syntax/perl6.vim
