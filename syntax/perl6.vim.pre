@@ -33,7 +33,7 @@
 " To enable folding:
 "   let perl6_fold=1
 
-if version < 740 | throw "perl6.vim uses regex syntax which Vim <7.4 doesn't support. Try 'make fix_old_vim' in the vim-perl repository." | endif
+if version < 704 | throw "perl6.vim uses regex syntax which Vim <7.4 doesn't support. Try 'make fix_old_vim' in the vim-perl repository." | endif
 
 " For version 5.x: Clear all syntax items
 " For version 6.x: Quit when a syntax file was already loaded
