@@ -1329,7 +1329,8 @@ syn region p6PodDelimRegion
     \ start="^\z(\s*\)\zs=begin\>"
     \ end="^\z1\zs=end\>"
     \ contains=p6PodDelimNoCodeTypeRegion
-    \ keepend extend
+    \ keepend extend skipwhite
+    \ nextgroup=p6PodType
 
 syn region p6PodDelimNoCodeTypeRegion
     \ matchgroup=p6PodType
@@ -1356,7 +1357,8 @@ syn region p6PodDelimRegion
     \ start="^\z(\s*\)\zs=begin\>\ze\s*code\>"
     \ end="^\z1\zs=end\>"
     \ contains=p6PodDelimCodeTypeRegion
-    \ keepend extend
+    \ keepend extend skipwhite
+    \ nextgroup=p6PodType
 
 syn region p6PodDelimCodeTypeRegion
     \ matchgroup=p6PodType
@@ -1377,7 +1379,8 @@ syn region p6PodDelimRegion
     \ start="^\z(\s*\)\zs=begin\>\ze\s*\%(pod\|item\|nested\|\u\+\)\>"
     \ end="^\z1\zs=end\>"
     \ contains=p6PodDelimTypeRegion
-    \ keepend extend
+    \ keepend extend skipwhite
+    \ nextgroup=p6PodType
 
 syn region p6PodDelimTypeRegion
     \ matchgroup=p6PodType
@@ -1435,11 +1438,7 @@ syn match p6PodColon          display contained ":"
 syn match p6PodSemicolon      display contained ";"
 syn match p6PodComma          display contained ","
 syn match p6PodImplicitCode   display contained "^\s.*"
-
-syn region p6PodDelimEndRegion
-    \ matchgroup=p6PodType
-    \ start="\%(^\s*=end\>\)\@<="
-    \ end="\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)"
+syn match p6PodType           display contained "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)"
 
 " These may appear inside delimited blocks
 syn cluster p6PodNestedBlocks
@@ -1447,7 +1446,6 @@ syn cluster p6PodNestedBlocks
     \ add=p6PodDirectRegion
     \ add=p6PodParaRegion
     \ add=p6PodDelimRegion
-    \ add=p6PodDelimEndRegion
 
 " Pod formatting codes
 
