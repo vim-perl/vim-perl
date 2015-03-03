@@ -5,8 +5,20 @@
 "
 " And a timing report will be written to /tmp/report
 
+" Go to the top of the file
+exe "norm! 1G"
+
+" Start profiling
 syntime on
+
+" Redraw and scroll until we've hit the bottom
 redraw
+while line("w$") < line("$")
+    exe "norm! \<PageDown>"
+    redraw
+endwhile
+
+" Clean up
 syntime off
 redir! > /tmp/report
 silent syntime report
