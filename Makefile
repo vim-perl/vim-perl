@@ -19,7 +19,7 @@ install: dirs fix_old_vim
 tarball:
 	perl tools/make-tarball.pl
 
-test: preproc
+test: preproc fix_old_vim
 	prove -rv t
 
 test6: preproc
