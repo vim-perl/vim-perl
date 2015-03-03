@@ -66,4 +66,4 @@ preproc:
 
 # this gets rid of a regex optimization introduced in Vim 7.4
 fix_old_vim:
-	expr `vim --version|head -n1|grep -Poh '\d\.\d'|head -n1` \< 7.4 >/dev/null && sed -i 's/\\@[0-9]\+/\\@/g; /version < 740/d' syntax/perl6.vim; true
+	expr `vim --version|head -n1|grep -Poh '\d\.\d'|head -n1` \< 7.4 >/dev/null && sed -i 's/\\@[0-9]\+/\\@/g; /version < 704/d' syntax/perl6.vim; true
