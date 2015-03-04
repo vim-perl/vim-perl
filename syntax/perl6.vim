@@ -421,7 +421,7 @@ syn region p6InnerFrench
 " Hyperops. They need to come after "<>" and "«»" strings in order to override
 " them, but before other types of strings, to avoid matching those delimiters
 " as parts of hyperops.
-syn match p6HyperOp display #\d\@!\%(\.\|[^[{'",.:[:space:]]\)\+\%(«\|<<\)#
+syn match p6HyperOp display #[^[:digit:][{'",:[:space:]][^[{'",:[:space:]]*\%(«\|<<\)#
 syn match p6HyperOp display "«\%(\d\|[@%$][.?^=[:alpha:]]\)\@!\%(\.\|[^[{'".([:space:]]\)\+[«»]"
 syn match p6HyperOp display "»\%(\d\|[@%$][.?^=[:alpha:]]\)\@!\%(\.\|[^[{'".([:space:]]\)\+\%(«\|»\?\)"
 syn match p6HyperOp display "<<\%(\d\|[@%$][.?^=[:alpha:]]\)\@!\%(\.\|[^[{'".([:space:]]\)\+\%(<<\|>>\)"
