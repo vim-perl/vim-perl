@@ -743,7 +743,7 @@ syn region p6MatchBare
 " m/foo/, m$foo$, m!foo!, etc
 syn region p6Match
     \ matchgroup=p6Quote
-    \ start=+\z([/!$,|`'"]\)+
+    \ start=+\z([/!$,|`"]\)+
     \ skip="\\\z1"
     \ end="\z1"
     \ contained
@@ -759,7 +759,7 @@ endfor
 " s/foo//, s$foo$$, s!foo!!, etc
 syn region p6Substitution
     \ matchgroup=p6Quote
-    \ start=+\z([/!$,|`'"]\)+
+    \ start=+\z([/!$,|`"]\)+
     \ skip="\\\z1"
     \ end="\z1"me=e-1
     \ contained
@@ -785,7 +785,7 @@ endfor
 " tr/foo/bar/, tr|foo|bar, etc
 syn region p6Transliteration
     \ matchgroup=p6Quote
-    \ start=+\z([/!$,|`'"]\)+
+    \ start=+\z([/!$,|`"]\)+
     \ skip="\\\z1"
     \ end="\z1"me=e-1
     \ contained
