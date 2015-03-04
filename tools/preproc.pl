@@ -28,8 +28,8 @@ while (my $line = <>) {
         }
     }
 
-    if ($line =~ /^"\s*$preproc(\w+)$preproc\s+(?:"(.+)"|'(.*)')\s*$/) {
-        my ($name, $content) = ($1, $2);
+    if ($line =~ /^"\s*$preproc(\w+)$preproc\s+(?:(.)(.+)\2)\s*$/) {
+        my ($name, $content) = ($1, $3);
         $content =~ s/$preproc(\w+)$preproc/
             die "Replacement for $preproc$1$preproc not found at line $.\n" if !$replacements{$1};
             $replacements{$1}
