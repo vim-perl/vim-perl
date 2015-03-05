@@ -148,7 +148,7 @@ for [group, words] in items(s:keywords)
     let s:words_space = join(words, " ")
     let s:temp = split(s:words_space)
     let s:words = join(s:temp, "\\|")
-    exec "syn match ". group ." display \"\\.\\@1<!\\%(". s:words . "\\)(\\@!\\%([A-Za-z_\\xC0-\\xFF0-9]\\|[-'][A-Za-z_\\xC0-\\xFF]\\)\\@!\" contained"
+    exec "syn match ". group ." display \"[.^]\\@1<!\\%(". s:words . "\\)(\\@!\\%([A-Za-z_\\xC0-\\xFF0-9]\\|[-'][A-Za-z_\\xC0-\\xFF]\\)\\@!\" contained"
 endfor
 
 let s:words_space = join(s:types, " ")
@@ -157,8 +157,8 @@ let s:words = join(s:temp, "\\|")
 exec "syn match p6Type display \"\\%(". s:words . "\\)\\%([A-Za-z_\\xC0-\\xFF0-9]\\|[-'][A-Za-z_\\xC0-\\xFF]\\)\\@!\" contained"
 unlet s:keywords s:types s:words_space s:temp s:words
 
-syn match p6TypeConstraint  display "\%(\.\|^\s*\)\@<!\a\@=\%(does\|as\|but\|trusts\|of\|returns\|handles\|where\|augment\|supersede\)\>"
-syn match p6TypeConstraint  display "\%(\.\|^\s*\)\@<![A-Za-z_\xC0-\xFF0-9]\@1<!\%([A-Za-z_\xC0-\xFF][-']\)\@2<!is\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\)\@!" skipwhite skipempty nextgroup=p6Property
+syn match p6TypeConstraint  display "\%([.^]\|^\s*\)\@<!\a\@=\%(does\|as\|but\|trusts\|of\|returns\|handles\|where\|augment\|supersede\)\>"
+syn match p6TypeConstraint  display "\%([.^]\|^\s*\)\@<![A-Za-z_\xC0-\xFF0-9]\@1<!\%([A-Za-z_\xC0-\xFF][-']\)\@2<!is\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\)\@!" skipwhite skipempty nextgroup=p6Property
 syn match p6Property        display "\a\@=\%(signature\|context\|also\|shape\|prec\|irs\|ofs\|ors\|export\|deep\|binary\|unary\|reparsed\|rw\|parsed\|cached\|readonly\|defequiv\|will\|ref\|copy\|inline\|tighter\|looser\|equiv\|assoc\|required\)" contained
 
 " packages, must come after all the keywords

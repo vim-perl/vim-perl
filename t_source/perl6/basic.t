@@ -205,6 +205,8 @@ bla
 
 @foo».++;
 
+$foo.^method
+
 [&sprintf]
 X[&sprintf]
 $foo, $, $bar = @bla;
