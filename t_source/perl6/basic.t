@@ -207,6 +207,8 @@ bla
 
 $foo.^method
 
+say Buf.new(+«"127.0.0.1".split(".")).unpack("N")
+
 [&sprintf]
 X[&sprintf]
 $foo, $, $bar = @bla;
