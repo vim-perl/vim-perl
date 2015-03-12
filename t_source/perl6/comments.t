@@ -6,6 +6,13 @@ dsfsdfsdfsdf ) +3;
 # bar
 say "foo";
 
+#={
+ long
+}
+#|<<
+ comment
+>>
+
 #`«
 long comment
 is long >>foo»
