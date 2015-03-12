@@ -5,6 +5,8 @@ for @foo <-> $value {
 sub infix:<->(Foo) is required {
 }
 
+class Request { }
+
 ok("a cat_O_9_tails" ~~ m:s/<alpha> <ident>/, 'Standard captures' );
 
 is 'aa'.trans(/ <after a> ./ => 'b'), 'ab', 'trans with look-around regex';
