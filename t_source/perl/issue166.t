@@ -1,4 +1,4 @@
-# extra-option: let perl_no_subprototype_error=1
+# extra-option: let perl_sub_signatures=1
 
 use strict;
 use warnings;
