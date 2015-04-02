@@ -23,4 +23,9 @@ bla {{foo}} bla }} foo()
 foo
 # TODO: foo
 
+#`[[[
+    say "this is a comment";
+#]]]
+say "this is executable code";
+
 # vim: ft=perl6
