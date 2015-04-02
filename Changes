@@ -70,6 +70,8 @@ Added higlighting for "import" and "format".
 
 Stop setting "iskeyword" globally. (Hinrik)
 
+Fix folding for subroutines with prototypes. (zdm)
+
 [TESTING]
 Added a test harness in t/ (try "make test"). Moved example code
 to t_source/ (Hinrik)
