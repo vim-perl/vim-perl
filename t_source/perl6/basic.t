@@ -5,6 +5,7 @@ for @foo <-> $value {
 sub infix:<->(Foo) is required {
 }
 
+( < foo bar>)
 class Request { }
 
 ok("a cat_O_9_tails" ~~ m:s/<alpha> <ident>/, 'Standard captures' );

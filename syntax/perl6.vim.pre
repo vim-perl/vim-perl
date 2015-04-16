@@ -350,7 +350,7 @@ syn region p6Adverb
 "   for " = < ... >" assignments though.
 " * It comes after "enum", "for", "any", "all", or "none"
 " * It's the first or last thing on a line (ignoring whitespace)
-" * It's preceded by "= "
+" * It's preceded by "(\s*" or "=\s\+"
 " * It's empty and terminated on the same line (e.g. <> and < >)
 "
 " It never matches when:
@@ -364,7 +364,7 @@ syn region p6StringAngle
     \ start="[<+~=!]\@1<!<\%(\s\|<\|=>\|[-=]\{1,2}\)\@!"
     \ start="\%(^\s*\)\@<=<\%(<\|=>\|[-=]\{1,2}>\@!\)\@!"
     \ start="[<+~=!]\@1<!<\%(\s*$\)\@="
-    \ start="\%(=\s\+\)\@<=<\%(<\|=>\|[-=]\{1,2}>\@!\)\@!"
+    \ start="\%((\s*\|=\s\+\)\@<=<\%(<\|=>\|[-=]\{1,2}>\@!\)\@!"
     \ start="<\%(\s*>\)\@="
     \ skip="\\\@1<!\\>"
     \ end=">"
