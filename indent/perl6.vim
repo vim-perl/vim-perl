@@ -60,7 +60,7 @@ function! GetPerl6Indent()
         return 0
     endif
 
-    " Don't reindent coments on first column
+    " Don't reindent comments on first column
     if cline =~ '^#'
         return 0
     endif
