@@ -508,12 +508,6 @@ unlet s:plain_delims s:all_delims
 syn match p6Operator display ":\@1<!::\@!!\?" nextgroup=p6Key,p6StringAngleFixed,p6StringAngles,p6StringFrench
 syn match p6Key display "@@IDENTIFIER@@" contained nextgroup=p6StringAngleFixed,p6StringAngles,p6StringFrench
 
-" => and p5=> autoquoting
-syn match p6StringP5Auto display "@@IDENTIFIER@@\ze\s\+p5=>"
-syn match p6StringAuto   display "@@IDENTIFIER@@\ze\%(p5\)\@2<![RSXZ]\@1<!=>"
-syn match p6StringAuto   display "@@IDENTIFIER@@\ze\s\+=>"
-syn match p6StringAuto   display "@@IDENTIFIER@@p5\ze=>"
-
 " Regexes and grammars
 
 syn match p6DeclareRegex display "\%(regex\|rule\|token\)" nextgroup=p6RegexName skipwhite skipempty
@@ -1101,6 +1095,12 @@ syn region p6BracketComment
     \ contains=p6Attention,p6BracketComment
 
 syn match p6Shebang display "\%^#!.*"
+
+" => and p5=> autoquoting
+syn match p6StringP5Auto display "@@IDENTIFIER@@\ze\s\+p5=>"
+syn match p6StringAuto   display "@@IDENTIFIER@@\ze\%(p5\)\@2<![RSXZ]\@1<!=>"
+syn match p6StringAuto   display "@@IDENTIFIER@@\ze\s\+=>"
+syn match p6StringAuto   display "@@IDENTIFIER@@p5\ze=>"
 
 " Pod
 

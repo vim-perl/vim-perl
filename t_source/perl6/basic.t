@@ -39,6 +39,8 @@ ok $b (<) $bub, "(<) - {$b.gist} is a strict submix of {$bub.gist} (texas)";
 
 is test_ff({/B/ fff^ /B/ }, <A B A B A>), 'xBAxx', '/B/ fff^ /B/, lhs == rhs';
 
+
+rule => "foo"
 -100
 is Inf / 100, Inf;
 is Inf*-100, -Inf;
