@@ -202,7 +202,7 @@ syn match p6BinNumber  display "[01][01_]*" contained
 syn match p6HexNumber  display "\x[[:xdigit:]_]*" contained
 syn match p6DecNumber  display "\d[[:digit:]_]*" contained
 
-syn match p6Version    display "\<v\d\+\%(\.[*[:digit:]]\+\)*+\?"
+syn match p6Version    display "\<v\d\+\%(\.\%(\*\|\d\+\)\)*+\?"
 
 " Contextualizers
 syn match p6Context display "\<\%(item\|list\|slice\|hash\)\>"
