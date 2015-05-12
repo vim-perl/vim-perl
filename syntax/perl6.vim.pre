@@ -52,7 +52,7 @@ set cpo&vim
 " @@IDENTIFIER@@         "\%(@@IDENT_NONDIGIT@@\%(@@IDENT_CHAR@@\|[-']@@IDENT_NONDIGIT@@\@=\)*\)"
 " @@IDENTIFIER_START@@   "@@IDENT_CHAR@@\@1<!\%(@@IDENT_NONDIGIT@@[-']\)\@2<!"
 " @@IDENTIFIER_END@@     "\%(@@IDENT_CHAR@@\|[-']@@IDENT_NONDIGIT@@\)\@!"
-" @@METAOP@@             #\%(\d\|[@%$][.?^=[:alpha:]]\)\@!\%(\.\|[^[{('".([:space:]]\)\+#
+" @@METAOP@@             #\%(\d\|[@%$][.?^=[:alpha:]]\)\@!\%(\.\|[^[{('".[:space:]]\)\+#
 " @@ADVERBS@@            "\%(\_s*:!\?@@IDENTIFIER@@\%(([^)]*)\)\?\)*"
 "
 " Same but escaped, for use in string eval
