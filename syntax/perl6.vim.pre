@@ -998,7 +998,7 @@ endif
 syn match p6Attention display "\<\%(ACHTUNG\|ATTN\|ATTENTION\|FIXME\|NB\|TODO\|TBD\|WTF\|XXX\|NOTE\)" contained
 
 " normal end-of-line comment
-syn match p6Comment display "#`\@!.*" contains=p6Attention
+syn match p6Comment display "#.*" contains=p6Attention
 
 " Multiline comments. Arbitrary numbers of opening brackets are allowed,
 " but we only define regions for 1 to 3
