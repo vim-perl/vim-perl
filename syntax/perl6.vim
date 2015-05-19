@@ -67,7 +67,7 @@ syn match p6Identifier display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[
 
 let s:keywords = {
  \ "p6DeclareRoutine": [
- \   "macro sub submethod method multi proto only category",
+ \   "macro sub submethod method multi proto only category unit",
  \ ],
  \ "p6Module": [
  \   "module class role package enum grammar slang subset",
