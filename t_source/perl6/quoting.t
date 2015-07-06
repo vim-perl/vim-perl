@@ -33,6 +33,10 @@ sdfsdfsdf
 sdfsdf
 GOO
 
+my $str = q:foo:heredoc:bar/bla/
+dfgdfgdfg
+dfg
+bla
 
 my $str = q:heredoc/bla/
 dfgdfgdfg
