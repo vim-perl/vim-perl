@@ -92,6 +92,8 @@ token foo {
     <foo=.file>
 }
 
+"foo = $<foo>";
+
 state %sub-menus = @menu>>.key>>[0] Z=> @menu>>.value;
 
 is( # vowels become 'y' and whitespace becomes '_'
