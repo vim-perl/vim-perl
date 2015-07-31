@@ -5,6 +5,8 @@ for @foo <-> $value {
 sub infix:<->(Foo) is required {
 }
 
+"foo $bar.baz() $?CLASS.hi() $gsdf.hlagh(foo => 3) $much.^meta().wow()"
+
 ( < foo bar>)
 class Request { }
 
