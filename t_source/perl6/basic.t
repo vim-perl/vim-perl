@@ -5,6 +5,9 @@ for @foo <-> $value {
 sub infix:<->(Foo) is required {
 }
 
+my &double-invert = &invert o &double;
+my &double-invert = &invert ∘ &double;
+
 "foo $bar.baz() $?CLASS.hi() $gsdf.hlagh(foo => 3) $much.^meta().wow()"
 
 ( < foo bar>)

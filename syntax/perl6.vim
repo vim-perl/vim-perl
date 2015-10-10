@@ -100,7 +100,7 @@ let s:keywords = {
  \ ],
  \ "p6Operator": [
  \   "div xx x mod also leg cmp before after eq ne le lt not",
- \   "gt ge eqv ff fff and andthen or xor orelse extra lcm gcd",
+ \   "gt ge eqv ff fff and andthen or xor orelse extra lcm gcd o",
  \ ],
  \ "p6Type": [
  \   "int int1 int2 int4 int8 int16 int32 int64",
@@ -174,7 +174,7 @@ syn match p6Type display "\%(::\)\@2<!\%(Order\%(::Same\|::More\|::Less\)\?\|Boo
 " Don't put a "\+" at the end of the character class. That makes it so
 " greedy that the "%" " in "+%foo" won't be allowed to match as a sigil,
 " among other things
-syn match p6Operator display "[-+/*~?|=^!%&,<>».;\\∈∉∋∌∩∪≼≽⊂⊃⊄⊅⊆⊇⊈⊉⊍⊎⊖∅]"
+syn match p6Operator display "[-+/*~?|=^!%&,<>».;\\∈∉∋∌∩∪≼≽⊂⊃⊄⊅⊆⊇⊈⊉⊍⊎⊖∅∘]"
 syn match p6Operator display "\%(:\@1<!::\@2!\|::=\|\.::\)"
 " these require whitespace on the left side
 syn match p6Operator display "\%(\s\|^\)\@1<=\%(xx=\|p5=>\)"
