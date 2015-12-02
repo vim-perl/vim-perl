@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use lib 'tools';
 
-use Test::More tests => 4;
+use Test::More tests => 5;
 use Local::VimFolds;
 
 my $folds = Local::VimFolds->new(
@@ -75,3 +75,23 @@ sub subtract($x, $y) { # {{{
 } # }}}
 END_PERL
 }
+
+# block fold tests - I know these don't really belong here, but we can
+# break them out into a new file if they get extended
+$folds = Local::VimFolds->new(
+    language => 'perl',
+    options  => {
+        perl_fold        => 1,
+        perl_fold_blocks => 1,
+    },
+);
+
+$folds->folds_match(<<'END_PERL', 'test block folds');
+for my $i (@list) { # {{{
+    $total += $i;
+} # }}}
+
+foreach my $i (@list) { # {{{
+    $total += $i;
+} # }}}
+END_PERL
