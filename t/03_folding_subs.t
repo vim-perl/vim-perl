@@ -86,7 +86,10 @@ $folds = Local::VimFolds->new(
     },
 );
 
-$folds->folds_match(<<'END_PERL', 'test block folds');
+TODO: {
+    local $TODO = q{foreach folding overlaps between blocks};
+
+    $folds->folds_match(<<'END_PERL', 'test block folds');
 for my $i (@list) { # {{{
     $total += $i;
 } # }}}
@@ -95,3 +98,4 @@ foreach my $i (@list) { # {{{
     $total += $i;
 } # }}}
 END_PERL
+}
