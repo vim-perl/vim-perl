@@ -55,7 +55,7 @@ if !exists("perlpath")
                 let perlpath = system("perl6 -e  '@*INC.join(q/,/).say'")
             endif
             let perlpath = substitute(perlpath,',.$',',,','')
-        catch /E145:/
+        catch
             let perlpath = ".,,"
         endtry
     else
