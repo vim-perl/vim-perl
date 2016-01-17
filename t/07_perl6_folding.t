@@ -36,4 +36,7 @@ our sub Foobar { # {{{
 my Int sub foo(Str $bar) { # {{{
     say $bar;
 } # }}}
+sub foo # {{{
+{
+} # }}}
 END_PERL6
