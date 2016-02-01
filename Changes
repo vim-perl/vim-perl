@@ -49,6 +49,11 @@ as highlighting for new postfix dereferencing.   Thanks, mattn!
 Added tap.vim (based on https://github.com/threebytesfull/perltest).  Thanks
 to Rufus Cable for sharing!
 
+xs.vim can now be configured to display libc and private XS functions as errors
+via xs_superseded and xs_not_core.
+
+xs.vim has now been updated to highlight symbols from perl 5.22.
+
 [FIXES]
 Minor tweak to p6RxCharClass.  Thanks, Arne Skjærholt.
 
