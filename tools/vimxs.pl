@@ -285,16 +285,17 @@ else
   runtime! syntax/c.vim
 endif
 
-let xs_superseded = 1 " mark C functions superseded by Perl replacements
-let xs_not_core   = 1 " mark private core functions
+" Configuration:
+" let xs_superseded = 0 " mark C functions superseded by Perl replacements (ex. memcpy vs Copy)
+" let xs_not_core   = 0 " mark private core functions
 
 _VIM_
 
-print $vim "if exists(\"xs_superseded\") && xs_superseded\n";
+print $vim "if get(g:, 'xs_superseded', 0)\n";
 output \%superseded, 'Superseded' => $vim;
 print $vim "endif\n";
 
-print $vim "if exists(\"xs_not_core\") && xs_not_core\n";
+print $vim "if get(g:, 'xs_not_core', 0)\n";
 output \%private,    'Private'    => $vim;
 print $vim "endif\n";
 
