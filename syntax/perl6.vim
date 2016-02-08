@@ -85,8 +85,8 @@ let s:keywords = {
  \   "for loop repeat while until gather given",
  \ ],
  \ "p6FlowControl": [
- \   "take do when next last redo return contend maybe defer start",
- \   "default exit make continue break goto leave async lift",
+ \   "take do when next last redo return return-rw contend maybe defer",
+ \   "start default exit make continue break goto leave async lift",
  \ ],
  \ "p6ClosureTrait": [
  \   "BEGIN CHECK INIT START FIRST ENTER LEAVE KEEP",
