@@ -116,7 +116,7 @@ let s:types = [
  \ "Object Any Junction Whatever Capture Match",
  \ "Signature Proxy Matcher Package Module Class",
  \ "Grammar Scalar Array Hash KeyHash KeySet KeyBag",
- \ "Pair List Seq Range Set Bag Mapping Void Undef",
+ \ "Pair List Seq Range Set Bag Map Mapping Void Undef",
  \ "Failure Exception Code Block Routine Sub Macro",
  \ "Method Submethod Regex Str Blob Char Byte Parcel",
  \ "Codepoint Grapheme StrPos StrLen Version Num",
