@@ -10,3 +10,8 @@ syntax match perlStatementProc '\<\%(has\|traits\|inner\|is\|super\|requires\|wi
 
 " XXX catch instances where you forget the semicolon after the closing brace
 "     (for before, after, and friends)?
+if get(g:, 'perl_fold', 1)
+  if !exists("perl_nofold_subs")
+    syn region perlSubFold    start="^\<has\>[^;]*(" end=");" transparent fold keepend extend
+  endif
+endif
