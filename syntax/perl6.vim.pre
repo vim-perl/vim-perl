@@ -70,7 +70,7 @@ let s:keywords = {
  \   "use require unit",
  \ ],
  \ "p6Conditional": [
- \   "if else elsif unless",
+ \   "if else elsif unless with orwith without",
  \ ],
  \ "p6VarStorage": [
  \   "let my our state temp has constant",

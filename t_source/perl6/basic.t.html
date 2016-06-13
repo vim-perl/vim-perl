@@ -37,6 +37,8 @@ is <span class="synIdentifier">$s</span><span class="synOperator">.</span>trans(
 <span class="synIdentifier">$foo</span><span class="synOperator">.</span>die
 <span class="synIdentifier">@p</span> <span class="synOperator">=</span> <span class="synIdentifier">$x</span> <span class="synOperator">[[+]]=</span> <span class="synNumber">6</span><span class="synOperator">,</span> <span class="synNumber">7</span><span class="synOperator">;</span>
 
+say <span class="synOperator">.</span>key <span class="synOperator">*</span> <span class="synOperator">.</span>value <span class="synConditional">with</span> <span class="synIdentifier">@foo</span><span class="synOperator">.</span>first({ <span class="synOperator">.</span>value <span class="synOperator">&gt;=</span> <span class="synNumber">3</span> })<span class="synOperator">;</span>
+
 <span class="synIdentifier">@foo</span> <span class="synOperator">Z</span> <span class="synIdentifier">@bar</span>
 is (<span class="synNumber">1</span> <span class="synOperator">R[R[R-]]</span> <span class="synNumber">2</span>)<span class="synOperator">,</span> <span class="synNumber">1</span><span class="synOperator">,</span> <span class="synDelimiter">'</span><span class="synString">R[R[R-]] works</span><span class="synDelimiter">'</span><span class="synOperator">;</span>
 

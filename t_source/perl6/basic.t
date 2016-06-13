@@ -29,6 +29,8 @@ $foo.state
 $foo.die
 @p = $x [[+]]= 6, 7;
 
+say .key * .value with @foo.first({ .value >= 3 });
+
 @foo Z @bar
 is (1 R[R[R-]] 2), 1, 'R[R[R-]] works';
 
