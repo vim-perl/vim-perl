@@ -83,7 +83,7 @@ tokenizer(<span class="synIdentifier">$str</span>)<span class="synOperator">;</s
 Zfoobar<span class="synOperator">.</span>new<span class="synOperator">;</span>
 <span class="synOperator">Rcmp</span>
 
-<span class="synOperator">S|</span>
+<span class="synDelimiter">S|</span><span class="synString">sdfsdf</span><span class="synDelimiter">|</span><span class="synString">sdfsdf</span><span class="synDelimiter">|</span>
 
 <span class="synKeyword">proto</span> <span class="synKeyword">sub</span> infix<span class="synOperator">:</span><span class="synDelimiter">«</span><span class="synString">&gt;</span><span class="synDelimiter">»</span>(<span class="synType">Any</span><span class="synOperator">,</span> <span class="synType">Any</span>) <span class="synPreCondit">returns</span> <span class="synType">Bool</span><span class="synOperator">:</span><span class="synString">D</span> <span class="synPreCondit">is</span> <span class="synTag">assoc</span><span class="synDelimiter">&lt;</span><span class="synString">chain</span><span class="synDelimiter">&gt;</span>
 <span class="synKeyword">multi</span> <span class="synKeyword">sub</span> infix<span class="synOperator">:</span><span class="synDelimiter">«</span><span class="synString">&gt;</span><span class="synDelimiter">»</span>(<span class="synType">Int</span><span class="synOperator">:</span><span class="synString">D</span><span class="synOperator">,</span> <span class="synType">Int</span><span class="synOperator">:</span><span class="synString">D</span>)
@@ -266,6 +266,8 @@ ok <span class="synNumber">NaN</span> <span class="synOperator">~~</span> <span 
     <span class="synIdentifier">%count</span>{<span class="synIdentifier">$0</span>}<span class="synOperator">++</span> <span class="synConditional">if</span> <span class="synDelimiter">/</span><span class="synString"> </span><span class="synSpecialChar">^</span><span class="synString"> </span><span class="synSpecial">\s</span><span class="synSpecialChar">+</span><span class="synString"> </span><span class="synSpecial">(\w</span><span class="synSpecialChar">+</span><span class="synSpecial">)</span><span class="synString"> </span><span class="synSpecial">\s</span><span class="synSpecialChar">+</span><span class="synString"> </span><span class="synDelimiter">'</span><span class="synString">=&gt;</span><span class="synDelimiter">'</span><span class="synString"> </span><span class="synDelimiter">/</span><span class="synOperator">;</span>   <span class="synComment">## extract key</span>
 }<span class="synOperator">;</span>
 throws_like <span class="synDelimiter">&quot;</span><span class="synString">my Int a = 10;</span><span class="synDelimiter">&quot;</span><span class="synOperator">,</span> X::Syntax::Malformed<span class="synOperator">,</span> <span class="synString">message</span> <span class="synOperator">=&gt;</span> <span class="synDelimiter">/</span><span class="synString"> sigilless </span><span class="synDelimiter">/</span><span class="synOperator">;</span>
+
+<span class="synIdentifier">$foo</span> <span class="synOperator">~~</span> <span class="synDelimiter">S/</span><span class="synString">foo</span><span class="synDelimiter">/</span><span class="synString">bar</span><span class="synDelimiter">/</span><span class="synOperator">;</span>
 
 my()
 BEGIN()

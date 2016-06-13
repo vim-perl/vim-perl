@@ -75,7 +75,7 @@ tokenizer($str);
 Zfoobar.new;
 Rcmp
 
-S|
+S|sdfsdf|sdfsdf|
 
 proto sub infix:«>»(Any, Any) returns Bool:D is assoc<chain>
 multi sub infix:«>»(Int:D, Int:D)
@@ -258,6 +258,8 @@ for ('/foo/bar/baz/' ~~ m/^ $<dirname>=(.* '/'+)? $<basename>=(<-[\/]>+) '/'* $ 
     %count{$0}++ if / ^ \s+ (\w+) \s+ '=>' /;   ## extract key
 };
 throws_like "my Int a = 10;", X::Syntax::Malformed, message => / sigilless /;
+
+$foo ~~ S/foo/bar/;
 
 my()
 BEGIN()

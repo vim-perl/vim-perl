@@ -188,7 +188,7 @@ syn match p6ReduceOp display "\%(^\|\s\|(\)\@1<=!*\%([RSXZ\[]\)*[&RSXZ]\?\[\+(\?
 syn match p6SetOp    display "R\?(\%([-^.+|&]\|[<>][=+]\?\|cont\|elem\))"
 
 " Reverse, cross, and zip metaoperators
-exec "syn match p6RSXZOp display \"[RSXZ]:\\@!\\%(\\a\\@=\\%(". s:alpha_metaops_or . "\\)\\>\\|[[:alnum:]]\\@!\\%([.,]\\|[^[,.[:space:]]\\)\\+\\|\\s\\@=\\|$\\)\""
+exec "syn match p6RSXZOp display \"[RSXZ]:\\@!\\%(\\a\\@=\\%(". s:alpha_metaops_or . "\\)\\>\\|[[:alnum:]]\\@!\\%([.,]\\|[^[,.[:alnum:][:space:]]\\)\\+\\|\\s\\@=\\|$\\)\""
 
 syn match p6BlockLabel display "^\s*\zs\h\w*\s*::\@!\_s\@="
 
@@ -725,7 +725,7 @@ syn match p6PackageScope display "@@IDENTIFIER@@\?::" nextgroup=p6PackageScope,p
 " Perl 6 regex regions
 
 syn match p6MatchStart_m    display "\.\@1<!\<\%(mm\?\|rx\)@@IDENTIFIER_END@@" skipwhite skipempty nextgroup=p6MatchAdverbs_m
-syn match p6MatchStart_s    display "\.\@1<!\<s@@IDENTIFIER_END@@" skipwhite skipempty nextgroup=p6MatchAdverbs_s
+syn match p6MatchStart_s    display "\.\@1<!\<[sS]@@IDENTIFIER_END@@" skipwhite skipempty nextgroup=p6MatchAdverbs_s
 syn match p6MatchStart_tr   display "\.\@1<!\<tr@@IDENTIFIER_END@@" skipwhite skipempty nextgroup=p6MatchAdverbs_tr
 syn match p6MatchAdverbs_m  "@@ADVERBS@@" contained transparent skipwhite skipempty nextgroup=p6Match
 syn match p6MatchAdverbs_s  "@@ADVERBS@@" contained transparent skipwhite skipempty nextgroup=p6Substitution
