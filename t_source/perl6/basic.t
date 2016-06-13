@@ -70,6 +70,8 @@ sub process-pod-dir($dir, :&sorted-by = &[cmp], :$sparse) { }
 
 use Foo::Xbar; # not a cross-operator
 
+tokenizer($str);
+
 Zfoobar.new;
 Rcmp
 
@@ -129,6 +131,8 @@ ok("  a b\tc" ~~ m/@<chars>=[ (<?spaces>) (\S+)]+/, 'Nested multiple array captu
 isa_ok(regex {oo}, Regex);
 isa_ok(rx (o), Regex)
 my @delims = < ^ ° ! " § $ % @ € & / = ? ` * + ~ ; , . | >;
+
+$foo.regex()
 
 my $foo ~~ /foobar/;
 $foo /= 4;

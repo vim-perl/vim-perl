@@ -78,6 +78,8 @@ is showkv(<span class="synOperator">[(.)]</span> <span class="synIdentifier">@d<
 
 <span class="synInclude">use</span> Foo::Xbar<span class="synOperator">;</span> <span class="synComment"># not a cross-operator</span>
 
+tokenizer(<span class="synIdentifier">$str</span>)<span class="synOperator">;</span>
+
 Zfoobar<span class="synOperator">.</span>new<span class="synOperator">;</span>
 <span class="synOperator">Rcmp</span>
 
@@ -137,6 +139,8 @@ ok(<span class="synDelimiter">&quot;</span><span class="synString">  a b</span><
 isa_ok(<span class="synKeyword">regex</span> {<span class="synString">oo</span>}<span class="synOperator">,</span> <span class="synType">Regex</span>)<span class="synOperator">;</span>
 isa_ok(<span class="synDelimiter">rx</span> <span class="synDelimiter">(</span><span class="synString">o</span><span class="synDelimiter">)</span><span class="synOperator">,</span> <span class="synType">Regex</span>)
 <span class="synSpecial">my</span> <span class="synIdentifier">@delims</span> <span class="synOperator">=</span> <span class="synDelimiter">&lt;</span><span class="synString"> ^ ° ! &quot; § $ % @ € &amp; / = ? ` * + ~ ; , . | </span><span class="synDelimiter">&gt;</span><span class="synOperator">;</span>
+
+<span class="synIdentifier">$foo</span><span class="synOperator">.</span>regex()
 
 <span class="synSpecial">my</span> <span class="synIdentifier">$foo</span> <span class="synOperator">~~</span> <span class="synDelimiter">/</span><span class="synString">foobar</span><span class="synDelimiter">/</span><span class="synOperator">;</span>
 <span class="synIdentifier">$foo</span> <span class="synOperator">/=</span> <span class="synNumber">4</span><span class="synOperator">;</span>
