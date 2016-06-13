@@ -152,6 +152,8 @@ $foo ~~ s/sd$/foo$bar/
 $foo ~~ s{sdfsdf}
 $foo ~~ tr/dsf/sdf/
 
+sub next {}
+
 $<bar>
 Order::Same
 Bool::True
