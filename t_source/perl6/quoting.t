@@ -52,4 +52,14 @@ say qq
     Wow, this is $description!
     TEXT
 
+Q{\}
+Q{\\}
+
+Qto<foo>;
+fsd
+fsdfsdf foo
+sdfsdfsd
+foo
+3+3
+
 # vim: ft=perl6

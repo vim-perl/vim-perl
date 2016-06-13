@@ -448,11 +448,12 @@ syn region p6StringDQ
 
 " Q// and friends
 
-syn match p6QuoteQStart display "\%(:\|\%(sub\|role\)\s\)\@5<![Qq]\@=" nextgroup=p6QuoteQ,p6QuoteQ_q,p6QuoteQ_qww,p6QuoteQ_qq,p6QuoteQ_qto,p6QuoteQ_qqto,p6Identifier
+syn match p6QuoteQStart display "\%(:\|\%(sub\|role\)\s\)\@5<![Qq]\@=" nextgroup=p6QuoteQ,p6QuoteQ_q,p6QuoteQ_qww,p6QuoteQ_qq,p6QuoteQ_to,p6QuoteQ_qto,p6QuoteQ_qqto,p6Identifier
 syn match p6QuoteQ      display "Q\%(qq\|ww\|[abcfhpsqvwx]\)\?[A-Za-z(]\@!" nextgroup=p6PairsQ skipwhite skipempty contained
 syn match p6QuoteQ_q    display "q[abcfhpsvwx]\?[A-Za-z(]\@!" nextgroup=p6PairsQ_q skipwhite skipempty contained
 syn match p6QuoteQ_qww  display "qww[A-Za-z(]\@!" nextgroup=p6PairsQ_qww skipwhite skipempty contained
 syn match p6QuoteQ_qq   display "qq[pwx]\?[A-Za-z(]\@!" nextgroup=p6PairsQ_qq skipwhite skipempty contained
+syn match p6QuoteQ_to   display "Qto[A-Za-z(]\@!" nextgroup=p6StringQ_to skipwhite skipempty contained
 syn match p6QuoteQ_qto  display "qto[A-Za-z(]\@!" nextgroup=p6StringQ_qto skipwhite skipempty contained
 syn match p6QuoteQ_qqto display "qqto[A-Za-z(]\@!" nextgroup=p6StringQ_qqto skipwhite skipempty contained
 syn match p6QuoteQ_qto  display "q\_s*\%(@@ADVERBS@@:\%(to\|heredoc\)@@ADVERBS@@(\@!\)\@=" nextgroup=p6PairsQ_qto skipwhite skipempty contained
@@ -492,10 +493,11 @@ let s:bracketing_delims = [
 let s:all_delims = s:plain_delims + s:bracketing_delims
 
 for [name, start_delim, end_delim, end_group, skip] in s:all_delims
-    exec "syn region p6StringQ matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contains=".end_group." contained"
+    exec "syn region p6StringQ matchgroup=p6Quote start=\"".start_delim."\" end=\"".end_delim."\" contained"
     exec "syn region p6StringQ_q matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contains=@p6Interp_q,".end_group." contained"
     exec "syn region p6StringQ_qww matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contains=@p6Interp_q,p6StringSQ,p6StringDQ".end_group." contained"
     exec "syn region p6StringQ_qq matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contains=@p6Interp_qq,".end_group." contained"
+    exec "syn region p6StringQ_to matchgroup=p6Quote start=\"".start_delim."\\z([^".end_delim."]\\+\\)".end_delim."\" end=\"^\\s*\\z1$\" contained"
     exec "syn region p6StringQ_qto matchgroup=p6Quote start=\"".start_delim."\\z([^".end_delim."]\\+\\)".end_delim."\" skip=\"".skip."\" end=\"^\\s*\\z1$\" contains=@p6Interp_q,".end_group." contained"
     exec "syn region p6StringQ_qqto matchgroup=p6Quote start=\"".start_delim."\\z(\[^".end_delim."]\\+\\)".end_delim."\" skip=\"".skip."\" end=\"^\\s*\\z1$\" contains=@p6Interp_qq,".end_group." contained"
 
@@ -1757,6 +1759,7 @@ if version >= 508 || !exists("did_perl6_syntax_inits")
     HiLink p6StringQ_q        p6String
     HiLink p6StringQ_qww      p6String
     HiLink p6StringQ_qq       p6String
+    HiLink p6StringQ_to       p6String
     HiLink p6StringQ_qto      p6String
     HiLink p6StringQ_qqto     p6String
     HiLink p6RxStringSQ       p6String
@@ -1794,6 +1797,7 @@ if version >= 508 || !exists("did_perl6_syntax_inits")
     HiLink p6QuoteQ_q         p6Quote
     HiLink p6QuoteQ_qww       p6Quote
     HiLink p6QuoteQ_qq        p6Quote
+    HiLink p6QuoteQ_to        p6Quote
     HiLink p6QuoteQ_qto       p6Quote
     HiLink p6QuoteQ_qqto      p6Quote
     HiLink p6QuoteQ_PIR       p6Quote
