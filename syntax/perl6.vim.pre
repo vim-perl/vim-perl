@@ -1101,10 +1101,10 @@ syn region p6BracketComment
 syn match p6Shebang display "\%^#!.*"
 
 " => and p5=> autoquoting
-syn match p6StringP5Auto display "@@IDENTIFIER@@\ze\s\+p5=>"
-syn match p6StringAuto   display "@@IDENTIFIER@@\ze\%(p5\)\@2<![RSXZ]\@1<!=>"
-syn match p6StringAuto   display "@@IDENTIFIER@@\ze\s\+=>"
-syn match p6StringAuto   display "@@IDENTIFIER@@p5\ze=>"
+syn match p6StringP5Auto display "\.\@1<!@@IDENTIFIER@@\ze\s\+p5=>"
+syn match p6StringAuto   display "\.\@1<!@@IDENTIFIER@@\ze\%(p5\)\@2<![RSXZ]\@1<!=>"
+syn match p6StringAuto   display "\.\@1<!@@IDENTIFIER@@\ze\s\+=>"
+syn match p6StringAuto   display "\.\@1<!@@IDENTIFIER@@p5\ze=>"
 
 " Pod
 

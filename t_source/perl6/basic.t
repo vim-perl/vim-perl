@@ -91,6 +91,8 @@ v1.2+
 v1.2.0.0.0.0.0
 v1
 
+@foo.map { $^a.key => $^a.value }
+
 [1,2] xx 3;
 
 token foo {
