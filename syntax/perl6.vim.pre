@@ -152,7 +152,7 @@ exec "syn match p6Type display \"\\%(". s:words . "\\)@@IDENTIFIER_END_Q@@\" con
 unlet s:keywords s:types s:words_space s:temp s:words
 
 syn match p6PreDeclare display "[.^]\@1<!\<\%(multi\|proto\|only\)\>" nextgroup=p6Declare,p6Identifier skipwhite skipempty
-syn match p6Declare display "[.^]\@1<!\<\%(macro\|sub\|submethod\|method\|category\|module\|class\|role\|package\|enum\|grammar\|slang\|subset\)" nextgroup=p6Identifier skipwhite skipempty
+syn match p6Declare display "[.^]\@1<!\<\%(macro\|sub\|submethod\|method\|category\|module\|class\|role\|package\|enum\|grammar\|slang\|subset\)\>" nextgroup=p6Identifier skipwhite skipempty
 syn match p6DeclareRegex display "[.^]\@1<!\<\%(regex\|rule\|token\)\>" nextgroup=p6RegexName skipwhite skipempty
 
 syn match p6TypeConstraint  display "\%([.^]\|^\s*\)\@<!\a\@=\%(does\|as\|but\|trusts\|of\|returns\|handles\|where\|augment\|supersede\)\>"

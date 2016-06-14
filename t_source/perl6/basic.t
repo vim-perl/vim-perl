@@ -137,6 +137,7 @@ isa_ok(rx (o), Regex)
 my @delims = < ^ ° ! " § $ % @ € & / = ? ` * + ~ ; , . | >;
 
 $foo.regex()
+$foo .= substr(4);
 
 my $foo ~~ /foobar/;
 $foo /= 4;
