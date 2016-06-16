@@ -183,6 +183,8 @@ NaN
 1.2e7_000
 1.2e-7
 
+my @args = <-a -e -b -v>;
+
 token foo {
     <* < foo bar > >
 }
