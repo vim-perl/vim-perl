@@ -713,7 +713,7 @@ syn match p6VarNum       display "\$\d\+"
 syn match p6Variable     display "self"
 syn match p6Variable     display "[@$%&]\?[@&$%]\$*\%(::\|\%(\%([.^*?=!~]\|:\@1<!::\@!\)[A-Za-z_\xC0-\xFF]\)\|[A-Za-z_\xC0-\xFF]\)\@=" nextgroup=p6Twigil,p6VarName,p6PackageScope
 syn match p6VarName      display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)" nextgroup=p6PostHyperOp contained
-syn match p6Close        display "[\])]" nextgroup=p6PostHyperOp
+syn match p6Close        display "[\])]" transparent nextgroup=p6PostHyperOp
 syn match p6PostHyperOp  display "\%(»\|>>\)" contained
 syn match p6Twigil       display "\%([.^*?=!~]\|:\@1<!::\@!\)[A-Za-z_\xC0-\xFF]\@=" nextgroup=p6PackageScope,p6VarName contained
 syn match p6PackageScope display "\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)\?::" nextgroup=p6PackageScope,p6VarName contained

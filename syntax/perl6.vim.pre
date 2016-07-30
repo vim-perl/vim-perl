@@ -713,7 +713,7 @@ syn match p6VarNum       display "\$\d\+"
 syn match p6Variable     display "self"
 syn match p6Variable     display "[@$%&]\?[@&$%]\$*\%(::\|\%(\%([.^*?=!~]\|:\@1<!::\@!\)@@IDENT_NONDIGIT@@\)\|@@IDENT_NONDIGIT@@\)\@=" nextgroup=p6Twigil,p6VarName,p6PackageScope
 syn match p6VarName      display "@@IDENTIFIER@@" nextgroup=p6PostHyperOp contained
-syn match p6Close        display "[\])]" nextgroup=p6PostHyperOp
+syn match p6Close        display "[\])]" transparent nextgroup=p6PostHyperOp
 syn match p6PostHyperOp  display "\%(»\|>>\)" contained
 syn match p6Twigil       display "\%([.^*?=!~]\|:\@1<!::\@!\)@@IDENT_NONDIGIT@@\@=" nextgroup=p6PackageScope,p6VarName contained
 syn match p6PackageScope display "@@IDENTIFIER@@\?::" nextgroup=p6PackageScope,p6VarName contained
