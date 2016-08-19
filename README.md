@@ -68,7 +68,3 @@ You can also populate the local `after/syntax/perl/` via `make`:
 Vim itself only considers double quotes in this scenario; the matchit plugin, however,
 can deal with this scenario and vim-perl's files are set up to work with it should you
 choose to use it.
-
-xoxo,<br />
-eiro,<br />
-Andy (andy@petdance.com)
