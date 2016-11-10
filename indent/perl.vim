@@ -25,7 +25,15 @@
 " opening brace.  
 "
 " If you want to collapse the indents for cuddled braces then:
-" let g:PerlCuddleIndent = 1
+" let g:perl_cuddle_indent = 1
+" Eg:
+" $foo = [{
+"     key => $val
+" }]
+" Without perl_cuddle_indent you get:
+" $foo = [{
+"         key => $val
+"     }]
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -147,7 +155,7 @@ function! GetPerlIndent()
                 endif
             endif
 
-            if exists('g:PerlCuddleIndent') && g:PerlCuddleIndent
+            if exists('g:perl_cuddle_indent') && g:perl_cuddle_indent
                 let bracepos = -1
             else
                 let bracepos = match(line, braceclass, bracepos + 1)
