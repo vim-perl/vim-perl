@@ -19,6 +19,21 @@
 " (The following probably needs modifying the perl syntax file)
 " - qw() lists
 " - Heredocs with terminators that don't match \I\i*
+"
+" If multiple opening braces are on the same line, then
+" normal behavior is to indent over one shift width per 
+" opening brace.  
+"
+" If you want to collapse the indents for cuddled braces then:
+" let g:perl_cuddle_indent = 1
+" Eg:
+" $foo = [{
+"     key => $val
+" }]
+" Without perl_cuddle_indent you get:
+" $foo = [{
+"         key => $val
+"     }]
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -139,7 +154,12 @@ function! GetPerlIndent()
                     let ind = ind - &sw
                 endif
             endif
-            let bracepos = match(line, braceclass, bracepos + 1)
+
+            if exists('g:perl_cuddle_indent') && g:perl_cuddle_indent
+                let bracepos = -1
+            else
+                let bracepos = match(line, braceclass, bracepos + 1)
+            endif
         endwhile
         let bracepos = matchend(cline, '^\s*[])}]')
         if bracepos != -1
