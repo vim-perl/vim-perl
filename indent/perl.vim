@@ -38,6 +38,16 @@ endif
 let s:cpo_save = &cpo
 set cpo-=C
 
+if exists('*shiftwidth')
+  function! s:sw()
+    return shiftwidth()
+  endfunction
+else
+  function! s:sw()
+    return &shiftwidth
+  endfunction
+endif
+
 function! GetPerlIndent()
 
     " Get the line to be indented
@@ -134,9 +144,9 @@ function! GetPerlIndent()
                         \ || synid =~ '^perl\(Sub\|Block\|Package\)Fold'
                 let brace = strpart(line, bracepos, 1)
                 if brace == '(' || brace == '{' || brace == '['
-                    let ind = ind + &sw
+                    let ind = ind + s:sw()
                 else
-                    let ind = ind - &sw
+                    let ind = ind - s:sw()
                 endif
             endif
             let bracepos = match(line, braceclass, bracepos + 1)
@@ -149,25 +159,25 @@ function! GetPerlIndent()
                         \ || synid == "perlBraces"
                         \ || synid == "perlStatementIndirObj"
                         \ || synid =~ '^perl\(Sub\|Block\|Package\)Fold'
-                let ind = ind - &sw
+                let ind = ind - s:sw()
             endif
         endif
     else
         if line =~ '[{[(]\s*\(#[^])}]*\)\=$'
-            let ind = ind + &sw
+            let ind = ind + s:sw()
         endif
         if cline =~ '^\s*[])}]'
-            let ind = ind - &sw
+            let ind = ind - s:sw()
         endif
     endif
 
     " Indent lines that begin with 'or' or 'and'
     if cline =~ '^\s*\(or\|and\)\>'
         if line !~ '^\s*\(or\|and\)\>'
-            let ind = ind + &sw
+            let ind = ind + s:sw()
         endif
     elseif line =~ '^\s*\(or\|and\)\>'
-        let ind = ind - &sw
+        let ind = ind - s:sw()
     endif
 
     return ind
