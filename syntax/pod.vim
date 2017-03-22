@@ -59,8 +59,8 @@ syn match podSpecial	"\(\<\|&\)\I\i*\(::\I\i*\)*([^)]*)" contains=@NoSpell
 syn match podSpecial	"[$@%]\I\i*\(::\I\i*\)*\>" contains=@NoSpell
 
 " Special formatting sequences
-syn region podFormat	start="[IBSCLFX]<[^<]"me=e-1 end=">" oneline contains=podFormat,@NoSpell
-syn region podFormat	start="[IBSCLFX]<<\s" end="\s>>" oneline contains=podFormat,@NoSpell
+syn region podFormat	start="[IBSCLFX]<[^<]" end=">" oneline contains=@NoSpell
+syn region podFormat	start="[IBSCLFX]<<\s" end="\s>>" oneline contains=@NoSpell
 syn match  podFormat	"Z<>"
 syn match  podFormat	"E<\(\d\+\|\I\i*\)>" contains=podEscape,podEscape2,@NoSpell
 syn match  podEscape	"\I\i*>"me=e-1 contained contains=@NoSpell
