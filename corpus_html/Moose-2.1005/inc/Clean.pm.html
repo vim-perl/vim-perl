@@ -1,0 +1,36 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> inc::Clean</span>;
+<span class="synStatement">use </span>Moose;
+
+with <span class="synString">'Dist::Zilla::Role::BeforeBuild'</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">before_build </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synConditional">if</span> (<span class="synStatement">-e</span> <span class="synString">'Makefile'</span>) {
+        <span class="synIdentifier">$self-&gt;log</span>(<span class="synString">&quot;Running make distclean to clear out build cruft&quot;</span>);
+        <span class="synConditional">unless</span> (<span class="synStatement">fork</span>) {
+            <span class="synStatement">close</span>(<span class="synIdentifier">STDIN</span>);
+            <span class="synStatement">close</span>(<span class="synIdentifier">STDOUT</span>);
+            <span class="synStatement">close</span>(<span class="synIdentifier">STDERR</span>);
+            { <span class="synStatement">exec</span>(<span class="synString">&quot;</span><span class="synIdentifier">$^X</span><span class="synString"> Makefile.PL &amp;&amp; make distclean&quot;</span>) }
+            <span class="synStatement">die</span> <span class="synString">&quot;couldn't exec: </span><span class="synIdentifier">$!</span><span class="synString">&quot;</span>;
+        }
+    }
+
+    <span class="synConditional">if</span> (<span class="synStatement">-e</span> <span class="synString">'META.yml'</span>) {
+        <span class="synIdentifier">$self-&gt;log</span>(<span class="synString">&quot;Removing existing META.yml file&quot;</span>);
+        <span class="synStatement">unlink</span>(<span class="synString">'META.yml'</span>);
+    }
+}
+</pre>
+
+ </body>
+</html>

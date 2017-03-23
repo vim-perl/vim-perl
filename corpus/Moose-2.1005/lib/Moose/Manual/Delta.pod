@@ -1,0 +1,1086 @@
+package Moose::Manual::Delta;
+
+# ABSTRACT: Important Changes in Moose
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Moose::Manual::Delta - Important Changes in Moose
+
+=head1 VERSION
+
+version 2.1005
+
+=head1 DESCRIPTION
+
+This documents any important or noteworthy changes in Moose, with a
+focus on things that affect backwards compatibility. This does duplicate data
+from the F<Changes> file, but aims to provide more details and when possible
+workarounds.
+
+Besides helping keep up with changes, you can also use this document
+for finding the lowest version of Moose that supported a given
+feature.  If you encounter a problem and have a solution but don't see
+it documented here, or think we missed an important feature, please
+send us a patch.
+
+=head1 2.1000
+
+=over 4
+
+=item The Num type is now stricter
+
+The C<Num> type used to accept anything that fits Perl's notion of a number,
+which included Inf, NaN, and strings like C<" 1234 \n">.  We believe that the
+type constraint should indicate "this is a number", not "this coerces to a
+number".  Therefore, now Num accepts only integers, floating point numbers
+(both in decimal notation and exponential notation), 0, .0, 0.0 etc.
+
+If you want the old behavior you can use the C<LaxNum> type in
+L<MooseX::Types::LaxNum>.
+
+=item You can use L<Specio> instead of core Moose types
+
+The L<Specio> distribution is an experimental new type system intended to
+eventually replace the core Moose types, but yet also work with things like
+L<Moo> and L<Mouse> and anything else. Right now this is all speculative, but
+at least you can use Specio with Moose.
+
+=back
+
+=head1 2.0600
+
+=over 4
+
+=item C<< ->init_meta >> is even less reliable at loading extensions
+
+Previously, calling C<< MooseX::Foo->init_meta(@_) >> (and nothing else) from
+within your own C<init_meta> had a decent chance of doing something useful.
+This was never supported behavior, and didn't always work anyway. Due to some
+implementation adjustments, this now has a smaller chance of doing something
+useful, which could break code that was expecting it to continue doing useful
+things. Code that does this should instead just call
+C<< MooseX::Foo->import({ into => $into }) >>.
+
+=item All the Cookbook recipes have been renamed
+
+We've given them all descriptive names, rather than numbers. This makes it
+easier to talk about them, and eliminates the need to renumber recipes in
+order to reorder them or delete one.
+
+=back
+
+=head1 2.0400
+
+=over 4
+
+=item The parent of a union type is its components' nearest common ancestor
+
+Previously, union types considered all of their component types their parent
+types. This was incorrect because parent types are defined as types that must
+be satisfied in order for the child type to be satisfied, but in a union,
+validating as any parent type will validate against the entire union. This has
+been changed to find the nearest common ancestor for all of its components. For
+example, a union of "Int|ArrayRef[Int]" now has a parent of "Defined".
+
+=item Union types consider all members in the C<is_subtype_of> and C<is_a_type_of> methods
+
+Previously, a union type would report itself as being of a subtype of a type if
+I<any> of its member types were subtypes of that type. This was incorrect
+because any value that passes a subtype constraint must also pass a parent
+constraint. This has changed so that I<all> of its member types must be a
+subtype of the specified type.
+
+=item Enum types now work with just one value
+
+Previously, an C<enum> type needed to have two or more values.  Nobody knew
+why, so we fixed it.
+
+=item Methods defined in UNIVERSAL now appear in the MOP
+
+Any method introspection methods that look at methods from parent classes now
+find methods defined in UNIVERSAL. This includes methods like C<<
+$class->get_all_methods >> and C<< $class->find_method_by_name >>.
+
+This also means that you can now apply method modifiers to these methods.
+
+=item Hand-optimized type constraint code causes a deprecation warning
+
+If you provide an optimized sub ref for a type constraint, this now causes a
+deprecation warning. Typically, this comes from passing an C<optimize_as>
+parameter to C<subtype>, but it could also happen if you create a
+L<Moose::Meta::TypeConstraint> object directly.
+
+Use the inlining feature (C<inline_as>) added in 2.0100 instead.
+
+=item C<Class::Load::load_class> and C<is_class_loaded> have been removed
+
+The C<Class::MOP::load_class> and C<Class::MOP::is_class_loaded> subroutines
+are no longer documented, and will cause a deprecation warning in the
+future. Moose now uses L<Class::Load> to provide this functionality, and you
+should do so as well.
+
+=back
+
+=head1 2.0205
+
+=over 4
+
+=item Array and Hash native traits provide a C<shallow_clone> method
+
+The Array and Hash native traits now provide a "shallow_clone" method, which
+will return a reference to a new container with the same contents as the
+attribute's reference.
+
+=back
+
+=head1 2.0200
+
+=over 4
+
+=item Hand-optimized type constraint code is deprecated in favor of inlining
+
+Moose allows you to provide a hand-optimized version of a type constraint's
+subroutine reference. This version allows type constraints to generate inline
+code, and you should use this inlining instead of providing a hand-optimized
+subroutine reference.
+
+This affects the C<optimize_as> sub exported by
+L<Moose::Util::TypeConstraints>. Use C<inline_as> instead.
+
+This will start warning in the 2.0300 release.
+
+=back
+
+=head1 2.0002
+
+=over 4
+
+=item More useful type constraint error messages
+
+If you have L<Devel::PartialDump> version 0.14 or higher installed, Moose's
+type constraint error messages will use it to display the invalid value, rather
+than just displaying it directly. This will generally be much more useful. For
+instance, instead of this:
+
+  Attribute (foo) does not pass the type constraint because: Validation failed for 'ArrayRef[Int]' with value ARRAY(0x275eed8)
+
+the error message will instead look like
+
+  Attribute (foo) does not pass the type constraint because: Validation failed for 'ArrayRef[Int]' with value [ "a" ]
+
+Note that L<Devel::PartialDump> can't be made a direct dependency at the
+moment, because it uses Moose itself, but we're considering options to make
+this easier.
+
+=back
+
+=head1 2.0000
+
+=over 4
+
+=item Roles have their own default attribute metaclass
+
+Previously, when a role was applied to a class, it would use the attribute
+metaclass defined in the class when copying over the attributes in the role.
+This was wrong, because for instance, using L<MooseX::FollowPBP> in the class
+would end up renaming all of the accessors generated by the role, some of which
+may be being called in the role, causing it to break. Roles now keep track of
+their own attribute metaclass to use by default when being applied to a class
+(defaulting to Moose::Meta::Attribute). This is modifiable using
+L<Moose::Util::MetaRole> by passing the C<applied_attribute> key to the
+C<role_metaroles> option, as in:
+
+    Moose::Util::MetaRole::apply_metaroles(
+        for => __PACKAGE__,
+        class_metaroles => {
+            attribute => ['My::Meta::Role::Attribute'],
+        },
+        role_metaroles => {
+            applied_attribute => ['My::Meta::Role::Attribute'],
+        },
+    );
+
+=item Class::MOP has been folded into the Moose dist
+
+Moose and Class::MOP are tightly related enough that they have always had to be
+kept pretty closely in step in terms of versions. Making them into a single
+dist should simplify the upgrade process for users, as it should no longer be
+possible to upgrade one without the other and potentially cause issues. No
+functionality has changed, and this should be entirely transparent.
+
+=item Moose's conflict checking is more robust and useful
+
+There are two parts to this. The most useful one right now is that Moose will
+ship with a C<moose-outdated> script, which can be run at any point to list the
+modules which are installed that conflict with the installed version of Moose.
+After upgrading Moose, running C<moose-outdated | cpanm> should be sufficient
+to ensure that all of the Moose extensions you use will continue to work.
+
+The other part is that Moose's C<META.json> file will also specify the
+conflicts under the C<x_conflicts> key. We are working with the Perl tool chain
+developers to try to get conflicts support added to CPAN clients, and if/when
+that happens, the metadata already exists, and so the conflict checking will
+become automatic.
+
+=item Most deprecated APIs/features are slated for removal in Moose 2.0200
+
+Most of the deprecated APIs and features in Moose will start throwing an error
+in Moose 2.0200. Some of the features will go away entirely, and some will
+simply throw an error.
+
+The things on the chopping block are:
+
+=over 8
+
+=item * Old public methods in Class::MOP and Moose
+
+This includes things like C<< Class::MOP::Class->get_attribute_map >>, C<<
+Class::MOP::Class->construct_instance >>, and many others. These were
+deprecated in L<Class::MOP> 0.80_01, released on April 5, 2009.
+
+These methods will be removed entirely in Moose 2.0200.
+
+=item * Old public functions in Class::MOP
+
+This include C<Class::MOP::subname>, C<Class::MOP::in_global_destruction>, and
+the C<Class::MOP::HAS_ISAREV> constant. The first two were deprecated in 0.84,
+and the last in 0.80. Class::MOP 0.84 was released on May 12, 2009.
+
+These functions will be removed entirely in Moose 2.0200.
+
+=item * The C<alias> and C<excludes> option for role composition
+
+These were renamed to C<-alias> and C<-excludes> in Moose 0.89, released on
+August 13, 2009.
+
+Passing these will throw an error in Moose 2.0200.
+
+=item * The old L<Moose::Util::MetaRole> API
+
+This include the C<apply_metaclass_roles()> function, as well as passing the
+C<for_class> or any key ending in C<_roles> to C<apply_metaroles()>. This was
+deprecated in Moose 0.93_01, released on January 4, 2010.
+
+These will all throw an error in Moose 2.0200.
+
+=item * Passing plain lists to C<type()> or C<subtype()>
+
+The old API for these functions allowed you to pass a plain list of parameter,
+rather than a list of hash references (which is what C<as()>, C<where>,
+etc. return). This was deprecated in Moose 0.71_01, released on February 22,
+2009.
+
+This will throw an error in Moose 2.0200.
+
+=item * The Role subtype
+
+This subtype was deprecated in Moose 0.84, released on June 26, 2009.
+
+This will be removed entirely in Moose 2.0200.
+
+=back
+
+=back
+
+=head1 1.21
+
+=over 4
+
+=item * New release policy
+
+As of the 2.0 release, Moose now has an official release and support policy,
+documented in L<Moose::Manual::Support>. All API changes will now go through a
+deprecation cycle of at least one year, after which the deprecated API can be
+removed. Deprecations and removals will only happen in major releases.
+
+In between major releases, we will still make minor releases to add new
+features, fix bugs, update documentation, etc.
+
+=back
+
+=head1 1.16
+
+=over 4
+
+=item Configurable stacktraces
+
+Classes which use the L<Moose::Error::Default> error class can now have
+stacktraces disabled by setting the C<MOOSE_ERROR_STYLE> env var to C<croak>.
+This is experimental, fairly incomplete, and won't work in all cases (because
+Moose's error system in general is all of these things), but this should allow
+for reducing at least some of the verbosity in most cases.
+
+=back
+
+=head1 1.15
+
+=over 4
+
+=item Native Delegations
+
+In previous versions of Moose, the Native delegations were created as
+closures. The generated code was often quite slow compared to doing the same
+thing by hand. For example, the Array's push delegation ended up doing
+something like this:
+
+  push @{ $self->$reader() }, @_;
+
+If the attribute was created without a reader, the C<$reader> sub reference
+followed a very slow code path. Even with a reader, this is still slower than
+it needs to be.
+
+Native delegations are now generated as inline code, just like other
+accessors, so we can access the slot directly.
+
+In addition, native traits now do proper constraint checking in all cases. In
+particular, constraint checking has been improved for array and hash
+references. Previously, only the I<contained> type (the C<Str> in
+C<HashRef[Str]>) would be checked when a new value was added to the
+collection. However, if there was a constraint that applied to the whole
+value, this was never checked.
+
+In addition, coercions are now called on the whole value.
+
+The delegation methods now do more argument checking. All of the methods check
+that a valid number of arguments were passed to the method. In addition, the
+delegation methods check that the arguments are sane (array indexes, hash
+keys, numbers, etc.) when applicable. We have tried to emulate the behavior of
+Perl builtins as much as possible.
+
+Finally, triggers are called whenever the value of the attribute is changed by
+a Native delegation.
+
+These changes are only likely to break code in a few cases.
+
+The inlining code may or may not preserve the original reference when changes
+are made. In some cases, methods which change the value may replace it
+entirely. This will break tied values.
+
+If you have a typed arrayref or hashref attribute where the type enforces a
+constraint on the whole collection, this constraint will now be checked. It's
+possible that code which previously ran without errors will now cause the
+constraint to fail. However, presumably this is a good thing ;)
+
+If you are passing invalid arguments to a delegation which were previously
+being ignored, these calls will now fail.
+
+If your code relied on the trigger only being called for a regular writer,
+that may cause problems.
+
+As always, you are encouraged to test before deploying the latest version of
+Moose to production.
+
+=item Defaults is and default for String, Counter, and Bool
+
+A few native traits (String, Counter, Bool) provide default values of "is" and
+"default" when you created an attribute. Allowing them to provide these values
+is now deprecated. Supply the value yourself when creating the attribute.
+
+=item The C<meta> method
+
+Moose and Class::MOP have been cleaned up internally enough to make the
+C<meta> method that you get by default optional. C<use Moose> and
+C<use Moose::Role> now can take an additional C<-meta_name> option, which
+tells Moose what name to use when installing the C<meta> method. Passing
+C<undef> to this option suppresses generation of the C<meta> method
+entirely. This should be useful for users of modules which also use a C<meta>
+method or function, such as L<Curses> or L<Rose::DB::Object>.
+
+=back
+
+=head1 1.09
+
+=over 4
+
+=item All deprecated features now warn
+
+Previously, deprecation mostly consisted of simply saying "X is deprecated" in
+the Changes file. We were not very consistent about actually warning. Now, all
+deprecated features still present in Moose actually give a warning. The
+warning is issued once per calling package. See L<Moose::Deprecated> for more
+details.
+
+=item You cannot pass C<< coerce => 1 >> unless the attribute's type constraint has a coercion
+
+Previously, this was accepted, and it sort of worked, except that if you
+attempted to set the attribute after the object was created, you would get a
+runtime error.
+
+Now you will get a warning when you attempt to define the attribute.
+
+=item C<no Moose>, C<no Moose::Role>, and C<no Moose::Exporter> no longer unimport strict and warnings
+
+This change was made in 1.05, and has now been reverted. We don't know if the
+user has explicitly loaded strict or warnings on their own, and unimporting
+them is just broken in that case.
+
+=item Reversed logic when defining which options can be changed
+
+L<Moose::Meta::Attribute> now allows all options to be changed in an
+overridden attribute. The previous behaviour required each option to be
+whitelisted using the C<legal_options_for_inheritance> method. This method has
+been removed, and there is a new method, C<illegal_options_for_inheritance>,
+which can now be used to prevent certain options from being changeable.
+
+In addition, we only throw an error if the illegal option is actually
+changed. If the superclass didn't specify this option at all when defining the
+attribute, the subclass version can still add it as an option.
+
+Example of overriding this in an attribute trait:
+
+  package Bar::Meta::Attribute;
+  use Moose::Role;
+
+  has 'my_illegal_option' => (
+      isa => 'CodeRef',
+      is  => 'rw',
+  );
+
+  around illegal_options_for_inheritance => sub {
+      return ( shift->(@_), qw/my_illegal_option/ );
+  };
+
+=back
+
+=head1 1.05
+
+=over 4
+
+=item L<Moose::Object/BUILD> methods are now called when calling C<new_object>
+
+Previously, C<BUILD> methods would only be called from C<Moose::Object::new>,
+but now they are also called when constructing an object via
+C<Moose::Meta::Class::new_object>. C<BUILD> methods are an inherent part of the
+object construction process, and this should make C<< $meta->new_object >>
+actually usable without forcing people to use C<< $meta->name->new >>.
+
+=item C<no Moose>, C<no Moose::Role>, and C<no Moose::Exporter> now unimport strict and warnings
+
+In the interest of having C<no Moose> clean up everything that C<use Moose>
+does in the calling scope, C<no Moose> (as well as all other
+L<Moose::Exporter>-using modules) now unimports strict and warnings.
+
+=item Metaclass compatibility checking and fixing should be much more robust
+
+The L<metaclass compatibility|Moose/METACLASS COMPATIBILITY AND MOOSE> checking
+and fixing algorithms have been completely rewritten, in both Class::MOP and
+Moose. This should resolve many confusing errors when dealing with non-Moose
+inheritance and with custom metaclasses for things like attributes,
+constructors, etc. For correct code, the only thing that should require a
+change is that custom error metaclasses must now inherit from
+L<Moose::Error::Default>.
+
+=back
+
+=head1 1.02
+
+=over 4
+
+=item Moose::Meta::TypeConstraint::Class is_subtype_of behavior
+
+Earlier versions of L<is_subtype_of|Moose::Meta::TypeConstraint::Class/is_subtype_of>
+would incorrectly return true when called with itself, its own TC name or
+its class name as an argument. (i.e. $foo_tc->is_subtype_of('Foo') == 1) This
+behavior was a caused by C<isa> being checked before the class name. The old
+behavior can be accessed with L<is_type_of|Moose::Meta::TypeConstraint::Class/is_type_of>
+
+=back
+
+=head1 1.00
+
+=over 4
+
+=item Moose::Meta::Attribute::Native::Trait::Code no longer creates reader methods by default
+
+Earlier versions of L<Moose::Meta::Attribute::Native::Trait::Code> created
+read-only accessors for the attributes it's been applied to, even if you didn't
+ask for it with C<< is => 'ro' >>. This incorrect behaviour has now been fixed.
+
+=back
+
+=head1 0.95
+
+=over 4
+
+=item Moose::Util add_method_modifier behavior
+
+add_method_modifier (and subsequently the sugar functions Moose::before,
+Moose::after, and Moose::around) can now accept arrayrefs, with the same
+behavior as lists. Types other than arrayref and regexp result in an error.
+
+=back
+
+=head1 0.93_01 and 0.94
+
+=over 4
+
+=item Moose::Util::MetaRole API has changed
+
+The C<apply_metaclass_roles> function is now called C<apply_metaroles>. The
+way arguments are supplied has been changed to force you to distinguish
+between metaroles applied to L<Moose::Meta::Class> (and helpers) versus
+L<Moose::Meta::Role>.
+
+The old API still works, but will warn in a future release, and eventually be
+removed.
+
+=item Moose::Meta::Role has real attributes
+
+The attributes returned by L<Moose::Meta::Role> are now instances of the
+L<Moose::Meta::Role::Attribute> class, instead of bare hash references.
+
+=item "no Moose" now removes C<blessed> and C<confess>
+
+Moose is now smart enough to know exactly what it exported, even when it
+re-exports functions from other packages. When you unimport Moose, it will
+remove these functions from your namespace unless you I<also> imported them
+directly from their respective packages.
+
+If you have a C<no Moose> in your code I<before> you call C<blessed> or
+C<confess>, your code will break. You can either move the C<no Moose> call
+later in your code, or explicitly import the relevant functions from the
+packages that provide them.
+
+=item L<Moose::Exporter> is smarter about unimporting re-exports
+
+The change above comes from a general improvement to L<Moose::Exporter>. It
+will now unimport any function it exports, even if that function is a
+re-export from another package.
+
+=item Attributes in roles can no longer override class attributes with "+foo"
+
+Previously, this worked more or less accidentally, because role attributes
+weren't objects. This was never documented, but a few MooseX modules took
+advantage of this.
+
+=item The composition_class_roles attribute in L<Moose::Meta::Role> is now a method
+
+This was done to make it possible for roles to alter the list of composition
+class roles by applying a method modifiers. Previously, this was an attribute
+and MooseX modules override it. Since that no longer works, this was made a
+method.
+
+This I<should> be an attribute, so this may switch back to being an attribute
+in the future if we can figure out how to make this work.
+
+=back
+
+=head1 0.93
+
+=over 4
+
+=item Calling $object->new() is no longer deprecated
+
+We decided to undeprecate this. Now it just works.
+
+=item Both C<get_method_map> and C<get_attribute_map> is deprecated
+
+These metaclass methods were never meant to be public, and they are both now
+deprecated. The work around if you still need the functionality they provided
+is to iterate over the list of names manually.
+
+    my %fields = map { $_ => $meta->get_attribute($_) } $meta->get_attribute_list;
+
+This was actually a change in L<Class::MOP>, but this version of Moose
+requires a version of L<Class::MOP> that includes said change.
+
+=back
+
+=head1 0.90
+
+=over 4
+
+=item Added Native delegation for Code refs
+
+See L<Moose::Meta::Attribute::Native::Trait::Code> for details.
+
+=item Calling $object->new() is deprecated
+
+Moose has long supported this, but it's never really been documented, and we
+don't think this is a good practice. If you want to construct an object from
+an existing object, you should provide some sort of alternate constructor like
+C<< $object->clone >>.
+
+Calling C<< $object->new >> now issues a warning, and will be an error in a
+future release.
+
+=item Moose no longer warns if you call C<make_immutable> for a class with mutable ancestors
+
+While in theory this is a good thing to warn about, we found so many
+exceptions to this that doing this properly became quite problematic.
+
+=back
+
+=head1 0.89_02
+
+=over 4
+
+=item New Native delegation methods from L<List::Util> and L<List::MoreUtils>
+
+In particular, we now have C<reduce>, C<shuffle>, C<uniq>, and C<natatime>.
+
+=item The Moose::Exporter with_caller feature is now deprecated
+
+Use C<with_meta> instead. The C<with_caller> option will start warning in a
+future release.
+
+=item Moose now warns if you call C<make_immutable> for a class with mutable ancestors
+
+This is dangerous because modifying a class after a subclass has been
+immutabilized will lead to incorrect results in the subclass, due to inlining,
+caching, etc. This occasionally happens accidentally, when a class loads one
+of its subclasses in the middle of its class definition, so pointing out that
+this may cause issues should be helpful. Metaclasses (classes that inherit
+from L<Class::MOP::Object>) are currently exempt from this check, since at the
+moment we aren't very consistent about which metaclasses we immutabilize.
+
+=item C<enum> and C<duck_type> now take arrayrefs for all forms
+
+Previously, calling these functions with a list would take the first element of
+the list as the type constraint name, and use the remainder as the enum values
+or method names. This makes the interface inconsistent with the anon-type forms
+of these functions (which must take an arrayref), and a free-form list where
+the first value is sometimes special is hard to validate (and harder to give
+reasonable error messages for). These functions have been changed to take
+arrayrefs in all their forms - so, C<< enum 'My::Type' => [qw(foo bar)] >> is
+now the preferred way to create an enum type constraint. The old syntax still
+works for now, but it will hopefully be deprecated and removed in a future
+release.
+
+=back
+
+=head1 0.89_01
+
+L<Moose::Meta::Attribute::Native> has been moved into the Moose core from
+L<MooseX::AttributeHelpers>.  Major changes include:
+
+=over 4
+
+=item C<traits>, not C<metaclass>
+
+Method providers are only available via traits.
+
+=item C<handles>, not C<provides> or C<curries>
+
+The C<provides> syntax was like core Moose C<< handles => HASHREF >>
+syntax, but with the keys and values reversed.  This was confusing,
+and AttributeHelpers now uses C<< handles => HASHREF >> in a way that
+should be intuitive to anyone already familiar with how it is used for
+other attributes.
+
+The C<curries> functionality provided by AttributeHelpers has been
+generalized to apply to all cases of C<< handles => HASHREF >>, though
+not every piece of functionality has been ported (currying with a
+CODEREF is not supported).
+
+=item C<empty> is now C<is_empty>, and means empty, not non-empty
+
+Previously, the C<empty> method provided by Arrays and Hashes returned true if
+the attribute was B<not> empty (no elements).  Now it returns true if the
+attribute B<is> empty. It was also renamed to C<is_empty>, to reflect this.
+
+=item C<find> was renamed to C<first>, and C<first> and C<last> were removed
+
+L<List::Util> refers to the functionality that we used to provide under C<find>
+as L<first|List::Util/first>, so that will likely be more familiar (and will
+fit in better if we decide to add more List::Util functions). C<first> and
+C<last> were removed, since their functionality is easily duplicated with
+curries of C<get>.
+
+=item Helpers that take a coderef of one argument now use C<$_>
+
+Subroutines passed as the first argument to C<first>, C<map>, and C<grep> now
+receive their argument in C<$_> rather than as a parameter to the subroutine.
+Helpers that take a coderef of two or more arguments remain using the argument
+list (there are technical limitations to using C<$a> and C<$b> like C<sort>
+does).
+
+See L<Moose::Meta::Attribute::Native> for the new documentation.
+
+=back
+
+The C<alias> and C<excludes> role parameters have been renamed to C<-alias>
+and C<-excludes>. The old names still work, but new code should use the new
+names, and eventually the old ones will be deprecated and removed.
+
+=head1 0.89
+
+C<< use Moose -metaclass => 'Foo' >> now does alias resolution, just like
+C<-traits> (and the C<metaclass> and C<traits> options to C<has>).
+
+Added two functions C<meta_class_alias> and C<meta_attribute_alias> to
+L<Moose::Util>, to simplify aliasing metaclasses and metatraits. This is
+a wrapper around the old
+
+  package Moose::Meta::Class::Custom::Trait::FooTrait;
+  sub register_implementation { 'My::Meta::Trait' }
+
+way of doing this.
+
+=head1 0.84
+
+When an attribute generates I<no> accessors, we now warn. This is to help
+users who forget the C<is> option. If you really do not want any accessors,
+you can use C<< is => 'bare' >>. You can maintain back compat with older
+versions of Moose by using something like:
+
+    ($Moose::VERSION >= 0.84 ? is => 'bare' : ())
+
+When an accessor overwrites an existing method, we now warn. To work around
+this warning (if you really must have this behavior), you can explicitly
+remove the method before creating it as an accessor:
+
+    sub foo {}
+
+    __PACKAGE__->meta->remove_method('foo');
+
+    has foo => (
+        is => 'ro',
+    );
+
+When an unknown option is passed to C<has>, we now warn. You can silence
+the warning by fixing your code. :)
+
+The C<Role> type has been deprecated. On its own, it was useless,
+since it just checked C<< $object->can('does') >>. If you were using
+it as a parent type, just call C<role_type('Role::Name')> to create an
+appropriate type instead.
+
+=head1 0.78
+
+C<use Moose::Exporter;> now imports C<strict> and C<warnings> into packages
+that use it.
+
+=head1 0.77
+
+C<DEMOLISHALL> and C<DEMOLISH> now receive an argument indicating whether or
+not we are in global destruction.
+
+=head1 0.76
+
+Type constraints no longer run coercions for a value that already matches the
+constraint.  This may affect some (arguably buggy) edge case coercions that
+rely on side effects in the C<via> clause.
+
+=head1 0.75
+
+L<Moose::Exporter> now accepts the C<-metaclass> option for easily
+overriding the metaclass (without L<metaclass>). This works for classes
+and roles.
+
+=head1 0.74
+
+Added a C<duck_type> sugar function to L<Moose::Util::TypeConstraints>
+to make integration with non-Moose classes easier. It simply checks if
+C<< $obj->can() >> a list of methods.
+
+A number of methods (mostly inherited from L<Class::MOP>) have been
+renamed with a leading underscore to indicate their internal-ness. The
+old method names will still work for a while, but will warn that the
+method has been renamed. In a few cases, the method will be removed
+entirely in the future. This may affect MooseX authors who were using
+these methods.
+
+=head1 0.73
+
+Calling C<subtype> with a name as the only argument now throws an
+exception. If you want an anonymous subtype do:
+
+    my $subtype = subtype as 'Foo';
+
+This is related to the changes in version 0.71_01.
+
+The C<is_needed> method in L<Moose::Meta::Method::Destructor> is now
+only usable as a class method. Previously, it worked as a class or
+object method, with a different internal implementation for each
+version.
+
+The internals of making a class immutable changed a lot in Class::MOP
+0.78_02, and Moose's internals have changed along with it. The
+external C<< $metaclass->make_immutable >> method still works the same
+way.
+
+=head1 0.72
+
+A mutable class accepted C<< Foo->new(undef) >> without complaint,
+while an immutable class would blow up with an unhelpful error. Now,
+in both cases we throw a helpful error instead.
+
+This "feature" was originally added to allow for cases such as this:
+
+  my $args;
+
+  if ( something() ) {
+      $args = {...};
+  }
+
+  return My::Class->new($args);
+
+But we decided this is a bad idea and a little too magical, because it
+can easily mask real errors.
+
+=head1 0.71_01
+
+Calling C<type> or C<subtype> without the sugar helpers (C<as>,
+C<where>, C<message>) is now deprecated.
+
+As a side effect, this meant we ended up using Perl prototypes on
+C<as>, and code like this will no longer work:
+
+  use Moose::Util::TypeConstraints;
+  use Declare::Constraints::Simple -All;
+
+  subtype 'ArrayOfInts'
+      => as 'ArrayRef'
+      => IsArrayRef(IsInt);
+
+Instead it must be changed to this:
+
+  subtype(
+      'ArrayOfInts' => {
+          as    => 'ArrayRef',
+          where => IsArrayRef(IsInt)
+      }
+  );
+
+If you want to maintain backwards compat with older versions of Moose,
+you must explicitly test Moose's C<VERSION>:
+
+  if ( Moose->VERSION < 0.71_01 ) {
+      subtype 'ArrayOfInts'
+          => as 'ArrayRef'
+          => IsArrayRef(IsInt);
+  }
+  else {
+      subtype(
+          'ArrayOfInts' => {
+              as    => 'ArrayRef',
+              where => IsArrayRef(IsInt)
+          }
+      );
+  }
+
+=head1 0.70
+
+We no longer pass the meta-attribute object as a final argument to
+triggers. This actually changed for inlined code a while back, but the
+non-inlined version and the docs were still out of date.
+
+If by some chance you actually used this feature, the workaround is
+simple. You fetch the attribute object from out of the C<$self>
+that is passed as the first argument to trigger, like so:
+
+  has 'foo' => (
+      is      => 'ro',
+      isa     => 'Any',
+      trigger => sub {
+          my ( $self, $value ) = @_;
+          my $attr = $self->meta->find_attribute_by_name('foo');
+
+          # ...
+      }
+  );
+
+=head1 0.66
+
+If you created a subtype and passed a parent that Moose didn't know
+about, it simply ignored the parent. Now it automatically creates the
+parent as a class type. This may not be what you want, but is less
+broken than before.
+
+You could declare a name with subtype such as "Foo!Bar". Moose would
+accept this allowed, but if you used it in a parameterized type such
+as "ArrayRef[Foo!Bar]" it wouldn't work. We now do some vetting on
+names created via the sugar functions, so that they can only contain
+alphanumerics, ":", and ".".
+
+=head1 0.65
+
+Methods created via an attribute can now fulfill a C<requires>
+declaration for a role. Honestly we don't know why Stevan didn't make
+this work originally, he was just insane or something.
+
+Stack traces from inlined code will now report the line and file as
+being in your class, as opposed to in Moose guts.
+
+=head1 0.62_02
+
+When a class does not provide all of a role's required methods, the
+error thrown now mentions all of the missing methods, as opposed to
+just the first missing method.
+
+Moose will no longer inline a constructor for your class unless it
+inherits its constructor from Moose::Object, and will warn when it
+doesn't inline. If you want to force inlining anyway, pass
+C<< replace_constructor => 1 >> to C<make_immutable>.
+
+If you want to get rid of the warning, pass C<< inline_constructor =>
+0 >>.
+
+=head1 0.62
+
+Removed the (deprecated) C<make_immutable> keyword.
+
+Removing an attribute from a class now also removes delegation
+(C<handles>) methods installed for that attribute. This is correct
+behavior, but if you were wrongly relying on it you might get bit.
+
+=head1 0.58
+
+Roles now add methods by calling C<add_method>, not
+C<alias_method>. They make sure to always provide a method object,
+which will be cloned internally. This means that it is now possible to
+track the source of a method provided by a role, and even follow its
+history through intermediate roles.  This means that methods added by
+a role now show up when looking at a class's method list/map.
+
+Parameter and Union args are now sorted, this makes Int|Str the same
+constraint as Str|Int. Also, incoming type constraint strings are
+normalized to remove all whitespace differences. This is mostly for
+internals and should not affect outside code.
+
+L<Moose::Exporter> will no longer remove a subroutine that the
+exporting package re-exports. Moose re-exports the Carp::confess
+function, among others. The reasoning is that we cannot know whether
+you have also explicitly imported those functions for your own use, so
+we err on the safe side and always keep them.
+
+=head1 0.56
+
+C<Moose::init_meta> should now be called as a method.
+
+New modules for extension writers, L<Moose::Exporter> and
+L<Moose::Util::MetaRole>.
+
+=head1 0.55_01
+
+Implemented metaclass traits (and wrote a recipe for it):
+
+  use Moose -traits => 'Foo'
+
+This should make writing small Moose extensions a little
+easier.
+
+=head1 0.55
+
+Fixed C<coerce> to accept anon types just like C<subtype> can.
+So that you can do:
+
+  coerce $some_anon_type => from 'Str' => via { ... };
+
+=head1 0.51
+
+Added C<BUILDARGS>, a new step in C<< Moose::Object->new() >>.
+
+=head1 0.49
+
+Fixed how the C<< is => (ro|rw) >> works with custom defined
+C<reader>, C<writer> and C<accessor> options. See the below table for
+details:
+
+  is => ro, writer => _foo    # turns into (reader => foo, writer => _foo)
+  is => rw, writer => _foo    # turns into (reader => foo, writer => _foo)
+  is => rw, accessor => _foo  # turns into (accessor => _foo)
+  is => ro, accessor => _foo  # error, accesor is rw
+
+=head1 0.45
+
+The C<before/around/after> method modifiers now support regexp
+matching of method names. NOTE: this only works for classes, it is
+currently not supported in roles, but, ... patches welcome.
+
+The C<has> keyword for roles now accepts the same array ref form that
+L<Moose>.pm does for classes.
+
+A trigger on a read-only attribute is no longer an error, as it's
+useful to trigger off of the constructor.
+
+Subtypes of parameterizable types now are parameterizable types
+themselves.
+
+=head1 0.44
+
+Fixed issue where C<DEMOLISHALL> was eating the value in C<$@>, and so
+not working correctly. It still kind of eats them, but so does vanilla
+perl.
+
+=head1 0.41
+
+Inherited attributes may now be extended without restriction on the
+type ('isa', 'does').
+
+The entire set of Moose::Meta::TypeConstraint::* classes were
+refactored in this release. If you were relying on their internals you
+should test your code carefully.
+
+=head1 0.40
+
+Documenting the use of '+name' with attributes that come from recently
+composed roles. It makes sense, people are using it, and so why not
+just officially support it.
+
+The C<< Moose::Meta::Class->create >> method now supports roles.
+
+It is now possible to make anonymous enum types by passing C<enum> an
+array reference instead of the C<< enum $name => @values >>.
+
+=head1 0.37
+
+Added the C<make_immutable> keyword as a shortcut to calling
+C<make_immutable> on the meta object. This eventually got removed!
+
+Made C<< init_arg => undef >> work in Moose. This means "do not accept
+a constructor parameter for this attribute".
+
+Type errors now use the provided message. Prior to this release they
+didn't.
+
+=head1 0.34
+
+Moose is now a postmodern object system :)
+
+The Role system was completely refactored. It is 100% backwards
+compat, but the internals were totally changed. If you relied on the
+internals then you are advised to test carefully.
+
+Added method exclusion and aliasing for Roles in this release.
+
+Added the L<Moose::Util::TypeConstraints::OptimizedConstraints>
+module.
+
+Passing a list of values to an accessor (which is only expecting one
+value) used to be silently ignored, now it throws an error.
+
+=head1 0.26
+
+Added parameterized types and did a pretty heavy refactoring of the
+type constraint system.
+
+Better framework extensibility and better support for "making your own
+Moose".
+
+=head1 0.25 or before
+
+Honestly, you shouldn't be using versions of Moose that are this old,
+so many bug fixes and speed improvements have been made you would be
+crazy to not upgrade.
+
+Also, I am tired of going through the Changelog so I am stopping here,
+if anyone would like to continue this please feel free.
+
+=head1 AUTHOR
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See L<Moose/CABAL> and L<Moose/CONTRIBUTORS> for details.
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut

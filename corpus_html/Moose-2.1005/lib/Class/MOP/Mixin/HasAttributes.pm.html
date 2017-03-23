@@ -1,0 +1,144 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Class::MOP::Mixin::HasAttributes</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Class::MOP::Mixin::HasAttributes::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Class::MOP::Mixin::HasAttributes::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Carp         <span class="synString">'confess'</span>;
+<span class="synStatement">use </span>Scalar::Util <span class="synString">'blessed'</span>;
+
+<span class="synStatement">use base</span> <span class="synString">'Class::MOP::Mixin'</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">add_attribute </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$attribute</span>
+        = blessed( <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> ) ? <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> : <span class="synIdentifier">$self-&gt;attribute_metaclass-&gt;new</span>(<span class="synIdentifier">@_</span>);
+
+    ( <span class="synIdentifier">$attribute-&gt;isa</span>(<span class="synString">'Class::MOP::Mixin::AttributeCore'</span>) )
+        || confess
+        <span class="synString">&quot;Your attribute must be an instance of Class::MOP::Mixin::AttributeCore (or a subclass)&quot;</span>;
+
+    <span class="synIdentifier">$self-&gt;_attach_attribute</span>(<span class="synIdentifier">$attribute</span>);
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$attr_name</span> = <span class="synIdentifier">$attribute-&gt;name</span>;
+
+    <span class="synIdentifier">$self-&gt;remove_attribute</span>(<span class="synIdentifier">$attr_name</span>)
+        <span class="synConditional">if</span> <span class="synIdentifier">$self-&gt;has_attribute</span>(<span class="synIdentifier">$attr_name</span>);
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$order</span> = ( <span class="synStatement">scalar</span> <span class="synStatement">keys</span> <span class="synIdentifier">%{</span> <span class="synIdentifier">$self-&gt;_attribute_map</span> <span class="synIdentifier">}</span> );
+    <span class="synIdentifier">$attribute-&gt;_set_insertion_order</span>(<span class="synIdentifier">$order</span>);
+
+    <span class="synIdentifier">$self-&gt;_attribute_map-&gt;{$attr_name}</span> = <span class="synIdentifier">$attribute</span>;
+
+    <span class="synComment"># This method is called to allow for installing accessors. Ideally, we'd</span>
+    <span class="synComment"># use method overriding, but then the subclass would be responsible for</span>
+    <span class="synComment"># making the attribute, which would end up with lots of code</span>
+    <span class="synComment"># duplication. Even more ideally, we'd use augment/inner, but this is</span>
+    <span class="synComment"># Class::MOP!</span>
+    <span class="synIdentifier">$self-&gt;_post_add_attribute</span>(<span class="synIdentifier">$attribute</span>)
+        <span class="synConditional">if</span> <span class="synIdentifier">$self-&gt;can</span>(<span class="synString">'_post_add_attribute'</span>);
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$attribute</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">has_attribute </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$self</span>, <span class="synIdentifier">$attribute_name</span> ) = <span class="synIdentifier">@_</span>;
+
+    ( <span class="synOperator">defined</span> <span class="synIdentifier">$attribute_name</span> )
+        || confess <span class="synString">&quot;You must define an attribute name&quot;</span>;
+
+    <span class="synStatement">exists</span> <span class="synIdentifier">$self-&gt;_attribute_map-&gt;{$attribute_name}</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">get_attribute </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$self</span>, <span class="synIdentifier">$attribute_name</span> ) = <span class="synIdentifier">@_</span>;
+
+    ( <span class="synOperator">defined</span> <span class="synIdentifier">$attribute_name</span> )
+        || confess <span class="synString">&quot;You must define an attribute name&quot;</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;_attribute_map-&gt;{$attribute_name}</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">remove_attribute </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$self</span>, <span class="synIdentifier">$attribute_name</span> ) = <span class="synIdentifier">@_</span>;
+
+    ( <span class="synOperator">defined</span> <span class="synIdentifier">$attribute_name</span> )
+        || confess <span class="synString">&quot;You must define an attribute name&quot;</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$removed_attribute</span> = <span class="synIdentifier">$self-&gt;_attribute_map-&gt;{$attribute_name}</span>;
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synOperator">defined</span> <span class="synIdentifier">$removed_attribute</span>;
+
+    <span class="synStatement">delete</span> <span class="synIdentifier">$self-&gt;_attribute_map-&gt;{$attribute_name}</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$removed_attribute</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">get_attribute_list </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">keys</span> <span class="synIdentifier">%{</span> <span class="synIdentifier">$self-&gt;_attribute_map</span> <span class="synIdentifier">}</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_restore_metaattributes_from </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$old_meta</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$attr</span> (<span class="synStatement">sort</span> <span class="synStatement">{</span> <span class="synIdentifier">$a-&gt;insertion_order</span> &lt;=&gt; <span class="synIdentifier">$b-&gt;insertion_order</span> <span class="synStatement">}</span>
+                       <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$old_meta-&gt;get_attribute</span>(<span class="synIdentifier">$_</span>) <span class="synStatement">}</span>
+                           <span class="synIdentifier">$old_meta-&gt;get_attribute_list</span>) {
+        <span class="synIdentifier">$attr-&gt;_make_compatible_with</span>(<span class="synIdentifier">$self-&gt;attribute_metaclass</span>);
+        <span class="synIdentifier">$self-&gt;add_attribute</span>(<span class="synIdentifier">$attr</span>);
+    }
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: Methods for metaclasses which have attributes</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Class::MOP::Mixin::HasAttributes - Methods for metaclasses which have attributes
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This class implements methods for metaclasses which have attributes
+(<span class="synIdentifier">L&lt;Class::MOP::Class&gt;</span> and <span class="synIdentifier">L&lt;Moose::Meta::Role&gt;</span>). See <span class="synIdentifier">L&lt;Class::MOP::Class&gt;</span> for
+API details.
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

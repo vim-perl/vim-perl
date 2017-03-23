@@ -1,0 +1,221 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Moose::Meta::TypeConstraint::Role</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::TypeConstraint::Role::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::TypeConstraint::Role::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+<span class="synStatement">use </span>metaclass;
+
+<span class="synStatement">use </span>B;
+<span class="synStatement">use </span>Scalar::Util <span class="synString">'blessed'</span>;
+<span class="synStatement">use </span>Moose::Util::TypeConstraints ();
+
+<span class="synStatement">use base</span> <span class="synString">'Moose::Meta::TypeConstraint'</span>;
+
+__PACKAGE__<span class="synIdentifier">-&gt;meta-&gt;add_attribute</span>(<span class="synString">'role'</span> =&gt; (
+    <span class="synString">reader</span> =&gt; <span class="synString">'role'</span>,
+    Class::MOP::_definition_context(),
+));
+
+<span class="synStatement">my</span> <span class="synIdentifier">$inliner</span> = <span class="synKeyword">sub </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$val</span>  = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">return</span> <span class="synString">'Moose::Util::does_role('</span>
+             . <span class="synIdentifier">$val</span> . <span class="synString">', '</span>
+             . B::perlstring(<span class="synIdentifier">$self-&gt;role</span>)
+         . <span class="synString">')'</span>;
+};
+
+<span class="synKeyword">sub </span><span class="synFunction">new </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$class</span>, <span class="synIdentifier">%args</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synIdentifier">$args{</span><span class="synString">parent</span><span class="synIdentifier">}</span> = Moose::Util::TypeConstraints::find_type_constraint(<span class="synString">'Object'</span>);
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$role_name</span> = <span class="synIdentifier">$args{</span><span class="synString">role</span><span class="synIdentifier">}</span>;
+    <span class="synIdentifier">$args{</span><span class="synString">constraint</span><span class="synIdentifier">}</span> = <span class="synKeyword">sub </span>{ Moose::Util::does_role( <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>, <span class="synIdentifier">$role_name</span> ) };
+
+    <span class="synIdentifier">$args{</span><span class="synString">inlined</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$inliner</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synIdentifier">$class-&gt;SUPER</span>::new( \<span class="synIdentifier">%args</span> );
+
+    <span class="synIdentifier">$self-&gt;_create_hand_optimized_type_constraint</span>;
+    <span class="synIdentifier">$self-&gt;compile_type_constraint</span>();
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$self</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_create_hand_optimized_type_constraint </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$role</span> = <span class="synIdentifier">$self-&gt;role</span>;
+    <span class="synIdentifier">$self-&gt;hand_optimized_type_constraint</span>(
+        <span class="synKeyword">sub </span>{ Moose::Util::does_role(<span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>, <span class="synIdentifier">$role</span>) }
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">parents </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">return</span> (
+        <span class="synIdentifier">$self-&gt;parent</span>,
+        <span class="synStatement">map</span> <span class="synStatement">{</span>
+            <span class="synComment"># </span><span class="synTodo">FIXME</span><span class="synComment"> find_type_constraint might find a TC named after the role but that isn't really it</span>
+            <span class="synComment"># I did this anyway since it's a convention that preceded TypeConstraint::Role, and it should DWIM</span>
+            <span class="synComment"># if anybody thinks this problematic please discuss on IRC.</span>
+            <span class="synComment"># a possible fix is to add by attr indexing to the type registry to find types of a certain property</span>
+            <span class="synComment"># regardless of their name</span>
+            Moose::Util::TypeConstraints::find_type_constraint(<span class="synIdentifier">$_</span>)
+                ||
+            __PACKAGE__<span class="synIdentifier">-&gt;new</span>( <span class="synString">role</span> =&gt; <span class="synIdentifier">$_</span>, <span class="synString">name</span> =&gt; <span class="synString">&quot;__ANON__&quot;</span> )
+        <span class="synStatement">}</span> <span class="synIdentifier">@{</span> Class::MOP::class_of(<span class="synIdentifier">$self-&gt;role</span>)-&gt;get_roles <span class="synIdentifier">}</span>,
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">equals </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$self</span>, <span class="synIdentifier">$type_or_name</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$other</span> = Moose::Util::TypeConstraints::find_type_constraint(<span class="synIdentifier">$type_or_name</span>);
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synOperator">defined</span> <span class="synIdentifier">$other</span>;
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$other-&gt;isa</span>(__PACKAGE__);
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;role</span> <span class="synOperator">eq</span> <span class="synIdentifier">$other-&gt;role</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">is_a_type_of </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">$type_or_name</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$type</span> = Moose::Util::TypeConstraints::find_type_constraint(<span class="synIdentifier">$type_or_name</span>);
+
+    (<span class="synIdentifier">$self-&gt;equals</span>(<span class="synIdentifier">$type</span>) || <span class="synIdentifier">$self-&gt;is_subtype_of</span>(<span class="synIdentifier">$type_or_name</span>));
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">is_subtype_of </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">$type_or_name_or_role</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synConditional">if</span> ( <span class="synOperator">not</span> <span class="synOperator">ref</span> <span class="synIdentifier">$type_or_name_or_role</span> ) {
+        <span class="synComment"># it might be a role</span>
+        <span class="synStatement">my</span> <span class="synIdentifier">$class</span> = Class::MOP::class_of(<span class="synIdentifier">$self-&gt;role</span>);
+        <span class="synStatement">return</span> <span class="synNumber">1</span> <span class="synConditional">if</span> <span class="synOperator">defined</span>(<span class="synIdentifier">$class</span>) &amp;&amp; <span class="synIdentifier">$class-&gt;does_role</span>( <span class="synIdentifier">$type_or_name_or_role</span> );
+    }
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$type</span> = Moose::Util::TypeConstraints::find_type_constraint(<span class="synIdentifier">$type_or_name_or_role</span>);
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synOperator">defined</span> <span class="synIdentifier">$type</span>;
+
+    <span class="synConditional">if</span> ( <span class="synIdentifier">$type-&gt;isa</span>(__PACKAGE__) ) {
+        <span class="synComment"># if $type_or_name_or_role isn't a role, it might be the TC name of another ::Role type</span>
+        <span class="synComment"># or it could also just be a type object in this branch</span>
+        <span class="synStatement">my</span> <span class="synIdentifier">$class</span> = Class::MOP::class_of(<span class="synIdentifier">$self-&gt;role</span>);
+        <span class="synStatement">return</span> <span class="synOperator">defined</span>(<span class="synIdentifier">$class</span>) &amp;&amp; <span class="synIdentifier">$class-&gt;does_role</span>( <span class="synIdentifier">$type-&gt;role</span> );
+    } <span class="synConditional">else</span> {
+        <span class="synComment"># the only other thing we are a subtype of is Object</span>
+        <span class="synIdentifier">$self-&gt;SUPER</span>::is_subtype_of(<span class="synIdentifier">$type</span>);
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">create_child_type </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">@args</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">return</span> Moose::Meta::TypeConstraint-&gt;new(<span class="synIdentifier">@args</span>, <span class="synString">parent</span> =&gt; <span class="synIdentifier">$self</span>);
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: Role/TypeConstraint parallel hierarchy</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Moose::Meta::TypeConstraint::Role - Role/TypeConstraint parallel hierarchy
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This class represents type constraints for a role.
+
+<span class="synStatement">=head1</span><span class="synString"> INHERITANCE</span>
+
+<span class="synIdentifier">C&lt;Moose::Meta::TypeConstraint::Role&gt;</span> is a subclass of
+<span class="synIdentifier">L&lt;Moose::Meta::TypeConstraint&gt;</span>.
+
+<span class="synStatement">=head1</span><span class="synString"> METHODS</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; Moose::Meta::TypeConstraint::Role-&gt;new(%options) &gt;&gt;</span>
+
+This creates a new role type constraint based on the given
+<span class="synIdentifier">C&lt;%options&gt;</span>.
+
+It takes the same options as its parent, with two exceptions. First,
+it requires an additional option, <span class="synIdentifier">C&lt;role&gt;</span>, which is name of the
+constraint's role.  Second, it automatically sets the parent to the
+<span class="synIdentifier">C&lt;Object&gt;</span> type.
+
+The constructor also overrides the hand optimized type constraint with
+one it creates internally.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $constraint-&gt;role &gt;&gt;</span>
+
+Returns the role name associated with the constraint.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $constraint-&gt;parents &gt;&gt;</span>
+
+Returns all the type's parent types, corresponding to the roles that
+its role does.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $constraint-&gt;is_subtype_of($type_name_or_object) &gt;&gt;</span>
+
+If the given type is also a role type, then this checks that the
+type's role does the other type's role.
+
+Otherwise it falls back to the implementation in
+<span class="synIdentifier">L&lt;Moose::Meta::TypeConstraint&gt;</span>.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $constraint-&gt;create_child_type(%options) &gt;&gt;</span>
+
+This returns a new <span class="synIdentifier">L&lt;Moose::Meta::TypeConstraint&gt;</span> object with the type
+as its parent.
+
+Note that it does <span class="synIdentifier">I&lt;not&gt;</span> return a <span class="synIdentifier">C&lt;Moose::Meta::TypeConstraint::Role&gt;</span>
+object!
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> BUGS</span>
+
+See <span class="synIdentifier">L&lt;Moose/BUGS&gt;</span> for details on reporting bugs.
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

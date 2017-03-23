@@ -1,0 +1,20 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+# PODNAME: moose-outdated
+
+use Getopt::Long;
+use Moose::Conflicts;
+
+my $verbose;
+GetOptions( 'verbose|v' => \$verbose );
+
+if ($verbose) {
+    Moose::Conflicts->check_conflicts;
+}
+else {
+    my @conflicts = Moose::Conflicts->calculate_conflicts;
+    print "$_\n" for map { $_->{package} } @conflicts;
+    exit @conflicts;
+}

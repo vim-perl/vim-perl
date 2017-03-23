@@ -1,0 +1,1021 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Moose::Exporter</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Exporter::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Exporter::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Class::Load <span class="synString">qw(is_class_loaded)</span>;
+<span class="synStatement">use </span>Class::MOP;
+<span class="synStatement">use </span>List::MoreUtils <span class="synString">qw( first_index uniq )</span>;
+<span class="synStatement">use </span>Moose::Util::MetaRole;
+<span class="synStatement">use </span>Scalar::Util <span class="synString">qw(reftype)</span>;
+<span class="synStatement">use </span>Sub::Exporter <span class="synFloat">0.980</span>;
+<span class="synStatement">use </span>Sub::Name <span class="synString">qw(subname)</span>;
+
+<span class="synStatement">my</span> <span class="synIdentifier">%EXPORT_SPEC</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">setup_import_methods </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$class</span>, <span class="synIdentifier">%args</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synIdentifier">$args{</span><span class="synString">exporting_package</span><span class="synIdentifier">}</span> ||= <span class="synStatement">caller</span>();
+
+    <span class="synIdentifier">$class-&gt;build_import_methods</span>(
+        <span class="synIdentifier">%args</span>,
+        <span class="synString">install</span> =&gt; [<span class="synString">qw(import unimport init_meta)</span>]
+    );
+}
+
+<span class="synComment"># A reminder to intrepid Moose hackers</span>
+<span class="synComment"># there may be more than one level of exporter</span>
+<span class="synComment"># don't make doy cry. -- perigrin</span>
+
+<span class="synKeyword">sub </span><span class="synFunction">build_import_methods </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$class</span>, <span class="synIdentifier">%args</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$exporting_package</span> = <span class="synIdentifier">$args{</span><span class="synString">exporting_package</span><span class="synIdentifier">}</span> ||= <span class="synStatement">caller</span>();
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$meta_lookup</span> = <span class="synIdentifier">$args{</span><span class="synString">meta_lookup</span><span class="synIdentifier">}</span> || <span class="synKeyword">sub </span>{ Class::MOP::class_of(<span class="synStatement">shift</span>) };
+
+    <span class="synIdentifier">$EXPORT_SPEC{$exporting_package}</span> = \<span class="synIdentifier">%args</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">@exports_from</span> = <span class="synIdentifier">$class-&gt;_follow_also</span>(<span class="synIdentifier">$exporting_package</span>);
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$export_recorder</span> = {};
+    <span class="synStatement">my</span> <span class="synIdentifier">$is_reexport</span>     = {};
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$exports</span> = <span class="synIdentifier">$class-&gt;_make_sub_exporter_params</span>(
+        [ <span class="synIdentifier">$exporting_package</span>, <span class="synIdentifier">@exports_from</span> ],
+        <span class="synIdentifier">$export_recorder</span>,
+        <span class="synIdentifier">$is_reexport</span>,
+        <span class="synIdentifier">$args{</span><span class="synString">meta_lookup</span><span class="synIdentifier">}</span>, <span class="synComment"># so that we don't pass through the default</span>
+    );
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$exporter</span> = <span class="synIdentifier">$class-&gt;_make_exporter</span>(
+        <span class="synIdentifier">$exports</span>,
+        <span class="synIdentifier">$is_reexport</span>,
+        <span class="synIdentifier">$meta_lookup</span>,
+    );
+
+    <span class="synStatement">my</span> <span class="synIdentifier">%methods</span>;
+    <span class="synIdentifier">$methods{</span><span class="synString">import</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$class-&gt;_make_import_sub</span>(
+        <span class="synIdentifier">$exporting_package</span>,
+        <span class="synIdentifier">$exporter</span>,
+        \<span class="synIdentifier">@exports_from</span>,
+        <span class="synIdentifier">$is_reexport</span>,
+        <span class="synIdentifier">$meta_lookup</span>,
+    );
+
+    <span class="synIdentifier">$methods{</span><span class="synString">unimport</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$class-&gt;_make_unimport_sub</span>(
+        <span class="synIdentifier">$exporting_package</span>,
+        <span class="synIdentifier">$exports</span>,
+        <span class="synIdentifier">$export_recorder</span>,
+        <span class="synIdentifier">$is_reexport</span>,
+        <span class="synIdentifier">$meta_lookup</span>,
+    );
+
+    <span class="synIdentifier">$methods{</span><span class="synString">init_meta</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$class-&gt;_make_init_meta</span>(
+        <span class="synIdentifier">$exporting_package</span>,
+        \<span class="synIdentifier">%args</span>,
+        <span class="synIdentifier">$meta_lookup</span>,
+    );
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$package</span> = Class::MOP::Package-&gt;initialize(<span class="synIdentifier">$exporting_package</span>);
+    <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$to_install</span> ( <span class="synIdentifier">@{</span> <span class="synIdentifier">$args{</span><span class="synString">install</span><span class="synIdentifier">}</span> || [] <span class="synIdentifier">}</span> ) {
+        <span class="synStatement">my</span> <span class="synIdentifier">$symbol</span> = <span class="synString">'&amp;'</span> . <span class="synIdentifier">$to_install</span>;
+        <span class="synStatement">next</span>
+            <span class="synConditional">unless</span> <span class="synIdentifier">$methods{$to_install}</span>
+                &amp;&amp; !<span class="synIdentifier">$package-&gt;has_package_symbol</span>(<span class="synIdentifier">$symbol</span>);
+        <span class="synIdentifier">$package-&gt;add_package_symbol</span>( <span class="synIdentifier">$symbol</span>, <span class="synIdentifier">$methods{$to_install}</span> );
+    }
+
+    <span class="synStatement">return</span> ( <span class="synIdentifier">$methods{</span><span class="synString">import</span><span class="synIdentifier">}</span>, <span class="synIdentifier">$methods{</span><span class="synString">unimport</span><span class="synIdentifier">}</span>, <span class="synIdentifier">$methods{</span><span class="synString">init_meta</span><span class="synIdentifier">}</span> );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_make_exporter </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$class</span>, <span class="synIdentifier">$exports</span>, <span class="synIdentifier">$is_reexport</span>, <span class="synIdentifier">$meta_lookup</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> Sub::Exporter::build_exporter(
+        {
+            <span class="synString">exports</span>   =&gt; <span class="synIdentifier">$exports</span>,
+            <span class="synString">groups</span>    =&gt; { <span class="synString">default</span> =&gt; [<span class="synString">':all'</span>] },
+            <span class="synString">installer</span> =&gt; <span class="synKeyword">sub </span>{
+                <span class="synStatement">my</span> (<span class="synIdentifier">$arg</span>, <span class="synIdentifier">$to_export</span>) = <span class="synIdentifier">@_</span>;
+                <span class="synStatement">my</span> <span class="synIdentifier">$meta</span> = <span class="synIdentifier">$meta_lookup</span>-&gt;(<span class="synIdentifier">$arg-&gt;{</span><span class="synString">into</span><span class="synIdentifier">}</span>);
+
+                <span class="synStatement">goto</span> <span class="synIdentifier">&amp;</span><span class="synType">Sub::Exporter::</span><span class="synIdentifier">default_installer</span> <span class="synConditional">unless</span> <span class="synIdentifier">$meta</span>;
+
+                <span class="synComment"># don't overwrite existing symbols with our magically flagged</span>
+                <span class="synComment"># version of it if we would install the same sub that's already</span>
+                <span class="synComment"># in the importer</span>
+
+                <span class="synStatement">my</span> <span class="synIdentifier">@filtered_to_export</span>;
+                <span class="synStatement">my</span> <span class="synIdentifier">%installed</span>;
+                <span class="synRepeat">for</span> (<span class="synStatement">my</span> <span class="synIdentifier">$i</span> = <span class="synNumber">0</span>; <span class="synIdentifier">$i</span> &lt; <span class="synIdentifier">@{</span> <span class="synIdentifier">$to_export</span> <span class="synIdentifier">}</span>; <span class="synIdentifier">$i</span> += <span class="synNumber">2</span>) {
+                    <span class="synStatement">my</span> (<span class="synIdentifier">$as</span>, <span class="synIdentifier">$cv</span>) = <span class="synIdentifier">@{</span> <span class="synIdentifier">$to_export</span> <span class="synIdentifier">}[$i</span>, <span class="synIdentifier">$i</span> + <span class="synNumber">1</span><span class="synIdentifier">]</span>;
+
+                    <span class="synStatement">next</span> <span class="synConditional">if</span> !<span class="synOperator">ref</span>(<span class="synIdentifier">$as</span>)
+                         &amp;&amp; <span class="synIdentifier">$meta-&gt;has_package_symbol</span>(<span class="synString">'&amp;'</span> . <span class="synIdentifier">$as</span>)
+                         &amp;&amp; <span class="synIdentifier">$meta-&gt;get_package_symbol</span>(<span class="synString">'&amp;'</span> . <span class="synIdentifier">$as</span>) == <span class="synIdentifier">$cv</span>;
+
+                    <span class="synStatement">push</span> <span class="synIdentifier">@filtered_to_export</span>, <span class="synIdentifier">$as</span>, <span class="synIdentifier">$cv</span>;
+                    <span class="synIdentifier">$installed{$as}</span> = <span class="synNumber">1</span> <span class="synConditional">unless</span> <span class="synOperator">ref</span> <span class="synIdentifier">$as</span>;
+                }
+
+                Sub::Exporter::default_installer(<span class="synIdentifier">$arg</span>, \<span class="synIdentifier">@filtered_to_export</span>);
+
+                <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$name</span> ( <span class="synStatement">keys</span> <span class="synIdentifier">%{$is_reexport}</span> ) {
+                    <span class="synStatement">no strict</span> <span class="synString">'refs'</span>;
+                    <span class="synStatement">no warnings</span> <span class="synString">'once'</span>;
+                    <span class="synStatement">next</span> <span class="synConditional">unless</span> <span class="synStatement">exists</span> <span class="synIdentifier">$installed{$name}</span>;
+                    _flag_as_reexport( \<span class="synIdentifier">*{</span> <span class="synStatement">join</span> <span class="synString">q{::}</span>, <span class="synIdentifier">$arg-&gt;{</span><span class="synString">into</span><span class="synIdentifier">}</span>, <span class="synIdentifier">$name</span> <span class="synIdentifier">}</span> );
+                }
+            },
+        }
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_follow_also </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$class</span>             = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$exporting_package</span> = <span class="synStatement">shift</span>;
+
+    _die_if_cycle_found_in_also_list_for_package(<span class="synIdentifier">$exporting_package</span>);
+
+    <span class="synStatement">return</span> uniq( _follow_also_real(<span class="synIdentifier">$exporting_package</span>) );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_follow_also_real </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$exporting_package</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">@also</span>              = _also_list_for_package(<span class="synIdentifier">$exporting_package</span>);
+
+    <span class="synStatement">return</span> <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_</span>, _follow_also_real(<span class="synIdentifier">$_</span>) <span class="synStatement">}</span> <span class="synIdentifier">@also</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_also_list_for_package </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$package</span> = <span class="synStatement">shift</span>;
+
+    <span class="synConditional">if</span> ( !<span class="synStatement">exists</span> <span class="synIdentifier">$EXPORT_SPEC{$package}</span> ) {
+        <span class="synStatement">my</span> <span class="synIdentifier">$loaded</span> = is_class_loaded(<span class="synIdentifier">$package</span>);
+
+        <span class="synStatement">die</span> <span class="synString">&quot;Package in also (</span><span class="synIdentifier">$package</span><span class="synString">) does not seem to &quot;</span>
+            . <span class="synString">&quot;use Moose::Exporter&quot;</span>
+            . ( <span class="synIdentifier">$loaded</span> ? <span class="synString">&quot;&quot;</span> : <span class="synString">&quot; (is it loaded?)&quot;</span> );
+    }
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$also</span> = <span class="synIdentifier">$EXPORT_SPEC{$package}{</span><span class="synString">also</span><span class="synIdentifier">}</span>;
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synOperator">defined</span> <span class="synIdentifier">$also</span>;
+
+    <span class="synStatement">return</span> <span class="synOperator">ref</span> <span class="synIdentifier">$also</span> ? <span class="synIdentifier">@$also</span> : <span class="synIdentifier">$also</span>;
+}
+
+<span class="synComment"># this is no Tarjan algorithm, but for the list sizes expected,</span>
+<span class="synComment"># brute force will probably be fine (and more maintainable)</span>
+<span class="synKeyword">sub </span><span class="synFunction">_die_if_cycle_found_in_also_list_for_package </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$package</span> = <span class="synStatement">shift</span>;
+    _die_if_also_list_cycles_back_to_existing_stack(
+        [ _also_list_for_package(<span class="synIdentifier">$package</span>) ],
+        [<span class="synIdentifier">$package</span>],
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_die_if_also_list_cycles_back_to_existing_stack </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$also_list</span>, <span class="synIdentifier">$existing_stack</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">@$also_list</span> &amp;&amp; <span class="synIdentifier">@$existing_stack</span>;
+
+    <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$also_member</span> (<span class="synIdentifier">@$also_list</span>) {
+        <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$stack_member</span> (<span class="synIdentifier">@$existing_stack</span>) {
+            <span class="synStatement">next</span> <span class="synConditional">unless</span> <span class="synIdentifier">$also_member</span> <span class="synOperator">eq</span> <span class="synIdentifier">$stack_member</span>;
+
+            <span class="synStatement">die</span>
+                <span class="synString">&quot;Circular reference in 'also' parameter to Moose::Exporter between &quot;</span>
+                . <span class="synStatement">join</span>(
+                <span class="synString">', '</span>,
+                <span class="synIdentifier">@$existing_stack</span>
+                ) . <span class="synString">&quot; and </span><span class="synIdentifier">$also_member</span><span class="synString">&quot;</span>;
+        }
+
+        _die_if_also_list_cycles_back_to_existing_stack(
+            [ _also_list_for_package(<span class="synIdentifier">$also_member</span>) ],
+            [ <span class="synIdentifier">$also_member</span>, <span class="synIdentifier">@$existing_stack</span> ],
+        );
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_parse_trait_aliases </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$class</span>   = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$package</span>, <span class="synIdentifier">$aliases</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">@ret</span>;
+    <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$alias</span> (<span class="synIdentifier">@$aliases</span>) {
+        <span class="synStatement">my</span> <span class="synIdentifier">$name</span>;
+        <span class="synConditional">if</span> (<span class="synOperator">ref</span>(<span class="synIdentifier">$alias</span>)) {
+            reftype(<span class="synIdentifier">$alias</span>) <span class="synOperator">eq</span> <span class="synString">'ARRAY'</span>
+                <span class="synOperator">or</span> Moose-&gt;throw_error(reftype(<span class="synIdentifier">$alias</span>) . <span class="synString">&quot; references are not &quot;</span>
+                                    . <span class="synString">&quot;valid arguments to the 'trait_aliases' &quot;</span>
+                                    . <span class="synString">&quot;option&quot;</span>);
+
+            (<span class="synIdentifier">$alias</span>, <span class="synIdentifier">$name</span>) = <span class="synIdentifier">@$alias</span>;
+        }
+        <span class="synConditional">else</span> {
+            (<span class="synIdentifier">$name</span> = <span class="synIdentifier">$alias</span>) =~ <span class="synStatement">s/</span><span class="synSpecial">.*</span><span class="synString">::</span><span class="synStatement">//</span>;
+        }
+        <span class="synStatement">push</span> <span class="synIdentifier">@ret</span>, subname <span class="synString">&quot;</span><span class="synIdentifier">${package}</span><span class="synString">::</span><span class="synIdentifier">${name}</span><span class="synString">&quot;</span> =&gt; <span class="synKeyword">sub </span><span class="synType">() </span>{ <span class="synIdentifier">$alias</span> };
+    }
+
+    <span class="synStatement">return</span> <span class="synIdentifier">@ret</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_make_sub_exporter_params </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$class</span>                = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$packages</span>             = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$export_recorder</span>      = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$is_reexport</span>          = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$meta_lookup_override</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">%exports</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$current_meta_lookup</span>;
+
+    <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$package</span> ( <span class="synIdentifier">@{$packages}</span> ) {
+        <span class="synStatement">my</span> <span class="synIdentifier">$args</span> = <span class="synIdentifier">$EXPORT_SPEC{$package}</span>
+            <span class="synOperator">or</span> <span class="synStatement">die</span> <span class="synString">&quot;The </span><span class="synIdentifier">$package</span><span class="synString"> package does not use Moose::Exporter</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+
+        <span class="synIdentifier">$current_meta_lookup</span> = <span class="synIdentifier">$meta_lookup_override</span> || <span class="synIdentifier">$args-&gt;{</span><span class="synString">meta_lookup</span><span class="synIdentifier">}</span>;
+        <span class="synIdentifier">$meta_lookup_override</span> = <span class="synIdentifier">$current_meta_lookup</span>;
+
+        <span class="synStatement">my</span> <span class="synIdentifier">$meta_lookup</span> = <span class="synIdentifier">$current_meta_lookup</span>
+                       || <span class="synKeyword">sub </span>{ Class::MOP::class_of(<span class="synStatement">shift</span>) };
+
+        <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$name</span> ( <span class="synIdentifier">@{</span> <span class="synIdentifier">$args-&gt;{</span><span class="synString">with_meta</span><span class="synIdentifier">}</span> <span class="synIdentifier">}</span> ) {
+            <span class="synStatement">my</span> <span class="synIdentifier">$sub</span> = <span class="synIdentifier">$class-&gt;_sub_from_package</span>( <span class="synIdentifier">$package</span>, <span class="synIdentifier">$name</span> )
+                <span class="synOperator">or</span> <span class="synStatement">next</span>;
+
+            <span class="synStatement">my</span> <span class="synIdentifier">$fq_name</span> = <span class="synIdentifier">$package</span> . <span class="synString">'::'</span> . <span class="synIdentifier">$name</span>;
+
+            <span class="synIdentifier">$exports{$name}</span> = <span class="synIdentifier">$class-&gt;_make_wrapped_sub_with_meta</span>(
+                <span class="synIdentifier">$fq_name</span>,
+                <span class="synIdentifier">$sub</span>,
+                <span class="synIdentifier">$export_recorder</span>,
+                <span class="synIdentifier">$meta_lookup</span>,
+            ) <span class="synConditional">unless</span> <span class="synStatement">exists</span> <span class="synIdentifier">$exports{$name}</span>;
+        }
+
+        <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$name</span> ( <span class="synIdentifier">@{</span> <span class="synIdentifier">$args-&gt;{</span><span class="synString">with_caller</span><span class="synIdentifier">}</span> <span class="synIdentifier">}</span> ) {
+            <span class="synStatement">my</span> <span class="synIdentifier">$sub</span> = <span class="synIdentifier">$class-&gt;_sub_from_package</span>( <span class="synIdentifier">$package</span>, <span class="synIdentifier">$name</span> )
+                <span class="synOperator">or</span> <span class="synStatement">next</span>;
+
+            <span class="synStatement">my</span> <span class="synIdentifier">$fq_name</span> = <span class="synIdentifier">$package</span> . <span class="synString">'::'</span> . <span class="synIdentifier">$name</span>;
+
+            <span class="synIdentifier">$exports{$name}</span> = <span class="synIdentifier">$class-&gt;_make_wrapped_sub</span>(
+                <span class="synIdentifier">$fq_name</span>,
+                <span class="synIdentifier">$sub</span>,
+                <span class="synIdentifier">$export_recorder</span>,
+            ) <span class="synConditional">unless</span> <span class="synStatement">exists</span> <span class="synIdentifier">$exports{$name}</span>;
+        }
+
+        <span class="synStatement">my</span> <span class="synIdentifier">@extra_exports</span> = <span class="synIdentifier">$class-&gt;_parse_trait_aliases</span>(
+            <span class="synIdentifier">$package</span>, <span class="synIdentifier">$args-&gt;{</span><span class="synString">trait_aliases</span><span class="synIdentifier">}</span>,
+        );
+        <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$name</span> ( <span class="synIdentifier">@{</span> <span class="synIdentifier">$args-&gt;{</span><span class="synString">as_is</span><span class="synIdentifier">}</span> <span class="synIdentifier">}</span>, <span class="synIdentifier">@extra_exports</span> ) {
+            <span class="synStatement">my</span> ( <span class="synIdentifier">$sub</span>, <span class="synIdentifier">$coderef_name</span> );
+
+            <span class="synConditional">if</span> ( <span class="synOperator">ref</span> <span class="synIdentifier">$name</span> ) {
+                <span class="synIdentifier">$sub</span> = <span class="synIdentifier">$name</span>;
+
+                <span class="synStatement">my</span> <span class="synIdentifier">$coderef_pkg</span>;
+                ( <span class="synIdentifier">$coderef_pkg</span>, <span class="synIdentifier">$coderef_name</span> )
+                    = Class::MOP::get_code_info(<span class="synIdentifier">$name</span>);
+
+                <span class="synConditional">if</span> ( <span class="synIdentifier">$coderef_pkg</span> <span class="synOperator">ne</span> <span class="synIdentifier">$package</span> ) {
+                    <span class="synIdentifier">$is_reexport-&gt;{$coderef_name}</span> = <span class="synNumber">1</span>;
+                }
+            }
+            <span class="synConditional">else</span> {
+                <span class="synIdentifier">$sub</span> = <span class="synIdentifier">$class-&gt;_sub_from_package</span>( <span class="synIdentifier">$package</span>, <span class="synIdentifier">$name</span> )
+                    <span class="synOperator">or</span> <span class="synStatement">next</span>;
+
+                <span class="synIdentifier">$coderef_name</span> = <span class="synIdentifier">$name</span>;
+            }
+
+            <span class="synIdentifier">$export_recorder-&gt;{$sub}</span> = <span class="synNumber">1</span>;
+
+            <span class="synIdentifier">$exports{$coderef_name}</span> = <span class="synKeyword">sub </span>{ <span class="synIdentifier">$sub</span> }
+                <span class="synConditional">unless</span> <span class="synStatement">exists</span> <span class="synIdentifier">$exports{$coderef_name}</span>;
+        }
+    }
+
+    <span class="synStatement">return</span> \<span class="synIdentifier">%exports</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_sub_from_package </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$sclass</span>  = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$package</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$name</span>    = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$sub</span> = <span class="synOperator">do</span> {
+        <span class="synStatement">no strict</span> <span class="synString">'refs'</span>;
+        \<span class="synIdentifier">&amp;{</span> <span class="synIdentifier">$package</span> . <span class="synString">'::'</span> . <span class="synIdentifier">$name</span> <span class="synIdentifier">}</span>;
+    };
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$sub</span> <span class="synConditional">if</span> <span class="synOperator">defined</span> <span class="synIdentifier">&amp;$sub</span>;
+
+    Carp::cluck <span class="synString">&quot;Trying to export undefined sub </span><span class="synIdentifier">${package}</span><span class="synString">::</span><span class="synIdentifier">${name}</span><span class="synString">&quot;</span>;
+
+    <span class="synStatement">return</span>;
+}
+
+<span class="synStatement">our</span> <span class="synIdentifier">$CALLER</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">_make_wrapped_sub </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span>            = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$fq_name</span>         = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$sub</span>             = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$export_recorder</span> = <span class="synStatement">shift</span>;
+
+    <span class="synComment"># We need to set the package at import time, so that when</span>
+    <span class="synComment"># package Foo imports has(), we capture &quot;Foo&quot; as the</span>
+    <span class="synComment"># package. This lets other packages call Foo::has() and get</span>
+    <span class="synComment"># the right package. This is done for backwards compatibility</span>
+    <span class="synComment"># with existing production code, not because this is a good</span>
+    <span class="synComment"># idea ;)</span>
+    <span class="synStatement">return</span> <span class="synKeyword">sub </span>{
+        <span class="synStatement">my</span> <span class="synIdentifier">$caller</span> = <span class="synIdentifier">$CALLER</span>;
+
+        <span class="synStatement">my</span> <span class="synIdentifier">$wrapper</span> = <span class="synIdentifier">$self-&gt;_curry_wrapper</span>( <span class="synIdentifier">$sub</span>, <span class="synIdentifier">$fq_name</span>, <span class="synIdentifier">$caller</span> );
+
+        <span class="synStatement">my</span> <span class="synIdentifier">$sub</span> = subname( <span class="synIdentifier">$fq_name</span> =&gt; <span class="synIdentifier">$wrapper</span> );
+
+        <span class="synIdentifier">$export_recorder-&gt;{$sub}</span> = <span class="synNumber">1</span>;
+
+        <span class="synStatement">return</span> <span class="synIdentifier">$sub</span>;
+    };
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_make_wrapped_sub_with_meta </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span>            = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$fq_name</span>         = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$sub</span>             = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$export_recorder</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$meta_lookup</span>     = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">return</span> <span class="synKeyword">sub </span>{
+        <span class="synStatement">my</span> <span class="synIdentifier">$caller</span> = <span class="synIdentifier">$CALLER</span>;
+
+        <span class="synStatement">my</span> <span class="synIdentifier">$wrapper</span> = <span class="synIdentifier">$self-&gt;_late_curry_wrapper</span>(
+            <span class="synIdentifier">$sub</span>, <span class="synIdentifier">$fq_name</span>,
+            <span class="synIdentifier">$meta_lookup</span> =&gt; <span class="synIdentifier">$caller</span>
+        );
+
+        <span class="synStatement">my</span> <span class="synIdentifier">$sub</span> = subname( <span class="synIdentifier">$fq_name</span> =&gt; <span class="synIdentifier">$wrapper</span> );
+
+        <span class="synIdentifier">$export_recorder-&gt;{$sub}</span> = <span class="synNumber">1</span>;
+
+        <span class="synStatement">return</span> <span class="synIdentifier">$sub</span>;
+    };
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_curry_wrapper </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$class</span>   = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$sub</span>     = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$fq_name</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">@extra</span>   = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$wrapper</span> = <span class="synKeyword">sub </span>{ <span class="synIdentifier">$sub</span>-&gt;( <span class="synIdentifier">@extra</span>, <span class="synIdentifier">@_</span> ) };
+    <span class="synConditional">if</span> ( <span class="synStatement">my</span> <span class="synIdentifier">$proto</span> = <span class="synStatement">prototype</span> <span class="synIdentifier">$sub</span> ) {
+
+        <span class="synComment"># </span><span class="synTodo">XXX</span><span class="synComment"> - Perl's prototype sucks. Use &amp; to make set_prototype</span>
+        <span class="synComment"># ignore the fact that we're passing &quot;private variables&quot;</span>
+        <span class="synIdentifier">&amp;</span><span class="synType">Scalar::Util::</span><span class="synIdentifier">set_prototype</span>( <span class="synIdentifier">$wrapper</span>, <span class="synIdentifier">$proto</span> );
+    }
+    <span class="synStatement">return</span> <span class="synIdentifier">$wrapper</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_late_curry_wrapper </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$class</span>   = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$sub</span>     = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$fq_name</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$extra</span>   = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">@ex_args</span> = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$wrapper</span> = <span class="synKeyword">sub </span>{
+
+        <span class="synComment"># resolve curried arguments at runtime via this closure</span>
+        <span class="synStatement">my</span> <span class="synIdentifier">@curry</span> = ( <span class="synIdentifier">$extra</span>-&gt;(<span class="synIdentifier">@ex_args</span>) );
+        <span class="synStatement">return</span> <span class="synIdentifier">$sub</span>-&gt;( <span class="synIdentifier">@curry</span>, <span class="synIdentifier">@_</span> );
+    };
+
+    <span class="synConditional">if</span> ( <span class="synStatement">my</span> <span class="synIdentifier">$proto</span> = <span class="synStatement">prototype</span> <span class="synIdentifier">$sub</span> ) {
+
+        <span class="synComment"># </span><span class="synTodo">XXX</span><span class="synComment"> - Perl's prototype sucks. Use &amp; to make set_prototype</span>
+        <span class="synComment"># ignore the fact that we're passing &quot;private variables&quot;</span>
+        <span class="synIdentifier">&amp;</span><span class="synType">Scalar::Util::</span><span class="synIdentifier">set_prototype</span>( <span class="synIdentifier">$wrapper</span>, <span class="synIdentifier">$proto</span> );
+    }
+    <span class="synStatement">return</span> <span class="synIdentifier">$wrapper</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_make_import_sub </span>{
+    <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$exporting_package</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$exporter</span>          = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$exports_from</span>      = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$is_reexport</span>       = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$meta_lookup</span>       = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">return</span> <span class="synKeyword">sub </span>{
+
+        <span class="synComment"># I think we could use Sub::Exporter's collector feature</span>
+        <span class="synComment"># to do this, but that would be rather gross, since that</span>
+        <span class="synComment"># feature isn't really designed to return a value to the</span>
+        <span class="synComment"># caller of the exporter sub.</span>
+        <span class="synComment">#</span>
+        <span class="synComment"># Also, this makes sure we preserve backwards compat for</span>
+        <span class="synComment"># _get_caller, so it always sees the arguments in the</span>
+        <span class="synComment"># expected order.</span>
+        <span class="synStatement">my</span> <span class="synIdentifier">$traits</span>;
+        ( <span class="synIdentifier">$traits</span>, <span class="synIdentifier">@_</span> ) = _strip_traits(<span class="synIdentifier">@_</span>);
+
+        <span class="synStatement">my</span> <span class="synIdentifier">$metaclass</span>;
+        ( <span class="synIdentifier">$metaclass</span>, <span class="synIdentifier">@_</span> ) = _strip_metaclass(<span class="synIdentifier">@_</span>);
+        <span class="synIdentifier">$metaclass</span>
+            = Moose::Util::resolve_metaclass_alias( <span class="synString">'Class'</span> =&gt; <span class="synIdentifier">$metaclass</span> )
+            <span class="synConditional">if</span> <span class="synOperator">defined</span> <span class="synIdentifier">$metaclass</span> &amp;&amp; <span class="synStatement">length</span> <span class="synIdentifier">$metaclass</span>;
+
+        <span class="synStatement">my</span> <span class="synIdentifier">$meta_name</span>;
+        ( <span class="synIdentifier">$meta_name</span>, <span class="synIdentifier">@_</span> ) = _strip_meta_name(<span class="synIdentifier">@_</span>);
+
+        <span class="synComment"># Normally we could look at $_[0], but in some weird cases</span>
+        <span class="synComment"># (involving goto &amp;Moose::import), $_[0] ends as something</span>
+        <span class="synComment"># else (like Squirrel).</span>
+        <span class="synStatement">my</span> <span class="synIdentifier">$class</span> = <span class="synIdentifier">$exporting_package</span>;
+
+        <span class="synIdentifier">$CALLER</span> = _get_caller(<span class="synIdentifier">@_</span>);
+
+        <span class="synComment"># this works because both pragmas set $^H (see perldoc</span>
+        <span class="synComment"># perlvar) which affects the current compilation -</span>
+        <span class="synComment"># i.e. the file who use'd us - which is why we don't need</span>
+        <span class="synComment"># to do anything special to make it affect that file</span>
+        <span class="synComment"># rather than this one (which is already compiled)</span>
+
+        strict-&gt;<span class="synStatement">import</span>;
+        warnings-&gt;<span class="synStatement">import</span>;
+
+        <span class="synStatement">my</span> <span class="synIdentifier">$did_init_meta</span>;
+        <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$c</span> ( <span class="synStatement">grep</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;can</span>(<span class="synString">'init_meta'</span>) <span class="synStatement">}</span> <span class="synIdentifier">$class</span>, <span class="synIdentifier">@{$exports_from}</span> ) {
+
+            <span class="synComment"># init_meta can apply a role, which when loaded uses</span>
+            <span class="synComment"># Moose::Exporter, which in turn sets $CALLER, so we need</span>
+            <span class="synComment"># to protect against that.</span>
+            <span class="synStatement">local</span> <span class="synIdentifier">$CALLER</span> = <span class="synIdentifier">$CALLER</span>;
+            <span class="synIdentifier">$c-&gt;init_meta</span>(
+                <span class="synString">for_class</span> =&gt; <span class="synIdentifier">$CALLER</span>,
+                <span class="synString">metaclass</span> =&gt; <span class="synIdentifier">$metaclass</span>,
+                <span class="synString">meta_name</span> =&gt; <span class="synIdentifier">$meta_name</span>,
+            );
+            <span class="synIdentifier">$did_init_meta</span> = <span class="synNumber">1</span>;
+        }
+
+        {
+            <span class="synComment"># The metaroles will use Moose::Role, which in turn uses</span>
+            <span class="synComment"># Moose::Exporter, which in turn sets $CALLER, so we need</span>
+            <span class="synComment"># to protect against that.</span>
+            <span class="synStatement">local</span> <span class="synIdentifier">$CALLER</span> = <span class="synIdentifier">$CALLER</span>;
+            _apply_metaroles(
+                <span class="synIdentifier">$CALLER</span>,
+                [<span class="synIdentifier">$class</span>, <span class="synIdentifier">@$exports_from</span>],
+                <span class="synIdentifier">$meta_lookup</span>
+            );
+        }
+
+        <span class="synConditional">if</span> ( <span class="synIdentifier">$did_init_meta</span> &amp;&amp; <span class="synIdentifier">@{$traits}</span> ) {
+
+            <span class="synComment"># The traits will use Moose::Role, which in turn uses</span>
+            <span class="synComment"># Moose::Exporter, which in turn sets $CALLER, so we need</span>
+            <span class="synComment"># to protect against that.</span>
+            <span class="synStatement">local</span> <span class="synIdentifier">$CALLER</span> = <span class="synIdentifier">$CALLER</span>;
+            _apply_meta_traits( <span class="synIdentifier">$CALLER</span>, <span class="synIdentifier">$traits</span>, <span class="synIdentifier">$meta_lookup</span> );
+        }
+        <span class="synConditional">elsif</span> ( <span class="synIdentifier">@{$traits}</span> ) {
+            <span class="synStatement">require</span> Moose;
+            Moose-&gt;throw_error(
+                <span class="synString">&quot;Cannot provide traits when </span><span class="synIdentifier">$class</span><span class="synString"> does not have an init_meta() method&quot;</span>
+            );
+        }
+
+        <span class="synStatement">my</span> ( <span class="synOperator">undef</span>, <span class="synIdentifier">@args</span> ) = <span class="synIdentifier">@_</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$extra</span> = <span class="synStatement">shift</span> <span class="synIdentifier">@args</span> <span class="synConditional">if</span> <span class="synOperator">ref</span> <span class="synIdentifier">$args[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> <span class="synOperator">eq</span> <span class="synString">'HASH'</span>;
+
+        <span class="synIdentifier">$extra</span> ||= {};
+        <span class="synConditional">if</span> ( !<span class="synIdentifier">$extra-&gt;{</span><span class="synString">into</span><span class="synIdentifier">}</span> ) {
+            <span class="synIdentifier">$extra-&gt;{</span><span class="synString">into_level</span><span class="synIdentifier">}</span> ||= <span class="synNumber">0</span>;
+            <span class="synIdentifier">$extra-&gt;{</span><span class="synString">into_level</span><span class="synIdentifier">}</span>++;
+        }
+
+        <span class="synIdentifier">$class-&gt;$exporter</span>( <span class="synIdentifier">$extra</span>, <span class="synIdentifier">@args</span> );
+    };
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_strip_traits </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$idx</span> = first_index { ( <span class="synIdentifier">$_</span> || <span class="synString">''</span> ) <span class="synOperator">eq</span> <span class="synString">'-traits'</span> } <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> ( [], <span class="synIdentifier">@_</span> ) <span class="synConditional">unless</span> <span class="synIdentifier">$idx</span> &gt;= <span class="synNumber">0</span> &amp;&amp; <span class="synIdentifier">$#_</span> &gt;= <span class="synIdentifier">$idx</span> + <span class="synNumber">1</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$traits</span> = <span class="synIdentifier">$_[</span> <span class="synIdentifier">$idx</span> + <span class="synNumber">1</span> <span class="synIdentifier">]</span>;
+
+    <span class="synStatement">splice</span> <span class="synIdentifier">@_</span>, <span class="synIdentifier">$idx</span>, <span class="synNumber">2</span>;
+
+    <span class="synIdentifier">$traits</span> = [<span class="synIdentifier">$traits</span>] <span class="synConditional">unless</span> <span class="synOperator">ref</span> <span class="synIdentifier">$traits</span>;
+
+    <span class="synStatement">return</span> ( <span class="synIdentifier">$traits</span>, <span class="synIdentifier">@_</span> );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_strip_metaclass </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$idx</span> = first_index { ( <span class="synIdentifier">$_</span> || <span class="synString">''</span> ) <span class="synOperator">eq</span> <span class="synString">'-metaclass'</span> } <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> ( <span class="synOperator">undef</span>, <span class="synIdentifier">@_</span> ) <span class="synConditional">unless</span> <span class="synIdentifier">$idx</span> &gt;= <span class="synNumber">0</span> &amp;&amp; <span class="synIdentifier">$#_</span> &gt;= <span class="synIdentifier">$idx</span> + <span class="synNumber">1</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$metaclass</span> = <span class="synIdentifier">$_[</span> <span class="synIdentifier">$idx</span> + <span class="synNumber">1</span> <span class="synIdentifier">]</span>;
+
+    <span class="synStatement">splice</span> <span class="synIdentifier">@_</span>, <span class="synIdentifier">$idx</span>, <span class="synNumber">2</span>;
+
+    <span class="synStatement">return</span> ( <span class="synIdentifier">$metaclass</span>, <span class="synIdentifier">@_</span> );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_strip_meta_name </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$idx</span> = first_index { ( <span class="synIdentifier">$_</span> || <span class="synString">''</span> ) <span class="synOperator">eq</span> <span class="synString">'-meta_name'</span> } <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> ( <span class="synString">'meta'</span>, <span class="synIdentifier">@_</span> ) <span class="synConditional">unless</span> <span class="synIdentifier">$idx</span> &gt;= <span class="synNumber">0</span> &amp;&amp; <span class="synIdentifier">$#_</span> &gt;= <span class="synIdentifier">$idx</span> + <span class="synNumber">1</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$meta_name</span> = <span class="synIdentifier">$_[</span> <span class="synIdentifier">$idx</span> + <span class="synNumber">1</span> <span class="synIdentifier">]</span>;
+
+    <span class="synStatement">splice</span> <span class="synIdentifier">@_</span>, <span class="synIdentifier">$idx</span>, <span class="synNumber">2</span>;
+
+    <span class="synStatement">return</span> ( <span class="synIdentifier">$meta_name</span>, <span class="synIdentifier">@_</span> );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_apply_metaroles </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$class</span>, <span class="synIdentifier">$exports_from</span>, <span class="synIdentifier">$meta_lookup</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$metaroles</span> = _collect_metaroles(<span class="synIdentifier">$exports_from</span>);
+    <span class="synStatement">my</span> <span class="synIdentifier">$base_class_roles</span> = <span class="synStatement">delete</span> <span class="synIdentifier">$metaroles-&gt;{</span><span class="synString">base_class_roles</span><span class="synIdentifier">}</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$meta</span> = <span class="synIdentifier">$meta_lookup</span>-&gt;(<span class="synIdentifier">$class</span>);
+    <span class="synComment"># for instance, Moose.pm uses Moose::Util::TypeConstraints</span>
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$meta</span>;
+
+    Moose::Util::MetaRole::apply_metaroles(
+        <span class="synString">for</span> =&gt; <span class="synIdentifier">$meta</span>,
+        <span class="synIdentifier">%$metaroles</span>,
+    ) <span class="synConditional">if</span> <span class="synStatement">keys</span> <span class="synIdentifier">%$metaroles</span>;
+
+    Moose::Util::MetaRole::apply_base_class_roles(
+        <span class="synString">for</span>   =&gt; <span class="synIdentifier">$meta</span>,
+        <span class="synString">roles</span> =&gt; <span class="synIdentifier">$base_class_roles</span>,
+    ) <span class="synConditional">if</span> <span class="synIdentifier">$meta-&gt;isa</span>(<span class="synString">'Class::MOP::Class'</span>)
+      &amp;&amp; <span class="synIdentifier">$base_class_roles</span> &amp;&amp; <span class="synIdentifier">@$base_class_roles</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_collect_metaroles </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$exports_from</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">@old_style_role_types</span> = <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synString">&quot;</span><span class="synIdentifier">${_}</span><span class="synString">_roles&quot;</span> <span class="synStatement">}</span> <span class="synString">qw(</span>
+<span class="synString">        metaclass</span>
+<span class="synString">        attribute_metaclass</span>
+<span class="synString">        method_metaclass</span>
+<span class="synString">        wrapped_method_metaclass</span>
+<span class="synString">        instance_metaclass</span>
+<span class="synString">        constructor_class</span>
+<span class="synString">        destructor_class</span>
+<span class="synString">        error_class</span>
+<span class="synString">    )</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">%class_metaroles</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">%role_metaroles</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">@base_class_roles</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">%old_style_roles</span>;
+
+    <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$exporter</span> (<span class="synIdentifier">@$exports_from</span>) {
+        <span class="synStatement">my</span> <span class="synIdentifier">$data</span> = <span class="synIdentifier">$EXPORT_SPEC{$exporter}</span>;
+
+        <span class="synConditional">if</span> (<span class="synStatement">exists</span> <span class="synIdentifier">$data-&gt;{</span><span class="synString">class_metaroles</span><span class="synIdentifier">}</span>) {
+            <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$type</span> (<span class="synStatement">keys</span> <span class="synIdentifier">%{</span> <span class="synIdentifier">$data-&gt;{</span><span class="synString">class_metaroles</span><span class="synIdentifier">}</span> <span class="synIdentifier">}</span>) {
+                <span class="synStatement">push</span> <span class="synIdentifier">@{</span> <span class="synIdentifier">$class_metaroles{$type}</span> ||= [] <span class="synIdentifier">}</span>,
+                     <span class="synIdentifier">@{</span> <span class="synIdentifier">$data-&gt;{</span><span class="synString">class_metaroles</span><span class="synIdentifier">}{$type}</span> <span class="synIdentifier">}</span>;
+            }
+        }
+
+        <span class="synConditional">if</span> (<span class="synStatement">exists</span> <span class="synIdentifier">$data-&gt;{</span><span class="synString">role_metaroles</span><span class="synIdentifier">}</span>) {
+            <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$type</span> (<span class="synStatement">keys</span> <span class="synIdentifier">%{</span> <span class="synIdentifier">$data-&gt;{</span><span class="synString">role_metaroles</span><span class="synIdentifier">}</span> <span class="synIdentifier">}</span>) {
+                <span class="synStatement">push</span> <span class="synIdentifier">@{</span> <span class="synIdentifier">$role_metaroles{$type}</span> ||= [] <span class="synIdentifier">}</span>,
+                     <span class="synIdentifier">@{</span> <span class="synIdentifier">$data-&gt;{</span><span class="synString">role_metaroles</span><span class="synIdentifier">}{$type}</span> <span class="synIdentifier">}</span>;
+            }
+        }
+
+        <span class="synConditional">if</span> (<span class="synStatement">exists</span> <span class="synIdentifier">$data-&gt;{</span><span class="synString">base_class_roles</span><span class="synIdentifier">}</span>) {
+            <span class="synStatement">push</span> <span class="synIdentifier">@base_class_roles</span>, <span class="synIdentifier">@{</span> <span class="synIdentifier">$data-&gt;{</span><span class="synString">base_class_roles</span><span class="synIdentifier">}</span> <span class="synIdentifier">}</span>;
+        }
+
+        <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$type</span> (<span class="synIdentifier">@old_style_role_types</span>) {
+            <span class="synConditional">if</span> (<span class="synStatement">exists</span> <span class="synIdentifier">$data-&gt;{$type}</span>) {
+                <span class="synStatement">push</span> <span class="synIdentifier">@{</span> <span class="synIdentifier">$old_style_roles{$type}</span> ||= [] <span class="synIdentifier">}</span>,
+                     <span class="synIdentifier">@{</span> <span class="synIdentifier">$data-&gt;{$type}</span> <span class="synIdentifier">}</span>;
+            }
+        }
+    }
+
+    <span class="synStatement">return</span> {
+        (<span class="synStatement">keys</span>(<span class="synIdentifier">%class_metaroles</span>)
+            ? (<span class="synString">class_metaroles</span>  =&gt; \<span class="synIdentifier">%class_metaroles</span>)
+            : ()),
+        (<span class="synStatement">keys</span>(<span class="synIdentifier">%role_metaroles</span>)
+            ? (<span class="synString">role_metaroles</span>   =&gt; \<span class="synIdentifier">%role_metaroles</span>)
+            : ()),
+        (<span class="synIdentifier">@base_class_roles</span>
+            ? (<span class="synString">base_class_roles</span> =&gt; \<span class="synIdentifier">@base_class_roles</span>)
+            : ()),
+        <span class="synIdentifier">%old_style_roles</span>,
+    };
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_apply_meta_traits </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$class</span>, <span class="synIdentifier">$traits</span>, <span class="synIdentifier">$meta_lookup</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">@{$traits}</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$meta</span> = <span class="synIdentifier">$meta_lookup</span>-&gt;(<span class="synIdentifier">$class</span>);
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$type</span> = <span class="synIdentifier">$meta-&gt;isa</span>(<span class="synString">'Moose::Meta::Role'</span>) ? <span class="synString">'Role'</span>
+             : <span class="synIdentifier">$meta-&gt;isa</span>(<span class="synString">'Class::MOP::Class'</span>) ? <span class="synString">'Class'</span>
+             : Moose-&gt;throw_error(<span class="synString">'Cannot determine metaclass type for '</span>
+                                . <span class="synString">'trait application. Meta isa '</span>
+                                . <span class="synOperator">ref</span> <span class="synIdentifier">$meta</span>);
+
+    <span class="synStatement">my</span> <span class="synIdentifier">@resolved_traits</span> = <span class="synStatement">map</span> <span class="synStatement">{</span>
+        <span class="synOperator">ref</span> <span class="synIdentifier">$_</span>
+            ? <span class="synIdentifier">$_</span>
+            : Moose::Util::resolve_metatrait_alias( <span class="synIdentifier">$type</span> =&gt; <span class="synIdentifier">$_</span> )
+    <span class="synStatement">}</span> <span class="synIdentifier">@$traits</span>;
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">@resolved_traits</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">%args</span> = ( <span class="synString">for</span> =&gt; <span class="synIdentifier">$class</span> );
+
+    <span class="synConditional">if</span> ( <span class="synIdentifier">$meta-&gt;isa</span>(<span class="synString">'Moose::Meta::Role'</span>) ) {
+        <span class="synIdentifier">$args{</span><span class="synString">role_metaroles</span><span class="synIdentifier">}</span> = { <span class="synString">role</span> =&gt; \<span class="synIdentifier">@resolved_traits</span> };
+    }
+    <span class="synConditional">else</span> {
+        <span class="synIdentifier">$args{</span><span class="synString">class_metaroles</span><span class="synIdentifier">}</span> = { <span class="synString">class</span> =&gt; \<span class="synIdentifier">@resolved_traits</span> };
+    }
+
+    Moose::Util::MetaRole::apply_metaroles(<span class="synIdentifier">%args</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_get_caller </span>{
+
+    <span class="synComment"># 1 extra level because it's called by import so there's a layer</span>
+    <span class="synComment"># of indirection</span>
+    <span class="synStatement">my</span> <span class="synIdentifier">$offset</span> = <span class="synNumber">1</span>;
+
+    <span class="synStatement">return</span>
+          ( <span class="synOperator">ref</span> <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span> &amp;&amp; <span class="synOperator">defined</span> <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]-&gt;{</span><span class="synString">into</span><span class="synIdentifier">}</span> ) ? <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]-&gt;{</span><span class="synString">into</span><span class="synIdentifier">}</span>
+        : ( <span class="synOperator">ref</span> <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span> &amp;&amp; <span class="synOperator">defined</span> <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]-&gt;{</span><span class="synString">into_level</span><span class="synIdentifier">}</span> )
+        ? <span class="synStatement">caller</span>( <span class="synIdentifier">$offset</span> + <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]-&gt;{</span><span class="synString">into_level</span><span class="synIdentifier">}</span> )
+        : <span class="synStatement">caller</span>(<span class="synIdentifier">$offset</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_make_unimport_sub </span>{
+    <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$exporting_package</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$exports</span>           = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$export_recorder</span>   = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$is_reexport</span>       = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$meta_lookup</span>       = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">return</span> <span class="synKeyword">sub </span>{
+        <span class="synStatement">my</span> <span class="synIdentifier">$caller</span> = <span class="synStatement">scalar</span> <span class="synStatement">caller</span>();
+        Moose::Exporter-&gt;_remove_keywords(
+            <span class="synIdentifier">$caller</span>,
+            [ <span class="synStatement">keys</span> <span class="synIdentifier">%{$exports}</span> ],
+            <span class="synIdentifier">$export_recorder</span>,
+            <span class="synIdentifier">$is_reexport</span>,
+        );
+    };
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_remove_keywords </span>{
+    <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$package</span>          = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$keywords</span>         = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$recorded_exports</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$is_reexport</span>      = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">no strict</span> <span class="synString">'refs'</span>;
+
+    <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$name</span> ( <span class="synIdentifier">@{$keywords}</span> ) {
+        <span class="synConditional">if</span> ( <span class="synOperator">defined</span> <span class="synIdentifier">&amp;{</span> <span class="synIdentifier">$package</span> . <span class="synString">'::'</span> . <span class="synIdentifier">$name</span> <span class="synIdentifier">}</span> ) {
+            <span class="synStatement">my</span> <span class="synIdentifier">$sub</span> = \<span class="synIdentifier">&amp;{</span> <span class="synIdentifier">$package</span> . <span class="synString">'::'</span> . <span class="synIdentifier">$name</span> <span class="synIdentifier">}</span>;
+
+            <span class="synComment"># make sure it is from us</span>
+            <span class="synStatement">next</span> <span class="synConditional">unless</span> <span class="synIdentifier">$recorded_exports-&gt;{$sub}</span>;
+
+            <span class="synConditional">if</span> ( <span class="synIdentifier">$is_reexport-&gt;{$name}</span> ) {
+                <span class="synStatement">no strict</span> <span class="synString">'refs'</span>;
+                <span class="synStatement">next</span>
+                    <span class="synConditional">unless</span> _export_is_flagged(
+                            \<span class="synIdentifier">*{</span> <span class="synStatement">join</span> <span class="synString">q{::}</span> =&gt; <span class="synIdentifier">$package</span>, <span class="synIdentifier">$name</span> <span class="synIdentifier">}</span> );
+            }
+
+            <span class="synComment"># and if it is from us, then undef the slot</span>
+            <span class="synStatement">delete</span> <span class="synIdentifier">${</span> <span class="synIdentifier">$package</span> . <span class="synString">'::'</span> <span class="synIdentifier">}{$name}</span>;
+        }
+    }
+}
+
+<span class="synComment"># maintain this for now for backcompat</span>
+<span class="synComment"># make sure to return a sub to install in the same circumstances as previously</span>
+<span class="synComment"># but this functionality now happens at the end of -&gt;import</span>
+<span class="synKeyword">sub </span><span class="synFunction">_make_init_meta </span>{
+    <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$class</span>          = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$args</span>           = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$meta_lookup</span>    = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">%old_style_roles</span>;
+    <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$role</span> (
+        <span class="synStatement">map</span> <span class="synStatement">{</span><span class="synString">&quot;</span><span class="synIdentifier">${_}</span><span class="synString">_roles&quot;</span><span class="synStatement">}</span>
+        <span class="synString">qw(</span>
+<span class="synString">        metaclass</span>
+<span class="synString">        attribute_metaclass</span>
+<span class="synString">        method_metaclass</span>
+<span class="synString">        wrapped_method_metaclass</span>
+<span class="synString">        instance_metaclass</span>
+<span class="synString">        constructor_class</span>
+<span class="synString">        destructor_class</span>
+<span class="synString">        error_class</span>
+<span class="synString">        )</span>
+        ) {
+        <span class="synIdentifier">$old_style_roles{$role}</span> = <span class="synIdentifier">$args-&gt;{$role}</span>
+            <span class="synConditional">if</span> <span class="synStatement">exists</span> <span class="synIdentifier">$args-&gt;{$role}</span>;
+    }
+
+    <span class="synStatement">my</span> <span class="synIdentifier">%base_class_roles</span>;
+    <span class="synIdentifier">%base_class_roles</span> = ( <span class="synString">roles</span> =&gt; <span class="synIdentifier">$args-&gt;{</span><span class="synString">base_class_roles</span><span class="synIdentifier">}</span> )
+        <span class="synConditional">if</span> <span class="synStatement">exists</span> <span class="synIdentifier">$args-&gt;{</span><span class="synString">base_class_roles</span><span class="synIdentifier">}</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">%new_style_roles</span> = <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_</span> =&gt; <span class="synIdentifier">$args-&gt;{$_}</span> <span class="synStatement">}</span>
+        <span class="synStatement">grep</span> <span class="synStatement">{</span> <span class="synStatement">exists</span> <span class="synIdentifier">$args-&gt;{$_}</span> <span class="synStatement">}</span> <span class="synString">qw( class_metaroles role_metaroles )</span>;
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">%new_style_roles</span> || <span class="synIdentifier">%old_style_roles</span> || <span class="synIdentifier">%base_class_roles</span>;
+
+    <span class="synStatement">return</span> <span class="synKeyword">sub </span>{
+        <span class="synStatement">shift</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">%opts</span> = <span class="synIdentifier">@_</span>;
+        <span class="synIdentifier">$meta_lookup</span>-&gt;(<span class="synIdentifier">$opts{</span><span class="synString">for_class</span><span class="synIdentifier">}</span>);
+    };
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">import </span>{
+    strict-&gt;<span class="synStatement">import</span>;
+    warnings-&gt;<span class="synStatement">import</span>;
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: make an import() and unimport() just like Moose.pm</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Moose::Exporter - make an <span class="synIdentifier">import()</span> and <span class="synIdentifier">unimport()</span> just like Moose.pm
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> SYNOPSIS</span>
+
+<span class="synPreProc">  package MyApp::Moose;</span>
+
+<span class="synPreProc">  use Moose ();</span>
+<span class="synPreProc">  use Moose::Exporter;</span>
+
+<span class="synPreProc">  Moose::Exporter-&gt;setup_import_methods(</span>
+<span class="synPreProc">      with_meta =&gt; [ 'has_rw', 'sugar2' ],</span>
+<span class="synPreProc">      as_is     =&gt; [ 'sugar3', \&amp;Some::Random::thing ],</span>
+<span class="synPreProc">      also      =&gt; 'Moose',</span>
+<span class="synPreProc">  );</span>
+
+<span class="synPreProc">  sub has_rw {</span>
+<span class="synPreProc">      my ( $meta, $name, %options ) = @_;</span>
+<span class="synPreProc">      $meta-&gt;add_attribute(</span>
+<span class="synPreProc">          $name,</span>
+<span class="synPreProc">          is =&gt; 'rw',</span>
+<span class="synPreProc">          %options,</span>
+<span class="synPreProc">      );</span>
+<span class="synPreProc">  }</span>
+
+<span class="synPreProc">  # then later ...</span>
+<span class="synPreProc">  package MyApp::User;</span>
+
+<span class="synPreProc">  use MyApp::Moose;</span>
+
+<span class="synPreProc">  has 'name';</span>
+<span class="synPreProc">  has_rw 'size';</span>
+<span class="synPreProc">  thing;</span>
+
+<span class="synPreProc">  no MyApp::Moose;</span>
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This module encapsulates the exporting of sugar functions in a
+<span class="synIdentifier">C&lt;Moose.pm&gt;</span>-like manner. It does this by building custom <span class="synIdentifier">C&lt;import&gt;</span> and
+<span class="synIdentifier">C&lt;unimport&gt;</span> methods for your module, based on a spec you provide.
+
+It also lets you &quot;stack&quot; Moose-alike modules so you can export Moose's sugar
+as well as your own, along with sugar from any random <span class="synIdentifier">C&lt;MooseX&gt;</span> module, as
+long as they all use <span class="synIdentifier">C&lt;Moose::Exporter&gt;</span>. This feature exists to let you bundle
+a set of MooseX modules into a policy module that developers can use directly
+instead of using Moose itself.
+
+To simplify writing exporter modules, <span class="synIdentifier">C&lt;Moose::Exporter&gt;</span> also imports
+<span class="synIdentifier">C&lt;strict&gt;</span> and <span class="synIdentifier">C&lt;warnings&gt;</span> into your exporter module, as well as into
+modules that use it.
+
+<span class="synStatement">=head1</span><span class="synString"> METHODS</span>
+
+This module provides two public methods:
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; Moose::Exporter-&gt;setup_import_methods(...) &gt;&gt;</span>
+
+When you call this method, <span class="synIdentifier">C&lt;Moose::Exporter&gt;</span> builds custom <span class="synIdentifier">C&lt;import&gt;</span> and
+<span class="synIdentifier">C&lt;unimport&gt;</span> methods for your module. The <span class="synIdentifier">C&lt;import&gt;</span> method
+will export the functions you specify, and can also re-export functions
+exported by some other module (like <span class="synIdentifier">C&lt;Moose.pm&gt;</span>). If you pass any parameters
+for <span class="synIdentifier">L&lt;Moose::Util::MetaRole&gt;</span>, the <span class="synIdentifier">C&lt;import&gt;</span> method will also call
+<span class="synIdentifier">C&lt;Moose::Util::MetaRole::apply_metaroles&gt;</span> and
+<span class="synIdentifier">C&lt;Moose::Util::MetaRole::apply_base_class_roles&gt;</span> as needed, after making
+sure the metaclass is initialized.
+
+The <span class="synIdentifier">C&lt;unimport&gt;</span> method cleans the caller's namespace of all the exported
+functions. This includes any functions you re-export from other
+packages. However, if the consumer of your package also imports those
+functions from the original package, they will <span class="synIdentifier">I&lt;not&gt;</span> be cleaned.
+
+Note that if any of these methods already exist, they will not be
+overridden, you will have to use <span class="synIdentifier">C&lt;build_import_methods&gt;</span> to get the
+coderef that would be installed.
+
+This method accepts the following parameters:
+
+<span class="synStatement">=over</span> <span class="synNumber">8</span>
+
+<span class="synStatement">=item</span><span class="synString"> * with_meta =&gt; [ ... ]</span>
+
+This list of function <span class="synIdentifier">I&lt;names only&gt;</span> will be wrapped and then exported. The
+wrapper will pass the metaclass object for the caller as its first argument.
+
+Many sugar functions will need to use this metaclass object to do something to
+the calling package.
+
+<span class="synStatement">=item</span><span class="synString"> * as_is =&gt; [ ... ]</span>
+
+This list of function names or sub references will be exported as-is. You can
+identify a subroutine by reference, which is handy to re-export some other
+module's functions directly by reference (<span class="synIdentifier">C&lt;\&amp;Some::Package::function&gt;</span>).
+
+If you do export some other package's function, this function will never be
+removed by the <span class="synIdentifier">C&lt;unimport&gt;</span> method. The reason for this is we cannot know if
+the caller <span class="synIdentifier">I&lt;also&gt;</span> explicitly imported the sub themselves, and therefore wants
+to keep it.
+
+<span class="synStatement">=item</span><span class="synString"> * trait_aliases =&gt; [ ... ]</span>
+
+This is a list of package names which should have shortened aliases exported,
+similar to the functionality of <span class="synIdentifier">L&lt;aliased&gt;</span>. Each element in the list can be
+either a package name, in which case the export will be named as the last
+namespace component of the package, or an arrayref, whose first element is the
+package to alias to, and second element is the alias to export.
+
+<span class="synStatement">=item</span><span class="synString"> * also =&gt; $name or \@names</span>
+
+This is a list of modules which contain functions that the caller
+wants to export. These modules must also use <span class="synIdentifier">C&lt;Moose::Exporter&gt;</span>. The
+most common use case will be to export the functions from <span class="synIdentifier">C&lt;Moose.pm&gt;</span>.
+Functions specified by <span class="synIdentifier">C&lt;with_meta&gt;</span> or <span class="synIdentifier">C&lt;as_is&gt;</span> take precedence over
+functions exported by modules specified by <span class="synIdentifier">C&lt;also&gt;</span>, so that a module
+can selectively override functions exported by another module.
+
+<span class="synIdentifier">C&lt;Moose::Exporter&gt;</span> also makes sure all these functions get removed
+when <span class="synIdentifier">C&lt;unimport&gt;</span> is called.
+
+<span class="synStatement">=item</span><span class="synString"> * meta_lookup =&gt; sub { ... }</span>
+
+This is a function which will be called to provide the metaclass
+to be operated upon by the exporter. This is an advanced feature
+intended for use by package generator modules in the vein of
+<span class="synIdentifier">L&lt;MooseX::Role::Parameterized&gt;</span> in order to simplify reusing sugar
+from other modules that use <span class="synIdentifier">C&lt;Moose::Exporter&gt;</span>. This function is
+used, for example, to select the metaclass to bind to functions
+that are exported using the <span class="synIdentifier">C&lt;with_meta&gt;</span> option.
+
+This function will receive one parameter: the class name into which
+the sugar is being exported. The default implementation is:
+
+<span class="synPreProc">    sub { Class::MOP::class_of(shift) }</span>
+
+Accordingly, this function is expected to return a metaclass.
+
+<span class="synStatement">=back</span>
+
+You can also provide parameters for <span class="synIdentifier">C&lt;Moose::Util::MetaRole::apply_metaroles&gt;</span>
+and <span class="synIdentifier">C&lt;Moose::Util::MetaRole::base_class_roles&gt;</span>. Specifically, valid parameters
+are &quot;class_metaroles&quot;, &quot;role_metaroles&quot;, and &quot;base_class_roles&quot;.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; Moose::Exporter-&gt;build_import_methods(...) &gt;&gt;</span>
+
+Returns two code refs, one for <span class="synIdentifier">C&lt;import&gt;</span> and one for <span class="synIdentifier">C&lt;unimport&gt;</span>.
+
+Accepts the additional <span class="synIdentifier">C&lt;install&gt;</span> option, which accepts an arrayref of method
+names to install into your exporting package. The valid options are <span class="synIdentifier">C&lt;import&gt;</span>
+and <span class="synIdentifier">C&lt;unimport&gt;</span>. Calling <span class="synIdentifier">C&lt;setup_import_methods&gt;</span> is equivalent
+to calling <span class="synIdentifier">C&lt;build_import_methods&gt;</span> with <span class="synIdentifier">C&lt;&lt; install =&gt; [qw(import unimport)] &gt;&gt;</span>
+except that it doesn't also return the methods.
+
+The <span class="synIdentifier">C&lt;import&gt;</span> method is built using <span class="synIdentifier">L&lt;Sub::Exporter&gt;</span>. This means that it can
+take a hashref of the form <span class="synIdentifier">C&lt;&lt; { into =&gt; $package } &gt;&gt;</span> to specify the package
+it operates on.
+
+Used by <span class="synIdentifier">C&lt;setup_import_methods&gt;</span>.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> IMPORTING AND init_meta</span>
+
+If you want to set an alternative base object class or metaclass class, see
+above for details on how this module can call <span class="synIdentifier">L&lt;Moose::Util::MetaRole&gt;</span> for
+you.
+
+If you want to do something that is not supported by this module, simply
+define an <span class="synIdentifier">C&lt;init_meta&gt;</span> method in your class. The <span class="synIdentifier">C&lt;import&gt;</span> method that
+<span class="synIdentifier">C&lt;Moose::Exporter&gt;</span> generates for you will call this method (if it exists). It
+will always pass the caller to this method via the <span class="synIdentifier">C&lt;for_class&gt;</span> parameter.
+
+Most of the time, your <span class="synIdentifier">C&lt;init_meta&gt;</span> method will probably just call C&lt;&lt;
+Moose-&gt;init_meta &gt;&gt; to do the real work:
+
+<span class="synPreProc">  sub init_meta {</span>
+<span class="synPreProc">      shift; # our class name</span>
+<span class="synPreProc">      return Moose-&gt;init_meta( @_, metaclass =&gt; 'My::Metaclass' );</span>
+<span class="synPreProc">  }</span>
+
+<span class="synStatement">=head1</span><span class="synString"> METACLASS TRAITS</span>
+
+The <span class="synIdentifier">C&lt;import&gt;</span> method generated by <span class="synIdentifier">C&lt;Moose::Exporter&gt;</span> will allow the
+user of your module to specify metaclass traits in a <span class="synIdentifier">C&lt;-traits&gt;</span>
+parameter passed as part of the import:
+
+<span class="synPreProc">  use Moose -traits =&gt; 'My::Meta::Trait';</span>
+
+<span class="synPreProc">  use Moose -traits =&gt; [ 'My::Meta::Trait', 'My::Other::Trait' ];</span>
+
+These traits will be applied to the caller's metaclass
+instance. Providing traits for an exporting class that does not create
+a metaclass for the caller is an error.
+
+<span class="synStatement">=head1</span><span class="synString"> BUGS</span>
+
+See <span class="synIdentifier">L&lt;Moose/BUGS&gt;</span> for details on reporting bugs.
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

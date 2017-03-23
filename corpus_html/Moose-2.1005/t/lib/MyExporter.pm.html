@@ -1,0 +1,36 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre>
+
+<span class="synStatement">package</span><span class="synType"> MyExporter</span>;
+<span class="synStatement">use </span>Moose::Exporter;
+<span class="synStatement">use </span>Test::More;
+
+Moose::Exporter-&gt;setup_import_methods(
+    <span class="synString">with_meta</span> =&gt; [<span class="synString">qw(with_prototype)</span>],
+    <span class="synString">as_is</span>     =&gt; [<span class="synString">qw(as_is_prototype)</span>],
+);
+
+<span class="synKeyword">sub </span><span class="synFunction">with_prototype </span><span class="synType">(&amp;) </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$class</span>, <span class="synIdentifier">$code</span>) = <span class="synIdentifier">@_</span>;
+    isa_ok(<span class="synIdentifier">$code</span>, <span class="synString">'CODE'</span>, <span class="synString">'with_prototype received a coderef'</span>);
+    <span class="synIdentifier">$code</span>-&gt;();
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">as_is_prototype </span><span class="synType">(&amp;) </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$code</span>) = <span class="synIdentifier">@_</span>;
+    isa_ok(<span class="synIdentifier">$code</span>, <span class="synString">'CODE'</span>, <span class="synString">'as_is_prototype received a coderef'</span>);
+    <span class="synIdentifier">$code</span>-&gt;();
+}
+
+<span class="synNumber">1</span>;
+</pre>
+
+ </body>
+</html>

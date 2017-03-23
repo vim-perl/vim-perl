@@ -1,0 +1,448 @@
+package Moose::Manual::Types;
+
+# ABSTRACT: Moose's type system
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Moose::Manual::Types - Moose's type system
+
+=head1 VERSION
+
+version 2.1005
+
+=head1 TYPES IN PERL?
+
+Moose provides its own type system for attributes. You can also use
+these types to validate method parameters with the help of a MooseX
+module.
+
+Moose's type system is based on a combination of Perl 5's own
+I<implicit> types and some Perl 6 concepts. You can create your
+own subtypes with custom constraints, making it easy to express any
+sort of validation.
+
+Types have names, and you can re-use them by name, making it easy to
+share types throughout a large application.
+
+However, this is not a "real" type system. Moose does not magically make Perl
+start associating types with variables. This is just an advanced parameter
+checking system which allows you to associate a name with a constraint.
+
+That said, it's still pretty damn useful, and we think it's one of the
+things that makes Moose both fun and powerful. Taking advantage of the
+type system makes it much easier to ensure that you are getting valid
+data, and it also contributes greatly to code maintainability.
+
+=head1 THE TYPES
+
+The basic Moose type hierarchy looks like this
+
+  Any
+      Item
+          Bool
+          Maybe[`a]
+          Undef
+          Defined
+              Value
+                  Str
+                      Num
+                          Int
+                      ClassName
+                      RoleName
+              Ref
+                  ScalarRef[`a]
+                  ArrayRef[`a]
+                  HashRef[`a]
+                  CodeRef
+                  RegexpRef
+                  GlobRef
+                  FileHandle
+                  Object
+
+In practice, the only difference between C<Any> and C<Item> is
+conceptual. C<Item> is used as the top-level type in the hierarchy.
+
+The rest of these types correspond to existing Perl concepts.
+In particular:
+
+=over 4
+
+=item
+
+C<Bool> accepts C<1> for true, and undef, 0, or the empty string as false.
+
+=item
+
+C<Maybe[`a]> accepts either C<`a> or C<undef>.
+
+=item
+
+C<Num> accepts integers, floating point numbers (both in decimal notation &
+exponential notation), 0, .0, 0.0 etc. It doesn't accept numbers with
+whitespace, Inf, Infinity, "0 but true", NaN & other such strings.
+
+=item
+
+C<ClassName> and C<RoleName> accept strings that are either the name of a class or the name of a role. The class/role must already be loaded when the constraint is checked.
+
+=item
+
+C<FileHandle> accepts either an L<IO::Handle> object or a builtin perl filehandle (see L<Scalar::Util/openhandle>).
+
+=item
+
+C<Object> accepts any blessed reference.
+
+=back
+
+The types followed by "[`a]" can be parameterized. So instead of just
+plain C<ArrayRef> we can say that we want C<ArrayRef[Int]> instead. We
+can even do something like C<HashRef[ArrayRef[Str]]>.
+
+The C<Maybe[`a]> type deserves a special mention. Used by itself, it
+doesn't really mean anything (and is equivalent to C<Item>). When it
+is parameterized, it means that the value is either C<undef> or the
+parameterized type. So C<Maybe[Int]> means an integer or C<undef>.
+
+For more details on the type hierarchy, see
+L<Moose::Util::TypeConstraints>.
+
+=head1 WHAT IS A TYPE?
+
+It's important to realize that types are not classes (or
+packages). Types are just objects (L<Moose::Meta::TypeConstraint>
+objects, to be exact) with a name and a constraint. Moose maintains a
+global type registry that lets it convert names like C<Num> into the
+appropriate object.
+
+However, class names I<can be> type names. When you define a new class
+using Moose, it defines an associated type name behind the scenes:
+
+  package MyApp::User;
+
+  use Moose;
+
+Now you can use C<'MyApp::User'> as a type name:
+
+  has creator => (
+      is  => 'ro',
+      isa => 'MyApp::User',
+  );
+
+However, for non-Moose classes there's no magic. You may have to
+explicitly declare the class type. This is a bit muddled because Moose
+assumes that any unknown type name passed as the C<isa> value for an
+attribute is a class. So this works:
+
+  has 'birth_date' => (
+      is  => 'ro',
+      isa => 'DateTime',
+  );
+
+In general, when Moose is presented with an unknown name, it assumes
+that the name is a class:
+
+  subtype 'ModernDateTime'
+      => as 'DateTime'
+      => where { $_->year() >= 1980 }
+      => message { 'The date you provided is not modern enough' };
+
+  has 'valid_dates' => (
+      is  => 'ro',
+      isa => 'ArrayRef[DateTime]',
+  );
+
+Moose will assume that C<DateTime> is a class name in both of these
+instances.
+
+=head1 SUBTYPES
+
+Moose uses subtypes in its built-in hierarchy. For example, C<Int> is
+a child of C<Num>.
+
+A subtype is defined in terms of a parent type and a constraint. Any
+constraints defined by the parent(s) will be checked first, followed by
+constraints defined by the subtype. A value must pass I<all> of these
+checks to be valid for the subtype.
+
+Typically, a subtype takes the parent's constraint and makes it more
+specific.
+
+A subtype can also define its own constraint failure message. This
+lets you do things like have an error "The value you provided (20),
+was not a valid rating, which must be a number from 1-10." This is
+much friendlier than the default error, which just says that the value
+failed a validation check for the type. The default error can, however,
+be made more friendly by installing L<Devel::PartialDump> (version 0.14 or
+higher), which Moose will use if possible to display the invalid value.
+
+Here's a simple (and useful) subtype example:
+
+  subtype 'PositiveInt',
+      as 'Int',
+      where { $_ > 0 },
+      message { "The number you provided, $_, was not a positive number" };
+
+Note that the sugar functions for working with types are all exported
+by L<Moose::Util::TypeConstraints>.
+
+=head1 TYPE NAMES
+
+Type names are global throughout the current Perl
+interpreter. Internally, Moose maps names to type objects via a
+L<registry|Moose::Meta::TypeConstraint::Registry>.
+
+If you have multiple apps or libraries all using Moose in the same
+process, you could have problems with collisions. We recommend that
+you prefix names with some sort of namespace indicator to prevent
+these sorts of collisions.
+
+For example, instead of calling a type "PositiveInt", call it
+"MyApp::Type::PositiveInt" or "MyApp::Types::PositiveInt". We
+recommend that you centralize all of these definitions in a single
+package, C<MyApp::Types>, which can be loaded by other classes in your
+application.
+
+However, before you do this, you should look at the L<MooseX::Types>
+module. This module makes it easy to create a "type library" module, which can
+export your types as perl constants.
+
+  has 'counter' => (is => 'rw', isa => PositiveInt);
+
+This lets you use a short name rather than needing to fully qualify the name
+everywhere. It also allows you to easily create parameterized types:
+
+  has 'counts' => (is => 'ro', isa => HashRef[PositiveInt]);
+
+This module will check your names at compile time, and is generally more
+robust than the string type parsing for complex cases.
+
+=head1 COERCION
+
+A coercion lets you tell Moose to automatically convert one type to another.
+
+  subtype 'ArrayRefOfInts',
+      as 'ArrayRef[Int]';
+
+  coerce 'ArrayRefOfInts',
+      from 'Int',
+      via { [ $_ ] };
+
+You'll note that we created a subtype rather than coercing C<ArrayRef[Int]>
+directly. It's a bad idea to add coercions to the raw built in
+types.
+
+Coercions are global, just like type names, so a coercion applied to a built
+in type is seen by all modules using Moose types. This is I<another> reason
+why it is good to namespace your types.
+
+Moose will I<never> try to coerce a value unless you explicitly ask for
+it. This is done by setting the C<coerce> attribute option to a true value:
+
+  package Foo;
+
+  has 'sizes' => (
+      is     => 'ro',
+      isa    => 'ArrayRefOfInts',
+      coerce => 1,
+  );
+
+  Foo->new( sizes => 42 );
+
+This code example will do the right thing, and the newly created
+object will have C<[ 42 ]> as its C<sizes> attribute.
+
+=head2 Deep coercion
+
+Deep coercion is the coercion of type parameters for parameterized
+types. Let's take these types as an example:
+
+  subtype 'HexNum',
+      as 'Str',
+      where { /[a-f0-9]/i };
+
+  coerce 'Int',
+      from 'HexNum',
+      via { hex $_ };
+
+  has 'sizes' => (
+      is     => 'ro',
+      isa    => 'ArrayRef[Int]',
+      coerce => 1,
+  );
+
+If we try passing an array reference of hex numbers for the C<sizes>
+attribute, Moose will not do any coercion.
+
+However, you can define a set of subtypes to enable coercion between
+two parameterized types.
+
+  subtype 'ArrayRefOfHexNums',
+      as 'ArrayRef[HexNum]';
+
+  subtype 'ArrayRefOfInts',
+      as 'ArrayRef[Int]';
+
+  coerce 'ArrayRefOfInts',
+      from 'ArrayRefOfHexNums',
+      via { [ map { hex } @{$_} ] };
+
+  Foo->new( sizes => [ 'a1', 'ff', '22' ] );
+
+Now Moose will coerce the hex numbers to integers.
+
+Moose does not attempt to chain coercions, so it will not
+coerce a single hex number. To do that, we need to define a separate
+coercion:
+
+  coerce 'ArrayRefOfInts',
+      from 'HexNum',
+      via { [ hex $_ ] };
+
+Yes, this can all get verbose, but coercion is tricky magic, and we
+think it's best to make it explicit.
+
+=head1 TYPE UNIONS
+
+Moose allows you to say that an attribute can be of two or more
+disparate types. For example, we might allow an C<Object> or
+C<FileHandle>:
+
+  has 'output' => (
+      is  => 'rw',
+      isa => 'Object | FileHandle',
+  );
+
+Moose actually parses that string and recognizes that you are creating
+a type union. The C<output> attribute will accept any sort of object,
+as well as an unblessed file handle. It is up to you to do the right
+thing for each of them in your code.
+
+Whenever you use a type union, you should consider whether or not
+coercion might be a better answer.
+
+For our example above, we might want to be more specific, and insist
+that output be an object with a C<print> method:
+
+  duck_type 'CanPrint', [qw(print)];
+
+We can coerce file handles to an object that satisfies this condition
+with a simple wrapper class:
+
+  package FHWrapper;
+
+  use Moose;
+
+  has 'handle' => (
+      is  => 'rw',
+      isa => 'FileHandle',
+  );
+
+  sub print {
+      my $self = shift;
+      my $fh   = $self->handle();
+
+      print {$fh} @_;
+  }
+
+Now we can define a coercion from C<FileHandle> to our wrapper class:
+
+  coerce 'CanPrint'
+      => from 'FileHandle'
+      => via { FHWrapper->new( handle => $_ ) };
+
+  has 'output' => (
+      is     => 'rw',
+      isa    => 'CanPrint',
+      coerce => 1,
+  );
+
+This pattern of using a coercion instead of a type union will help
+make your class internals simpler.
+
+=head1 TYPE CREATION HELPERS
+
+The L<Moose::Util::TypeConstraints> module exports a number of helper
+functions for creating specific kinds of types. These include
+C<class_type>, C<role_type>, C<maybe_type>, and C<duck_type>. See the
+docs for details.
+
+One helper worth noting is C<enum>, which allows you to create a
+subtype of C<Str> that only allows the specified values:
+
+  enum 'RGB', [qw( red green blue )];
+
+This creates a type named C<RGB>.
+
+=head1 ANONYMOUS TYPES
+
+All of the type creation functions return a type object. This type
+object can be used wherever you would use a type name, as a parent
+type, or as the value for an attribute's C<isa> option:
+
+  has 'size' => (
+      is  => 'ro',
+      isa => subtype( 'Int' => where { $_ > 0 } ),
+  );
+
+This is handy when you want to create a one-off type and don't want to
+"pollute" the global namespace registry.
+
+=head1 VALIDATING METHOD PARAMETERS
+
+Moose does not provide any means of validating method
+parameters. However, there are several MooseX extensions on CPAN which
+let you do this.
+
+The simplest and least sugary is L<MooseX::Params::Validate>. This
+lets you validate a set of named parameters using Moose types:
+
+  use Moose;
+  use MooseX::Params::Validate;
+
+  sub foo {
+      my $self   = shift;
+      my %params = validated_hash(
+          \@_,
+          bar => { isa => 'Str', default => 'Moose' },
+      );
+      ...
+  }
+
+L<MooseX::Params::Validate> also supports coercions.
+
+There are several more powerful extensions that support method
+parameter validation using Moose types, including
+L<MooseX::Method::Signatures>, which gives you a full-blown C<method>
+keyword.
+
+  method morning ( Str $name ) {
+      $self->say("Good morning ${name}!");
+  }
+
+=head1 LOAD ORDER ISSUES
+
+Because Moose types are defined at runtime, you may run into load
+order problems. In particular, you may want to use a class's type
+constraint before that type has been defined.
+
+In order to ameliorate this problem, we recommend defining I<all> of your
+custom types in one module, C<MyApp::Types>, and then loading this module in
+all of your other modules.
+
+=head1 AUTHOR
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See L<Moose/CABAL> and L<Moose/CONTRIBUTORS> for details.
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut

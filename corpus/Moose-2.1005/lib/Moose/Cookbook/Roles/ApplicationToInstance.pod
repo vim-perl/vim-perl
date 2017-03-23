@@ -1,0 +1,148 @@
+package Moose::Cookbook::Roles::ApplicationToInstance;
+
+# ABSTRACT: Applying a role to an object instance
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Moose::Cookbook::Roles::ApplicationToInstance - Applying a role to an object instance
+
+=head1 VERSION
+
+version 2.1005
+
+=head1 SYNOPSIS
+
+  package MyApp::Role::Job::Manager;
+
+  use List::Util qw( first );
+
+  use Moose::Role;
+
+  has 'employees' => (
+      is  => 'rw',
+      isa => 'ArrayRef[Employee]',
+  );
+
+  sub assign_work {
+      my $self = shift;
+      my $work = shift;
+
+      my $employee = first { !$_->has_work } @{ $self->employees };
+
+      die 'All my employees have work to do!' unless $employee;
+
+      $employee->work($work);
+  }
+
+  package main;
+
+  my $lisa = Employee->new( name => 'Lisa' );
+  MyApp::Role::Job::Manager->meta->apply($lisa);
+
+  my $homer = Employee->new( name => 'Homer' );
+  my $bart  = Employee->new( name => 'Bart' );
+  my $marge = Employee->new( name => 'Marge' );
+
+  $lisa->employees( [ $homer, $bart, $marge ] );
+  $lisa->assign_work('mow the lawn');
+
+=head1 DESCRIPTION
+
+In this recipe, we show how a role can be applied to an object. In
+this specific case, we are giving an employee managerial
+responsibilities.
+
+Applying a role to an object is simple. The L<Moose::Meta::Role>
+object provides an C<apply> method. This method will do the right
+thing when given an object instance.
+
+  MyApp::Role::Job::Manager->meta->apply($lisa);
+
+We could also use the C<apply_all_roles> function from L<Moose::Util>.
+
+  apply_all_roles( $person, MyApp::Role::Job::Manager->meta );
+
+The main advantage of using C<apply_all_roles> is that it can be used
+to apply more than one role at a time.
+
+We could also pass parameters to the role we're applying:
+
+  MyApp::Role::Job::Manager->meta->apply(
+      $lisa,
+      -alias => { assign_work => 'get_off_your_lazy_behind' },
+  );
+
+We saw examples of how method exclusion and alias working in
+L<Moose::Cookbook::Roles::Restartable_AdvancedComposition>.
+
+=begin testing-SETUP
+
+{
+    # Not in the recipe, but needed for writing tests.
+    package Employee;
+
+    use Moose;
+
+    has 'name' => (
+        is       => 'ro',
+        isa      => 'Str',
+        required => 1,
+    );
+
+    has 'work' => (
+        is        => 'rw',
+        isa       => 'Str',
+        predicate => 'has_work',
+    );
+}
+
+=end testing-SETUP
+
+=head1 CONCLUSION
+
+Applying a role to an object instance is a useful tool for adding
+behavior to existing objects. In our example, it is effective used to
+model a promotion.
+
+It can also be useful as a sort of controlled monkey-patching for
+existing code, particularly non-Moose code. For example, you could
+create a debugging role and apply it to an object at runtime.
+
+=begin testing
+
+{
+    my $lisa = Employee->new( name => 'Lisa' );
+    MyApp::Role::Job::Manager->meta->apply($lisa);
+
+    my $homer = Employee->new( name => 'Homer' );
+    my $bart  = Employee->new( name => 'Bart' );
+    my $marge = Employee->new( name => 'Marge' );
+
+    $lisa->employees( [ $homer, $bart, $marge ] );
+    $lisa->assign_work('mow the lawn');
+
+    ok( $lisa->does('MyApp::Role::Job::Manager'),
+        'lisa now does the manager role' );
+
+    is( $homer->work, 'mow the lawn',
+        'homer was assigned a task by lisa' );
+}
+
+=end testing
+
+=head1 AUTHOR
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See L<Moose/CABAL> and L<Moose/CONTRIBUTORS> for details.
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut

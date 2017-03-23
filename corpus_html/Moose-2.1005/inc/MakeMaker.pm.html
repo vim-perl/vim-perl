@@ -1,0 +1,54 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> inc::MakeMaker</span>;
+
+<span class="synStatement">use </span>Moose;
+
+<span class="synStatement">use lib</span> <span class="synString">'inc'</span>;
+
+<span class="synStatement">use </span>MMHelper;
+
+extends <span class="synString">'Dist::Zilla::Plugin::MakeMaker::Awesome'</span>;
+
+override <span class="synString">_build_MakeFile_PL_template</span> =&gt; <span class="synKeyword">sub </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$tmpl</span> = super();
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$ccflags</span> = MMHelper::ccflags_dyn();
+    <span class="synIdentifier">$tmpl</span> =~ <span class="synStatement">s/</span><span class="synString">^</span><span class="synSpecial">(</span><span class="synString">WriteMakefile</span><span class="synSpecial">\()</span><span class="synStatement">/</span><span class="synSpecial">\$</span><span class="synString">WriteMakefileArgs{CCFLAGS} = </span><span class="synIdentifier">$ccflags</span><span class="synString">;</span><span class="synSpecial">\n\n</span><span class="synIdentifier">$1</span><span class="synStatement">/m</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$tmpl</span> . <span class="synString">&quot;</span><span class="synSpecial">\n\n</span><span class="synString">&quot;</span> . MMHelper::my_package_subs();
+};
+
+override <span class="synString">_build_WriteMakefile_args</span> =&gt; <span class="synKeyword">sub </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$args</span> = super();
+
+    <span class="synStatement">return</span> {
+        <span class="synIdentifier">%{$args}</span>,
+        MMHelper::mm_args(),
+    };
+};
+
+override <span class="synString">test</span> =&gt; <span class="synKeyword">sub </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">local</span> <span class="synIdentifier">$ENV{</span><span class="synString">PERL5LIB</span><span class="synIdentifier">}</span> = <span class="synStatement">join</span> <span class="synString">':'</span>,
+        <span class="synStatement">grep</span> <span class="synStatement">{</span><span class="synOperator">defined</span><span class="synStatement">}</span> <span class="synIdentifier">@ENV{</span> <span class="synString">'PERL5LIB'</span>, <span class="synString">'DZIL_TEST_INC'</span> <span class="synIdentifier">}</span>;
+
+    super();
+};
+
+<span class="synNumber">1</span>;
+</pre>
+
+ </body>
+</html>

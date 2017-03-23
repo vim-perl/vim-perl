@@ -1,0 +1,169 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Class::MOP::Method::Inlined</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Class::MOP::Method::Inlined::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Class::MOP::Method::Inlined::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Carp         <span class="synString">'confess'</span>;
+<span class="synStatement">use </span>Scalar::Util <span class="synString">'blessed'</span>, <span class="synString">'weaken'</span>, <span class="synString">'looks_like_number'</span>, <span class="synString">'refaddr'</span>;
+
+<span class="synStatement">use base</span> <span class="synString">'Class::MOP::Method::Generated'</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">_uninlined_body </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$super_method</span>
+        = <span class="synIdentifier">$self-&gt;associated_metaclass-&gt;find_next_method_by_name</span>( <span class="synIdentifier">$self-&gt;name</span> )
+        <span class="synOperator">or</span> <span class="synStatement">return</span>;
+
+    <span class="synConditional">if</span> ( <span class="synIdentifier">$super_method-&gt;isa</span>(__PACKAGE__) ) {
+        <span class="synStatement">return</span> <span class="synIdentifier">$super_method-&gt;_uninlined_body</span>;
+    }
+    <span class="synConditional">else</span> {
+        <span class="synStatement">return</span> <span class="synIdentifier">$super_method-&gt;body</span>;
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">can_be_inlined </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span>      = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$metaclass</span> = <span class="synIdentifier">$self-&gt;associated_metaclass</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$class</span>     = <span class="synIdentifier">$metaclass-&gt;name</span>;
+
+    <span class="synComment"># If we don't find an inherited method, this is a rather weird</span>
+    <span class="synComment"># case where we have no method in the inheritance chain even</span>
+    <span class="synComment"># though we're expecting one to be there</span>
+    <span class="synStatement">my</span> <span class="synIdentifier">$inherited_method</span>
+        = <span class="synIdentifier">$metaclass-&gt;find_next_method_by_name</span>( <span class="synIdentifier">$self-&gt;name</span> );
+
+    <span class="synConditional">if</span> (   <span class="synIdentifier">$inherited_method</span>
+        &amp;&amp; <span class="synIdentifier">$inherited_method-&gt;isa</span>(<span class="synString">'Class::MOP::Method::Wrapped'</span>) ) {
+        <span class="synStatement">warn</span> <span class="synString">&quot;Not inlining '&quot;</span>
+            . <span class="synIdentifier">$self-&gt;name</span>
+            . <span class="synString">&quot;' for </span><span class="synIdentifier">$class</span><span class="synString"> since it &quot;</span>
+            . <span class="synString">&quot;has method modifiers which would be lost if it were inlined</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+
+        <span class="synStatement">return</span> <span class="synNumber">0</span>;
+    }
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$expected_class</span> = <span class="synIdentifier">$self-&gt;_expected_method_class</span>
+        <span class="synOperator">or</span> <span class="synStatement">return</span> <span class="synNumber">1</span>;
+
+    <span class="synComment"># if we are shadowing a method we first verify that it is</span>
+    <span class="synComment"># compatible with the definition we are replacing it with</span>
+    <span class="synStatement">my</span> <span class="synIdentifier">$expected_method</span> = <span class="synIdentifier">$expected_class-&gt;can</span>( <span class="synIdentifier">$self-&gt;name</span> );
+
+    <span class="synConditional">if</span> ( ! <span class="synIdentifier">$expected_method</span> ) {
+        <span class="synStatement">warn</span> <span class="synString">&quot;Not inlining '&quot;</span>
+            . <span class="synIdentifier">$self-&gt;name</span>
+            . <span class="synString">&quot;' for </span><span class="synIdentifier">$class</span><span class="synString"> since </span><span class="synIdentifier">${expected_class}</span><span class="synString">::&quot;</span>
+            . <span class="synIdentifier">$self-&gt;name</span>
+            . <span class="synString">&quot; is not defined</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+
+        <span class="synStatement">return</span> <span class="synNumber">0</span>;
+    }
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$actual_method</span> = <span class="synIdentifier">$class-&gt;can</span>( <span class="synIdentifier">$self-&gt;name</span> )
+        <span class="synOperator">or</span> <span class="synStatement">return</span> <span class="synNumber">1</span>;
+
+    <span class="synComment"># the method is what we wanted (probably Moose::Object::new)</span>
+    <span class="synStatement">return</span> <span class="synNumber">1</span>
+        <span class="synConditional">if</span> refaddr(<span class="synIdentifier">$expected_method</span>) == refaddr(<span class="synIdentifier">$actual_method</span>);
+
+    <span class="synComment"># otherwise we have to check that the actual method is an inlined</span>
+    <span class="synComment"># version of what we're expecting</span>
+    <span class="synConditional">if</span> ( <span class="synIdentifier">$inherited_method-&gt;isa</span>(__PACKAGE__) ) {
+        <span class="synConditional">if</span> ( <span class="synIdentifier">$inherited_method-&gt;_uninlined_body</span>
+             &amp;&amp; refaddr( <span class="synIdentifier">$inherited_method-&gt;_uninlined_body</span> )
+             == refaddr(<span class="synIdentifier">$expected_method</span>) ) {
+            <span class="synStatement">return</span> <span class="synNumber">1</span>;
+        }
+    }
+    <span class="synConditional">elsif</span> ( refaddr( <span class="synIdentifier">$inherited_method-&gt;body</span> )
+            == refaddr(<span class="synIdentifier">$expected_method</span>) ) {
+        <span class="synStatement">return</span> <span class="synNumber">1</span>;
+    }
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$warning</span>
+        = <span class="synString">&quot;Not inlining '&quot;</span>
+        . <span class="synIdentifier">$self-&gt;name</span>
+        . <span class="synString">&quot;' for </span><span class="synIdentifier">$class</span><span class="synString"> since it is not&quot;</span>
+        . <span class="synString">&quot; inheriting the default </span><span class="synIdentifier">${expected_class}</span><span class="synString">::&quot;</span>
+        . <span class="synIdentifier">$self-&gt;name</span> . <span class="synString">&quot;</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+
+    <span class="synConditional">if</span> ( <span class="synIdentifier">$self-&gt;isa</span>(<span class="synString">&quot;Class::MOP::Method::Constructor&quot;</span>) ) {
+
+        <span class="synComment"># </span><span class="synTodo">FIXME</span><span class="synComment"> kludge, refactor warning generation to a method</span>
+        <span class="synIdentifier">$warning</span>
+            .= <span class="synString">&quot;If you are certain you don't need to inline your&quot;</span>
+            . <span class="synString">&quot; constructor, specify inline_constructor =&gt; 0 in your&quot;</span>
+            . <span class="synString">&quot; call to </span><span class="synIdentifier">$class-&gt;meta-&gt;make_immutable</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+    }
+
+    <span class="synStatement">warn</span> <span class="synIdentifier">$warning</span>;
+
+    <span class="synStatement">return</span> <span class="synNumber">0</span>;
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: Method base class for methods which have been inlined</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Class::MOP::Method::Inlined - Method base class for methods which have been inlined
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This is a <span class="synIdentifier">L&lt;Class::MOP::Method::Generated&gt;</span> subclass for methods which
+can be inlined.
+
+<span class="synStatement">=head1</span><span class="synString"> METHODS</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metamethod-&gt;can_be_inlined &gt;&gt;</span>
+
+This method returns true if the method in question can be inlined in
+the associated metaclass.
+
+If it cannot be inlined, it spits out a warning and returns false.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre>
+<span class="synStatement">package</span><span class="synType"> MOP::Point</span>;
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+<span class="synStatement">use </span>metaclass;
+
+__PACKAGE__<span class="synIdentifier">-&gt;meta-&gt;add_attribute</span>(<span class="synString">'x'</span> =&gt; (<span class="synString">accessor</span> =&gt; <span class="synString">'x'</span>, <span class="synString">default</span> =&gt; <span class="synNumber">10</span>));
+__PACKAGE__<span class="synIdentifier">-&gt;meta-&gt;add_attribute</span>(<span class="synString">'y'</span> =&gt; (<span class="synString">accessor</span> =&gt; <span class="synString">'y'</span>));
+
+<span class="synKeyword">sub </span><span class="synFunction">new </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$class</span> = <span class="synStatement">shift</span>;
+    <span class="synIdentifier">$class-&gt;meta-&gt;new_object</span>(<span class="synIdentifier">@_</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">clear </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synIdentifier">$self-&gt;x</span>(<span class="synNumber">0</span>);
+    <span class="synIdentifier">$self-&gt;y</span>(<span class="synNumber">0</span>);
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment">__END__</span>
+</pre>
+
+ </body>
+</html>

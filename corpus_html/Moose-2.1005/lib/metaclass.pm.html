@@ -1,0 +1,133 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre>
+<span class="synStatement">package</span><span class="synType"> metaclass</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">metaclass::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">metaclass::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Carp         <span class="synString">'confess'</span>;
+<span class="synStatement">use </span>Class::Load  <span class="synString">'load_class'</span>;
+<span class="synStatement">use </span>Scalar::Util <span class="synString">'blessed'</span>;
+<span class="synStatement">use </span>Try::Tiny;
+
+<span class="synStatement">use </span>Class::MOP;
+
+<span class="synKeyword">sub </span><span class="synFunction">import </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$class</span>, <span class="synIdentifier">@args</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">unshift</span> <span class="synIdentifier">@args</span>, <span class="synString">&quot;metaclass&quot;</span> <span class="synConditional">if</span> <span class="synIdentifier">@args</span> % <span class="synNumber">2</span> == <span class="synNumber">1</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">%options</span> = <span class="synIdentifier">@args</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$meta_name</span> = <span class="synStatement">exists</span> <span class="synIdentifier">$options{</span><span class="synString">meta_name</span><span class="synIdentifier">}</span> ? <span class="synIdentifier">$options{</span><span class="synString">meta_name</span><span class="synIdentifier">}</span> : <span class="synString">'meta'</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$metaclass</span> = <span class="synStatement">delete</span> <span class="synIdentifier">$options{</span><span class="synString">metaclass</span><span class="synIdentifier">}</span>;
+
+    <span class="synConditional">unless</span> ( <span class="synOperator">defined</span> <span class="synIdentifier">$metaclass</span> ) {
+        <span class="synIdentifier">$metaclass</span> = <span class="synString">&quot;Class::MOP::Class&quot;</span>;
+    } <span class="synConditional">else</span> {
+        load_class(<span class="synIdentifier">$metaclass</span>);
+    }
+
+    (<span class="synIdentifier">$metaclass-&gt;isa</span>(<span class="synString">'Class::MOP::Class'</span>))
+        || confess <span class="synString">&quot;The metaclass (</span><span class="synIdentifier">$metaclass</span><span class="synString">) must be derived from Class::MOP::Class&quot;</span>;
+
+    <span class="synComment"># make sure the custom metaclasses get loaded</span>
+    <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$key</span> (<span class="synStatement">grep</span> <span class="synStatement">{</span> <span class="synStatement">/</span><span class="synString">_</span><span class="synSpecial">(?:</span><span class="synString">meta</span><span class="synSpecial">)?</span><span class="synString">class$</span><span class="synStatement">/</span> <span class="synStatement">}</span> <span class="synStatement">keys</span> <span class="synIdentifier">%options</span>) {
+        <span class="synConditional">unless</span> ( <span class="synOperator">ref</span>( <span class="synStatement">my</span> <span class="synIdentifier">$class</span> = <span class="synIdentifier">$options{$key}</span> ) ) {
+            load_class(<span class="synIdentifier">$class</span>)
+        }
+    }
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$package</span> = <span class="synStatement">caller</span>();
+
+    <span class="synComment"># create a meta object so we can install &amp;meta</span>
+    <span class="synStatement">my</span> <span class="synIdentifier">$meta</span> = <span class="synIdentifier">$metaclass-&gt;initialize</span>(<span class="synIdentifier">$package</span> =&gt; <span class="synIdentifier">%options</span>);
+    <span class="synIdentifier">$meta-&gt;_add_meta_method</span>(<span class="synIdentifier">$meta_name</span>)
+        <span class="synConditional">if</span> <span class="synOperator">defined</span> <span class="synIdentifier">$meta_name</span>;
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: a pragma for installing and using Class::MOP metaclasses</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+metaclass - a pragma for installing and using Class::MOP metaclasses
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> SYNOPSIS</span>
+
+<span class="synPreProc">  package MyClass;</span>
+
+<span class="synPreProc">  # use Class::MOP::Class</span>
+<span class="synPreProc">  use metaclass;</span>
+
+<span class="synPreProc">  # ... or use a custom metaclass</span>
+<span class="synPreProc">  use metaclass 'MyMetaClass';</span>
+
+<span class="synPreProc">  # ... or use a custom metaclass</span>
+<span class="synPreProc">  # and custom attribute and method</span>
+<span class="synPreProc">  # metaclasses</span>
+<span class="synPreProc">  use metaclass 'MyMetaClass' =&gt; (</span>
+<span class="synPreProc">      'attribute_metaclass' =&gt; 'MyAttributeMetaClass',</span>
+<span class="synPreProc">      'method_metaclass'    =&gt; 'MyMethodMetaClass',</span>
+<span class="synPreProc">  );</span>
+
+<span class="synPreProc">  # ... or just specify custom attribute</span>
+<span class="synPreProc">  # and method classes, and Class::MOP::Class</span>
+<span class="synPreProc">  # is the assumed metaclass</span>
+<span class="synPreProc">  use metaclass (</span>
+<span class="synPreProc">      'attribute_metaclass' =&gt; 'MyAttributeMetaClass',</span>
+<span class="synPreProc">      'method_metaclass'    =&gt; 'MyMethodMetaClass',</span>
+<span class="synPreProc">  );</span>
+
+<span class="synPreProc">  # if we'd rather not install a 'meta' method, we can do this</span>
+<span class="synPreProc">  use metaclass meta_name =&gt; undef;</span>
+<span class="synPreProc">  # or if we'd like it to have a different name,</span>
+<span class="synPreProc">  use metaclass meta_name =&gt; 'my_meta';</span>
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This is a pragma to make it easier to use a specific metaclass
+and a set of custom attribute and method metaclasses. It also
+installs a <span class="synIdentifier">C&lt;meta&gt;</span> method to your class as well, unless <span class="synIdentifier">C&lt;undef&gt;</span>
+is passed to the <span class="synIdentifier">C&lt;meta_name&gt;</span> option.
+
+Note that if you are using Moose, you most likely do <span class="synIdentifier">B&lt;not&gt;</span> want
+to be using this - look into <span class="synIdentifier">L&lt;Moose::Util::MetaRole&gt;</span> instead.
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

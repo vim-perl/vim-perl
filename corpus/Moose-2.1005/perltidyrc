@@ -1,0 +1,21 @@
+-l=78
+-i=4
+-ci=4
+-se
+-b
+-bar
+-boc
+-vt=0
+-vtc=0
+-cti=0
+-pt=1
+-bt=1
+-sbt=1
+-bbt=1
+-nolq
+-npro
+-nsfs
+--opening-hash-brace-right
+--no-outdent-long-comments 
+--blank-lines-before-packages=0
+-wbb="% + - * / x != == >= <= =~ !~ < > | & >= < = **= += *= &= <<= &&= -= /= |= >>= ||= .= %= ^= x="

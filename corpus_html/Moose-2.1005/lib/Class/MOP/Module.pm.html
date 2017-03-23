@@ -1,0 +1,181 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre>
+<span class="synStatement">package</span><span class="synType"> Class::MOP::Module</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Class::MOP::Module::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Class::MOP::Module::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Carp         <span class="synString">'confess'</span>;
+<span class="synStatement">use </span>Scalar::Util <span class="synString">'blessed'</span>;
+
+<span class="synStatement">use base</span> <span class="synString">'Class::MOP::Package'</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">_new </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$class</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">return</span> Class::MOP::Class-&gt;initialize(<span class="synIdentifier">$class</span>)-&gt;new_object(<span class="synIdentifier">@_</span>)
+        <span class="synConditional">if</span> <span class="synIdentifier">$class</span> <span class="synOperator">ne</span> __PACKAGE__;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$params</span> = <span class="synIdentifier">@_</span> == <span class="synNumber">1</span> ? <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> : {<span class="synIdentifier">@_</span>};
+    <span class="synStatement">return</span> <span class="synOperator">bless</span> {
+        <span class="synComment"># Need to quote package to avoid a problem with PPI mis-parsing this</span>
+        <span class="synComment"># as a package statement.</span>
+
+        <span class="synComment"># from Class::MOP::Package</span>
+        <span class="synString">'package'</span> =&gt; <span class="synIdentifier">$params-&gt;{</span><span class="synString">package</span><span class="synIdentifier">}</span>,
+        <span class="synString">namespace</span> =&gt; \<span class="synOperator">undef</span>,
+
+        <span class="synComment"># attributes</span>
+        <span class="synString">version</span>   =&gt; \<span class="synOperator">undef</span>,
+        <span class="synString">authority</span> =&gt; \<span class="synOperator">undef</span>
+    } =&gt; <span class="synIdentifier">$class</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">version </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synIdentifier">${$self-&gt;get_or_add_package_symbol</span>(<span class="synString">'$VERSION'</span>)<span class="synIdentifier">}</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">authority </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synIdentifier">${$self-&gt;get_or_add_package_symbol</span>(<span class="synString">'$AUTHORITY'</span>)<span class="synIdentifier">}</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">identifier </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">join</span> <span class="synString">'-'</span> =&gt; (
+        <span class="synIdentifier">$self-&gt;name</span>,
+        (<span class="synIdentifier">$self-&gt;version</span>   || ()),
+        (<span class="synIdentifier">$self-&gt;authority</span> || ()),
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">create </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$class</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">@args</span> = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">unshift</span> <span class="synIdentifier">@args</span>, <span class="synString">'package'</span> <span class="synConditional">if</span> <span class="synIdentifier">@args</span> % <span class="synNumber">2</span> == <span class="synNumber">1</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">%options</span> = <span class="synIdentifier">@args</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$package</span>   = <span class="synStatement">delete</span> <span class="synIdentifier">$options{</span><span class="synString">package</span><span class="synIdentifier">}</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$version</span>   = <span class="synStatement">delete</span> <span class="synIdentifier">$options{</span><span class="synString">version</span><span class="synIdentifier">}</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$authority</span> = <span class="synStatement">delete</span> <span class="synIdentifier">$options{</span><span class="synString">authority</span><span class="synIdentifier">}</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$meta</span> = <span class="synIdentifier">$class-&gt;SUPER</span>::create(<span class="synIdentifier">$package</span> =&gt; <span class="synIdentifier">%options</span>);
+
+    <span class="synIdentifier">$meta-&gt;_instantiate_module</span>(<span class="synIdentifier">$version</span>, <span class="synIdentifier">$authority</span>);
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$meta</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_anon_package_prefix </span>{ <span class="synString">'Class::MOP::Module::__ANON__::SERIAL::'</span> }
+<span class="synKeyword">sub </span><span class="synFunction">_anon_cache_key      </span>{ confess <span class="synString">&quot;Modules are not cacheable&quot;</span> }
+
+
+<span class="synKeyword">sub </span><span class="synFunction">_instantiate_module </span>{
+    <span class="synStatement">my</span>(<span class="synIdentifier">$self</span>, <span class="synIdentifier">$version</span>, <span class="synIdentifier">$authority</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$package_name</span> = <span class="synIdentifier">$self-&gt;name</span>;
+
+    <span class="synIdentifier">$self-&gt;add_package_symbol</span>(<span class="synString">'$VERSION'</span> =&gt; <span class="synIdentifier">$version</span>)
+        <span class="synConditional">if</span> <span class="synOperator">defined</span> <span class="synIdentifier">$version</span>;
+    <span class="synIdentifier">$self-&gt;add_package_symbol</span>(<span class="synString">'$AUTHORITY'</span> =&gt; <span class="synIdentifier">$authority</span>)
+        <span class="synConditional">if</span> <span class="synOperator">defined</span> <span class="synIdentifier">$authority</span>;
+
+    <span class="synStatement">return</span>;
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: Module Meta Object</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Class::MOP::Module - Module Meta Object
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+A module is essentially a <span class="synIdentifier">L&lt;Class::MOP::Package&gt;</span> with metadata, in our
+case the version and authority.
+
+<span class="synStatement">=head1</span><span class="synString"> INHERITANCE</span>
+
+<span class="synIdentifier">B&lt;Class::MOP::Module&gt;</span> is a subclass of <span class="synIdentifier">L&lt;Class::MOP::Package&gt;</span>.
+
+<span class="synStatement">=head1</span><span class="synString"> METHODS</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; Class::MOP::Module-&gt;create($package, %options) &gt;&gt;</span>
+
+Overrides <span class="synIdentifier">C&lt;create&gt;</span> from <span class="synIdentifier">L&lt;Class::MOP::Package&gt;</span> to provide these additional
+options:
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">C&lt;version&gt;</span>
+
+A version number, to be installed in the <span class="synIdentifier">C&lt;$VERSION&gt;</span> package global variable.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">C&lt;authority&gt;</span>
+
+An authority, to be installed in the <span class="synIdentifier">C&lt;$AUTHORITY&gt;</span> package global variable.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metamodule-&gt;version &gt;&gt;</span>
+
+This is a read-only attribute which returns the <span class="synIdentifier">C&lt;$VERSION&gt;</span> of the
+package, if one exists.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metamodule-&gt;authority &gt;&gt;</span>
+
+This is a read-only attribute which returns the <span class="synIdentifier">C&lt;$AUTHORITY&gt;</span> of the
+package, if one exists.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metamodule-&gt;identifier &gt;&gt;</span>
+
+This constructs a string which combines the name, version and
+authority.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; Class::MOP::Module-&gt;meta &gt;&gt;</span>
+
+This will return a <span class="synIdentifier">L&lt;Class::MOP::Class&gt;</span> instance for this class.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

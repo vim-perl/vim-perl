@@ -1,0 +1,48 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synPreProc">#!/usr/bin/perl</span>
+
+<span class="synStatement">package</span><span class="synType"> Bench::Construct</span>;
+<span class="synStatement">use </span>Moose;
+<span class="synStatement">use </span>Moose::Util::TypeConstraints;
+
+has <span class="synString">class</span> =&gt; (
+    <span class="synString">isa</span> =&gt; <span class="synString">&quot;Str&quot;</span>,
+    <span class="synString">is</span>  =&gt; <span class="synString">&quot;ro&quot;</span>,
+);
+
+<span class="synStatement">eval</span> {
+coerce ArrayRef
+    =&gt; from HashRef
+        =&gt; via { [ <span class="synIdentifier">%$_</span> ] };
+};
+
+has <span class="synString">args</span> =&gt; (
+    <span class="synString">isa</span> =&gt; <span class="synString">&quot;ArrayRef&quot;</span>,
+    <span class="synString">is</span>  =&gt; <span class="synString">&quot;ro&quot;</span>,
+    <span class="synString">auto_deref</span> =&gt; <span class="synNumber">1</span>,
+    <span class="synString">coerce</span>     =&gt; <span class="synNumber">1</span>,
+);
+
+<span class="synKeyword">sub </span><span class="synFunction">code </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$class</span> = <span class="synIdentifier">$self-&gt;class</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">@args</span>  = <span class="synIdentifier">$self-&gt;args</span>;
+
+    <span class="synKeyword">sub </span>{ <span class="synStatement">my</span> <span class="synIdentifier">$obj</span> = <span class="synIdentifier">$class-&gt;new</span>( <span class="synIdentifier">@args</span> ) }
+}
+
+__PACKAGE__;
+
+<span class="synComment">__END__</span>
+</pre>
+
+ </body>
+</html>

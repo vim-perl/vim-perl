@@ -1,0 +1,120 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Moose::Error::Default</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Error::Default::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Error::Default::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Carp::Heavy;
+<span class="synStatement">use </span>Class::MOP::MiniTrait;
+
+<span class="synStatement">use </span>Moose::Error::Util;
+
+<span class="synStatement">use base</span> <span class="synString">'Class::MOP::Object'</span>;
+
+Class::MOP::MiniTrait::apply(__PACKAGE__, <span class="synString">'Moose::Meta::Object::Trait'</span>);
+
+<span class="synKeyword">sub </span><span class="synFunction">new </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$self</span>, <span class="synIdentifier">@args</span> ) = <span class="synIdentifier">@_</span>;
+    <span class="synComment"># can't use Moose::Error::Util::create_error here because that would break</span>
+    <span class="synComment"># inheritance. we don't care about that for the inlined version, because</span>
+    <span class="synComment"># the inlined versions are explicitly not inherited.</span>
+    <span class="synConditional">if</span> (<span class="synOperator">defined</span> <span class="synIdentifier">$ENV{</span><span class="synString">MOOSE_ERROR_STYLE</span><span class="synIdentifier">}</span> &amp;&amp; <span class="synIdentifier">$ENV{</span><span class="synString">MOOSE_ERROR_STYLE</span><span class="synIdentifier">}</span> <span class="synOperator">eq</span> <span class="synString">'croak'</span>) {
+        <span class="synIdentifier">$self-&gt;create_error_croak</span>( <span class="synIdentifier">@args</span> );
+    }
+    <span class="synConditional">else</span> {
+        <span class="synIdentifier">$self-&gt;create_error_confess</span>( <span class="synIdentifier">@args</span> );
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_new </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$self</span>, <span class="synIdentifier">%args</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$depth</span> = (<span class="synIdentifier">$args{</span><span class="synString">depth</span><span class="synIdentifier">}</span> || <span class="synNumber">0</span>) - <span class="synNumber">1</span>;
+    <span class="synStatement">return</span> <span class="synString">'Moose::Error::Util::create_error('</span>
+      . <span class="synString">'message =&gt; '</span> . <span class="synIdentifier">$args{</span><span class="synString">message</span><span class="synIdentifier">}</span> . <span class="synString">', '</span>
+      . <span class="synString">'depth   =&gt; '</span> . <span class="synIdentifier">$depth</span>         . <span class="synString">', '</span>
+  . <span class="synString">')'</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">create_error_croak </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$self</span>, <span class="synIdentifier">@args</span> ) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">return</span> Moose::Error::Util::create_error_croak(<span class="synIdentifier">@args</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">create_error_confess </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$self</span>, <span class="synIdentifier">@args</span> ) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">return</span> Moose::Error::Util::create_error_confess(<span class="synIdentifier">@args</span>);
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: L&lt;Carp&gt; based error generation for Moose.</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Moose::Error::Default - <span class="synIdentifier">L&lt;Carp&gt;</span> based error generation for Moose.
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This class implements <span class="synIdentifier">L&lt;Carp&gt;</span> based error generation.
+
+The default behavior is like <span class="synIdentifier">L&lt;Moose::Error::Confess&gt;</span>. To override this to
+default to <span class="synIdentifier">L&lt;Moose::Error::Croak&gt;</span>'s behaviour on a system wide basis, set the
+MOOSE_ERROR_STYLE environment variable to <span class="synIdentifier">C&lt;croak&gt;</span>. The use of this
+environment variable is considered experimental, and may change in a future
+release.
+
+<span class="synStatement">=head1</span><span class="synString"> METHODS</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; Moose::Error::Default-&gt;new(@args) &gt;&gt;</span>
+
+Create a new error. Delegates to <span class="synIdentifier">C&lt;create_error_confess&gt;</span> or
+<span class="synIdentifier">C&lt;create_error_croak&gt;</span>.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $error-&gt;create_error_confess(@args) &gt;&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $error-&gt;create_error_croak(@args) &gt;&gt;</span>
+
+Creates a new errors string of the specified style.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

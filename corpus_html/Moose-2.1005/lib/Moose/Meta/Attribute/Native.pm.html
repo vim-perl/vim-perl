@@ -1,0 +1,284 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Moose::Meta::Attribute::Native</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Attribute::Native::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Attribute::Native::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use </span>Class::Load <span class="synString">qw(load_class)</span>;
+
+<span class="synStatement">my</span> <span class="synIdentifier">@trait_names</span> = <span class="synString">qw(Bool Counter Number String Array Hash Code)</span>;
+
+<span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$trait_name</span> (<span class="synIdentifier">@trait_names</span>) {
+    <span class="synStatement">my</span> <span class="synIdentifier">$trait_class</span> = <span class="synString">&quot;Moose::Meta::Attribute::Native::Trait::</span><span class="synIdentifier">$trait_name</span><span class="synString">&quot;</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$meta</span> = Class::MOP::Class-&gt;initialize(
+        <span class="synString">&quot;Moose::Meta::Attribute::Custom::Trait::</span><span class="synIdentifier">$trait_name</span><span class="synString">&quot;</span>
+    );
+    <span class="synConditional">if</span> (<span class="synIdentifier">$meta-&gt;find_method_by_name</span>(<span class="synString">'register_implementation'</span>)) {
+        <span class="synStatement">my</span> <span class="synIdentifier">$class</span> = <span class="synIdentifier">$meta-&gt;name-&gt;register_implementation</span>;
+        Moose-&gt;throw_error(
+            <span class="synString">&quot;An implementation for </span><span class="synIdentifier">$trait_name</span><span class="synString"> already exists &quot;</span> .
+            <span class="synString">&quot;(found '</span><span class="synIdentifier">$class</span><span class="synString">' when trying to register '</span><span class="synIdentifier">$trait_class</span><span class="synString">')&quot;</span>
+        );
+    }
+    <span class="synIdentifier">$meta-&gt;add_method</span>(<span class="synString">register_implementation</span> =&gt; <span class="synKeyword">sub </span>{
+        <span class="synComment"># resolve_metatrait_alias will load classes anyway, but throws away</span>
+        <span class="synComment"># their error message; we WANT to die if there's a problem</span>
+        load_class(<span class="synIdentifier">$trait_class</span>);
+        <span class="synStatement">return</span> <span class="synIdentifier">$trait_class</span>;
+    });
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: Delegate to native Perl types</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Moose::Meta::Attribute::Native - Delegate to native Perl types
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> SYNOPSIS</span>
+
+<span class="synPreProc">  package MyClass;</span>
+<span class="synPreProc">  use Moose;</span>
+
+<span class="synPreProc">  has 'mapping' =&gt; (</span>
+<span class="synPreProc">      traits  =&gt; ['Hash'],</span>
+<span class="synPreProc">      is      =&gt; 'rw',</span>
+<span class="synPreProc">      isa     =&gt; 'HashRef[Str]',</span>
+<span class="synPreProc">      default =&gt; sub { {} },</span>
+<span class="synPreProc">      handles =&gt; {</span>
+<span class="synPreProc">          exists_in_mapping =&gt; 'exists',</span>
+<span class="synPreProc">          ids_in_mapping    =&gt; 'keys',</span>
+<span class="synPreProc">          get_mapping       =&gt; 'get',</span>
+<span class="synPreProc">          set_mapping       =&gt; 'set',</span>
+<span class="synPreProc">          set_quantity      =&gt; [ set =&gt; 'quantity' ],</span>
+<span class="synPreProc">      },</span>
+<span class="synPreProc">  );</span>
+
+<span class="synPreProc">  my $obj = MyClass-&gt;new;</span>
+<span class="synPreProc">  $obj-&gt;set_quantity(10);      # quantity =&gt; 10</span>
+<span class="synPreProc">  $obj-&gt;set_mapping('foo', 4); # foo =&gt; 4</span>
+<span class="synPreProc">  $obj-&gt;set_mapping('bar', 5); # bar =&gt; 5</span>
+<span class="synPreProc">  $obj-&gt;set_mapping('baz', 6); # baz =&gt; 6</span>
+
+<span class="synPreProc">  # prints 5</span>
+<span class="synPreProc">  print $obj-&gt;get_mapping('bar') if $obj-&gt;exists_in_mapping('bar');</span>
+
+<span class="synPreProc">  # prints 'quantity, foo, bar, baz'</span>
+<span class="synPreProc">  print join ', ', $obj-&gt;ids_in_mapping;</span>
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+Native delegations allow you to delegate to native Perl data
+structures as if they were objects. For example, in the <span class="synIdentifier">L&lt;/SYNOPSIS&gt;</span> you can
+see a hash reference being treated as if it has methods named <span class="synIdentifier">C&lt;exists()&gt;</span>,
+<span class="synIdentifier">C&lt;keys()&gt;</span>, <span class="synIdentifier">C&lt;get()&gt;</span>, and <span class="synIdentifier">C&lt;set()&gt;</span>.
+
+The delegation methods (mostly) map to Perl builtins and operators. The return
+values of these delegations should be the same as the corresponding Perl
+operation. Any deviations will be explicitly documented.
+
+<span class="synStatement">=head1</span><span class="synString"> API</span>
+
+Native delegations are enabled by passing certain options to <span class="synIdentifier">C&lt;has&gt;</span> when
+creating an attribute.
+
+<span class="synStatement">=head2</span><span class="synString"> traits</span>
+
+To enable this feature, pass the appropriate name in the <span class="synIdentifier">C&lt;traits&gt;</span> array
+reference for the attribute. For example, to enable this feature for hash
+reference, we include <span class="synIdentifier">C&lt;'Hash'&gt;</span> in the list of traits.
+
+<span class="synStatement">=head2</span><span class="synString"> isa</span>
+
+You will need to make sure that the attribute has an appropriate type. For
+example, to use this with a Hash you must specify that your attribute is some
+sort of <span class="synIdentifier">C&lt;HashRef&gt;</span>.
+
+<span class="synStatement">=head2</span><span class="synString"> handles</span>
+
+This is just like any other delegation, but only a hash reference is allowed
+when defining native delegations. The keys are the methods to be created in
+the class which contains the attribute. The values are the methods provided by
+the associated trait. Currying works the same way as it does with any other
+delegation.
+
+See the docs for each native trait for details on what methods are available.
+
+<span class="synStatement">=head2</span><span class="synString"> is</span>
+
+Some traits provide a default <span class="synIdentifier">C&lt;is&gt;</span> for historical reasons. This behavior is
+deprecated, and you are strongly encouraged to provide a value. If you don't
+plan to read and write the attribute value directly, not passing the <span class="synIdentifier">C&lt;is&gt;</span>
+option will prevent standard accessor generation.
+
+<span class="synStatement">=head2</span><span class="synString"> default or builder</span>
+
+Some traits provide a default <span class="synIdentifier">C&lt;default&gt;</span> for historical reasons. This behavior
+is deprecated, and you are strongly encouraged to provide a default value or
+make the attribute required.
+
+<span class="synStatement">=head1</span><span class="synString"> TRAITS FOR NATIVE DELEGATIONS</span>
+
+Below are some simple examples of each native trait. More features are
+available than what is shown here; this is just a quick synopsis.
+
+<span class="synStatement">=over</span>
+
+<span class="synStatement">=item</span><span class="synString"> Array (</span><span class="synIdentifier">L&lt;Moose::Meta::Attribute::Native::Trait::Array&gt;</span><span class="synString">)</span>
+
+<span class="synPreProc">    has 'queue' =&gt; (</span>
+<span class="synPreProc">        traits  =&gt; ['Array'],</span>
+<span class="synPreProc">        is      =&gt; 'ro',</span>
+<span class="synPreProc">        isa     =&gt; 'ArrayRef[Str]',</span>
+<span class="synPreProc">        default =&gt; sub { [] },</span>
+<span class="synPreProc">        handles =&gt; {</span>
+<span class="synPreProc">            add_item  =&gt; 'push',</span>
+<span class="synPreProc">            next_item =&gt; 'shift',</span>
+<span class="synPreProc">            # ...</span>
+<span class="synPreProc">        }</span>
+<span class="synPreProc">    );</span>
+
+<span class="synStatement">=item</span><span class="synString"> Bool (</span><span class="synIdentifier">L&lt;Moose::Meta::Attribute::Native::Trait::Bool&gt;</span><span class="synString">)</span>
+
+<span class="synPreProc">    has 'is_lit' =&gt; (</span>
+<span class="synPreProc">        traits  =&gt; ['Bool'],</span>
+<span class="synPreProc">        is      =&gt; 'ro',</span>
+<span class="synPreProc">        isa     =&gt; 'Bool',</span>
+<span class="synPreProc">        default =&gt; 0,</span>
+<span class="synPreProc">        handles =&gt; {</span>
+<span class="synPreProc">            illuminate  =&gt; 'set',</span>
+<span class="synPreProc">            darken      =&gt; 'unset',</span>
+<span class="synPreProc">            flip_switch =&gt; 'toggle',</span>
+<span class="synPreProc">            is_dark     =&gt; 'not',</span>
+<span class="synPreProc">            # ...</span>
+<span class="synPreProc">        }</span>
+<span class="synPreProc">    );</span>
+
+<span class="synStatement">=item</span><span class="synString"> Code (</span><span class="synIdentifier">L&lt;Moose::Meta::Attribute::Native::Trait::Code&gt;</span><span class="synString">)</span>
+
+<span class="synPreProc">    has 'callback' =&gt; (</span>
+<span class="synPreProc">        traits  =&gt; ['Code'],</span>
+<span class="synPreProc">        is      =&gt; 'ro',</span>
+<span class="synPreProc">        isa     =&gt; 'CodeRef',</span>
+<span class="synPreProc">        default =&gt; sub {</span>
+<span class="synPreProc">            sub {'called'}</span>
+<span class="synPreProc">        },</span>
+<span class="synPreProc">        handles =&gt; {</span>
+<span class="synPreProc">            call =&gt; 'execute',</span>
+<span class="synPreProc">            # ...</span>
+<span class="synPreProc">        }</span>
+<span class="synPreProc">    );</span>
+
+<span class="synStatement">=item</span><span class="synString"> Counter (</span><span class="synIdentifier">L&lt;Moose::Meta::Attribute::Native::Trait::Counter&gt;</span><span class="synString">)</span>
+
+<span class="synPreProc">    has 'counter' =&gt; (</span>
+<span class="synPreProc">        traits  =&gt; ['Counter'],</span>
+<span class="synPreProc">        is      =&gt; 'ro',</span>
+<span class="synPreProc">        isa     =&gt; 'Num',</span>
+<span class="synPreProc">        default =&gt; 0,</span>
+<span class="synPreProc">        handles =&gt; {</span>
+<span class="synPreProc">            inc_counter   =&gt; 'inc',</span>
+<span class="synPreProc">            dec_counter   =&gt; 'dec',</span>
+<span class="synPreProc">            reset_counter =&gt; 'reset',</span>
+<span class="synPreProc">            # ...</span>
+<span class="synPreProc">        }</span>
+<span class="synPreProc">    );</span>
+
+<span class="synStatement">=item</span><span class="synString"> Hash (</span><span class="synIdentifier">L&lt;Moose::Meta::Attribute::Native::Trait::Hash&gt;</span><span class="synString">)</span>
+
+<span class="synPreProc">    has 'options' =&gt; (</span>
+<span class="synPreProc">        traits  =&gt; ['Hash'],</span>
+<span class="synPreProc">        is      =&gt; 'ro',</span>
+<span class="synPreProc">        isa     =&gt; 'HashRef[Str]',</span>
+<span class="synPreProc">        default =&gt; sub { {} },</span>
+<span class="synPreProc">        handles =&gt; {</span>
+<span class="synPreProc">            set_option =&gt; 'set',</span>
+<span class="synPreProc">            get_option =&gt; 'get',</span>
+<span class="synPreProc">            has_option =&gt; 'exists',</span>
+<span class="synPreProc">            # ...</span>
+<span class="synPreProc">        }</span>
+<span class="synPreProc">    );</span>
+
+<span class="synStatement">=item</span><span class="synString"> Number (</span><span class="synIdentifier">L&lt;Moose::Meta::Attribute::Native::Trait::Number&gt;</span><span class="synString">)</span>
+
+<span class="synPreProc">    has 'integer' =&gt; (</span>
+<span class="synPreProc">        traits  =&gt; ['Number'],</span>
+<span class="synPreProc">        is      =&gt; 'ro',</span>
+<span class="synPreProc">        isa     =&gt; 'Int',</span>
+<span class="synPreProc">        default =&gt; 5,</span>
+<span class="synPreProc">        handles =&gt; {</span>
+<span class="synPreProc">            set =&gt; 'set',</span>
+<span class="synPreProc">            add =&gt; 'add',</span>
+<span class="synPreProc">            sub =&gt; 'sub',</span>
+<span class="synPreProc">            mul =&gt; 'mul',</span>
+<span class="synPreProc">            div =&gt; 'div',</span>
+<span class="synPreProc">            mod =&gt; 'mod',</span>
+<span class="synPreProc">            abs =&gt; 'abs',</span>
+<span class="synPreProc">            # ...</span>
+<span class="synPreProc">        }</span>
+<span class="synPreProc">    );</span>
+
+<span class="synStatement">=item</span><span class="synString"> String (</span><span class="synIdentifier">L&lt;Moose::Meta::Attribute::Native::Trait::String&gt;</span><span class="synString">)</span>
+
+<span class="synPreProc">    has 'text' =&gt; (</span>
+<span class="synPreProc">        traits  =&gt; ['String'],</span>
+<span class="synPreProc">        is      =&gt; 'ro',</span>
+<span class="synPreProc">        isa     =&gt; 'Str',</span>
+<span class="synPreProc">        default =&gt; q{},</span>
+<span class="synPreProc">        handles =&gt; {</span>
+<span class="synPreProc">            add_text     =&gt; 'append',</span>
+<span class="synPreProc">            replace_text =&gt; 'replace',</span>
+<span class="synPreProc">            # ...</span>
+<span class="synPreProc">        }</span>
+<span class="synPreProc">    );</span>
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> COMPATIBILITY WITH MooseX::AttributeHelpers</span>
+
+This feature used to be a separated CPAN distribution called
+<span class="synIdentifier">L&lt;MooseX::AttributeHelpers&gt;</span>.
+
+When the feature was incorporated into the Moose core, some of the API details
+were changed. The underlying capabilities are the same, but some details of
+the API were changed.
+
+<span class="synStatement">=head1</span><span class="synString"> BUGS</span>
+
+See <span class="synIdentifier">L&lt;Moose/BUGS&gt;</span> for details on reporting bugs.
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

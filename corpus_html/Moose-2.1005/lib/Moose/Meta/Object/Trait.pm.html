@@ -1,0 +1,81 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre>
+<span class="synStatement">package</span><span class="synType"> Moose::Meta::Object::Trait</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Object::Trait::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Object::Trait::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use </span>Scalar::Util <span class="synString">qw(blessed)</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">_get_compatible_metaclass </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$orig</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;$orig</span>(<span class="synIdentifier">@_</span>)
+        || <span class="synIdentifier">$self-&gt;_get_compatible_metaclass_by_role_reconciliation</span>(<span class="synIdentifier">@_</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_get_compatible_metaclass_by_role_reconciliation </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$other_name</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$meta_name</span> = blessed(<span class="synIdentifier">$self</span>) ? <span class="synIdentifier">$self-&gt;_real_ref_name</span> : <span class="synIdentifier">$self</span>;
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> Moose::Util::_classes_differ_by_roles_only(
+        <span class="synIdentifier">$meta_name</span>, <span class="synIdentifier">$other_name</span>
+    );
+
+    <span class="synStatement">return</span> Moose::Util::_reconcile_roles_for_metaclass(
+        <span class="synIdentifier">$meta_name</span>, <span class="synIdentifier">$other_name</span>
+    );
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: Some overrides for L&lt;Class::MOP::Object&gt; functionality</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Moose::Meta::Object::Trait - Some overrides for <span class="synIdentifier">L&lt;Class::MOP::Object&gt;</span> functionality
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This module is entirely private, you shouldn't ever need to interact with
+it directly.
+
+<span class="synStatement">=head1</span><span class="synString"> BUGS</span>
+
+See <span class="synIdentifier">L&lt;Moose/BUGS&gt;</span> for details on reporting bugs.
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

@@ -1,0 +1,15 @@
+#! /usr/bin/env perl
+use Regexp::Debugger;
+Regexp::Debugger::rxrx(@ARGV);
+
+__END__
+
+=head1 NAME
+
+rxrx - command-line REPL and wrapper for Regexp::Debugger
+
+=head1 DESCRIPTION
+
+See the documentation of L<Regexp::Debugger>.
+
+=cut

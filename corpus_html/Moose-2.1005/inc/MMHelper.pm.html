@@ -1,0 +1,92 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> MMHelper</span>;
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Config;
+<span class="synStatement">use </span>Cwd <span class="synString">qw( abs_path )</span>;
+<span class="synStatement">use </span>File::Basename <span class="synString">qw( dirname )</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">ccflags_dyn </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$is_dev</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$ccflags</span> = <span class="synString">q&lt;( $Config::Config{ccflags} || '' ) . ' -I.'&gt;</span>;
+    <span class="synIdentifier">$ccflags</span> .= <span class="synString">q&lt; . ' -Wall -Wdeclaration-after-statement'&gt;</span>
+        <span class="synConditional">if</span> <span class="synIdentifier">$is_dev</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$ccflags</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">ccflags_static </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$is_dev</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">return</span> <span class="synStatement">eval</span>(ccflags_dyn(<span class="synIdentifier">$is_dev</span>));
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">mm_args </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">@object</span>, <span class="synIdentifier">%xs</span> );
+
+    <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$xs</span> ( <span class="synStatement">glob</span> <span class="synString">&quot;xs/*.xs&quot;</span> ) {
+        ( <span class="synStatement">my</span> <span class="synIdentifier">$c</span> = <span class="synIdentifier">$xs</span> ) =~ <span class="synStatement">s/</span><span class="synSpecial">\.</span><span class="synString">xs$</span><span class="synStatement">/</span><span class="synString">.c</span><span class="synStatement">/i</span>;
+        ( <span class="synStatement">my</span> <span class="synIdentifier">$o</span> = <span class="synIdentifier">$xs</span> ) =~ <span class="synStatement">s/</span><span class="synSpecial">\.</span><span class="synString">xs$</span><span class="synStatement">/</span><span class="synSpecial">\$</span><span class="synString">(OBJ_EXT)</span><span class="synStatement">/i</span>;
+
+        <span class="synIdentifier">$xs{$xs}</span> = <span class="synIdentifier">$c</span>;
+        <span class="synStatement">push</span> <span class="synIdentifier">@object</span>, <span class="synIdentifier">$o</span>;
+    }
+
+    <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$c</span> ( <span class="synStatement">glob</span> <span class="synString">&quot;*.c&quot;</span> ) {
+        ( <span class="synStatement">my</span> <span class="synIdentifier">$o</span> = <span class="synIdentifier">$c</span> ) =~ <span class="synStatement">s/</span><span class="synSpecial">\.</span><span class="synString">c$</span><span class="synStatement">/</span><span class="synSpecial">\$</span><span class="synString">(OBJ_EXT)</span><span class="synStatement">/i</span>;
+        <span class="synStatement">push</span> <span class="synIdentifier">@object</span>, <span class="synIdentifier">$o</span>;
+    }
+
+    <span class="synStatement">return</span> (
+        <span class="synString">clean</span>   =&gt; { <span class="synString">FILES</span> =&gt; <span class="synStatement">join</span>( <span class="synString">q{ }</span>, <span class="synIdentifier">@object</span> ) },
+        <span class="synString">OBJECT</span> =&gt; <span class="synStatement">join</span>( <span class="synString">q{ }</span>, <span class="synIdentifier">@object</span> ),
+        <span class="synString">XS</span>     =&gt; \<span class="synIdentifier">%xs</span>,
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">my_package_subs </span>{
+    <span class="synStatement">return</span> <span class="synString">&lt;&lt;'EOP'</span>;
+<span class="synString">{</span>
+<span class="synString">package MY;</span>
+
+<span class="synString">use Config;</span>
+
+<span class="synString">sub const_cccmd {</span>
+<span class="synString">    my $ret = shift-&gt;SUPER::const_cccmd(@_);</span>
+<span class="synString">    return q{} unless $ret;</span>
+
+<span class="synString">    if ($Config{cc} =~ /^cl\b/i) {</span>
+<span class="synString">        warn 'you are using MSVC... my condolences.';</span>
+<span class="synString">        $ret .= ' /Fo$@';</span>
+<span class="synString">    }</span>
+<span class="synString">    else {</span>
+<span class="synString">        $ret .= ' -o $@';</span>
+<span class="synString">    }</span>
+
+<span class="synString">    return $ret;</span>
+<span class="synString">}</span>
+
+<span class="synString">sub postamble {</span>
+<span class="synString">    return &lt;&lt;'EOF'</span>;
+<span class="synString">$(OBJECT) : mop.h</span>
+<span class="synString">EOF</span>
+<span class="synString">}</span>
+<span class="synString">}</span>
+<span class="synString">EOP</span>
+}
+
+<span class="synNumber">1</span>;
+</pre>
+
+ </body>
+</html>

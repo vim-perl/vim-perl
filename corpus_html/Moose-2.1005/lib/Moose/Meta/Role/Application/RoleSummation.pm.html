@@ -1,0 +1,346 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Moose::Meta::Role::Application::RoleSummation</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Role::Application::RoleSummation::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Role::Application::RoleSummation::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+<span class="synStatement">use </span>metaclass;
+
+<span class="synStatement">use </span>Scalar::Util <span class="synString">'blessed'</span>;
+
+<span class="synStatement">use </span>Moose::Meta::Role::Composite;
+
+<span class="synStatement">use base</span> <span class="synString">'Moose::Meta::Role::Application'</span>;
+
+__PACKAGE__<span class="synIdentifier">-&gt;meta-&gt;add_attribute</span>(<span class="synString">'role_params'</span> =&gt; (
+    <span class="synString">reader</span>  =&gt; <span class="synString">'role_params'</span>,
+    <span class="synString">default</span> =&gt; <span class="synKeyword">sub </span>{ {} },
+    Class::MOP::_definition_context(),
+));
+
+<span class="synKeyword">sub </span><span class="synFunction">get_exclusions_for_role </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">$role</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synIdentifier">$role</span> = <span class="synIdentifier">$role-&gt;name</span> <span class="synConditional">if</span> blessed <span class="synIdentifier">$role</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$excludes_key</span> = <span class="synStatement">exists</span> <span class="synIdentifier">$self-&gt;role_params-&gt;{$role}-&gt;{</span><span class="synString">'-excludes'</span><span class="synIdentifier">}</span> ?
+                           <span class="synString">'-excludes'</span> : <span class="synString">'excludes'</span>;
+    <span class="synConditional">if</span> (<span class="synIdentifier">$self-&gt;role_params-&gt;{$role}</span> &amp;&amp; <span class="synOperator">defined</span> <span class="synIdentifier">$self-&gt;role_params-&gt;{$role}-&gt;{$excludes_key}</span>) {
+        <span class="synConditional">if</span> (<span class="synOperator">ref</span> <span class="synIdentifier">$self-&gt;role_params-&gt;{$role}-&gt;{$excludes_key}</span> <span class="synOperator">eq</span> <span class="synString">'ARRAY'</span>) {
+            <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;role_params-&gt;{$role}-&gt;{$excludes_key}</span>;
+        }
+        <span class="synStatement">return</span> [ <span class="synIdentifier">$self-&gt;role_params-&gt;{$role}-&gt;{$excludes_key}</span> ];
+    }
+    <span class="synStatement">return</span> [];
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">get_method_aliases_for_role </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">$role</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synIdentifier">$role</span> = <span class="synIdentifier">$role-&gt;name</span> <span class="synConditional">if</span> blessed <span class="synIdentifier">$role</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$alias_key</span> = <span class="synStatement">exists</span> <span class="synIdentifier">$self-&gt;role_params-&gt;{$role}-&gt;{</span><span class="synString">'-alias'</span><span class="synIdentifier">}</span> ?
+                        <span class="synString">'-alias'</span> : <span class="synString">'alias'</span>;
+    <span class="synConditional">if</span> (<span class="synIdentifier">$self-&gt;role_params-&gt;{$role}</span> &amp;&amp; <span class="synOperator">defined</span> <span class="synIdentifier">$self-&gt;role_params-&gt;{$role}-&gt;{$alias_key}</span>) {
+        <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;role_params-&gt;{$role}-&gt;{$alias_key}</span>;
+    }
+    <span class="synStatement">return</span> {};
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">is_method_excluded </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">$role</span>, <span class="synIdentifier">$method_name</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synRepeat">foreach</span> (<span class="synIdentifier">$self-&gt;get_exclusions_for_role</span>(<span class="synIdentifier">$role-&gt;name</span>)) {
+        <span class="synStatement">return</span> <span class="synNumber">1</span> <span class="synConditional">if</span> <span class="synIdentifier">$_</span> <span class="synOperator">eq</span> <span class="synIdentifier">$method_name</span>;
+    }
+    <span class="synStatement">return</span> <span class="synNumber">0</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">is_method_aliased </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">$role</span>, <span class="synIdentifier">$method_name</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">exists</span> <span class="synIdentifier">$self-&gt;get_method_aliases_for_role</span>(<span class="synIdentifier">$role-&gt;name</span>)-&gt;{<span class="synIdentifier">$method_name</span>} ? <span class="synNumber">1</span> : <span class="synNumber">0</span>
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">is_aliased_method </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">$role</span>, <span class="synIdentifier">$method_name</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">%aliased_names</span> = <span class="synStatement">reverse</span> <span class="synIdentifier">%{$self-&gt;get_method_aliases_for_role</span>(<span class="synIdentifier">$role-&gt;name</span>)<span class="synIdentifier">}</span>;
+    <span class="synStatement">exists</span> <span class="synIdentifier">$aliased_names{$method_name}</span> ? <span class="synNumber">1</span> : <span class="synNumber">0</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">check_role_exclusions </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">$c</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">%excluded_roles</span>;
+    <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$role</span> (<span class="synIdentifier">@{</span> <span class="synIdentifier">$c-&gt;get_roles</span> <span class="synIdentifier">}</span>) {
+        <span class="synStatement">my</span> <span class="synIdentifier">$name</span> = <span class="synIdentifier">$role-&gt;name</span>;
+
+        <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$excluded</span> (<span class="synIdentifier">$role-&gt;get_excluded_roles_list</span>) {
+            <span class="synStatement">push</span> <span class="synIdentifier">@{</span> <span class="synIdentifier">$excluded_roles{$excluded}</span> <span class="synIdentifier">}</span>, <span class="synIdentifier">$name</span>;
+        }
+    }
+
+    <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$role</span> (<span class="synIdentifier">@{$c-&gt;get_roles}</span>) {
+        <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$excluded</span> (<span class="synStatement">keys</span> <span class="synIdentifier">%excluded_roles</span>) {
+            <span class="synStatement">next</span> <span class="synConditional">unless</span> <span class="synIdentifier">$role-&gt;does_role</span>(<span class="synIdentifier">$excluded</span>);
+
+            <span class="synStatement">my</span> <span class="synIdentifier">@excluding</span> = <span class="synIdentifier">@{</span> <span class="synIdentifier">$excluded_roles{$excluded}</span> <span class="synIdentifier">}</span>;
+
+            <span class="synStatement">require</span> Moose;
+            Moose-&gt;throw_error(<span class="synStatement">sprintf</span> <span class="synString">&quot;Conflict detected: Role%s %s exclude%s role '%s'&quot;</span>, (<span class="synIdentifier">@excluding</span> == <span class="synNumber">1</span> ? <span class="synString">''</span> : <span class="synString">'s'</span>), <span class="synStatement">join</span>(<span class="synString">', '</span>, <span class="synIdentifier">@excluding</span>), (<span class="synIdentifier">@excluding</span> == <span class="synNumber">1</span> ? <span class="synString">'s'</span> : <span class="synString">''</span>), <span class="synIdentifier">$excluded</span>);
+        }
+    }
+
+    <span class="synIdentifier">$c-&gt;add_excluded_roles</span>(<span class="synStatement">keys</span> <span class="synIdentifier">%excluded_roles</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">check_required_methods </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">$c</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">%all_required_methods</span> =
+        <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;name</span> =&gt; <span class="synIdentifier">$_</span> <span class="synStatement">}</span>
+        <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;get_required_method_list</span> <span class="synStatement">}</span>
+        <span class="synIdentifier">@{$c-&gt;get_roles}</span>;
+
+    <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$role</span> (<span class="synIdentifier">@{$c-&gt;get_roles}</span>) {
+        <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$required</span> (<span class="synStatement">keys</span> <span class="synIdentifier">%all_required_methods</span>) {
+
+            <span class="synStatement">delete</span> <span class="synIdentifier">$all_required_methods{$required}</span>
+                <span class="synConditional">if</span> <span class="synIdentifier">$role-&gt;has_method</span>(<span class="synIdentifier">$required</span>)
+                || <span class="synIdentifier">$self-&gt;is_aliased_method</span>(<span class="synIdentifier">$role</span>, <span class="synIdentifier">$required</span>);
+        }
+    }
+
+    <span class="synIdentifier">$c-&gt;add_required_methods</span>(<span class="synStatement">values</span> <span class="synIdentifier">%all_required_methods</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">check_required_attributes </span>{
+
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">apply_attributes </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">$c</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">@all_attributes</span>;
+
+    <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$role</span> ( <span class="synIdentifier">@{</span> <span class="synIdentifier">$c-&gt;get_roles</span> <span class="synIdentifier">}</span> ) {
+        <span class="synStatement">push</span> <span class="synIdentifier">@all_attributes</span>,
+            <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$role-&gt;get_attribute</span>(<span class="synIdentifier">$_</span>) <span class="synStatement">}</span> <span class="synIdentifier">$role-&gt;get_attribute_list</span>;
+    }
+
+    <span class="synStatement">my</span> <span class="synIdentifier">%seen</span>;
+    <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$attr</span> (<span class="synIdentifier">@all_attributes</span>) {
+        <span class="synStatement">my</span> <span class="synIdentifier">$name</span> = <span class="synIdentifier">$attr-&gt;name</span>;
+
+        <span class="synConditional">if</span> ( <span class="synStatement">exists</span> <span class="synIdentifier">$seen{$name}</span> ) {
+            <span class="synStatement">next</span> <span class="synConditional">if</span> <span class="synIdentifier">$seen{$name}-&gt;is_same_as</span>(<span class="synIdentifier">$attr</span>);
+
+            <span class="synStatement">my</span> <span class="synIdentifier">$role1</span> = <span class="synIdentifier">$seen{$name}-&gt;associated_role-&gt;name</span>;
+            <span class="synStatement">my</span> <span class="synIdentifier">$role2</span> = <span class="synIdentifier">$attr-&gt;associated_role-&gt;name</span>;
+
+            <span class="synStatement">require</span> Moose;
+            Moose-&gt;throw_error(
+                <span class="synString">&quot;We have encountered an attribute conflict with '</span><span class="synIdentifier">$name</span><span class="synString">' &quot;</span>
+                    . <span class="synString">&quot;during role composition. &quot;</span>
+                    . <span class="synString">&quot; This attribute is defined in both </span><span class="synIdentifier">$role1</span><span class="synString"> and </span><span class="synIdentifier">$role2</span><span class="synString">.&quot;</span>
+                    . <span class="synString">&quot; This is a fatal error and cannot be disambiguated.&quot;</span> );
+        }
+
+        <span class="synIdentifier">$seen{$name}</span> = <span class="synIdentifier">$attr</span>;
+    }
+
+    <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$attr</span> (<span class="synIdentifier">@all_attributes</span>) {
+        <span class="synIdentifier">$c-&gt;add_attribute</span>( <span class="synIdentifier">$attr-&gt;clone</span> );
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">apply_methods </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">$c</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">@all_methods</span> = <span class="synStatement">map</span> <span class="synStatement">{</span>
+        <span class="synStatement">my</span> <span class="synIdentifier">$role</span>     = <span class="synIdentifier">$_</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$aliases</span>  = <span class="synIdentifier">$self-&gt;get_method_aliases_for_role</span>(<span class="synIdentifier">$role</span>);
+        <span class="synStatement">my</span> <span class="synIdentifier">%excludes</span> = <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_</span> =&gt; <span class="synOperator">undef</span> <span class="synStatement">}</span> <span class="synIdentifier">@{</span> <span class="synIdentifier">$self-&gt;get_exclusions_for_role</span>(<span class="synIdentifier">$role</span>) <span class="synIdentifier">}</span>;
+        (
+            (<span class="synStatement">map</span> <span class="synStatement">{</span>
+                <span class="synStatement">exists</span> <span class="synIdentifier">$excludes{$_}</span> ? () :
+                +{
+                    <span class="synString">role</span>   =&gt; <span class="synIdentifier">$role</span>,
+                    <span class="synString">name</span>   =&gt; <span class="synIdentifier">$_</span>,
+                    <span class="synString">method</span> =&gt; <span class="synIdentifier">$role-&gt;get_method</span>(<span class="synIdentifier">$_</span>),
+                }
+            <span class="synStatement">}</span> <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;name</span> <span class="synStatement">}</span>
+              <span class="synStatement">grep</span> <span class="synStatement">{</span> !<span class="synIdentifier">$_-&gt;isa</span>(<span class="synString">'Class::MOP::Method::Meta'</span>) <span class="synStatement">}</span>
+                   <span class="synIdentifier">$role-&gt;_get_local_methods</span>),
+            (<span class="synStatement">map</span> <span class="synStatement">{</span>
+                +{
+                    <span class="synString">role</span>   =&gt; <span class="synIdentifier">$role</span>,
+                    <span class="synString">name</span>   =&gt; <span class="synIdentifier">$aliases-&gt;{$_}</span>,
+                    <span class="synString">method</span> =&gt; <span class="synIdentifier">$role-&gt;get_method</span>(<span class="synIdentifier">$_</span>),
+                }
+            <span class="synStatement">}</span> <span class="synStatement">keys</span> <span class="synIdentifier">%$aliases</span>)
+        );
+    <span class="synStatement">}</span> <span class="synIdentifier">@{$c-&gt;get_roles}</span>;
+
+    <span class="synStatement">my</span> (<span class="synIdentifier">%seen</span>, <span class="synIdentifier">%conflicts</span>, <span class="synIdentifier">%method_map</span>);
+    <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$method</span> (<span class="synIdentifier">@all_methods</span>) {
+        <span class="synStatement">next</span> <span class="synConditional">if</span> <span class="synIdentifier">$conflicts{$method-&gt;{</span><span class="synString">name</span><span class="synIdentifier">}}</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$seen</span> = <span class="synIdentifier">$seen{$method-&gt;{</span><span class="synString">name</span><span class="synIdentifier">}}</span>;
+
+        <span class="synConditional">if</span> (<span class="synIdentifier">$seen</span>) {
+            <span class="synConditional">if</span> (<span class="synIdentifier">$seen-&gt;{</span><span class="synString">method</span><span class="synIdentifier">}-&gt;body</span> != <span class="synIdentifier">$method-&gt;{</span><span class="synString">method</span><span class="synIdentifier">}-&gt;body</span>) {
+                <span class="synIdentifier">$c-&gt;add_conflicting_method</span>(
+                    <span class="synString">name</span>  =&gt; <span class="synIdentifier">$method-&gt;{</span><span class="synString">name</span><span class="synIdentifier">}</span>,
+                    <span class="synString">roles</span> =&gt; [<span class="synIdentifier">$method-&gt;{</span><span class="synString">role</span><span class="synIdentifier">}-&gt;name</span>, <span class="synIdentifier">$seen-&gt;{</span><span class="synString">role</span><span class="synIdentifier">}-&gt;name</span>],
+                );
+
+                <span class="synStatement">delete</span> <span class="synIdentifier">$method_map{$method-&gt;{</span><span class="synString">name</span><span class="synIdentifier">}}</span>;
+                <span class="synIdentifier">$conflicts{$method-&gt;{</span><span class="synString">name</span><span class="synIdentifier">}}</span> = <span class="synNumber">1</span>;
+                <span class="synStatement">next</span>;
+            }
+        }
+
+        <span class="synIdentifier">$seen{$method-&gt;{</span><span class="synString">name</span><span class="synIdentifier">}}</span>       = <span class="synIdentifier">$method</span>;
+        <span class="synIdentifier">$method_map{$method-&gt;{</span><span class="synString">name</span><span class="synIdentifier">}}</span> = <span class="synIdentifier">$method-&gt;{</span><span class="synString">method</span><span class="synIdentifier">}</span>;
+    }
+
+    <span class="synIdentifier">$c-&gt;add_method</span>(<span class="synIdentifier">$_</span> =&gt; <span class="synIdentifier">$method_map{$_}</span>) <span class="synRepeat">for</span> <span class="synStatement">keys</span> <span class="synIdentifier">%method_map</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">apply_override_method_modifiers </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">$c</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">@all_overrides</span> = <span class="synStatement">map</span> <span class="synStatement">{</span>
+        <span class="synStatement">my</span> <span class="synIdentifier">$role</span> = <span class="synIdentifier">$_</span>;
+        <span class="synStatement">map</span> <span class="synStatement">{</span>
+            +{
+                <span class="synString">name</span>   =&gt; <span class="synIdentifier">$_</span>,
+                <span class="synString">method</span> =&gt; <span class="synIdentifier">$role-&gt;get_override_method_modifier</span>(<span class="synIdentifier">$_</span>),
+            }
+        <span class="synStatement">}</span> <span class="synIdentifier">$role-&gt;get_method_modifier_list</span>(<span class="synString">'override'</span>);
+    <span class="synStatement">}</span> <span class="synIdentifier">@{$c-&gt;get_roles}</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">%seen</span>;
+    <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$override</span> (<span class="synIdentifier">@all_overrides</span>) {
+        <span class="synConditional">if</span> ( <span class="synIdentifier">$c-&gt;has_method</span>(<span class="synIdentifier">$override-&gt;{</span><span class="synString">name</span><span class="synIdentifier">}</span>) ){
+            <span class="synStatement">require</span> Moose;
+            Moose-&gt;throw_error( <span class="synString">&quot;Role '&quot;</span> . <span class="synIdentifier">$c-&gt;name</span> . <span class="synString">&quot;' has encountered an 'override' method conflict &quot;</span> .
+                                <span class="synString">&quot;during composition (A local method of the same name as been found). This &quot;</span> .
+                                <span class="synString">&quot;is fatal error.&quot;</span> )
+        }
+        <span class="synConditional">if</span> (<span class="synStatement">exists</span> <span class="synIdentifier">$seen{$override-&gt;{</span><span class="synString">name</span><span class="synIdentifier">}}</span>) {
+            <span class="synConditional">if</span> ( <span class="synIdentifier">$seen{$override-&gt;{</span><span class="synString">name</span><span class="synIdentifier">}}</span> != <span class="synIdentifier">$override-&gt;{</span><span class="synString">method</span><span class="synIdentifier">}</span> ) {
+                <span class="synStatement">require</span> Moose;
+                Moose-&gt;throw_error( <span class="synString">&quot;We have encountered an 'override' method conflict during &quot;</span> .
+                                    <span class="synString">&quot;composition (Two 'override' methods of the same name encountered). &quot;</span> .
+                                    <span class="synString">&quot;This is fatal error.&quot;</span>)
+            }
+        }
+        <span class="synIdentifier">$seen{$override-&gt;{</span><span class="synString">name</span><span class="synIdentifier">}}</span> = <span class="synIdentifier">$override-&gt;{</span><span class="synString">method</span><span class="synIdentifier">}</span>;
+    }
+
+    <span class="synIdentifier">$c-&gt;add_override_method_modifier</span>(
+        <span class="synIdentifier">$_-&gt;{</span><span class="synString">name</span><span class="synIdentifier">}</span>, <span class="synIdentifier">$_-&gt;{</span><span class="synString">method</span><span class="synIdentifier">}</span>
+    ) <span class="synRepeat">for</span> <span class="synIdentifier">@all_overrides</span>;
+
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">apply_method_modifiers </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">$modifier_type</span>, <span class="synIdentifier">$c</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$add</span> = <span class="synString">&quot;add_</span><span class="synIdentifier">${modifier_type}</span><span class="synString">_method_modifier&quot;</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$get</span> = <span class="synString">&quot;get_</span><span class="synIdentifier">${modifier_type}</span><span class="synString">_method_modifiers&quot;</span>;
+    <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$role</span> (<span class="synIdentifier">@{$c-&gt;get_roles}</span>) {
+        <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$method_name</span> (<span class="synIdentifier">$role-&gt;get_method_modifier_list</span>(<span class="synIdentifier">$modifier_type</span>)) {
+            <span class="synIdentifier">$c-&gt;$add</span>(
+                <span class="synIdentifier">$method_name</span>,
+                <span class="synIdentifier">$_</span>
+            ) <span class="synRepeat">foreach</span> <span class="synIdentifier">$role-&gt;$get</span>(<span class="synIdentifier">$method_name</span>);
+        }
+    }
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: Combine two or more roles</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Moose::Meta::Role::Application::RoleSummation - Combine two or more roles
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+Summation composes two traits, forming the union of non-conflicting
+bindings and 'disabling' the conflicting bindings
+
+<span class="synStatement">=head2</span><span class="synString"> METHODS</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;new&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;meta&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;role_params&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;get_exclusions_for_role&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;get_method_aliases_for_role&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;is_aliased_method&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;is_method_aliased&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;is_method_excluded&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;apply&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;check_role_exclusions&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;check_required_methods&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;check_required_attributes&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;apply_attributes&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;apply_methods&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;apply_method_modifiers&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;apply_override_method_modifiers&gt;</span>
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> BUGS</span>
+
+See <span class="synIdentifier">L&lt;Moose/BUGS&gt;</span> for details on reporting bugs.
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

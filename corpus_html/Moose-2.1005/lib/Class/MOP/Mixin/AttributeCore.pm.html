@@ -1,0 +1,98 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Class::MOP::Mixin::AttributeCore</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Class::MOP::Mixin::AttributeCore::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Class::MOP::Mixin::AttributeCore::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Scalar::Util <span class="synString">'blessed'</span>;
+
+<span class="synStatement">use base</span> <span class="synString">'Class::MOP::Mixin'</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">has_accessor        </span>{ <span class="synOperator">defined</span> <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;{</span><span class="synString">'accessor'</span><span class="synIdentifier">}</span> }
+<span class="synKeyword">sub </span><span class="synFunction">has_reader          </span>{ <span class="synOperator">defined</span> <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;{</span><span class="synString">'reader'</span><span class="synIdentifier">}</span> }
+<span class="synKeyword">sub </span><span class="synFunction">has_writer          </span>{ <span class="synOperator">defined</span> <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;{</span><span class="synString">'writer'</span><span class="synIdentifier">}</span> }
+<span class="synKeyword">sub </span><span class="synFunction">has_predicate       </span>{ <span class="synOperator">defined</span> <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;{</span><span class="synString">'predicate'</span><span class="synIdentifier">}</span> }
+<span class="synKeyword">sub </span><span class="synFunction">has_clearer         </span>{ <span class="synOperator">defined</span> <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;{</span><span class="synString">'clearer'</span><span class="synIdentifier">}</span> }
+<span class="synKeyword">sub </span><span class="synFunction">has_builder         </span>{ <span class="synOperator">defined</span> <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;{</span><span class="synString">'builder'</span><span class="synIdentifier">}</span> }
+<span class="synKeyword">sub </span><span class="synFunction">has_init_arg        </span>{ <span class="synOperator">defined</span> <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;{</span><span class="synString">'init_arg'</span><span class="synIdentifier">}</span> }
+<span class="synKeyword">sub </span><span class="synFunction">has_default         </span>{ <span class="synStatement">exists</span>  <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;{</span><span class="synString">'default'</span><span class="synIdentifier">}</span> }
+<span class="synKeyword">sub </span><span class="synFunction">has_initializer     </span>{ <span class="synOperator">defined</span> <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;{</span><span class="synString">'initializer'</span><span class="synIdentifier">}</span> }
+<span class="synKeyword">sub </span><span class="synFunction">has_insertion_order </span>{ <span class="synOperator">defined</span> <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;{</span><span class="synString">'insertion_order'</span><span class="synIdentifier">}</span> }
+
+<span class="synKeyword">sub </span><span class="synFunction">_set_insertion_order </span>{ <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;{</span><span class="synString">'insertion_order'</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span> }
+
+<span class="synKeyword">sub </span><span class="synFunction">has_read_method  </span>{ <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;has_reader</span> || <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;has_accessor</span> }
+<span class="synKeyword">sub </span><span class="synFunction">has_write_method </span>{ <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;has_writer</span> || <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;has_accessor</span> }
+
+<span class="synKeyword">sub </span><span class="synFunction">is_default_a_coderef </span>{
+    <span class="synComment"># Uber hack because it is called from CMOP::Attribute constructor as</span>
+    <span class="synComment"># $class-&gt;is_default_a_coderef(\%options)</span>
+    <span class="synStatement">my</span> (<span class="synIdentifier">$value</span>) = <span class="synOperator">ref</span> <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> ? <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;{</span><span class="synString">'default'</span><span class="synIdentifier">}</span> : <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]-&gt;{</span><span class="synString">'default'</span><span class="synIdentifier">}</span>;
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synOperator">ref</span>(<span class="synIdentifier">$value</span>);
+
+    <span class="synStatement">return</span> <span class="synOperator">ref</span>(<span class="synIdentifier">$value</span>) <span class="synOperator">eq</span> <span class="synString">'CODE'</span>
+        || ( blessed(<span class="synIdentifier">$value</span>) &amp;&amp; <span class="synIdentifier">$value-&gt;isa</span>(<span class="synString">'Class::MOP::Method'</span>) );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">default </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$self</span>, <span class="synIdentifier">$instance</span> ) = <span class="synIdentifier">@_</span>;
+    <span class="synConditional">if</span> ( <span class="synOperator">defined</span> <span class="synIdentifier">$instance</span> &amp;&amp; <span class="synIdentifier">$self-&gt;is_default_a_coderef</span> ) {
+        <span class="synComment"># if the default is a CODE ref, then we pass in the instance and</span>
+        <span class="synComment"># default can return a value based on that instance. Somewhat crude,</span>
+        <span class="synComment"># but works.</span>
+        <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;{</span><span class="synString">'default'</span><span class="synIdentifier">}</span>-&gt;(<span class="synIdentifier">$instance</span>);
+    }
+    <span class="synIdentifier">$self-&gt;{</span><span class="synString">'default'</span><span class="synIdentifier">}</span>;
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: Core attributes shared by attribute metaclasses</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Class::MOP::Mixin::AttributeCore - Core attributes shared by attribute metaclasses
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This class implements the core attributes (aka properties) shared by all
+attributes. See the <span class="synIdentifier">L&lt;Class::MOP::Attribute&gt;</span> documentation for API details.
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

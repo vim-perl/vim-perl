@@ -1,0 +1,87 @@
+package Moose::Cookbook::Snack::Types;
+
+# ABSTRACT: Snippets of code for using Types and Type Constraints
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Moose::Cookbook::Snack::Types - Snippets of code for using Types and Type Constraints
+
+=head1 VERSION
+
+version 2.1005
+
+=head1 SYNOPSIS
+
+  package Point;
+  use Moose;
+
+  has 'x' => ( isa => 'Int', is => 'ro' );
+  has 'y' => ( isa => 'Int', is => 'rw' );
+
+  package main;
+  use Try::Tiny;
+
+  my $point = try {
+      Point->new( x => 'fifty', y => 'forty' );
+  }
+  catch {
+      print "Oops: $_";
+  };
+
+  my $point;
+  my $xval             = 'forty-two';
+  my $xattribute       = Point->meta->find_attribute_by_name('x');
+  my $xtype_constraint = $xattribute->type_constraint;
+
+  if ( $xtype_constraint->check($xval) ) {
+      $point = Point->new( x => $xval, y => 0 );
+  }
+  else {
+      print "Value: $xval is not an " . $xtype_constraint->name . "\n";
+  }
+
+=head1 DESCRIPTION
+
+This is the Point example from
+L<Moose::Cookbook::Basics::Point_AttributesAndSubclassing> with type checking
+added.
+
+If we try to assign a string value to an attribute that is an C<Int>,
+Moose will die with an explicit error message. The error will include
+the attribute name, as well as the type constraint name and the value
+which failed the constraint check.
+
+We use L<Try::Tiny> to catch this error message.
+
+Later, we get the L<Moose::Meta::TypeConstraint> object from a
+L<Moose::Meta::Attribute> and use the L<Moose::Meta::TypeConstraint>
+to check a value directly.
+
+=head1 SEE ALSO
+
+=over 4
+
+=item L<Moose::Cookbook::Basics::Point_AttributesAndSubclassing>
+
+=item L<Moose::Util::TypeConstraints>
+
+=item L<Moose::Meta::Attribute>
+
+=back
+
+=head1 AUTHOR
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See L<Moose/CABAL> and L<Moose/CONTRIBUTORS> for details.
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut

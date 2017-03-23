@@ -1,0 +1,84 @@
+package Moose::Cookbook::Basics::DateTime_ExtendingNonMooseParent;
+
+# ABSTRACT: Extending a non-Moose parent class
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Moose::Cookbook::Basics::DateTime_ExtendingNonMooseParent - Extending a non-Moose parent class
+
+=head1 VERSION
+
+version 2.1005
+
+=head1 SYNOPSIS
+
+  package My::DateTime;
+
+  use Moose;
+  use MooseX::NonMoose;
+  use DateTime::Calendar::Mayan;
+  extends qw( DateTime );
+
+  has 'mayan_date' => (
+      is        => 'ro',
+      isa       => 'DateTime::Calendar::Mayan',
+      init_arg  => undef,
+      lazy      => 1,
+      builder   => '_build_mayan_date',
+      clearer   => '_clear_mayan_date',
+      predicate => 'has_mayan_date',
+  );
+
+  after 'set' => sub {
+      $_[0]->_clear_mayan_date;
+  };
+
+  sub _build_mayan_date {
+      DateTime::Calendar::Mayan->from_object( object => $_[0] );
+  }
+
+=head1 DESCRIPTION
+
+This recipe demonstrates how to use Moose to subclass a parent which
+is not Moose based. This recipe only works if the parent class uses a
+blessed hash reference for object instances. If your parent is doing
+something funkier, you should check out L<MooseX::NonMoose::InsideOut> and L<MooseX::InsideOut>.
+
+The meat of this recipe is contained in L<MooseX::NonMoose>, which does all
+the grunt work for you.
+
+=for testing-SETUP use Test::Requires {
+    'DateTime'                  => '0',
+    'DateTime::Calendar::Mayan' => '0',
+    'MooseX::NonMoose'          => '0',
+};
+
+=begin testing
+
+my $dt = My::DateTime->new( year => 1970, month => 2, day => 24 );
+
+can_ok( $dt, 'mayan_date' );
+isa_ok( $dt->mayan_date, 'DateTime::Calendar::Mayan' );
+is( $dt->mayan_date->date, '12.17.16.9.19', 'got expected mayan date' );
+
+$dt->set( year => 2009 );
+ok( ! $dt->has_mayan_date, 'mayan_date is cleared after call to ->set' );
+
+=end testing
+
+=head1 AUTHOR
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See L<Moose/CABAL> and L<Moose/CONTRIBUTORS> for details.
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut

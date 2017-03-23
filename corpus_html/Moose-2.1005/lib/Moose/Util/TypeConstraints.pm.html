@@ -1,0 +1,1442 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre>
+<span class="synStatement">package</span><span class="synType"> Moose::Util::TypeConstraints</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Util::TypeConstraints::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Util::TypeConstraints::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use </span>Carp ();
+<span class="synStatement">use </span>List::MoreUtils <span class="synString">qw( all any )</span>;
+<span class="synStatement">use </span>Scalar::Util <span class="synString">qw( blessed reftype )</span>;
+<span class="synStatement">use </span>Moose::Exporter;
+
+<span class="synComment">## --------------------------------------------------------</span>
+<span class="synComment"># Prototyped subs must be predeclared because we have a</span>
+<span class="synComment"># circular dependency with Moose::Meta::Attribute et. al.</span>
+<span class="synComment"># so in case of us being use'd first the predeclaration</span>
+<span class="synComment"># ensures the prototypes are in scope when consumers are</span>
+<span class="synComment"># compiled.</span>
+
+<span class="synComment"># dah sugah!</span>
+<span class="synKeyword">sub </span><span class="synFunction">where </span><span class="synType">(&amp;)</span>;
+<span class="synKeyword">sub </span><span class="synFunction">via </span><span class="synType">(&amp;)</span>;
+<span class="synKeyword">sub </span><span class="synFunction">message </span><span class="synType">(&amp;)</span>;
+<span class="synKeyword">sub </span><span class="synFunction">optimize_as </span><span class="synType">(&amp;)</span>;
+<span class="synKeyword">sub </span><span class="synFunction">inline_as </span><span class="synType">(&amp;)</span>;
+
+<span class="synComment">## --------------------------------------------------------</span>
+
+<span class="synStatement">use </span>Moose::Deprecated;
+<span class="synStatement">use </span>Moose::Meta::TypeConstraint;
+<span class="synStatement">use </span>Moose::Meta::TypeConstraint::Union;
+<span class="synStatement">use </span>Moose::Meta::TypeConstraint::Parameterized;
+<span class="synStatement">use </span>Moose::Meta::TypeConstraint::Parameterizable;
+<span class="synStatement">use </span>Moose::Meta::TypeConstraint::Class;
+<span class="synStatement">use </span>Moose::Meta::TypeConstraint::Role;
+<span class="synStatement">use </span>Moose::Meta::TypeConstraint::Enum;
+<span class="synStatement">use </span>Moose::Meta::TypeConstraint::DuckType;
+<span class="synStatement">use </span>Moose::Meta::TypeCoercion;
+<span class="synStatement">use </span>Moose::Meta::TypeCoercion::Union;
+<span class="synStatement">use </span>Moose::Meta::TypeConstraint::Registry;
+
+Moose::Exporter-&gt;setup_import_methods(
+    <span class="synString">as_is</span> =&gt; [
+        <span class="synString">qw(</span>
+<span class="synString">            type subtype class_type role_type maybe_type duck_type</span>
+<span class="synString">            as where message optimize_as inline_as</span>
+<span class="synString">            coerce from via</span>
+<span class="synString">            enum union</span>
+<span class="synString">            find_type_constraint</span>
+<span class="synString">            register_type_constraint</span>
+<span class="synString">            match_on_type )</span>
+    ],
+);
+
+<span class="synComment">## --------------------------------------------------------</span>
+<span class="synComment">## type registry and some useful functions for it</span>
+<span class="synComment">## --------------------------------------------------------</span>
+
+<span class="synStatement">my</span> <span class="synIdentifier">$REGISTRY</span> = Moose::Meta::TypeConstraint::Registry-&gt;new;
+
+<span class="synKeyword">sub </span><span class="synFunction">get_type_constraint_registry </span>{<span class="synIdentifier">$REGISTRY</span>}
+<span class="synKeyword">sub </span><span class="synFunction">list_all_type_constraints    </span>{ <span class="synStatement">keys</span> <span class="synIdentifier">%{</span> <span class="synIdentifier">$REGISTRY-&gt;type_constraints</span> <span class="synIdentifier">}</span> }
+
+<span class="synKeyword">sub </span><span class="synFunction">export_type_constraints_as_functions </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$pkg</span> = <span class="synStatement">caller</span>();
+    <span class="synStatement">no strict</span> <span class="synString">'refs'</span>;
+    <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$constraint</span> ( <span class="synStatement">keys</span> <span class="synIdentifier">%{</span> <span class="synIdentifier">$REGISTRY-&gt;type_constraints</span> <span class="synIdentifier">}</span> ) {
+        <span class="synStatement">my</span> <span class="synIdentifier">$tc</span> = <span class="synIdentifier">$REGISTRY-&gt;get_type_constraint</span>(<span class="synIdentifier">$constraint</span>)
+            -&gt;_compiled_type_constraint;
+        <span class="synIdentifier">*{</span><span class="synString">&quot;</span><span class="synIdentifier">${pkg}</span><span class="synString">::</span><span class="synIdentifier">${constraint}</span><span class="synString">&quot;</span><span class="synIdentifier">}</span>
+            = <span class="synKeyword">sub </span>{ <span class="synIdentifier">$tc</span>-&gt;( <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> ) ? <span class="synNumber">1</span> : <span class="synOperator">undef</span> };    <span class="synComment"># the undef is for compat</span>
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">create_type_constraint_union </span>{
+    _create_type_constraint_union(\<span class="synIdentifier">@_</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">create_named_type_constraint_union </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$name</span> = <span class="synStatement">shift</span>;
+    _create_type_constraint_union(<span class="synIdentifier">$name</span>, \<span class="synIdentifier">@_</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_create_type_constraint_union </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$name</span>;
+    <span class="synIdentifier">$name</span> = <span class="synStatement">shift</span> <span class="synConditional">if</span> <span class="synIdentifier">@_</span> &gt; <span class="synNumber">1</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">@tcs</span> = <span class="synIdentifier">@{</span> <span class="synStatement">shift</span>() <span class="synIdentifier">}</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">@type_constraint_names</span>;
+
+    <span class="synConditional">if</span> ( <span class="synStatement">scalar</span> <span class="synIdentifier">@tcs</span> == <span class="synNumber">1</span> &amp;&amp; _detect_type_constraint_union( <span class="synIdentifier">$tcs[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> ) ) {
+        <span class="synIdentifier">@type_constraint_names</span> = _parse_type_constraint_union( <span class="synIdentifier">$tcs[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> );
+    }
+    <span class="synConditional">else</span> {
+        <span class="synIdentifier">@type_constraint_names</span> = <span class="synIdentifier">@tcs</span>;
+    }
+
+    ( <span class="synStatement">scalar</span> <span class="synIdentifier">@type_constraint_names</span> &gt;= <span class="synNumber">2</span> )
+        || __PACKAGE__<span class="synIdentifier">-&gt;_throw_error</span>(
+        <span class="synString">&quot;You must pass in at least 2 type names to make a union&quot;</span>);
+
+    <span class="synStatement">my</span> <span class="synIdentifier">@type_constraints</span> = <span class="synStatement">map</span> <span class="synStatement">{</span>
+        find_or_parse_type_constraint(<span class="synIdentifier">$_</span>)
+            || __PACKAGE__<span class="synIdentifier">-&gt;_throw_error</span>(
+            <span class="synString">&quot;Could not locate type constraint (</span><span class="synIdentifier">$_</span><span class="synString">) for the union&quot;</span>);
+    <span class="synStatement">}</span> <span class="synIdentifier">@type_constraint_names</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">%options</span> = (
+      <span class="synString">type_constraints</span> =&gt; \<span class="synIdentifier">@type_constraints</span>
+    );
+    <span class="synIdentifier">$options{</span><span class="synString">name</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$name</span> <span class="synConditional">if</span> <span class="synOperator">defined</span> <span class="synIdentifier">$name</span>;
+
+    <span class="synStatement">return</span> Moose::Meta::TypeConstraint::Union-&gt;new(<span class="synIdentifier">%options</span>);
+}
+
+
+<span class="synKeyword">sub </span><span class="synFunction">create_parameterized_type_constraint </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$type_constraint_name</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$base_type</span>, <span class="synIdentifier">$type_parameter</span> )
+        = _parse_parameterized_type_constraint(<span class="synIdentifier">$type_constraint_name</span>);
+
+    ( <span class="synOperator">defined</span> <span class="synIdentifier">$base_type</span> &amp;&amp; <span class="synOperator">defined</span> <span class="synIdentifier">$type_parameter</span> )
+        || __PACKAGE__<span class="synIdentifier">-&gt;_throw_error</span>(
+        <span class="synString">&quot;Could not parse type name (</span><span class="synIdentifier">$type_constraint_name</span><span class="synString">) correctly&quot;</span>);
+
+    <span class="synConditional">if</span> ( <span class="synIdentifier">$REGISTRY-&gt;has_type_constraint</span>(<span class="synIdentifier">$base_type</span>) ) {
+        <span class="synStatement">my</span> <span class="synIdentifier">$base_type_tc</span> = <span class="synIdentifier">$REGISTRY-&gt;get_type_constraint</span>(<span class="synIdentifier">$base_type</span>);
+        <span class="synStatement">return</span> _create_parameterized_type_constraint(
+            <span class="synIdentifier">$base_type_tc</span>,
+            <span class="synIdentifier">$type_parameter</span>
+        );
+    }
+    <span class="synConditional">else</span> {
+        __PACKAGE__<span class="synIdentifier">-&gt;_throw_error</span>(
+            <span class="synString">&quot;Could not locate the base type (</span><span class="synIdentifier">$base_type</span><span class="synString">)&quot;</span>);
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_create_parameterized_type_constraint </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$base_type_tc</span>, <span class="synIdentifier">$type_parameter</span> ) = <span class="synIdentifier">@_</span>;
+    <span class="synConditional">if</span> ( <span class="synIdentifier">$base_type_tc-&gt;can</span>(<span class="synString">'parameterize'</span>) ) {
+        <span class="synStatement">return</span> <span class="synIdentifier">$base_type_tc-&gt;parameterize</span>(<span class="synIdentifier">$type_parameter</span>);
+    }
+    <span class="synConditional">else</span> {
+        <span class="synStatement">return</span> Moose::Meta::TypeConstraint::Parameterized-&gt;new(
+            <span class="synString">name</span>   =&gt; <span class="synIdentifier">$base_type_tc-&gt;name</span> . <span class="synString">'['</span> . <span class="synIdentifier">$type_parameter</span> . <span class="synString">']'</span>,
+            <span class="synString">parent</span> =&gt; <span class="synIdentifier">$base_type_tc</span>,
+            <span class="synString">type_parameter</span> =&gt;
+                find_or_create_isa_type_constraint(<span class="synIdentifier">$type_parameter</span>),
+        );
+    }
+}
+
+<span class="synComment">#should we also support optimized checks?</span>
+<span class="synKeyword">sub </span><span class="synFunction">create_class_type_constraint </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$class</span>, <span class="synIdentifier">$options</span> ) = <span class="synIdentifier">@_</span>;
+
+<span class="synComment"># too early for this check</span>
+<span class="synComment">#find_type_constraint(&quot;ClassName&quot;)-&gt;check($class)</span>
+<span class="synComment">#    || __PACKAGE__-&gt;_throw_error(&quot;Can't create a class type constraint because '$class' is not a class name&quot;);</span>
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$pkg_defined_in</span> = <span class="synIdentifier">$options-&gt;{</span><span class="synString">package_defined_in</span><span class="synIdentifier">}</span> || <span class="synStatement">scalar</span>( <span class="synStatement">caller</span>(<span class="synNumber">1</span>) );
+
+    <span class="synConditional">if</span> (<span class="synStatement">my</span> <span class="synIdentifier">$type</span> = <span class="synIdentifier">$REGISTRY-&gt;get_type_constraint</span>(<span class="synIdentifier">$class</span>)) {
+        <span class="synConditional">if</span> (!(<span class="synIdentifier">$type-&gt;isa</span>(<span class="synString">'Moose::Meta::TypeConstraint::Class'</span>) &amp;&amp; <span class="synIdentifier">$type-&gt;class</span> <span class="synOperator">eq</span> <span class="synIdentifier">$class</span>)) {
+            _confess(
+                <span class="synString">&quot;The type constraint '</span><span class="synIdentifier">$class</span><span class="synString">' has already been created in &quot;</span>
+              . <span class="synIdentifier">$type-&gt;_package_defined_in</span>
+              . <span class="synString">&quot; and cannot be created again in &quot;</span>
+              . <span class="synIdentifier">$pkg_defined_in</span> )
+        }
+        <span class="synConditional">else</span> {
+            <span class="synStatement">return</span> <span class="synIdentifier">$type</span>;
+        }
+    }
+
+    <span class="synStatement">my</span> <span class="synIdentifier">%options</span> = (
+        <span class="synString">class</span>              =&gt; <span class="synIdentifier">$class</span>,
+        <span class="synString">name</span>               =&gt; <span class="synIdentifier">$class</span>,
+        <span class="synString">package_defined_in</span> =&gt; <span class="synIdentifier">$pkg_defined_in</span>,
+        <span class="synIdentifier">%{</span> <span class="synIdentifier">$options</span> || {} <span class="synIdentifier">}</span>,
+    );
+
+    <span class="synIdentifier">$options{</span><span class="synString">name</span><span class="synIdentifier">}</span> ||= <span class="synString">&quot;__ANON__&quot;</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$tc</span> = Moose::Meta::TypeConstraint::Class-&gt;new(<span class="synIdentifier">%options</span>);
+    <span class="synIdentifier">$REGISTRY-&gt;add_type_constraint</span>(<span class="synIdentifier">$tc</span>);
+    <span class="synStatement">return</span> <span class="synIdentifier">$tc</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">create_role_type_constraint </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$role</span>, <span class="synIdentifier">$options</span> ) = <span class="synIdentifier">@_</span>;
+
+<span class="synComment"># too early for this check</span>
+<span class="synComment">#find_type_constraint(&quot;ClassName&quot;)-&gt;check($class)</span>
+<span class="synComment">#    || __PACKAGE__-&gt;_throw_error(&quot;Can't create a class type constraint because '$class' is not a class name&quot;);</span>
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$pkg_defined_in</span> = <span class="synIdentifier">$options-&gt;{</span><span class="synString">package_defined_in</span><span class="synIdentifier">}</span> || <span class="synStatement">scalar</span>( <span class="synStatement">caller</span>(<span class="synNumber">1</span>) );
+
+    <span class="synConditional">if</span> (<span class="synStatement">my</span> <span class="synIdentifier">$type</span> = <span class="synIdentifier">$REGISTRY-&gt;get_type_constraint</span>(<span class="synIdentifier">$role</span>)) {
+        <span class="synConditional">if</span> (!(<span class="synIdentifier">$type-&gt;isa</span>(<span class="synString">'Moose::Meta::TypeConstraint::Role'</span>) &amp;&amp; <span class="synIdentifier">$type-&gt;role</span> <span class="synOperator">eq</span> <span class="synIdentifier">$role</span>)) {
+            _confess(
+                <span class="synString">&quot;The type constraint '</span><span class="synIdentifier">$role</span><span class="synString">' has already been created in &quot;</span>
+              . <span class="synIdentifier">$type-&gt;_package_defined_in</span>
+              . <span class="synString">&quot; and cannot be created again in &quot;</span>
+              . <span class="synIdentifier">$pkg_defined_in</span> )
+        }
+        <span class="synConditional">else</span> {
+            <span class="synStatement">return</span> <span class="synIdentifier">$type</span>;
+        }
+    }
+
+    <span class="synStatement">my</span> <span class="synIdentifier">%options</span> = (
+        <span class="synString">role</span>               =&gt; <span class="synIdentifier">$role</span>,
+        <span class="synString">name</span>               =&gt; <span class="synIdentifier">$role</span>,
+        <span class="synString">package_defined_in</span> =&gt; <span class="synIdentifier">$pkg_defined_in</span>,
+        <span class="synIdentifier">%{</span> <span class="synIdentifier">$options</span> || {} <span class="synIdentifier">}</span>,
+    );
+
+    <span class="synIdentifier">$options{</span><span class="synString">name</span><span class="synIdentifier">}</span> ||= <span class="synString">&quot;__ANON__&quot;</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$tc</span> = Moose::Meta::TypeConstraint::Role-&gt;new(<span class="synIdentifier">%options</span>);
+    <span class="synIdentifier">$REGISTRY-&gt;add_type_constraint</span>(<span class="synIdentifier">$tc</span>);
+    <span class="synStatement">return</span> <span class="synIdentifier">$tc</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">find_or_create_type_constraint </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$type_constraint_name</span>, <span class="synIdentifier">$options_for_anon_type</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synConditional">if</span> ( <span class="synStatement">my</span> <span class="synIdentifier">$constraint</span>
+        = find_or_parse_type_constraint(<span class="synIdentifier">$type_constraint_name</span>) ) {
+        <span class="synStatement">return</span> <span class="synIdentifier">$constraint</span>;
+    }
+    <span class="synConditional">elsif</span> ( <span class="synOperator">defined</span> <span class="synIdentifier">$options_for_anon_type</span> ) {
+
+        <span class="synComment"># </span><span class="synTodo">NOTE:</span>
+        <span class="synComment"># if there is no $options_for_anon_type</span>
+        <span class="synComment"># specified, then we assume they don't</span>
+        <span class="synComment"># want to create one, and return nothing.</span>
+
+        <span class="synComment"># otherwise assume that we should create</span>
+        <span class="synComment"># an ANON type with the $options_for_anon_type</span>
+        <span class="synComment"># options which can be passed in. It should</span>
+        <span class="synComment"># be noted that these don't get registered</span>
+        <span class="synComment"># so we need to return it.</span>
+        <span class="synComment"># - SL</span>
+        <span class="synStatement">return</span> Moose::Meta::TypeConstraint-&gt;new(
+            <span class="synString">name</span> =&gt; <span class="synString">'__ANON__'</span>,
+            <span class="synIdentifier">%{$options_for_anon_type}</span>
+        );
+    }
+
+    <span class="synStatement">return</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">find_or_create_isa_type_constraint </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$type_constraint_name</span>, <span class="synIdentifier">$options</span>) = <span class="synIdentifier">@_</span>;
+    find_or_parse_type_constraint(<span class="synIdentifier">$type_constraint_name</span>)
+        || create_class_type_constraint(<span class="synIdentifier">$type_constraint_name</span>, <span class="synIdentifier">$options</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">find_or_create_does_type_constraint </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$type_constraint_name</span>, <span class="synIdentifier">$options</span>) = <span class="synIdentifier">@_</span>;
+    find_or_parse_type_constraint(<span class="synIdentifier">$type_constraint_name</span>)
+        || create_role_type_constraint(<span class="synIdentifier">$type_constraint_name</span>, <span class="synIdentifier">$options</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">find_or_parse_type_constraint </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$type_constraint_name</span> = normalize_type_constraint_name(<span class="synStatement">shift</span>);
+    <span class="synStatement">my</span> <span class="synIdentifier">$constraint</span>;
+
+    <span class="synConditional">if</span> ( <span class="synIdentifier">$constraint</span> = find_type_constraint(<span class="synIdentifier">$type_constraint_name</span>) ) {
+        <span class="synStatement">return</span> <span class="synIdentifier">$constraint</span>;
+    }
+    <span class="synConditional">elsif</span> ( _detect_type_constraint_union(<span class="synIdentifier">$type_constraint_name</span>) ) {
+        <span class="synIdentifier">$constraint</span> = create_type_constraint_union(<span class="synIdentifier">$type_constraint_name</span>);
+    }
+    <span class="synConditional">elsif</span> ( _detect_parameterized_type_constraint(<span class="synIdentifier">$type_constraint_name</span>) ) {
+        <span class="synIdentifier">$constraint</span>
+            = create_parameterized_type_constraint(<span class="synIdentifier">$type_constraint_name</span>);
+    }
+    <span class="synConditional">else</span> {
+        <span class="synStatement">return</span>;
+    }
+
+    <span class="synIdentifier">$REGISTRY-&gt;add_type_constraint</span>(<span class="synIdentifier">$constraint</span>);
+    <span class="synStatement">return</span> <span class="synIdentifier">$constraint</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">normalize_type_constraint_name </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$type_constraint_name</span> = <span class="synStatement">shift</span>;
+    <span class="synIdentifier">$type_constraint_name</span> =~ <span class="synStatement">s/</span><span class="synSpecial">\s</span><span class="synStatement">//g</span>;
+    <span class="synStatement">return</span> <span class="synIdentifier">$type_constraint_name</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_confess </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$error</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">local</span> <span class="synIdentifier">$</span><span class="synType">Carp::</span><span class="synIdentifier">CarpLevel</span> = <span class="synIdentifier">$</span><span class="synType">Carp::</span><span class="synIdentifier">CarpLevel</span> + <span class="synNumber">1</span>;
+    Carp::confess(<span class="synIdentifier">$error</span>);
+}
+
+<span class="synComment">## --------------------------------------------------------</span>
+<span class="synComment">## exported functions ...</span>
+<span class="synComment">## --------------------------------------------------------</span>
+
+<span class="synKeyword">sub </span><span class="synFunction">find_type_constraint </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$type</span> = <span class="synStatement">shift</span>;
+
+    <span class="synConditional">if</span> ( blessed <span class="synIdentifier">$type</span> <span class="synOperator">and</span> <span class="synIdentifier">$type-&gt;isa</span>(<span class="synString">&quot;Moose::Meta::TypeConstraint&quot;</span>) ) {
+        <span class="synStatement">return</span> <span class="synIdentifier">$type</span>;
+    }
+    <span class="synConditional">else</span> {
+        <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$REGISTRY-&gt;has_type_constraint</span>(<span class="synIdentifier">$type</span>);
+        <span class="synStatement">return</span> <span class="synIdentifier">$REGISTRY-&gt;get_type_constraint</span>(<span class="synIdentifier">$type</span>);
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">register_type_constraint </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$constraint</span> = <span class="synStatement">shift</span>;
+    __PACKAGE__<span class="synIdentifier">-&gt;_throw_error</span>(<span class="synString">&quot;can't register an unnamed type constraint&quot;</span>)
+        <span class="synConditional">unless</span> <span class="synOperator">defined</span> <span class="synIdentifier">$constraint-&gt;name</span>;
+    <span class="synIdentifier">$REGISTRY-&gt;add_type_constraint</span>(<span class="synIdentifier">$constraint</span>);
+    <span class="synStatement">return</span> <span class="synIdentifier">$constraint</span>;
+}
+
+<span class="synComment"># type constructors</span>
+
+<span class="synKeyword">sub </span><span class="synFunction">type </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$name</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">%p</span> = <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">%{$_}</span> <span class="synStatement">}</span> <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> _create_type_constraint(
+        <span class="synIdentifier">$name</span>, <span class="synOperator">undef</span>, <span class="synIdentifier">$p{</span><span class="synString">where</span><span class="synIdentifier">}</span>, <span class="synIdentifier">$p{</span><span class="synString">message</span><span class="synIdentifier">}</span>,
+        <span class="synIdentifier">$p{</span><span class="synString">optimize_as</span><span class="synIdentifier">}</span>, <span class="synIdentifier">$p{</span><span class="synString">inline_as</span><span class="synIdentifier">}</span>,
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">subtype </span>{
+    <span class="synConditional">if</span> ( <span class="synIdentifier">@_</span> == <span class="synNumber">1</span> &amp;&amp; !<span class="synOperator">ref</span> <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> ) {
+        __PACKAGE__<span class="synIdentifier">-&gt;_throw_error</span>(
+            <span class="synString">'A subtype cannot consist solely of a name, it must have a parent'</span>
+        );
+    }
+
+    <span class="synComment"># The blessed check is mostly to accommodate MooseX::Types, which</span>
+    <span class="synComment"># uses an object which overloads stringification as a type name.</span>
+    <span class="synStatement">my</span> <span class="synIdentifier">$name</span> = <span class="synOperator">ref</span> <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> &amp;&amp; !blessed <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> ? <span class="synOperator">undef</span> : <span class="synStatement">shift</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">%p</span> = <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">%{$_}</span> <span class="synStatement">}</span> <span class="synIdentifier">@_</span>;
+
+    <span class="synComment"># subtype Str =&gt; where { ... };</span>
+    <span class="synConditional">if</span> ( !<span class="synStatement">exists</span> <span class="synIdentifier">$p{</span><span class="synString">as</span><span class="synIdentifier">}</span> ) {
+        <span class="synIdentifier">$p{</span><span class="synString">as</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$name</span>;
+        <span class="synIdentifier">$name</span> = <span class="synOperator">undef</span>;
+    }
+
+    <span class="synStatement">return</span> _create_type_constraint(
+        <span class="synIdentifier">$name</span>, <span class="synIdentifier">$p{</span><span class="synString">as</span><span class="synIdentifier">}</span>, <span class="synIdentifier">$p{</span><span class="synString">where</span><span class="synIdentifier">}</span>, <span class="synIdentifier">$p{</span><span class="synString">message</span><span class="synIdentifier">}</span>,
+        <span class="synIdentifier">$p{</span><span class="synString">optimize_as</span><span class="synIdentifier">}</span>, <span class="synIdentifier">$p{</span><span class="synString">inline_as</span><span class="synIdentifier">}</span>,
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">class_type </span>{
+    create_class_type_constraint(<span class="synIdentifier">@_</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">role_type </span><span class="synType">($;$) </span>{
+    create_role_type_constraint(<span class="synIdentifier">@_</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">maybe_type </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$type_parameter</span>) = <span class="synIdentifier">@_</span>;
+
+    register_type_constraint(
+        <span class="synIdentifier">$REGISTRY-&gt;get_type_constraint</span>(<span class="synString">'Maybe'</span>)-&gt;parameterize(<span class="synIdentifier">$type_parameter</span>)
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">duck_type </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$type_name</span>, <span class="synIdentifier">@methods</span> ) = <span class="synIdentifier">@_</span>;
+    <span class="synConditional">if</span> ( <span class="synOperator">ref</span> <span class="synIdentifier">$type_name</span> <span class="synOperator">eq</span> <span class="synString">'ARRAY'</span> &amp;&amp; !<span class="synIdentifier">@methods</span> ) {
+        <span class="synIdentifier">@methods</span>   = <span class="synIdentifier">@$type_name</span>;
+        <span class="synIdentifier">$type_name</span> = <span class="synOperator">undef</span>;
+    }
+    <span class="synConditional">if</span> ( <span class="synIdentifier">@methods</span> == <span class="synNumber">1</span> &amp;&amp; <span class="synOperator">ref</span> <span class="synIdentifier">$methods[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> <span class="synOperator">eq</span> <span class="synString">'ARRAY'</span> ) {
+        <span class="synIdentifier">@methods</span> = <span class="synIdentifier">@{</span> <span class="synIdentifier">$methods[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> <span class="synIdentifier">}</span>;
+    }
+
+    register_type_constraint(
+        create_duck_type_constraint(
+            <span class="synIdentifier">$type_name</span>,
+            \<span class="synIdentifier">@methods</span>,
+        )
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">coerce </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$type_name</span>, <span class="synIdentifier">@coercion_map</span> ) = <span class="synIdentifier">@_</span>;
+    _install_type_coercions( <span class="synIdentifier">$type_name</span>, \<span class="synIdentifier">@coercion_map</span> );
+}
+
+<span class="synComment"># The trick of returning @_ lets us avoid having to specify a</span>
+<span class="synComment"># prototype. Perl will parse this:</span>
+<span class="synComment">#</span>
+<span class="synComment"># subtype 'Foo'</span>
+<span class="synComment">#     =&gt; as 'Str'</span>
+<span class="synComment">#     =&gt; where { ... }</span>
+<span class="synComment">#</span>
+<span class="synComment"># as this:</span>
+<span class="synComment">#</span>
+<span class="synComment"># subtype( 'Foo', as( 'Str', where { ... } ) );</span>
+<span class="synComment">#</span>
+<span class="synComment"># If as() returns all its extra arguments, this just works, and</span>
+<span class="synComment"># preserves backwards compatibility.</span>
+<span class="synKeyword">sub </span><span class="synFunction">as </span>{ { <span class="synString">as</span> =&gt; <span class="synStatement">shift</span> }, <span class="synIdentifier">@_</span> }
+<span class="synKeyword">sub </span><span class="synFunction">where </span><span class="synType">(&amp;)       </span>{ { <span class="synString">where</span>       =&gt; <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> } }
+<span class="synKeyword">sub </span><span class="synFunction">message </span><span class="synType">(&amp;)     </span>{ { <span class="synString">message</span>     =&gt; <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> } }
+<span class="synKeyword">sub </span><span class="synFunction">optimize_as </span><span class="synType">(&amp;) </span>{ { <span class="synString">optimize_as</span> =&gt; <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> } }
+<span class="synKeyword">sub </span><span class="synFunction">inline_as </span><span class="synType">(&amp;)   </span>{ { <span class="synString">inline_as</span>   =&gt; <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> } }
+
+<span class="synKeyword">sub </span><span class="synFunction">from    </span>{<span class="synIdentifier">@_</span>}
+<span class="synKeyword">sub </span><span class="synFunction">via </span><span class="synType">(&amp;) </span>{ <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> }
+
+<span class="synKeyword">sub </span><span class="synFunction">enum </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$type_name</span>, <span class="synIdentifier">@values</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synComment"># </span><span class="synTodo">NOTE:</span>
+    <span class="synComment"># if only an array-ref is passed then</span>
+    <span class="synComment"># you get an anon-enum</span>
+    <span class="synComment"># - SL</span>
+    <span class="synConditional">if</span> ( <span class="synOperator">ref</span> <span class="synIdentifier">$type_name</span> <span class="synOperator">eq</span> <span class="synString">'ARRAY'</span> ) {
+        <span class="synIdentifier">@values</span> == <span class="synNumber">0</span>
+            || __PACKAGE__<span class="synIdentifier">-&gt;_throw_error</span>(<span class="synString">&quot;enum called with an array reference and additional arguments. Did you mean to parenthesize the enum call's parameters?&quot;</span>);
+
+        <span class="synIdentifier">@values</span>    = <span class="synIdentifier">@$type_name</span>;
+        <span class="synIdentifier">$type_name</span> = <span class="synOperator">undef</span>;
+    }
+    <span class="synConditional">if</span> ( <span class="synIdentifier">@values</span> == <span class="synNumber">1</span> &amp;&amp; <span class="synOperator">ref</span> <span class="synIdentifier">$values[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> <span class="synOperator">eq</span> <span class="synString">'ARRAY'</span> ) {
+        <span class="synIdentifier">@values</span> = <span class="synIdentifier">@{</span> <span class="synIdentifier">$values[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> <span class="synIdentifier">}</span>;
+    }
+
+    register_type_constraint(
+        create_enum_type_constraint(
+            <span class="synIdentifier">$type_name</span>,
+            \<span class="synIdentifier">@values</span>,
+        )
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">union </span>{
+  <span class="synStatement">my</span> ( <span class="synIdentifier">$type_name</span>, <span class="synIdentifier">@constraints</span> ) = <span class="synIdentifier">@_</span>;
+  <span class="synConditional">if</span> ( <span class="synOperator">ref</span> <span class="synIdentifier">$type_name</span> <span class="synOperator">eq</span> <span class="synString">'ARRAY'</span> ) {
+    <span class="synIdentifier">@constraints</span> == <span class="synNumber">0</span>
+      || __PACKAGE__<span class="synIdentifier">-&gt;_throw_error</span>(<span class="synString">&quot;union called with an array reference and additional arguments.&quot;</span>);
+    <span class="synIdentifier">@constraints</span> = <span class="synIdentifier">@$type_name</span>;
+    <span class="synIdentifier">$type_name</span>   = <span class="synOperator">undef</span>;
+  }
+  <span class="synConditional">if</span> ( <span class="synIdentifier">@constraints</span> == <span class="synNumber">1</span> &amp;&amp; <span class="synOperator">ref</span> <span class="synIdentifier">$constraints[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> <span class="synOperator">eq</span> <span class="synString">'ARRAY'</span> ) {
+    <span class="synIdentifier">@constraints</span> = <span class="synIdentifier">@{</span> <span class="synIdentifier">$constraints[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> <span class="synIdentifier">}</span>;
+  }
+  <span class="synConditional">if</span> ( <span class="synOperator">defined</span> <span class="synIdentifier">$type_name</span> ) {
+    <span class="synStatement">return</span> register_type_constraint(
+      create_named_type_constraint_union( <span class="synIdentifier">$type_name</span>, <span class="synIdentifier">@constraints</span> )
+    );
+  }
+  <span class="synStatement">return</span> create_type_constraint_union( <span class="synIdentifier">@constraints</span> );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">create_enum_type_constraint </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$type_name</span>, <span class="synIdentifier">$values</span> ) = <span class="synIdentifier">@_</span>;
+
+    Moose::Meta::TypeConstraint::Enum-&gt;new(
+        <span class="synString">name</span> =&gt; <span class="synIdentifier">$type_name</span> || <span class="synString">'__ANON__'</span>,
+        <span class="synString">values</span> =&gt; <span class="synIdentifier">$values</span>,
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">create_duck_type_constraint </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$type_name</span>, <span class="synIdentifier">$methods</span> ) = <span class="synIdentifier">@_</span>;
+
+    Moose::Meta::TypeConstraint::DuckType-&gt;new(
+        <span class="synString">name</span> =&gt; <span class="synIdentifier">$type_name</span> || <span class="synString">'__ANON__'</span>,
+        <span class="synString">methods</span> =&gt; <span class="synIdentifier">$methods</span>,
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">match_on_type </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$to_match</span>, <span class="synIdentifier">@cases</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$default</span>;
+    <span class="synConditional">if</span> (<span class="synIdentifier">@cases</span> % <span class="synNumber">2</span> != <span class="synNumber">0</span>) {
+        <span class="synIdentifier">$default</span> = <span class="synStatement">pop</span> <span class="synIdentifier">@cases</span>;
+        (<span class="synOperator">ref</span> <span class="synIdentifier">$default</span> <span class="synOperator">eq</span> <span class="synString">'CODE'</span>)
+            || __PACKAGE__<span class="synIdentifier">-&gt;_throw_error</span>(<span class="synString">&quot;Default case must be a CODE ref, not </span><span class="synIdentifier">$default</span><span class="synString">&quot;</span>);
+    }
+    <span class="synRepeat">while</span> (<span class="synIdentifier">@cases</span>) {
+        <span class="synStatement">my</span> (<span class="synIdentifier">$type</span>, <span class="synIdentifier">$action</span>) = <span class="synStatement">splice</span> <span class="synIdentifier">@cases</span>, <span class="synNumber">0</span>, <span class="synNumber">2</span>;
+
+        <span class="synConditional">unless</span> (blessed <span class="synIdentifier">$type</span> &amp;&amp; <span class="synIdentifier">$type-&gt;isa</span>(<span class="synString">'Moose::Meta::TypeConstraint'</span>)) {
+            <span class="synIdentifier">$type</span> = find_or_parse_type_constraint(<span class="synIdentifier">$type</span>)
+                 || __PACKAGE__<span class="synIdentifier">-&gt;_throw_error</span>(<span class="synString">&quot;Cannot find or parse the type '</span><span class="synIdentifier">$type</span><span class="synString">'&quot;</span>)
+        }
+
+        (<span class="synOperator">ref</span> <span class="synIdentifier">$action</span> <span class="synOperator">eq</span> <span class="synString">'CODE'</span>)
+            || __PACKAGE__<span class="synIdentifier">-&gt;_throw_error</span>(<span class="synString">&quot;Match action must be a CODE ref, not </span><span class="synIdentifier">$action</span><span class="synString">&quot;</span>);
+
+        <span class="synConditional">if</span> (<span class="synIdentifier">$type-&gt;check</span>(<span class="synIdentifier">$to_match</span>)) {
+            <span class="synStatement">local</span> <span class="synIdentifier">$_</span> = <span class="synIdentifier">$to_match</span>;
+            <span class="synStatement">return</span> <span class="synIdentifier">$action</span>-&gt;(<span class="synIdentifier">$to_match</span>);
+        }
+    }
+    (<span class="synOperator">defined</span> <span class="synIdentifier">$default</span>)
+        || __PACKAGE__<span class="synIdentifier">-&gt;_throw_error</span>(<span class="synString">&quot;No cases matched for </span><span class="synIdentifier">$to_match</span><span class="synString">&quot;</span>);
+    {
+        <span class="synStatement">local</span> <span class="synIdentifier">$_</span> = <span class="synIdentifier">$to_match</span>;
+        <span class="synStatement">return</span> <span class="synIdentifier">$default</span>-&gt;(<span class="synIdentifier">$to_match</span>);
+    }
+}
+
+
+<span class="synComment">## --------------------------------------------------------</span>
+<span class="synComment">## desugaring functions ...</span>
+<span class="synComment">## --------------------------------------------------------</span>
+
+<span class="synKeyword">sub </span><span class="synFunction">_create_type_constraint </span><span class="synType">($$$;$$) </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$name</span>      = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$parent</span>    = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$check</span>     = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$message</span>   = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$optimized</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$inlined</span>   = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$pkg_defined_in</span> = <span class="synStatement">scalar</span>( <span class="synStatement">caller</span>(<span class="synNumber">1</span>) );
+
+    <span class="synConditional">if</span> ( <span class="synOperator">defined</span> <span class="synIdentifier">$name</span> ) {
+        <span class="synStatement">my</span> <span class="synIdentifier">$type</span> = <span class="synIdentifier">$REGISTRY-&gt;get_type_constraint</span>(<span class="synIdentifier">$name</span>);
+
+        ( <span class="synIdentifier">$type-&gt;_package_defined_in</span> <span class="synOperator">eq</span> <span class="synIdentifier">$pkg_defined_in</span> )
+            || _confess(
+                  <span class="synString">&quot;The type constraint '</span><span class="synIdentifier">$name</span><span class="synString">' has already been created in &quot;</span>
+                . <span class="synIdentifier">$type-&gt;_package_defined_in</span>
+                . <span class="synString">&quot; and cannot be created again in &quot;</span>
+                . <span class="synIdentifier">$pkg_defined_in</span> )
+            <span class="synConditional">if</span> <span class="synOperator">defined</span> <span class="synIdentifier">$type</span>;
+
+        <span class="synIdentifier">$name</span> =~ <span class="synStatement">/</span><span class="synString">^[</span><span class="synSpecial">\w</span><span class="synString">:</span><span class="synSpecial">\.</span><span class="synString">]</span><span class="synSpecial">+</span><span class="synString">$</span><span class="synStatement">/</span>
+            <span class="synOperator">or</span> <span class="synStatement">die</span> <span class="synString">qq{</span><span class="synIdentifier">$name</span><span class="synString"> contains invalid characters for a type name.}</span>
+            . <span class="synString">qq{ Names can contain alphanumeric character, &quot;:&quot;, and &quot;.&quot;</span><span class="synSpecial">\n</span><span class="synString">}</span>;
+    }
+
+    <span class="synStatement">my</span> <span class="synIdentifier">%opts</span> = (
+        <span class="synString">name</span>               =&gt; <span class="synIdentifier">$name</span>,
+        <span class="synString">package_defined_in</span> =&gt; <span class="synIdentifier">$pkg_defined_in</span>,
+
+        ( <span class="synIdentifier">$check</span>     ? ( <span class="synString">constraint</span> =&gt; <span class="synIdentifier">$check</span> )     : () ),
+        ( <span class="synIdentifier">$message</span>   ? ( <span class="synString">message</span>    =&gt; <span class="synIdentifier">$message</span> )   : () ),
+        ( <span class="synIdentifier">$optimized</span> ? ( <span class="synString">optimized</span>  =&gt; <span class="synIdentifier">$optimized</span> ) : () ),
+        ( <span class="synIdentifier">$inlined</span>   ? ( <span class="synString">inlined</span>    =&gt; <span class="synIdentifier">$inlined</span> )   : () ),
+    );
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$constraint</span>;
+    <span class="synConditional">if</span> (
+        <span class="synOperator">defined</span> <span class="synIdentifier">$parent</span>
+        <span class="synOperator">and</span> <span class="synIdentifier">$parent</span>
+        = blessed <span class="synIdentifier">$parent</span>
+        ? <span class="synIdentifier">$parent</span>
+        : find_or_create_isa_type_constraint(<span class="synIdentifier">$parent</span>)
+        ) {
+        <span class="synIdentifier">$constraint</span> = <span class="synIdentifier">$parent-&gt;create_child_type</span>(<span class="synIdentifier">%opts</span>);
+    }
+    <span class="synConditional">else</span> {
+        <span class="synIdentifier">$constraint</span> = Moose::Meta::TypeConstraint-&gt;new(<span class="synIdentifier">%opts</span>);
+    }
+
+    <span class="synIdentifier">$REGISTRY-&gt;add_type_constraint</span>(<span class="synIdentifier">$constraint</span>)
+        <span class="synConditional">if</span> <span class="synOperator">defined</span> <span class="synIdentifier">$name</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$constraint</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_install_type_coercions </span><span class="synType">($$) </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$type_name</span>, <span class="synIdentifier">$coercion_map</span> ) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$type</span> = find_type_constraint(<span class="synIdentifier">$type_name</span>);
+    ( <span class="synOperator">defined</span> <span class="synIdentifier">$type</span> )
+        || __PACKAGE__<span class="synIdentifier">-&gt;_throw_error</span>(
+        <span class="synString">&quot;Cannot find type '</span><span class="synIdentifier">$type_name</span><span class="synString">', perhaps you forgot to load it&quot;</span>);
+    <span class="synConditional">if</span> ( <span class="synIdentifier">$type-&gt;has_coercion</span> ) {
+        <span class="synIdentifier">$type-&gt;coercion-&gt;add_type_coercions</span>(<span class="synIdentifier">@$coercion_map</span>);
+    }
+    <span class="synConditional">else</span> {
+        <span class="synStatement">my</span> <span class="synIdentifier">$type_coercion</span> = Moose::Meta::TypeCoercion-&gt;new(
+            <span class="synString">type_coercion_map</span> =&gt; <span class="synIdentifier">$coercion_map</span>,
+            <span class="synString">type_constraint</span>   =&gt; <span class="synIdentifier">$type</span>
+        );
+        <span class="synIdentifier">$type-&gt;coercion</span>(<span class="synIdentifier">$type_coercion</span>);
+    }
+}
+
+<span class="synComment">## --------------------------------------------------------</span>
+<span class="synComment">## type notation parsing ...</span>
+<span class="synComment">## --------------------------------------------------------</span>
+
+{
+
+    <span class="synComment"># All I have to say is mugwump++ cause I know</span>
+    <span class="synComment"># do not even have enough regexp-fu to be able</span>
+    <span class="synComment"># to have written this (I can only barely</span>
+    <span class="synComment"># understand it as it is)</span>
+    <span class="synComment"># - SL</span>
+
+    <span class="synStatement">use re</span> <span class="synString">&quot;eval&quot;</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$valid_chars</span> = <span class="synString">qr{[</span><span class="synSpecial">\w</span><span class="synString">:</span><span class="synSpecial">\.</span><span class="synString">]}</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$type_atom</span>   = <span class="synString">qr{ </span><span class="synSpecial">(?</span><span class="synString">&gt;</span><span class="synIdentifier">$valid_chars</span><span class="synSpecial">+)</span><span class="synString"> }x</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$ws</span>          = <span class="synString">qr{ </span><span class="synSpecial">(?</span><span class="synString">&gt;</span><span class="synSpecial">\s*)</span><span class="synString"> }x</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$op_union</span>    = <span class="synString">qr{ </span><span class="synIdentifier">$ws</span><span class="synString"> </span><span class="synSpecial">\|</span><span class="synString"> </span><span class="synIdentifier">$ws</span><span class="synString"> }x</span>;
+
+    <span class="synStatement">my</span> (<span class="synIdentifier">$type</span>, <span class="synIdentifier">$type_capture_parts</span>, <span class="synIdentifier">$type_with_parameter</span>, <span class="synIdentifier">$union</span>, <span class="synIdentifier">$any</span>);
+    <span class="synConditional">if</span> (Class::MOP::IS_RUNNING_ON_5_10) {
+        <span class="synStatement">my</span> <span class="synIdentifier">$type_pattern</span>
+            = <span class="synString">q{  (?&amp;type_atom)  (?: \[ (?&amp;ws)  (?&amp;any)  (?&amp;ws) \] )? }</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$type_capture_parts_pattern</span>
+            = <span class="synString">q{ ((?&amp;type_atom)) (?: \[ (?&amp;ws) ((?&amp;any)) (?&amp;ws) \] )? }</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$type_with_parameter_pattern</span>
+            = <span class="synString">q{  (?&amp;type_atom)      \[ (?&amp;ws)  (?&amp;any)  (?&amp;ws) \]    }</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$union_pattern</span>
+            = <span class="synString">q{ (?&amp;type) (?&gt; (?: (?&amp;op_union) (?&amp;type) )+ ) }</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$any_pattern</span>
+            = <span class="synString">q{ (?&amp;type) | (?&amp;union) }</span>;
+
+        <span class="synStatement">my</span> <span class="synIdentifier">$defines</span> = <span class="synString">qr{</span><span class="synSpecial">(?(</span><span class="synString">DEFINE</span><span class="synSpecial">)</span>
+<span class="synString">            </span><span class="synSpecial">(?</span><span class="synString">&lt;valid_chars&gt;         </span><span class="synIdentifier">$valid_chars</span><span class="synSpecial">)</span>
+<span class="synString">            </span><span class="synSpecial">(?</span><span class="synString">&lt;type_atom&gt;           </span><span class="synIdentifier">$type_atom</span><span class="synSpecial">)</span>
+<span class="synString">            </span><span class="synSpecial">(?</span><span class="synString">&lt;ws&gt;                  </span><span class="synIdentifier">$ws</span><span class="synSpecial">)</span>
+<span class="synString">            </span><span class="synSpecial">(?</span><span class="synString">&lt;op_union&gt;            </span><span class="synIdentifier">$op_union</span><span class="synSpecial">)</span>
+<span class="synString">            </span><span class="synSpecial">(?</span><span class="synString">&lt;type&gt;                </span><span class="synIdentifier">$type_pattern</span><span class="synSpecial">)</span>
+<span class="synString">            </span><span class="synSpecial">(?</span><span class="synString">&lt;type_capture_parts&gt;  </span><span class="synIdentifier">$type_capture_parts_pattern</span><span class="synSpecial">)</span>
+<span class="synString">            </span><span class="synSpecial">(?</span><span class="synString">&lt;type_with_parameter&gt; </span><span class="synIdentifier">$type_with_parameter_pattern</span><span class="synSpecial">)</span>
+<span class="synString">            </span><span class="synSpecial">(?</span><span class="synString">&lt;union&gt;               </span><span class="synIdentifier">$union_pattern</span><span class="synSpecial">)</span>
+<span class="synString">            </span><span class="synSpecial">(?</span><span class="synString">&lt;any&gt;                 </span><span class="synIdentifier">$any_pattern</span><span class="synSpecial">)</span>
+<span class="synString">        </span><span class="synSpecial">)</span><span class="synString">}x</span>;
+
+        <span class="synIdentifier">$type</span>                = <span class="synString">qr{ </span><span class="synIdentifier">$type_pattern</span><span class="synString">                </span><span class="synIdentifier">$defines</span><span class="synString"> }x</span>;
+        <span class="synIdentifier">$type_capture_parts</span>  = <span class="synString">qr{ </span><span class="synIdentifier">$type_capture_parts_pattern</span><span class="synString">  </span><span class="synIdentifier">$defines</span><span class="synString"> }x</span>;
+        <span class="synIdentifier">$type_with_parameter</span> = <span class="synString">qr{ </span><span class="synIdentifier">$type_with_parameter_pattern</span><span class="synString"> </span><span class="synIdentifier">$defines</span><span class="synString"> }x</span>;
+        <span class="synIdentifier">$union</span>               = <span class="synString">qr{ </span><span class="synIdentifier">$union_pattern</span><span class="synString">               </span><span class="synIdentifier">$defines</span><span class="synString"> }x</span>;
+        <span class="synIdentifier">$any</span>                 = <span class="synString">qr{ </span><span class="synIdentifier">$any_pattern</span><span class="synString">                 </span><span class="synIdentifier">$defines</span><span class="synString"> }x</span>;
+    }
+    <span class="synConditional">else</span> {
+        <span class="synIdentifier">$type</span>
+            = <span class="synString">qr{  </span><span class="synIdentifier">$type_atom</span><span class="synString">  </span><span class="synSpecial">(?:</span><span class="synString"> </span><span class="synSpecial">\[</span><span class="synString"> </span><span class="synIdentifier">$ws</span><span class="synString">  </span><span class="synSpecial">(??</span><span class="synString">{</span><span class="synIdentifier">$any</span><span class="synString">}</span><span class="synSpecial">)</span><span class="synString">  </span><span class="synIdentifier">$ws</span><span class="synString"> </span><span class="synSpecial">\]</span><span class="synString"> </span><span class="synSpecial">)?</span><span class="synString"> }x</span>;
+        <span class="synIdentifier">$type_capture_parts</span>
+            = <span class="synString">qr{ </span><span class="synSpecial">(</span><span class="synIdentifier">$type_atom</span><span class="synSpecial">)</span><span class="synString"> </span><span class="synSpecial">(?:</span><span class="synString"> </span><span class="synSpecial">\[</span><span class="synString"> </span><span class="synIdentifier">$ws</span><span class="synString"> </span><span class="synSpecial">((??</span><span class="synString">{</span><span class="synIdentifier">$any</span><span class="synString">}</span><span class="synSpecial">))</span><span class="synString"> </span><span class="synIdentifier">$ws</span><span class="synString"> </span><span class="synSpecial">\]</span><span class="synString"> </span><span class="synSpecial">)?</span><span class="synString"> }x</span>;
+        <span class="synIdentifier">$type_with_parameter</span>
+            = <span class="synString">qr{  </span><span class="synIdentifier">$type_atom</span><span class="synString">      </span><span class="synSpecial">\[</span><span class="synString"> </span><span class="synIdentifier">$ws</span><span class="synString">  </span><span class="synSpecial">(??</span><span class="synString">{</span><span class="synIdentifier">$any</span><span class="synString">}</span><span class="synSpecial">)</span><span class="synString">  </span><span class="synIdentifier">$ws</span><span class="synString"> </span><span class="synSpecial">\]</span><span class="synString">    }x</span>;
+        <span class="synIdentifier">$union</span>
+            = <span class="synString">qr{ </span><span class="synIdentifier">$type</span><span class="synString"> </span><span class="synSpecial">(?</span><span class="synString">&gt; </span><span class="synSpecial">(?:</span><span class="synString"> </span><span class="synIdentifier">$op_union</span><span class="synString"> </span><span class="synIdentifier">$type</span><span class="synString"> </span><span class="synSpecial">)+</span><span class="synString"> </span><span class="synSpecial">)</span><span class="synString"> }x</span>;
+        <span class="synIdentifier">$any</span>
+            = <span class="synString">qr{ </span><span class="synIdentifier">$type</span><span class="synString"> | </span><span class="synIdentifier">$union</span><span class="synString"> }x</span>;
+    }
+
+
+    <span class="synKeyword">sub </span><span class="synFunction">_parse_parameterized_type_constraint </span>{
+        { <span class="synStatement">no warnings</span> <span class="synString">'void'</span>; <span class="synIdentifier">$any</span>; }  <span class="synComment"># force capture of interpolated lexical</span>
+        <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> =~ <span class="synStatement">m{</span><span class="synString"> </span><span class="synIdentifier">$type_capture_parts</span><span class="synString"> </span><span class="synStatement">}x</span>;
+        <span class="synStatement">return</span> ( <span class="synIdentifier">$1</span>, <span class="synIdentifier">$2</span> );
+    }
+
+    <span class="synKeyword">sub </span><span class="synFunction">_detect_parameterized_type_constraint </span>{
+        { <span class="synStatement">no warnings</span> <span class="synString">'void'</span>; <span class="synIdentifier">$any</span>; }  <span class="synComment"># force capture of interpolated lexical</span>
+        <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> =~ <span class="synStatement">m{</span><span class="synString"> ^ </span><span class="synIdentifier">$type_with_parameter</span><span class="synString"> $ </span><span class="synStatement">}x</span>;
+    }
+
+    <span class="synKeyword">sub </span><span class="synFunction">_parse_type_constraint_union </span>{
+        { <span class="synStatement">no warnings</span> <span class="synString">'void'</span>; <span class="synIdentifier">$any</span>; }  <span class="synComment"># force capture of interpolated lexical</span>
+        <span class="synStatement">my</span> <span class="synIdentifier">$given</span> = <span class="synStatement">shift</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">@rv</span>;
+        <span class="synRepeat">while</span> ( <span class="synIdentifier">$given</span> =~ <span class="synStatement">m{</span><span class="synString"> </span><span class="synSpecial">\G</span><span class="synString"> </span><span class="synSpecial">(?:</span><span class="synString"> </span><span class="synIdentifier">$op_union</span><span class="synString"> </span><span class="synSpecial">)?</span><span class="synString"> </span><span class="synSpecial">(</span><span class="synIdentifier">$type</span><span class="synSpecial">)</span><span class="synString"> </span><span class="synStatement">}gcx</span> ) {
+            <span class="synStatement">push</span> <span class="synIdentifier">@rv</span> =&gt; <span class="synIdentifier">$1</span>;
+        }
+        ( <span class="synStatement">pos</span>(<span class="synIdentifier">$given</span>) <span class="synOperator">eq</span> <span class="synStatement">length</span>(<span class="synIdentifier">$given</span>) )
+            || __PACKAGE__<span class="synIdentifier">-&gt;_throw_error</span>( <span class="synString">&quot;'</span><span class="synIdentifier">$given</span><span class="synString">' didn't parse (parse-pos=&quot;</span>
+                . <span class="synStatement">pos</span>(<span class="synIdentifier">$given</span>)
+                . <span class="synString">&quot; and str-length=&quot;</span>
+                . <span class="synStatement">length</span>(<span class="synIdentifier">$given</span>)
+                . <span class="synString">&quot;)&quot;</span> );
+        <span class="synIdentifier">@rv</span>;
+    }
+
+    <span class="synKeyword">sub </span><span class="synFunction">_detect_type_constraint_union </span>{
+        { <span class="synStatement">no warnings</span> <span class="synString">'void'</span>; <span class="synIdentifier">$any</span>; }  <span class="synComment"># force capture of interpolated lexical</span>
+        <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> =~ <span class="synStatement">m{</span><span class="synString">^ </span><span class="synIdentifier">$type</span><span class="synString"> </span><span class="synIdentifier">$op_union</span><span class="synString"> </span><span class="synIdentifier">$type</span><span class="synString"> </span><span class="synSpecial">(</span><span class="synString"> </span><span class="synIdentifier">$op_union</span><span class="synString"> </span><span class="synSpecial">.*</span><span class="synString"> </span><span class="synSpecial">)?</span><span class="synString"> $</span><span class="synStatement">}x</span>;
+    }
+}
+
+<span class="synComment">## --------------------------------------------------------</span>
+<span class="synComment"># define some basic built-in types</span>
+<span class="synComment">## --------------------------------------------------------</span>
+
+<span class="synComment"># By making these classes immutable before creating all the types in</span>
+<span class="synComment"># Moose::Util::TypeConstraints::Builtin , we avoid repeatedly calling the slow</span>
+<span class="synComment"># MOP-based accessors.</span>
+<span class="synIdentifier">$_-&gt;make_immutable</span>(
+    <span class="synString">inline_constructor</span> =&gt; <span class="synNumber">1</span>,
+    <span class="synString">constructor_name</span>   =&gt; <span class="synString">&quot;_new&quot;</span>,
+
+    <span class="synComment"># these are Class::MOP accessors, so they need inlining</span>
+    <span class="synString">inline_accessors</span> =&gt; <span class="synNumber">1</span>
+    ) <span class="synRepeat">for</span> <span class="synStatement">grep</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;is_mutable</span> <span class="synStatement">}</span>
+    <span class="synStatement">map</span> <span class="synStatement">{</span> Class::MOP::class_of(<span class="synIdentifier">$_</span>) <span class="synStatement">}</span>
+    <span class="synString">qw(</span>
+<span class="synString">    Moose::Meta::TypeConstraint</span>
+<span class="synString">    Moose::Meta::TypeConstraint::Union</span>
+<span class="synString">    Moose::Meta::TypeConstraint::Parameterized</span>
+<span class="synString">    Moose::Meta::TypeConstraint::Parameterizable</span>
+<span class="synString">    Moose::Meta::TypeConstraint::Class</span>
+<span class="synString">    Moose::Meta::TypeConstraint::Role</span>
+<span class="synString">    Moose::Meta::TypeConstraint::Enum</span>
+<span class="synString">    Moose::Meta::TypeConstraint::DuckType</span>
+<span class="synString">    Moose::Meta::TypeConstraint::Registry</span>
+<span class="synString">)</span>;
+
+<span class="synStatement">require</span> Moose::Util::TypeConstraints::Builtins;
+Moose::Util::TypeConstraints::Builtins::define_builtins(<span class="synIdentifier">$REGISTRY</span>);
+
+<span class="synStatement">my</span> <span class="synIdentifier">@PARAMETERIZABLE_TYPES</span>
+    = <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$REGISTRY-&gt;get_type_constraint</span>(<span class="synIdentifier">$_</span>) <span class="synStatement">}</span> <span class="synString">qw[ScalarRef ArrayRef HashRef Maybe]</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">get_all_parameterizable_types </span>{<span class="synIdentifier">@PARAMETERIZABLE_TYPES</span>}
+
+<span class="synKeyword">sub </span><span class="synFunction">add_parameterizable_type </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$type</span> = <span class="synStatement">shift</span>;
+    ( blessed <span class="synIdentifier">$type</span>
+            &amp;&amp; <span class="synIdentifier">$type-&gt;isa</span>(<span class="synString">'Moose::Meta::TypeConstraint::Parameterizable'</span>) )
+        || __PACKAGE__<span class="synIdentifier">-&gt;_throw_error</span>(
+        <span class="synString">&quot;Type must be a Moose::Meta::TypeConstraint::Parameterizable not </span><span class="synIdentifier">$type</span><span class="synString">&quot;</span>
+        );
+    <span class="synStatement">push</span> <span class="synIdentifier">@PARAMETERIZABLE_TYPES</span> =&gt; <span class="synIdentifier">$type</span>;
+}
+
+<span class="synComment">## --------------------------------------------------------</span>
+<span class="synComment"># end of built-in types ...</span>
+<span class="synComment">## --------------------------------------------------------</span>
+
+{
+    <span class="synStatement">my</span> <span class="synIdentifier">@BUILTINS</span> = list_all_type_constraints();
+    <span class="synKeyword">sub </span><span class="synFunction">list_all_builtin_type_constraints </span>{<span class="synIdentifier">@BUILTINS</span>}
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_throw_error </span>{
+    <span class="synStatement">shift</span>;
+    <span class="synStatement">require</span> Moose;
+    <span class="synStatement">unshift</span> <span class="synIdentifier">@_</span>, <span class="synString">'Moose'</span>;
+    <span class="synStatement">goto</span> <span class="synIdentifier">&amp;</span><span class="synType">Moose::</span><span class="synIdentifier">throw_error</span>;
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: Type constraint system for Moose</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Moose::Util::TypeConstraints - Type constraint system for Moose
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> SYNOPSIS</span>
+
+<span class="synPreProc">  use Moose::Util::TypeConstraints;</span>
+
+<span class="synPreProc">  subtype 'Natural',</span>
+<span class="synPreProc">      as 'Int',</span>
+<span class="synPreProc">      where { $_ &gt; 0 };</span>
+
+<span class="synPreProc">  subtype 'NaturalLessThanTen',</span>
+<span class="synPreProc">      as 'Natural',</span>
+<span class="synPreProc">      where { $_ &lt; 10 },</span>
+<span class="synPreProc">      message { &quot;This number ($_) is not less than ten!&quot; };</span>
+
+<span class="synPreProc">  coerce 'Num',</span>
+<span class="synPreProc">      from 'Str',</span>
+<span class="synPreProc">      via { 0+$_ };</span>
+
+<span class="synPreProc">  class_type 'DateTimeClass', { class =&gt; 'DateTime' };</span>
+
+<span class="synPreProc">  role_type 'Barks', { role =&gt; 'Some::Library::Role::Barks' };</span>
+
+<span class="synPreProc">  enum 'RGBColors', [qw(red green blue)];</span>
+
+<span class="synPreProc">  union 'StringOrArray', [qw( String Array )];</span>
+
+<span class="synPreProc">  no Moose::Util::TypeConstraints;</span>
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This module provides Moose with the ability to create custom type
+constraints to be used in attribute definition.
+
+<span class="synStatement">=head2</span><span class="synString"> Important Caveat</span>
+
+This is <span class="synIdentifier">B&lt;NOT&gt;</span> a type system for Perl 5. These are type constraints,
+and they are not used by Moose unless you tell it to. No type
+inference is performed, expressions are not typed, etc. etc. etc.
+
+A type constraint is at heart a small &quot;check if a value is valid&quot;
+function. A constraint can be associated with an attribute. This
+simplifies parameter validation, and makes your code clearer to read,
+because you can refer to constraints by name.
+
+<span class="synStatement">=head2</span><span class="synString"> Slightly Less Important Caveat</span>
+
+It is <span class="synIdentifier">B&lt;always&gt;</span> a good idea to quote your type names.
+
+This prevents Perl from trying to execute the call as an indirect
+object call. This can be an issue when you have a subtype with the
+same name as a valid class.
+
+For instance:
+
+<span class="synPreProc">  subtype DateTime =&gt; as Object =&gt; where { $_-&gt;isa('DateTime') };</span>
+
+will <span class="synIdentifier">I&lt;just work&gt;</span>, while this:
+
+<span class="synPreProc">  use DateTime;</span>
+<span class="synPreProc">  subtype DateTime =&gt; as Object =&gt; where { $_-&gt;isa('DateTime') };</span>
+
+will fail silently and cause many headaches. The simple way to solve
+this, as well as future proof your subtypes from classes which have
+yet to have been created, is to quote the type name:
+
+<span class="synPreProc">  use DateTime;</span>
+<span class="synPreProc">  subtype 'DateTime', as 'Object', where { $_-&gt;isa('DateTime') };</span>
+
+<span class="synStatement">=head2</span><span class="synString"> Default Type Constraints</span>
+
+This module also provides a simple hierarchy for Perl 5 types, here is
+that hierarchy represented visually.
+
+<span class="synPreProc">  Any</span>
+<span class="synPreProc">      Item</span>
+<span class="synPreProc">          Bool</span>
+<span class="synPreProc">          Maybe[`a]</span>
+<span class="synPreProc">          Undef</span>
+<span class="synPreProc">          Defined</span>
+<span class="synPreProc">              Value</span>
+<span class="synPreProc">                  Str</span>
+<span class="synPreProc">                      Num</span>
+<span class="synPreProc">                          Int</span>
+<span class="synPreProc">                      ClassName</span>
+<span class="synPreProc">                      RoleName</span>
+<span class="synPreProc">              Ref</span>
+<span class="synPreProc">                  ScalarRef[`a]</span>
+<span class="synPreProc">                  ArrayRef[`a]</span>
+<span class="synPreProc">                  HashRef[`a]</span>
+<span class="synPreProc">                  CodeRef</span>
+<span class="synPreProc">                  RegexpRef</span>
+<span class="synPreProc">                  GlobRef</span>
+<span class="synPreProc">                  FileHandle</span>
+<span class="synPreProc">                  Object</span>
+
+<span class="synIdentifier">B&lt;NOTE:&gt;</span> Any type followed by a type parameter <span class="synIdentifier">C&lt;[`a]&gt;</span> can be
+parameterized, this means you can say:
+
+<span class="synPreProc">  ArrayRef[Int]    # an array of integers</span>
+<span class="synPreProc">  HashRef[CodeRef] # a hash of str to CODE ref mappings</span>
+<span class="synPreProc">  ScalarRef[Int]   # a reference to an integer</span>
+<span class="synPreProc">  Maybe[Str]       # value may be a string, may be undefined</span>
+
+If Moose finds a name in brackets that it does not recognize as an
+existing type, it assumes that this is a class name, for example
+<span class="synIdentifier">C&lt;ArrayRef[DateTime]&gt;</span>.
+
+<span class="synIdentifier">B&lt;NOTE:&gt;</span> Unless you parameterize a type, then it is invalid to include
+the square brackets. I.e. <span class="synIdentifier">C&lt;ArrayRef[]&gt;</span> will be treated as a new type
+name, <span class="synIdentifier">I&lt;not&gt;</span> as a parameterization of <span class="synIdentifier">C&lt;ArrayRef&gt;</span>.
+
+<span class="synIdentifier">B&lt;NOTE:&gt;</span> The <span class="synIdentifier">C&lt;Undef&gt;</span> type constraint for the most part works
+correctly now, but edge cases may still exist, please use it
+sparingly.
+
+<span class="synIdentifier">B&lt;NOTE:&gt;</span> The <span class="synIdentifier">C&lt;ClassName&gt;</span> type constraint does a complex package
+existence check. This means that your class <span class="synIdentifier">B&lt;must&gt;</span> be loaded for this
+type constraint to pass.
+
+<span class="synIdentifier">B&lt;NOTE:&gt;</span> The <span class="synIdentifier">C&lt;RoleName&gt;</span> constraint checks a string is a I&lt;package
+name&gt; which is a role, like <span class="synIdentifier">C&lt;'MyApp::Role::Comparable'&gt;</span>.
+
+<span class="synStatement">=head2</span><span class="synString"> Type Constraint Naming</span>
+
+Type name declared via this module can only contain alphanumeric
+characters, colons (:), and periods (.).
+
+Since the types created by this module are global, it is suggested
+that you namespace your types just as you would namespace your
+modules. So instead of creating a <span class="synIdentifier">I&lt;Color&gt;</span> type for your
+<span class="synIdentifier">B&lt;My::Graphics&gt;</span> module, you would call the type
+<span class="synIdentifier">I&lt;My::Graphics::Types::Color&gt;</span> instead.
+
+<span class="synStatement">=head2</span><span class="synString"> Use with Other Constraint Modules</span>
+
+This module can play nicely with other constraint modules with some
+slight tweaking. The <span class="synIdentifier">C&lt;where&gt;</span> clause in types is expected to be a
+<span class="synIdentifier">C&lt;CODE&gt;</span> reference which checks its first argument and returns a
+boolean. Since most constraint modules work in a similar way, it
+should be simple to adapt them to work with Moose.
+
+For instance, this is how you could use it with
+<span class="synIdentifier">L&lt;Declare::Constraints::Simple&gt;</span> to declare a completely new type.
+
+<span class="synPreProc">  type 'HashOfArrayOfObjects',</span>
+<span class="synPreProc">      where {</span>
+<span class="synPreProc">          IsHashRef(</span>
+<span class="synPreProc">              -keys   =&gt; HasLength,</span>
+<span class="synPreProc">              -values =&gt; IsArrayRef(IsObject)</span>
+<span class="synPreProc">          )-&gt;(@_);</span>
+<span class="synPreProc">      };</span>
+
+For more examples see the <span class="synIdentifier">F&lt;t/examples/example_w_DCS.t&gt;</span> test
+file.
+
+Here is an example of using <span class="synIdentifier">L&lt;Test::Deep&gt;</span> and its non-test
+related <span class="synIdentifier">C&lt;eq_deeply&gt;</span> function.
+
+<span class="synPreProc">  type 'ArrayOfHashOfBarsAndRandomNumbers',</span>
+<span class="synPreProc">      where {</span>
+<span class="synPreProc">          eq_deeply($_,</span>
+<span class="synPreProc">              array_each(subhashof({</span>
+<span class="synPreProc">                  bar           =&gt; isa('Bar'),</span>
+<span class="synPreProc">                  random_number =&gt; ignore()</span>
+<span class="synPreProc">              })))</span>
+<span class="synPreProc">        };</span>
+
+For a complete example see the
+<span class="synIdentifier">F&lt;t/examples/example_w_TestDeep.t&gt;</span> test file.
+
+<span class="synStatement">=head2</span><span class="synString"> Error messages</span>
+
+Type constraints can also specify custom error messages, for when they fail to
+validate. This is provided as just another coderef, which receives the invalid
+value in <span class="synIdentifier">C&lt;$_&gt;</span>, as in:
+
+<span class="synPreProc">  subtype 'PositiveInt',</span>
+<span class="synPreProc">       as 'Int',</span>
+<span class="synPreProc">       where { $_ &gt; 0 },</span>
+<span class="synPreProc">       message { &quot;$_ is not a positive integer!&quot; };</span>
+
+If no message is specified, a default message will be used, which indicates
+which type constraint was being used and what value failed. If
+<span class="synIdentifier">L&lt;Devel::PartialDump&gt;</span> (version 0.14 or higher) is installed, it will be used to
+display the invalid value, otherwise it will just be printed as is.
+
+<span class="synStatement">=head1</span><span class="synString"> FUNCTIONS</span>
+
+<span class="synStatement">=head2</span><span class="synString"> Type Constraint Constructors</span>
+
+The following functions are used to create type constraints.  They
+will also register the type constraints your create in a global
+registry that is used to look types up by name.
+
+See the <span class="synIdentifier">L&lt;/SYNOPSIS&gt;</span> for an example of how to use these.
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; subtype 'Name', as 'Parent', where { } ... &gt;&gt;</span>
+
+This creates a named subtype.
+
+If you provide a parent that Moose does not recognize, it will
+automatically create a new class type constraint for this name.
+
+When creating a named type, the <span class="synIdentifier">C&lt;subtype&gt;</span> function should either be
+called with the sugar helpers (<span class="synIdentifier">C&lt;where&gt;</span>, <span class="synIdentifier">C&lt;message&gt;</span>, etc), or with a
+name and a hashref of parameters:
+
+<span class="synPreProc"> subtype( 'Foo', { where =&gt; ..., message =&gt; ... } );</span>
+
+The valid hashref keys are <span class="synIdentifier">C&lt;as&gt;</span> (the parent), <span class="synIdentifier">C&lt;where&gt;</span>, <span class="synIdentifier">C&lt;message&gt;</span>,
+and <span class="synIdentifier">C&lt;optimize_as&gt;</span>.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; subtype as 'Parent', where { } ... &gt;&gt;</span>
+
+This creates an unnamed subtype and will return the type
+constraint meta-object, which will be an instance of
+<span class="synIdentifier">L&lt;Moose::Meta::TypeConstraint&gt;</span>.
+
+When creating an anonymous type, the <span class="synIdentifier">C&lt;subtype&gt;</span> function should either
+be called with the sugar helpers (<span class="synIdentifier">C&lt;where&gt;</span>, <span class="synIdentifier">C&lt;message&gt;</span>, etc), or with
+just a hashref of parameters:
+
+<span class="synPreProc"> subtype( { where =&gt; ..., message =&gt; ... } );</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;class_type ($class, ?$options)&gt;</span>
+
+Creates a new subtype of <span class="synIdentifier">C&lt;Object&gt;</span> with the name <span class="synIdentifier">C&lt;$class&gt;</span> and the
+metaclass <span class="synIdentifier">L&lt;Moose::Meta::TypeConstraint::Class&gt;</span>.
+
+<span class="synPreProc">  # Create a type called 'Box' which tests for objects which -&gt;isa('Box')</span>
+<span class="synPreProc">  class_type 'Box';</span>
+
+By default, the name of the type and the name of the class are the same, but
+you can specify both separately.
+
+<span class="synPreProc">  # Create a type called 'Box' which tests for objects which -&gt;isa('ObjectLibrary::Box');</span>
+<span class="synPreProc">  class_type 'Box', { class =&gt; 'ObjectLibrary::Box' };</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;role_type ($role, ?$options)&gt;</span>
+
+Creates a <span class="synIdentifier">C&lt;Role&gt;</span> type constraint with the name <span class="synIdentifier">C&lt;$role&gt;</span> and the
+metaclass <span class="synIdentifier">L&lt;Moose::Meta::TypeConstraint::Role&gt;</span>.
+
+<span class="synPreProc">  # Create a type called 'Walks' which tests for objects which -&gt;does('Walks')</span>
+<span class="synPreProc">  role_type 'Walks';</span>
+
+By default, the name of the type and the name of the role are the same, but
+you can specify both separately.
+
+<span class="synPreProc">  # Create a type called 'Walks' which tests for objects which -&gt;does('MooseX::Role::Walks');</span>
+<span class="synPreProc">  role_type 'Walks', { role =&gt; 'MooseX::Role::Walks' };</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;maybe_type ($type)&gt;</span>
+
+Creates a type constraint for either <span class="synIdentifier">C&lt;undef&gt;</span> or something of the
+given type.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;duck_type ($name, \@methods)&gt;</span>
+
+This will create a subtype of Object and test to make sure the value
+<span class="synIdentifier">C&lt;can()&gt;</span> do the methods in <span class="synIdentifier">C&lt;\@methods&gt;</span>.
+
+This is intended as an easy way to accept non-Moose objects that
+provide a certain interface. If you're using Moose classes, we
+recommend that you use a <span class="synIdentifier">C&lt;requires&gt;</span>-only Role instead.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;duck_type (\@methods)&gt;</span>
+
+If passed an ARRAY reference as the only parameter instead of the
+<span class="synIdentifier">C&lt;$name&gt;</span>, <span class="synIdentifier">C&lt;\@methods&gt;</span> pair, this will create an unnamed duck type.
+This can be used in an attribute definition like so:
+
+<span class="synPreProc">  has 'cache' =&gt; (</span>
+<span class="synPreProc">      is  =&gt; 'ro',</span>
+<span class="synPreProc">      isa =&gt; duck_type( [qw( get_set )] ),</span>
+<span class="synPreProc">  );</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;enum ($name, \@values)&gt;</span>
+
+This will create a basic subtype for a given set of strings.
+The resulting constraint will be a subtype of <span class="synIdentifier">C&lt;Str&gt;</span> and
+will match any of the items in <span class="synIdentifier">C&lt;\@values&gt;</span>. It is case sensitive.
+See the <span class="synIdentifier">L&lt;/SYNOPSIS&gt;</span> for a simple example.
+
+<span class="synIdentifier">B&lt;NOTE:&gt;</span> This is not a true proper enum type, it is simply
+a convenient constraint builder.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;enum (\@values)&gt;</span>
+
+If passed an ARRAY reference as the only parameter instead of the
+<span class="synIdentifier">C&lt;$name&gt;</span>, <span class="synIdentifier">C&lt;\@values&gt;</span> pair, this will create an unnamed enum. This
+can then be used in an attribute definition like so:
+
+<span class="synPreProc">  has 'sort_order' =&gt; (</span>
+<span class="synPreProc">      is  =&gt; 'ro',</span>
+<span class="synPreProc">      isa =&gt; enum([qw[ ascending descending ]]),</span>
+<span class="synPreProc">  );</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;union ($name, \@constraints)&gt;</span>
+
+This will create a basic subtype where any of the provided constraints
+may match in order to satisfy this constraint.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;union (\@constraints)&gt;</span>
+
+If passed an ARRAY reference as the only parameter instead of the
+<span class="synIdentifier">C&lt;$name&gt;</span>, <span class="synIdentifier">C&lt;\@constraints&gt;</span> pair, this will create an unnamed union.
+This can then be used in an attribute definition like so:
+
+<span class="synPreProc">  has 'items' =&gt; (</span>
+<span class="synPreProc">      is =&gt; 'ro',</span>
+<span class="synPreProc">      isa =&gt; union([qw[ Str ArrayRef ]]),</span>
+<span class="synPreProc">  );</span>
+
+This is similar to the existing string union:
+
+<span class="synPreProc">  isa =&gt; 'Str|ArrayRef'</span>
+
+except that it supports anonymous elements as child constraints:
+
+<span class="synPreProc">  has 'color' =&gt; (</span>
+<span class="synPreProc">    isa =&gt; 'ro',</span>
+<span class="synPreProc">    isa =&gt; union([ 'Int',  enum([qw[ red green blue ]]) ]),</span>
+<span class="synPreProc">  );</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;as 'Parent'&gt;</span>
+
+This is just sugar for the type constraint construction syntax.
+
+It takes a single argument, which is the name of a parent type.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;where { ... }&gt;</span>
+
+This is just sugar for the type constraint construction syntax.
+
+It takes a subroutine reference as an argument. When the type
+constraint is tested, the reference is run with the value to be tested
+in <span class="synIdentifier">C&lt;$_&gt;</span>. This reference should return true or false to indicate
+whether or not the constraint check passed.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;message { ... }&gt;</span>
+
+This is just sugar for the type constraint construction syntax.
+
+It takes a subroutine reference as an argument. When the type
+constraint fails, then the code block is run with the value provided
+in <span class="synIdentifier">C&lt;$_&gt;</span>. This reference should return a string, which will be used in
+the text of the exception thrown.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;inline_as { ... }&gt;</span>
+
+This can be used to define a &quot;hand optimized&quot; inlinable version of your type
+constraint.
+
+You provide a subroutine which will be called <span class="synIdentifier">I&lt;as a method&gt;</span> on a
+<span class="synIdentifier">L&lt;Moose::Meta::TypeConstraint&gt;</span> object. It will receive a single parameter, the
+name of the variable to check, typically something like <span class="synIdentifier">C&lt;&quot;$_&quot;&gt;</span> or <span class="synIdentifier">C&lt;&quot;$_[0]&quot;&gt;</span>.
+
+The subroutine should return a code string suitable for inlining. You can
+assume that the check will be wrapped in parentheses when it is inlined.
+
+The inlined code should include any checks that your type's parent types
+do. If your parent type constraint defines its own inlining, you can simply use
+that to avoid repeating code. For example, here is the inlining code for the
+<span class="synIdentifier">C&lt;Value&gt;</span> type, which is a subtype of <span class="synIdentifier">C&lt;Defined&gt;</span>:
+
+<span class="synPreProc">    sub {</span>
+<span class="synPreProc">        $_[0]-&gt;parent()-&gt;_inline_check($_[1])</span>
+<span class="synPreProc">        . ' &amp;&amp; !ref(' . $_[1] . ')'</span>
+<span class="synPreProc">    }</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;optimize_as { ... }&gt;</span>
+
+<span class="synIdentifier">B&lt;This feature is deprecated, use C&lt;inline_as&gt; instead.&gt;</span>
+
+This can be used to define a &quot;hand optimized&quot; version of your
+type constraint which can be used to avoid traversing a subtype
+constraint hierarchy.
+
+<span class="synIdentifier">B&lt;NOTE:&gt;</span> You should only use this if you know what you are doing.
+All the built in types use this, so your subtypes (assuming they
+are shallow) will not likely need to use this.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; type 'Name', where { } ... &gt;&gt;</span>
+
+This creates a base type, which has no parent.
+
+The <span class="synIdentifier">C&lt;type&gt;</span> function should either be called with the sugar helpers
+(<span class="synIdentifier">C&lt;where&gt;</span>, <span class="synIdentifier">C&lt;message&gt;</span>, etc), or with a name and a hashref of
+parameters:
+
+<span class="synPreProc">  type( 'Foo', { where =&gt; ..., message =&gt; ... } );</span>
+
+The valid hashref keys are <span class="synIdentifier">C&lt;where&gt;</span>, <span class="synIdentifier">C&lt;message&gt;</span>, and <span class="synIdentifier">C&lt;inlined_as&gt;</span>.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head2</span><span class="synString"> Type Constraint Utilities</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; match_on_type $value =&gt; ( $type =&gt; \&amp;action, ... ?\&amp;default ) &gt;&gt;</span>
+
+This is a utility function for doing simple type based dispatching similar to
+match/case in OCaml and case/of in Haskell. It is not as featureful as those
+languages, nor does not it support any kind of automatic destructuring
+bind. Here is a simple Perl pretty printer dispatching over the core Moose
+types.
+
+<span class="synPreProc">  sub ppprint {</span>
+<span class="synPreProc">      my $x = shift;</span>
+<span class="synPreProc">      match_on_type $x =&gt; (</span>
+<span class="synPreProc">          HashRef =&gt; sub {</span>
+<span class="synPreProc">              my $hash = shift;</span>
+<span class="synPreProc">              '{ '</span>
+<span class="synPreProc">                  . (</span>
+<span class="synPreProc">                  join &quot;, &quot; =&gt; map { $_ . ' =&gt; ' . ppprint( $hash-&gt;{$_} ) }</span>
+<span class="synPreProc">                      sort keys %$hash</span>
+<span class="synPreProc">                  ) . ' }';</span>
+<span class="synPreProc">          },</span>
+<span class="synPreProc">          ArrayRef =&gt; sub {</span>
+<span class="synPreProc">              my $array = shift;</span>
+<span class="synPreProc">              '[ ' . ( join &quot;, &quot; =&gt; map { ppprint($_) } @$array ) . ' ]';</span>
+<span class="synPreProc">          },</span>
+<span class="synPreProc">          CodeRef   =&gt; sub {'sub { ... }'},</span>
+<span class="synPreProc">          RegexpRef =&gt; sub { 'qr/' . $_ . '/' },</span>
+<span class="synPreProc">          GlobRef   =&gt; sub { '*' . B::svref_2object($_)-&gt;NAME },</span>
+<span class="synPreProc">          Object    =&gt; sub { $_-&gt;can('to_string') ? $_-&gt;to_string : $_ },</span>
+<span class="synPreProc">          ScalarRef =&gt; sub { '\\' . ppprint( ${$_} ) },</span>
+<span class="synPreProc">          Num       =&gt; sub {$_},</span>
+<span class="synPreProc">          Str       =&gt; sub { '&quot;' . $_ . '&quot;' },</span>
+<span class="synPreProc">          Undef     =&gt; sub {'undef'},</span>
+<span class="synPreProc">          =&gt; sub { die &quot;I don't know what $_ is&quot; }</span>
+<span class="synPreProc">      );</span>
+<span class="synPreProc">  }</span>
+
+Or a simple JSON serializer:
+
+<span class="synPreProc">  sub to_json {</span>
+<span class="synPreProc">      my $x = shift;</span>
+<span class="synPreProc">      match_on_type $x =&gt; (</span>
+<span class="synPreProc">          HashRef =&gt; sub {</span>
+<span class="synPreProc">              my $hash = shift;</span>
+<span class="synPreProc">              '{ '</span>
+<span class="synPreProc">                  . (</span>
+<span class="synPreProc">                  join &quot;, &quot; =&gt;</span>
+<span class="synPreProc">                      map { '&quot;' . $_ . '&quot; : ' . to_json( $hash-&gt;{$_} ) }</span>
+<span class="synPreProc">                      sort keys %$hash</span>
+<span class="synPreProc">                  ) . ' }';</span>
+<span class="synPreProc">          },</span>
+<span class="synPreProc">          ArrayRef =&gt; sub {</span>
+<span class="synPreProc">              my $array = shift;</span>
+<span class="synPreProc">              '[ ' . ( join &quot;, &quot; =&gt; map { to_json($_) } @$array ) . ' ]';</span>
+<span class="synPreProc">          },</span>
+<span class="synPreProc">          Num   =&gt; sub {$_},</span>
+<span class="synPreProc">          Str   =&gt; sub { '&quot;' . $_ . '&quot;' },</span>
+<span class="synPreProc">          Undef =&gt; sub {'null'},</span>
+<span class="synPreProc">          =&gt; sub { die &quot;$_ is not acceptable json type&quot; }</span>
+<span class="synPreProc">      );</span>
+<span class="synPreProc">  }</span>
+
+The matcher is done by mapping a <span class="synIdentifier">C&lt;$type&gt;</span> to an <span class="synIdentifier">C&lt;\&amp;action&gt;</span>. The <span class="synIdentifier">C&lt;$type&gt;</span> can
+be either a string type or a <span class="synIdentifier">L&lt;Moose::Meta::TypeConstraint&gt;</span> object, and
+<span class="synIdentifier">C&lt;\&amp;action&gt;</span> is a subroutine reference. This function will dispatch on the
+first match for <span class="synIdentifier">C&lt;$value&gt;</span>. It is possible to have a catch-all by providing an
+additional subroutine reference as the final argument to <span class="synIdentifier">C&lt;match_on_type&gt;</span>.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head2</span><span class="synString"> Type Coercion Constructors</span>
+
+You can define coercions for type constraints, which allow you to
+automatically transform values to something valid for the type
+constraint. If you ask your accessor to coerce, then Moose will run
+the type-coercion code first, followed by the type constraint
+check. This feature should be used carefully as it is very powerful
+and could easily take off a limb if you are not careful.
+
+See the <span class="synIdentifier">L&lt;/SYNOPSIS&gt;</span> for an example of how to use these.
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; coerce 'Name', from 'OtherName', via { ... }  &gt;&gt;</span>
+
+This defines a coercion from one type to another. The <span class="synIdentifier">C&lt;Name&gt;</span> argument
+is the type you are coercing <span class="synIdentifier">I&lt;to&gt;</span>.
+
+To define multiple coercions, supply more sets of from/via pairs:
+
+<span class="synPreProc">  coerce 'Name',</span>
+<span class="synPreProc">    from 'OtherName', via { ... },</span>
+<span class="synPreProc">    from 'ThirdName', via { ... };</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;from 'OtherName'&gt;</span>
+
+This is just sugar for the type coercion construction syntax.
+
+It takes a single type name (or type object), which is the type being
+coerced <span class="synIdentifier">I&lt;from&gt;</span>.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;via { ... }&gt;</span>
+
+This is just sugar for the type coercion construction syntax.
+
+It takes a subroutine reference. This reference will be called with
+the value to be coerced in <span class="synIdentifier">C&lt;$_&gt;</span>. It is expected to return a new value
+of the proper type for the coercion.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head2</span><span class="synString"> Creating and Finding Type Constraints</span>
+
+These are additional functions for creating and finding type
+constraints. Most of these functions are not available for
+importing. The ones that are importable as specified.
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;find_type_constraint($type_name)&gt;</span>
+
+This function can be used to locate the <span class="synIdentifier">L&lt;Moose::Meta::TypeConstraint&gt;</span>
+object for a named type.
+
+This function is importable.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;register_type_constraint($type_object)&gt;</span>
+
+This function will register a <span class="synIdentifier">L&lt;Moose::Meta::TypeConstraint&gt;</span> with the
+global type registry.
+
+This function is importable.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;normalize_type_constraint_name($type_constraint_name)&gt;</span>
+
+This method takes a type constraint name and returns the normalized
+form. This removes any whitespace in the string.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;create_type_constraint_union($pipe_separated_types | @type_constraint_names)&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;create_named_type_constraint_union($name, $pipe_separated_types | @type_constraint_names)&gt;</span>
+
+This can take a union type specification like <span class="synIdentifier">C&lt;'Int|ArrayRef[Int]'&gt;</span>,
+or a list of names. It returns a new
+<span class="synIdentifier">L&lt;Moose::Meta::TypeConstraint::Union&gt;</span> object.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;create_parameterized_type_constraint($type_name)&gt;</span>
+
+Given a <span class="synIdentifier">C&lt;$type_name&gt;</span> in the form of <span class="synIdentifier">C&lt;'BaseType[ContainerType]'&gt;</span>,
+this will create a new <span class="synIdentifier">L&lt;Moose::Meta::TypeConstraint::Parameterized&gt;</span>
+object. The <span class="synIdentifier">C&lt;BaseType&gt;</span> must exist already exist as a parameterizable
+type.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;create_class_type_constraint($class, $options)&gt;</span>
+
+Given a class name this function will create a new
+<span class="synIdentifier">L&lt;Moose::Meta::TypeConstraint::Class&gt;</span> object for that class name.
+
+The <span class="synIdentifier">C&lt;$options&gt;</span> is a hash reference that will be passed to the
+<span class="synIdentifier">L&lt;Moose::Meta::TypeConstraint::Class&gt;</span> constructor (as a hash).
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;create_role_type_constraint($role, $options)&gt;</span>
+
+Given a role name this function will create a new
+<span class="synIdentifier">L&lt;Moose::Meta::TypeConstraint::Role&gt;</span> object for that role name.
+
+The <span class="synIdentifier">C&lt;$options&gt;</span> is a hash reference that will be passed to the
+<span class="synIdentifier">L&lt;Moose::Meta::TypeConstraint::Role&gt;</span> constructor (as a hash).
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;create_enum_type_constraint($name, $values)&gt;</span>
+
+Given a enum name this function will create a new
+<span class="synIdentifier">L&lt;Moose::Meta::TypeConstraint::Enum&gt;</span> object for that enum name.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;create_duck_type_constraint($name, $methods)&gt;</span>
+
+Given a duck type name this function will create a new
+<span class="synIdentifier">L&lt;Moose::Meta::TypeConstraint::DuckType&gt;</span> object for that enum name.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;find_or_parse_type_constraint($type_name)&gt;</span>
+
+Given a type name, this first attempts to find a matching constraint
+in the global registry.
+
+If the type name is a union or parameterized type, it will create a
+new object of the appropriate, but if given a &quot;regular&quot; type that does
+not yet exist, it simply returns false.
+
+When given a union or parameterized type, the member or base type must
+already exist.
+
+If it creates a new union or parameterized type, it will add it to the
+global registry.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;find_or_create_isa_type_constraint($type_name)&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;find_or_create_does_type_constraint($type_name)&gt;</span>
+
+These functions will first call <span class="synIdentifier">C&lt;find_or_parse_type_constraint&gt;</span>. If
+that function does not return a type, a new type object will
+be created.
+
+The <span class="synIdentifier">C&lt;isa&gt;</span> variant will use <span class="synIdentifier">C&lt;create_class_type_constraint&gt;</span> and the
+<span class="synIdentifier">C&lt;does&gt;</span> variant will use <span class="synIdentifier">C&lt;create_role_type_constraint&gt;</span>.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;get_type_constraint_registry&gt;</span>
+
+Returns the <span class="synIdentifier">L&lt;Moose::Meta::TypeConstraint::Registry&gt;</span> object which
+keeps track of all type constraints.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;list_all_type_constraints&gt;</span>
+
+This will return a list of type constraint names in the global
+registry. You can then fetch the actual type object using
+<span class="synIdentifier">C&lt;find_type_constraint($type_name)&gt;</span>.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;list_all_builtin_type_constraints&gt;</span>
+
+This will return a list of builtin type constraints, meaning those
+which are defined in this module. See the <span class="synIdentifier">L&lt;Default Type Constraints&gt;</span>
+section for a complete list.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;export_type_constraints_as_functions&gt;</span>
+
+This will export all the current type constraints as functions into
+the caller's namespace (<span class="synIdentifier">C&lt;Int()&gt;</span>, <span class="synIdentifier">C&lt;Str()&gt;</span>, etc). Right now, this is
+mostly used for testing, but it might prove useful to others.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;get_all_parameterizable_types&gt;</span>
+
+This returns all the parameterizable types that have been registered,
+as a list of type objects.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;add_parameterizable_type($type)&gt;</span>
+
+Adds <span class="synIdentifier">C&lt;$type&gt;</span> to the list of parameterizable types
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> BUGS</span>
+
+See <span class="synIdentifier">L&lt;Moose/BUGS&gt;</span> for details on reporting bugs.
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

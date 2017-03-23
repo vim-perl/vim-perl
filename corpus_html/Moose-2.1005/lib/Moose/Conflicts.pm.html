@@ -1,0 +1,103 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre>package <span class="synComment"># hide from PAUSE</span>
+    Moose::Conflicts;
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Dist::CheckConflicts
+    <span class="synString">-dist</span>      =&gt; <span class="synString">'Moose'</span>,
+    <span class="synString">-conflicts</span> =&gt; {
+        <span class="synString">'Catalyst'</span> =&gt; <span class="synString">'5.80028'</span>,
+        <span class="synString">'Devel::REPL'</span> =&gt; <span class="synString">'1.003008'</span>,
+        <span class="synString">'Fey'</span> =&gt; <span class="synString">'0.36'</span>,
+        <span class="synString">'Fey::ORM'</span> =&gt; <span class="synString">'0.42'</span>,
+        <span class="synString">'File::ChangeNotify'</span> =&gt; <span class="synString">'0.15'</span>,
+        <span class="synString">'KiokuDB'</span> =&gt; <span class="synString">'0.51'</span>,
+        <span class="synString">'Markdent'</span> =&gt; <span class="synString">'0.16'</span>,
+        <span class="synString">'Mason'</span> =&gt; <span class="synString">'2.18'</span>,
+        <span class="synString">'MooseX::ABC'</span> =&gt; <span class="synString">'0.05'</span>,
+        <span class="synString">'MooseX::Aliases'</span> =&gt; <span class="synString">'0.08'</span>,
+        <span class="synString">'MooseX::AlwaysCoerce'</span> =&gt; <span class="synString">'0.13'</span>,
+        <span class="synString">'MooseX::App'</span> =&gt; <span class="synString">'1.18'</span>,
+        <span class="synString">'MooseX::Attribute::Deflator'</span> =&gt; <span class="synString">'2.1.7'</span>,
+        <span class="synString">'MooseX::Attribute::Dependent'</span> =&gt; <span class="synString">'1.1.0'</span>,
+        <span class="synString">'MooseX::Attribute::Prototype'</span> =&gt; <span class="synString">'0.10'</span>,
+        <span class="synString">'MooseX::AttributeHelpers'</span> =&gt; <span class="synString">'0.22'</span>,
+        <span class="synString">'MooseX::AttributeIndexes'</span> =&gt; <span class="synString">'1.0.0'</span>,
+        <span class="synString">'MooseX::AttributeInflate'</span> =&gt; <span class="synString">'0.02'</span>,
+        <span class="synString">'MooseX::CascadeClearing'</span> =&gt; <span class="synString">'0.03'</span>,
+        <span class="synString">'MooseX::ClassAttribute'</span> =&gt; <span class="synString">'0.26'</span>,
+        <span class="synString">'MooseX::Constructor::AllErrors'</span> =&gt; <span class="synString">'0.012'</span>,
+        <span class="synString">'MooseX::FollowPBP'</span> =&gt; <span class="synString">'0.02'</span>,
+        <span class="synString">'MooseX::HasDefaults'</span> =&gt; <span class="synString">'0.02'</span>,
+        <span class="synString">'MooseX::InstanceTracking'</span> =&gt; <span class="synString">'0.04'</span>,
+        <span class="synString">'MooseX::LazyRequire'</span> =&gt; <span class="synString">'0.06'</span>,
+        <span class="synString">'MooseX::Meta::Attribute::Index'</span> =&gt; <span class="synString">'0.04'</span>,
+        <span class="synString">'MooseX::Meta::Attribute::Lvalue'</span> =&gt; <span class="synString">'0.05'</span>,
+        <span class="synString">'MooseX::MethodAttributes'</span> =&gt; <span class="synString">'0.22'</span>,
+        <span class="synString">'MooseX::NonMoose'</span> =&gt; <span class="synString">'0.17'</span>,
+        <span class="synString">'MooseX::POE'</span> =&gt; <span class="synString">'0.214'</span>,
+        <span class="synString">'MooseX::Params::Validate'</span> =&gt; <span class="synString">'0.05'</span>,
+        <span class="synString">'MooseX::PrivateSetters'</span> =&gt; <span class="synString">'0.03'</span>,
+        <span class="synString">'MooseX::Role::Cmd'</span> =&gt; <span class="synString">'0.06'</span>,
+        <span class="synString">'MooseX::Role::Parameterized'</span> =&gt; <span class="synString">'0.23'</span>,
+        <span class="synString">'MooseX::Role::WithOverloading'</span> =&gt; <span class="synString">'0.07'</span>,
+        <span class="synString">'MooseX::Scaffold'</span> =&gt; <span class="synString">'0.05'</span>,
+        <span class="synString">'MooseX::SemiAffordanceAccessor'</span> =&gt; <span class="synString">'0.05'</span>,
+        <span class="synString">'MooseX::SetOnce'</span> =&gt; <span class="synString">'0.100473'</span>,
+        <span class="synString">'MooseX::Singleton'</span> =&gt; <span class="synString">'0.25'</span>,
+        <span class="synString">'MooseX::SlurpyConstructor'</span> =&gt; <span class="synString">'1.1'</span>,
+        <span class="synString">'MooseX::StrictConstructor'</span> =&gt; <span class="synString">'0.12'</span>,
+        <span class="synString">'MooseX::Types'</span> =&gt; <span class="synString">'0.19'</span>,
+        <span class="synString">'MooseX::Types::Parameterizable'</span> =&gt; <span class="synString">'0.05'</span>,
+        <span class="synString">'MooseX::Types::Signal'</span> =&gt; <span class="synString">'1.101930'</span>,
+        <span class="synString">'MooseX::UndefTolerant'</span> =&gt; <span class="synString">'0.11'</span>,
+        <span class="synString">'PRANG'</span> =&gt; <span class="synString">'0.14'</span>,
+        <span class="synString">'Pod::Elemental'</span> =&gt; <span class="synString">'0.093280'</span>,
+        <span class="synString">'Reaction'</span> =&gt; <span class="synString">'0.002003'</span>,
+        <span class="synString">'Test::Able'</span> =&gt; <span class="synString">'0.10'</span>,
+        <span class="synString">'namespace::autoclean'</span> =&gt; <span class="synString">'0.08'</span>,
+    },
+
+;
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: Provide information on conflicts for Moose</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Moose::Conflicts - Provide information on conflicts for Moose
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

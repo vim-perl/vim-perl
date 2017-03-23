@@ -1,0 +1,128 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Moose::Meta::Attribute::Native::Trait::Number</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Attribute::Native::Trait::Number::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Attribute::Native::Trait::Number::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+<span class="synStatement">use </span>Moose::Role;
+
+with <span class="synString">'Moose::Meta::Attribute::Native::Trait'</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">_helper_type </span>{ <span class="synString">'Num'</span> }
+
+<span class="synStatement">no </span>Moose::Role;
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: Helper trait for Num attributes</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Moose::Meta::Attribute::Native::Trait::Number - Helper trait for Num attributes
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> SYNOPSIS</span>
+
+<span class="synPreProc">  package Real;</span>
+<span class="synPreProc">  use Moose;</span>
+
+<span class="synPreProc">  has 'integer' =&gt; (</span>
+<span class="synPreProc">      traits  =&gt; ['Number'],</span>
+<span class="synPreProc">      is      =&gt; 'ro',</span>
+<span class="synPreProc">      isa     =&gt; 'Num',</span>
+<span class="synPreProc">      default =&gt; 5,</span>
+<span class="synPreProc">      handles =&gt; {</span>
+<span class="synPreProc">          set =&gt; 'set',</span>
+<span class="synPreProc">          add =&gt; 'add',</span>
+<span class="synPreProc">          sub =&gt; 'sub',</span>
+<span class="synPreProc">          mul =&gt; 'mul',</span>
+<span class="synPreProc">          div =&gt; 'div',</span>
+<span class="synPreProc">          mod =&gt; 'mod',</span>
+<span class="synPreProc">          abs =&gt; 'abs',</span>
+<span class="synPreProc">      },</span>
+<span class="synPreProc">  );</span>
+
+<span class="synPreProc">  my $real = Real-&gt;new();</span>
+<span class="synPreProc">  $real-&gt;add(5);    # same as $real-&gt;integer($real-&gt;integer + 5);</span>
+<span class="synPreProc">  $real-&gt;sub(2);    # same as $real-&gt;integer($real-&gt;integer - 2);</span>
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This trait provides native delegation methods for numbers. All of the
+operations correspond to arithmetic operations like addition or
+multiplication.
+
+<span class="synStatement">=head1</span><span class="synString"> DEFAULT TYPE</span>
+
+If you don't provide an <span class="synIdentifier">C&lt;isa&gt;</span> value for your attribute, it will default to
+<span class="synIdentifier">C&lt;Num&gt;</span>.
+
+<span class="synStatement">=head1</span><span class="synString"> PROVIDED METHODS</span>
+
+All of these methods modify the attribute's value in place. All methods return
+the new value.
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;add($value)&gt;</span>
+
+Adds the current value of the attribute to <span class="synIdentifier">C&lt;$value&gt;</span>.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;sub($value)&gt;</span>
+
+Subtracts <span class="synIdentifier">C&lt;$value&gt;</span> from the current value of the attribute.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;mul($value)&gt;</span>
+
+Multiplies the current value of the attribute by <span class="synIdentifier">C&lt;$value&gt;</span>.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;div($value)&gt;</span>
+
+Divides the current value of the attribute by <span class="synIdentifier">C&lt;$value&gt;</span>.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;mod($value)&gt;</span>
+
+Returns the current value of the attribute modulo <span class="synIdentifier">C&lt;$value&gt;</span>.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;abs&gt;</span>
+
+Sets the current value of the attribute to its absolute value.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> BUGS</span>
+
+See <span class="synIdentifier">L&lt;Moose/BUGS&gt;</span> for details on reporting bugs.
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

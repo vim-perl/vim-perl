@@ -1,0 +1,110 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> oose</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">oose::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">oose::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Class::Load <span class="synString">qw(load_class)</span>;
+
+<span class="synPreProc">BEGIN </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$package</span>;
+    <span class="synKeyword">sub </span><span class="synFunction">import </span>{
+        <span class="synIdentifier">$package</span> = <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span> || <span class="synString">'Class'</span>;
+        <span class="synConditional">if</span> (<span class="synIdentifier">$package</span> =~ <span class="synStatement">/</span><span class="synString">^</span><span class="synSpecial">\+</span><span class="synStatement">/</span>) {
+            <span class="synIdentifier">$package</span> =~ <span class="synStatement">s/</span><span class="synString">^</span><span class="synSpecial">\+</span><span class="synStatement">//</span>;
+            load_class(<span class="synIdentifier">$package</span>);
+        }
+    }
+    <span class="synStatement">use </span>Filter::Simple <span class="synKeyword">sub </span>{ <span class="synStatement">s/</span><span class="synString">^</span><span class="synStatement">/</span><span class="synString">package </span><span class="synIdentifier">$package</span><span class="synString">;</span><span class="synSpecial">\n</span><span class="synString">use Moose;use Moose::Util::TypeConstraints;</span><span class="synSpecial">\n</span><span class="synStatement">/</span>; }
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: syntactic sugar to make Moose one-liners easier</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+oose - syntactic sugar to make Moose one-liners easier
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> SYNOPSIS</span>
+
+<span class="synPreProc">  # create a Moose class on the fly ...</span>
+<span class="synPreProc">  perl -Moose=Foo -e 'has bar =&gt; ( is=&gt;q[ro], default =&gt; q[baz] ); print Foo-&gt;new-&gt;bar' # prints baz</span>
+
+<span class="synPreProc">  # loads an existing class (Moose or non-Moose)</span>
+<span class="synPreProc">  # and re-&quot;opens&quot; the package definition to make</span>
+<span class="synPreProc">  # debugging/introspection easier</span>
+<span class="synPreProc">  perl -Moose=+My::Class -e 'print join &quot;, &quot; =&gt; __PACKAGE__-&gt;meta-&gt;get_method_list'</span>
+
+<span class="synPreProc">  # also loads Moose::Util::TypeConstraints to allow subtypes etc</span>
+<span class="synPreProc">  perl -Moose=Person -e'subtype q[ValidAge] =&gt; as q[Int] =&gt; where { $_ &gt; 0 &amp;&amp; $_ &lt; 78 }; has =&gt; age ( isa =&gt; q[ValidAge], is =&gt; q[ro]); Person-&gt;new(age =&gt; 90)'</span>
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+oose.pm is a simple source filter that adds
+<span class="synIdentifier">C&lt;package $name; use Moose; use Moose::Util::TypeConstraints;&gt;</span>
+to the beginning of your script and was entirely created because typing
+<span class="synIdentifier">C&lt;perl -e'package Foo; use Moose; ...'&gt;</span> was annoying me.
+
+<span class="synStatement">=head1</span><span class="synString"> INTERFACE</span>
+
+oose provides exactly one method and it's automatically called by perl:
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;import($package)&gt;</span>
+
+Pass a package name to import to be used by the source filter. The
+package defaults to <span class="synIdentifier">C&lt;Class&gt;</span> if none is given.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> DEPENDENCIES</span>
+
+You will need <span class="synIdentifier">L&lt;Filter::Simple&gt;</span> and eventually <span class="synIdentifier">L&lt;Moose&gt;</span>
+
+<span class="synStatement">=head1</span><span class="synString"> INCOMPATIBILITIES</span>
+
+None reported. But it is a source filter and might have issues there.
+
+<span class="synStatement">=head1</span><span class="synString"> BUGS</span>
+
+See <span class="synIdentifier">L&lt;Moose/BUGS&gt;</span> for details on reporting bugs.
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

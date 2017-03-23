@@ -1,0 +1,232 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Moose::Meta::Role::Attribute</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Role::Attribute::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Role::Attribute::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Carp <span class="synString">'confess'</span>;
+<span class="synStatement">use </span>List::MoreUtils <span class="synString">'all'</span>;
+<span class="synStatement">use </span>Scalar::Util <span class="synString">'blessed'</span>, <span class="synString">'weaken'</span>;
+
+<span class="synStatement">use base</span> <span class="synString">'Moose::Meta::Mixin::AttributeCore'</span>, <span class="synString">'Class::MOP::Object'</span>;
+
+__PACKAGE__<span class="synIdentifier">-&gt;meta-&gt;add_attribute</span>(
+    <span class="synString">'metaclass'</span> =&gt; (
+        <span class="synString">reader</span> =&gt; <span class="synString">'metaclass'</span>,
+        Class::MOP::_definition_context(),
+    )
+);
+
+__PACKAGE__<span class="synIdentifier">-&gt;meta-&gt;add_attribute</span>(
+    <span class="synString">'associated_role'</span> =&gt; (
+        <span class="synString">reader</span> =&gt; <span class="synString">'associated_role'</span>,
+        Class::MOP::_definition_context(),
+    )
+);
+
+__PACKAGE__<span class="synIdentifier">-&gt;meta-&gt;add_attribute</span>(
+    <span class="synString">'_original_role'</span> =&gt; (
+        <span class="synString">reader</span> =&gt; <span class="synString">'_original_role'</span>,
+        Class::MOP::_definition_context(),
+    )
+);
+
+__PACKAGE__<span class="synIdentifier">-&gt;meta-&gt;add_attribute</span>(
+    <span class="synString">'is'</span> =&gt; (
+        <span class="synString">reader</span> =&gt; <span class="synString">'is'</span>,
+        Class::MOP::_definition_context(),
+    )
+);
+
+__PACKAGE__<span class="synIdentifier">-&gt;meta-&gt;add_attribute</span>(
+    <span class="synString">'original_options'</span> =&gt; (
+        <span class="synString">reader</span> =&gt; <span class="synString">'original_options'</span>,
+        Class::MOP::_definition_context(),
+    )
+);
+
+<span class="synKeyword">sub </span><span class="synFunction">new </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$class</span>, <span class="synIdentifier">$name</span>, <span class="synIdentifier">%options</span> ) = <span class="synIdentifier">@_</span>;
+
+    (<span class="synOperator">defined</span> <span class="synIdentifier">$name</span>)
+        || confess <span class="synString">&quot;You must provide a name for the attribute&quot;</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$role</span> = <span class="synStatement">delete</span> <span class="synIdentifier">$options{</span><span class="synString">_original_role</span><span class="synIdentifier">}</span>;
+
+    <span class="synStatement">return</span> <span class="synOperator">bless</span> {
+        <span class="synString">name</span>             =&gt; <span class="synIdentifier">$name</span>,
+        <span class="synString">original_options</span> =&gt; \<span class="synIdentifier">%options</span>,
+        <span class="synString">_original_role</span>   =&gt; <span class="synIdentifier">$role</span>,
+        <span class="synIdentifier">%options</span>,
+    }, <span class="synIdentifier">$class</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">attach_to_role </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$self</span>, <span class="synIdentifier">$role</span> ) = <span class="synIdentifier">@_</span>;
+
+    ( blessed(<span class="synIdentifier">$role</span>) &amp;&amp; <span class="synIdentifier">$role-&gt;isa</span>(<span class="synString">'Moose::Meta::Role'</span>) )
+        || confess
+        <span class="synString">&quot;You must pass a Moose::Meta::Role instance (or a subclass)&quot;</span>;
+
+    weaken( <span class="synIdentifier">$self-&gt;{</span><span class="synString">'associated_role'</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$role</span> );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">original_role </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;_original_role</span> || <span class="synIdentifier">$self-&gt;associated_role</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">attribute_for_class </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$metaclass</span> = <span class="synIdentifier">$self-&gt;original_role-&gt;applied_attribute_metaclass</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$metaclass-&gt;interpolate_class_and_new</span>(
+        <span class="synIdentifier">$self-&gt;name</span> =&gt; <span class="synIdentifier">%{</span> <span class="synIdentifier">$self-&gt;original_options</span> <span class="synIdentifier">}</span> );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">clone </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$role</span> = <span class="synIdentifier">$self-&gt;original_role</span>;
+
+    <span class="synStatement">return</span> ( <span class="synOperator">ref</span> <span class="synIdentifier">$self</span> )-&gt;new(
+        <span class="synIdentifier">$self-&gt;name</span>,
+        <span class="synIdentifier">%{</span> <span class="synIdentifier">$self-&gt;original_options</span> <span class="synIdentifier">}</span>,
+        <span class="synString">_original_role</span> =&gt; <span class="synIdentifier">$role</span>,
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">is_same_as </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$attr</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$self_options</span> = <span class="synIdentifier">$self-&gt;original_options</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$other_options</span> = <span class="synIdentifier">$attr-&gt;original_options</span>;
+
+    <span class="synStatement">return</span> <span class="synNumber">0</span>
+        <span class="synConditional">unless</span> ( <span class="synStatement">join</span> <span class="synString">q{|}</span>, <span class="synStatement">sort</span> <span class="synStatement">keys</span> <span class="synIdentifier">%{$self_options}</span> ) <span class="synOperator">eq</span> ( <span class="synStatement">join</span> <span class="synString">q{|}</span>, <span class="synStatement">sort</span> <span class="synStatement">keys</span> <span class="synIdentifier">%{$other_options}</span> );
+
+    <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$key</span> ( <span class="synStatement">keys</span> <span class="synIdentifier">%{$self_options}</span> ) {
+        <span class="synStatement">return</span> <span class="synNumber">0</span> <span class="synConditional">if</span> <span class="synOperator">defined</span> <span class="synIdentifier">$self_options-&gt;{$key}</span> &amp;&amp; ! <span class="synOperator">defined</span> <span class="synIdentifier">$other_options-&gt;{$key}</span>;
+        <span class="synStatement">return</span> <span class="synNumber">0</span> <span class="synConditional">if</span> ! <span class="synOperator">defined</span> <span class="synIdentifier">$self_options-&gt;{$key}</span> &amp;&amp; <span class="synOperator">defined</span> <span class="synIdentifier">$other_options-&gt;{$key}</span>;
+
+        <span class="synStatement">next</span> <span class="synConditional">if</span> all { ! <span class="synOperator">defined</span> } <span class="synIdentifier">$self_options-&gt;{$key}</span>, <span class="synIdentifier">$other_options-&gt;{$key}</span>;
+
+        <span class="synStatement">return</span> <span class="synNumber">0</span> <span class="synConditional">unless</span> <span class="synIdentifier">$self_options-&gt;{$key}</span> <span class="synOperator">eq</span> <span class="synIdentifier">$other_options-&gt;{$key}</span>;
+    }
+
+    <span class="synStatement">return</span> <span class="synNumber">1</span>;
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: The Moose attribute metaclass for Roles</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Moose::Meta::Role::Attribute - The Moose attribute metaclass for Roles
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This class implements the API for attributes in roles. Attributes in roles are
+more like attribute prototypes than full blown attributes. While they are
+introspectable, they have very little behavior.
+
+<span class="synStatement">=head1</span><span class="synString"> METHODS</span>
+
+This class provides the following methods:
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; Moose::Meta::Role::Attribute-&gt;new(...) &gt;&gt;</span>
+
+This method accepts all the options that would be passed to the constructor
+for <span class="synIdentifier">L&lt;Moose::Meta::Attribute&gt;</span>.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;metaclass &gt;&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;is &gt;&gt;</span>
+
+Returns the option as passed to the constructor.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;associated_role &gt;&gt;</span>
+
+Returns the <span class="synIdentifier">L&lt;Moose::Meta::Role&gt;</span> to which this attribute belongs, if any.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;original_role &gt;&gt;</span>
+
+Returns the <span class="synIdentifier">L&lt;Moose::Meta::Role&gt;</span> in which this attribute was first
+defined. This may not be the same as the value of <span class="synIdentifier">C&lt;associated_role()&gt;</span> for
+attributes in a composite role, or when one role consumes other roles.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;original_options &gt;&gt;</span>
+
+Returns a hash reference of options passed to the constructor. This is used
+when creating a <span class="synIdentifier">L&lt;Moose::Meta::Attribute&gt;</span> object from this object.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;attach_to_role($role) &gt;&gt;</span>
+
+Attaches the attribute to the given <span class="synIdentifier">L&lt;Moose::Meta::Role&gt;</span>.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;attribute_for_class($metaclass) &gt;&gt;</span>
+
+Given an attribute metaclass name, this method calls C&lt;&lt;
+<span class="synIdentifier">$metaclass</span>-&gt;interpolate_class_and_new &gt;&gt; to construct an attribute object
+which can be added to a <span class="synIdentifier">L&lt;Moose::Meta::Class&gt;</span>.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;clone &gt;&gt;</span>
+
+Creates a new object identical to the object on which the method is called.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;is_same_as($other_attr) &gt;&gt;</span>
+
+Compares two role attributes and returns true if they are identical.
+
+<span class="synStatement">=back</span>
+
+In addition, this class implements all informational predicates implements by
+<span class="synIdentifier">L&lt;Moose::Meta::Attribute&gt;</span> (and <span class="synIdentifier">L&lt;Class::MOP::Attribute&gt;</span>).
+
+<span class="synStatement">=head1</span><span class="synString"> BUGS</span>
+
+See <span class="synIdentifier">L&lt;Moose/BUGS&gt;</span> for details on reporting bugs.
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

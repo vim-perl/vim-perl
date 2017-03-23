@@ -1,0 +1,282 @@
+package Moose::Cookbook::Basics::Genome_OverloadingSubtypesAndCoercion;
+
+# ABSTRACT: Operator overloading, subtypes, and coercion
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Moose::Cookbook::Basics::Genome_OverloadingSubtypesAndCoercion - Operator overloading, subtypes, and coercion
+
+=head1 VERSION
+
+version 2.1005
+
+=head1 SYNOPSIS
+
+  package Human;
+
+  use Moose;
+  use Moose::Util::TypeConstraints;
+
+  subtype 'Sex'
+      => as 'Str'
+      => where { $_ =~ m{^[mf]$}s };
+
+  has 'sex'    => ( is => 'ro', isa => 'Sex', required => 1 );
+
+  has 'mother' => ( is => 'ro', isa => 'Human' );
+  has 'father' => ( is => 'ro', isa => 'Human' );
+
+  use overload '+' => \&_overload_add, fallback => 1;
+
+  sub _overload_add {
+      my ( $one, $two ) = @_;
+
+      die('Only male and female humans may create children')
+          if ( $one->sex() eq $two->sex() );
+
+      my ( $mother, $father )
+          = ( $one->sex eq 'f' ? ( $one, $two ) : ( $two, $one ) );
+
+      my $sex = 'f';
+      $sex = 'm' if ( rand() >= 0.5 );
+
+      return Human->new(
+          sex    => $sex,
+          mother => $mother,
+          father => $father,
+      );
+  }
+
+=head1 DESCRIPTION
+
+This Moose cookbook recipe shows how operator overloading, coercion,
+and subtypes can be used to mimic the human reproductive system
+(well, the selection of genes at least).
+
+=head1 INTRODUCTION
+
+Our C<Human> class uses operator overloading to allow us to "add" two
+humans together and produce a child. Our implementation does require
+that the two objects be of opposite sex. Remember, we're talking
+about biological reproduction, not marriage.
+
+While this example works as-is, we can take it a lot further by adding
+genes into the mix. We'll add the two genes that control eye color,
+and use overloading to combine the genes from the parent to model the
+biology.
+
+=head2 What is Operator Overloading?
+
+Overloading is I<not> a Moose-specific feature. It's a general OO
+concept that is implemented in Perl with the C<overload>
+pragma. Overloading lets objects do something sane when used with
+Perl's built in operators, like addition (C<+>) or when used as a
+string.
+
+In this example we overload addition so we can write code like
+C<$child = $mother + $father>.
+
+=head1 GENES
+
+There are many genes which affect eye color, but there are two which
+are most important, I<gey> and I<bey2>. We will start by making a
+class for each gene.
+
+=head2 Human::Gene::bey2
+
+  package Human::Gene::bey2;
+
+  use Moose;
+  use Moose::Util::TypeConstraints;
+
+  type 'bey2_color' => where { $_ =~ m{^(?:brown|blue)$} };
+
+  has 'color' => ( is => 'ro', isa => 'bey2_color' );
+
+This class is trivial. We have a type constraint for the allowed
+colors, and a C<color> attribute.
+
+=head2 Human::Gene::gey
+
+  package Human::Gene::gey;
+
+  use Moose;
+  use Moose::Util::TypeConstraints;
+
+  type 'gey_color' => where { $_ =~ m{^(?:green|blue)$} };
+
+  has 'color' => ( is => 'ro', isa => 'gey_color' );
+
+This is nearly identical to the C<Humane::Gene::bey2> class, except
+that the I<gey> gene allows for different colors.
+
+=head1 EYE COLOR
+
+We could just give four attributes (two of each gene) to the
+C<Human> class, but this is a bit messy. Instead, we'll abstract the
+genes into a container class, C<Human::EyeColor>. Then a C<Human> can
+have a single C<eye_color> attribute.
+
+  package Human::EyeColor;
+
+  use Moose;
+  use Moose::Util::TypeConstraints;
+
+  coerce 'Human::Gene::bey2'
+      => from 'Str'
+          => via { Human::Gene::bey2->new( color => $_ ) };
+
+  coerce 'Human::Gene::gey'
+      => from 'Str'
+          => via { Human::Gene::gey->new( color => $_ ) };
+
+  has [qw( bey2_1 bey2_2 )] =>
+      ( is => 'ro', isa => 'Human::Gene::bey2', coerce => 1 );
+
+  has [qw( gey_1 gey_2 )] =>
+      ( is => 'ro', isa => 'Human::Gene::gey', coerce => 1 );
+
+The eye color class has two of each type of gene. We've also created a
+coercion for each class that coerces a string into a new object. Note
+that a coercion will fail if it attempts to coerce a string like
+"indigo", because that is not a valid color for either type of gene.
+
+As an aside, you can see that we can define several identical
+attributes at once by supplying an array reference of names as the first
+argument to C<has>.
+
+We also need a method to calculate the actual eye color that results
+from a set of genes. The I<bey2> brown gene is dominant over both blue
+and green. The I<gey> green gene is dominant over blue.
+
+  sub color {
+      my ($self) = @_;
+
+      return 'brown'
+          if ( $self->bey2_1->color() eq 'brown'
+          or $self->bey2_2->color() eq 'brown' );
+
+      return 'green'
+          if ( $self->gey_1->color() eq 'green'
+          or $self->gey_2->color() eq 'green' );
+
+      return 'blue';
+  }
+
+We'd like to be able to treat a C<Human::EyeColor> object as a string,
+so we define a string overloading for the class:
+
+  use overload '""' => \&color, fallback => 1;
+
+Finally, we need to define overloading for addition. That way we can
+add together two C<Human::EyeColor> objects and get a new one with a
+new (genetically correct) eye color.
+
+  use overload '+' => \&_overload_add, fallback => 1;
+
+  sub _overload_add {
+      my ( $one, $two ) = @_;
+
+      my $one_bey2 = 'bey2_' . _rand2();
+      my $two_bey2 = 'bey2_' . _rand2();
+
+      my $one_gey = 'gey_' . _rand2();
+      my $two_gey = 'gey_' . _rand2();
+
+      return Human::EyeColor->new(
+          bey2_1 => $one->$one_bey2->color(),
+          bey2_2 => $two->$two_bey2->color(),
+          gey_1  => $one->$one_gey->color(),
+          gey_2  => $two->$two_gey->color(),
+      );
+  }
+
+  sub _rand2 {
+      return 1 + int( rand(2) );
+  }
+
+When two eye color objects are added together, the C<_overload_add()>
+method will be passed two C<Human::EyeColor> objects. These are the
+left and right side operands for the C<+> operator. This method
+returns a new C<Human::EyeColor> object.
+
+=head1 ADDING EYE COLOR TO C<Human>s
+
+Our original C<Human> class requires just a few changes to incorporate
+our new C<Human::EyeColor> class.
+
+  use List::MoreUtils qw( zip );
+
+  coerce 'Human::EyeColor'
+      => from 'ArrayRef'
+      => via { my @genes = qw( bey2_1 bey2_2 gey_1 gey_2 );
+               return Human::EyeColor->new( zip( @genes, @{$_} ) ); };
+
+  has 'eye_color' => (
+      is       => 'ro',
+      isa      => 'Human::EyeColor',
+      coerce   => 1,
+      required => 1,
+  );
+
+We also need to modify C<_overload_add()> in the C<Human> class to
+account for eye color:
+
+  return Human->new(
+      sex       => $sex,
+      eye_color => ( $one->eye_color() + $two->eye_color() ),
+      mother    => $mother,
+      father    => $father,
+  );
+
+=head1 CONCLUSION
+
+The three techniques we used, overloading, subtypes, and coercion,
+combine to provide a powerful interface.
+
+If you'd like to learn more about overloading, please read the
+documentation for the L<overload> pragma.
+
+To see all the code we created together, take a look at
+F<t/recipes/basics_recipe9.t>.
+
+=head1 NEXT STEPS
+
+Had this been a real project we'd probably want:
+
+=over 4
+
+=item Better Randomization with Crypt::Random
+
+=item Characteristic Base Class
+
+=item Mutating Genes
+
+=item More Characteristics
+
+=item Artificial Life
+
+=back
+
+=head1 LICENSE
+
+This work is licensed under a Creative Commons Attribution 3.0 Unported License.
+
+License details are at: L<http://creativecommons.org/licenses/by/3.0/>
+
+=head1 AUTHOR
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See L<Moose/CABAL> and L<Moose/CONTRIBUTORS> for details.
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut

@@ -1,0 +1,33 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> inc::TestRelease</span>;
+
+<span class="synStatement">use </span>Moose;
+
+extends <span class="synString">'Dist::Zilla::Plugin::TestRelease'</span>;
+
+around <span class="synString">before_release</span> =&gt; <span class="synKeyword">sub </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$orig</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">local</span> <span class="synIdentifier">$ENV{</span><span class="synString">MOOSE_TEST_MD</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$self-&gt;zilla-&gt;is_trial</span>
+        ? <span class="synIdentifier">$ENV{</span><span class="synString">MOOSE_TEST_MD</span><span class="synIdentifier">}</span>
+        : <span class="synNumber">1</span>;
+    <span class="synStatement">local</span> <span class="synIdentifier">$ENV{</span><span class="synString">AUTHOR_TESTING</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$self-&gt;zilla-&gt;is_trial</span>
+        ? <span class="synIdentifier">$ENV{</span><span class="synString">AUTHOR_TESTING</span><span class="synIdentifier">}</span>
+        : <span class="synNumber">1</span>;
+
+    <span class="synIdentifier">$self-&gt;$orig</span>(<span class="synIdentifier">@_</span>);
+};
+
+<span class="synNumber">1</span>;
+</pre>
+
+ </body>
+</html>

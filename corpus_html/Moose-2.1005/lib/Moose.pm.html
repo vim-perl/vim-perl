@@ -1,0 +1,1242 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Moose</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span><span class="synFloat">5.008</span>;
+
+<span class="synStatement">use </span>Scalar::Util <span class="synString">'blessed'</span>;
+<span class="synStatement">use </span>Carp         <span class="synString">'carp'</span>, <span class="synString">'confess'</span>;
+<span class="synStatement">use </span>Class::Load  <span class="synString">'is_class_loaded'</span>;
+
+<span class="synStatement">use </span>Moose::Deprecated;
+<span class="synStatement">use </span>Moose::Exporter;
+
+<span class="synStatement">use </span>Class::MOP;
+
+<span class="synPreProc">BEGIN </span>{
+    <span class="synStatement">die</span> <span class="synString">&quot;Class::MOP version </span><span class="synIdentifier">$</span><span class="synType">Moose::</span><span class="synIdentifier">VERSION</span><span class="synString"> required--this is version </span><span class="synIdentifier">$</span><span class="synType">Class::MOP::</span><span class="synIdentifier">VERSION</span><span class="synString">&quot;</span>
+        <span class="synConditional">if</span> <span class="synIdentifier">$</span><span class="synType">Moose::</span><span class="synIdentifier">VERSION</span> &amp;&amp; <span class="synIdentifier">$</span><span class="synType">Class::MOP::</span><span class="synIdentifier">VERSION</span> <span class="synOperator">ne</span> <span class="synIdentifier">$</span><span class="synType">Moose::</span><span class="synIdentifier">VERSION</span>;
+}
+
+<span class="synStatement">use </span>Moose::Meta::Class;
+<span class="synStatement">use </span>Moose::Meta::TypeConstraint;
+<span class="synStatement">use </span>Moose::Meta::TypeCoercion;
+<span class="synStatement">use </span>Moose::Meta::Attribute;
+<span class="synStatement">use </span>Moose::Meta::Instance;
+
+<span class="synStatement">use </span>Moose::Object;
+
+<span class="synStatement">use </span>Moose::Meta::Role;
+<span class="synStatement">use </span>Moose::Meta::Role::Composite;
+<span class="synStatement">use </span>Moose::Meta::Role::Application;
+<span class="synStatement">use </span>Moose::Meta::Role::Application::RoleSummation;
+<span class="synStatement">use </span>Moose::Meta::Role::Application::ToClass;
+<span class="synStatement">use </span>Moose::Meta::Role::Application::ToRole;
+<span class="synStatement">use </span>Moose::Meta::Role::Application::ToInstance;
+
+<span class="synStatement">use </span>Moose::Util::TypeConstraints;
+<span class="synStatement">use </span>Moose::Util ();
+
+<span class="synStatement">use </span>Moose::Meta::Attribute::Native;
+
+<span class="synKeyword">sub </span><span class="synFunction">throw_error </span>{
+    <span class="synComment"># </span><span class="synTodo">FIXME</span><span class="synComment"> This</span>
+    <span class="synStatement">shift</span>;
+    <span class="synStatement">goto</span> \<span class="synIdentifier">&amp;confess</span>
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">extends </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$meta</span> = <span class="synStatement">shift</span>;
+
+    Moose-&gt;throw_error(<span class="synString">&quot;Must derive at least one class&quot;</span>) <span class="synConditional">unless</span> <span class="synIdentifier">@_</span>;
+
+    <span class="synComment"># this checks the metaclass to make sure</span>
+    <span class="synComment"># it is correct, sometimes it can get out</span>
+    <span class="synComment"># of sync when the classes are being built</span>
+    <span class="synIdentifier">$meta-&gt;superclasses</span>(<span class="synIdentifier">@_</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">with </span>{
+    Moose::Util::apply_all_roles(<span class="synStatement">shift</span>, <span class="synIdentifier">@_</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">has </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$meta</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$name</span> = <span class="synStatement">shift</span>;
+
+    Moose-&gt;throw_error(<span class="synString">'Usage: has \'name\' =&gt; ( key =&gt; value, ... )'</span>)
+        <span class="synConditional">if</span> <span class="synIdentifier">@_</span> % <span class="synNumber">2</span> == <span class="synNumber">1</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">%context</span> = Moose::Util::_caller_info;
+    <span class="synIdentifier">$context{</span><span class="synString">context</span><span class="synIdentifier">}</span> = <span class="synString">'has declaration'</span>;
+    <span class="synIdentifier">$context{</span><span class="synString">type</span><span class="synIdentifier">}</span> = <span class="synString">'class'</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">%options</span> = ( <span class="synString">definition_context</span> =&gt; \<span class="synIdentifier">%context</span>, <span class="synIdentifier">@_</span> );
+    <span class="synStatement">my</span> <span class="synIdentifier">$attrs</span> = ( <span class="synOperator">ref</span>(<span class="synIdentifier">$name</span>) <span class="synOperator">eq</span> <span class="synString">'ARRAY'</span> ) ? <span class="synIdentifier">$name</span> : [ (<span class="synIdentifier">$name</span>) ];
+    <span class="synIdentifier">$meta-&gt;add_attribute</span>( <span class="synIdentifier">$_</span>, <span class="synIdentifier">%options</span> ) <span class="synRepeat">for</span> <span class="synIdentifier">@$attrs</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">before </span>{
+    Moose::Util::add_method_modifier(<span class="synStatement">shift</span>, <span class="synString">'before'</span>, \<span class="synIdentifier">@_</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">after </span>{
+    Moose::Util::add_method_modifier(<span class="synStatement">shift</span>, <span class="synString">'after'</span>, \<span class="synIdentifier">@_</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">around </span>{
+    Moose::Util::add_method_modifier(<span class="synStatement">shift</span>, <span class="synString">'around'</span>, \<span class="synIdentifier">@_</span>);
+}
+
+<span class="synStatement">our</span> <span class="synIdentifier">$SUPER_PACKAGE</span>;
+<span class="synStatement">our</span> <span class="synIdentifier">$SUPER_BODY</span>;
+<span class="synStatement">our</span> <span class="synIdentifier">@SUPER_ARGS</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">super </span>{
+    <span class="synConditional">if</span> (<span class="synIdentifier">@_</span>) {
+        carp <span class="synString">'Arguments passed to super() are ignored'</span>;
+    }
+
+    <span class="synComment"># This check avoids a recursion loop - see</span>
+    <span class="synComment"># t/bugs/super_recursion.t</span>
+    <span class="synStatement">return</span> <span class="synConditional">if</span> <span class="synOperator">defined</span> <span class="synIdentifier">$SUPER_PACKAGE</span> &amp;&amp; <span class="synIdentifier">$SUPER_PACKAGE</span> <span class="synOperator">ne</span> <span class="synStatement">caller</span>();
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$SUPER_BODY</span>; <span class="synIdentifier">$SUPER_BODY</span>-&gt;(<span class="synIdentifier">@SUPER_ARGS</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">override </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$meta</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$name</span>, <span class="synIdentifier">$method</span> ) = <span class="synIdentifier">@_</span>;
+    <span class="synIdentifier">$meta-&gt;add_override_method_modifier</span>( <span class="synIdentifier">$name</span> =&gt; <span class="synIdentifier">$method</span> );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">inner </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$pkg</span> = <span class="synStatement">caller</span>();
+    <span class="synStatement">our</span> ( <span class="synIdentifier">%INNER_BODY</span>, <span class="synIdentifier">%INNER_ARGS</span> );
+
+    <span class="synConditional">if</span> ( <span class="synStatement">my</span> <span class="synIdentifier">$body</span> = <span class="synIdentifier">$INNER_BODY{$pkg}</span> ) {
+        <span class="synStatement">my</span> <span class="synIdentifier">@args</span> = <span class="synIdentifier">@{</span> <span class="synIdentifier">$INNER_ARGS{$pkg}</span> <span class="synIdentifier">}</span>;
+        <span class="synStatement">local</span> <span class="synIdentifier">$INNER_ARGS{$pkg}</span>;
+        <span class="synStatement">local</span> <span class="synIdentifier">$INNER_BODY{$pkg}</span>;
+        <span class="synStatement">return</span> <span class="synIdentifier">$body</span>-&gt;(<span class="synIdentifier">@args</span>);
+    } <span class="synConditional">else</span> {
+        <span class="synStatement">return</span>;
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">augment </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$meta</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$name</span>, <span class="synIdentifier">$method</span> ) = <span class="synIdentifier">@_</span>;
+    <span class="synIdentifier">$meta-&gt;add_augment_method_modifier</span>( <span class="synIdentifier">$name</span> =&gt; <span class="synIdentifier">$method</span> );
+}
+
+Moose::Exporter-&gt;setup_import_methods(
+    <span class="synString">with_meta</span> =&gt; [
+        <span class="synString">qw( extends with has before after around override augment )</span>
+    ],
+    <span class="synString">as_is</span> =&gt; [
+        <span class="synString">qw( super inner )</span>,
+        \<span class="synIdentifier">&amp;</span><span class="synType">Carp::</span><span class="synIdentifier">confess</span>,
+        \<span class="synIdentifier">&amp;</span><span class="synType">Scalar::Util::</span><span class="synIdentifier">blessed</span>,
+    ],
+);
+
+<span class="synKeyword">sub </span><span class="synFunction">init_meta </span>{
+    <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">%args</span> = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$class</span> = <span class="synIdentifier">$args{</span><span class="synString">for_class</span><span class="synIdentifier">}</span>
+        <span class="synOperator">or</span> Moose-&gt;throw_error(<span class="synString">&quot;Cannot call init_meta without specifying a for_class&quot;</span>);
+    <span class="synStatement">my</span> <span class="synIdentifier">$base_class</span> = <span class="synIdentifier">$args{</span><span class="synString">base_class</span><span class="synIdentifier">}</span> || <span class="synString">'Moose::Object'</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$metaclass</span>  = <span class="synIdentifier">$args{</span><span class="synString">metaclass</span><span class="synIdentifier">}</span>  || <span class="synString">'Moose::Meta::Class'</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$meta_name</span>  = <span class="synStatement">exists</span> <span class="synIdentifier">$args{</span><span class="synString">meta_name</span><span class="synIdentifier">}</span> ? <span class="synIdentifier">$args{</span><span class="synString">meta_name</span><span class="synIdentifier">}</span> : <span class="synString">'meta'</span>;
+
+    Moose-&gt;throw_error(<span class="synString">&quot;The Metaclass </span><span class="synIdentifier">$metaclass</span><span class="synString"> must be loaded. (Perhaps you forgot to 'use </span><span class="synIdentifier">$metaclass</span><span class="synString">'?)&quot;</span>)
+        <span class="synConditional">unless</span> is_class_loaded(<span class="synIdentifier">$metaclass</span>);
+
+    Moose-&gt;throw_error(<span class="synString">&quot;The Metaclass </span><span class="synIdentifier">$metaclass</span><span class="synString"> must be a subclass of Moose::Meta::Class.&quot;</span>)
+        <span class="synConditional">unless</span> <span class="synIdentifier">$metaclass-&gt;isa</span>(<span class="synString">'Moose::Meta::Class'</span>);
+
+    <span class="synComment"># make a subtype for each Moose class</span>
+    class_type(<span class="synIdentifier">$class</span>)
+        <span class="synConditional">unless</span> find_type_constraint(<span class="synIdentifier">$class</span>);
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$meta</span>;
+
+    <span class="synConditional">if</span> ( <span class="synIdentifier">$meta</span> = Class::MOP::get_metaclass_by_name(<span class="synIdentifier">$class</span>) ) {
+        <span class="synConditional">unless</span> ( <span class="synIdentifier">$meta-&gt;isa</span>(<span class="synString">&quot;Moose::Meta::Class&quot;</span>) ) {
+            <span class="synStatement">my</span> <span class="synIdentifier">$error_message</span> = <span class="synString">&quot;</span><span class="synIdentifier">$class</span><span class="synString"> already has a metaclass, but it does not inherit </span><span class="synIdentifier">$metaclass</span><span class="synString"> (</span><span class="synIdentifier">$meta</span><span class="synString">).&quot;</span>;
+            <span class="synConditional">if</span> ( <span class="synIdentifier">$meta-&gt;isa</span>(<span class="synString">'Moose::Meta::Role'</span>) ) {
+                Moose-&gt;throw_error(<span class="synIdentifier">$error_message</span> . <span class="synString">' You cannot make the same thing a role and a class. Remove either Moose or Moose::Role.'</span>);
+            } <span class="synConditional">else</span> {
+                Moose-&gt;throw_error(<span class="synIdentifier">$error_message</span>);
+            }
+        }
+    } <span class="synConditional">else</span> {
+        <span class="synComment"># no metaclass</span>
+
+        <span class="synComment"># now we check whether our ancestors have metaclass, and if so borrow that</span>
+        <span class="synStatement">my</span> ( <span class="synOperator">undef</span>, <span class="synIdentifier">@isa</span> ) = <span class="synIdentifier">@{</span> mro::get_linear_isa(<span class="synIdentifier">$class</span>) <span class="synIdentifier">}</span>;
+
+        <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$ancestor</span> ( <span class="synIdentifier">@isa</span> ) {
+            <span class="synStatement">my</span> <span class="synIdentifier">$ancestor_meta</span> = Class::MOP::get_metaclass_by_name(<span class="synIdentifier">$ancestor</span>) || <span class="synStatement">next</span>;
+
+            <span class="synStatement">my</span> <span class="synIdentifier">$ancestor_meta_class</span> = <span class="synIdentifier">$ancestor_meta-&gt;_real_ref_name</span>;
+
+            <span class="synComment"># if we have an ancestor metaclass that inherits $metaclass, we use</span>
+            <span class="synComment"># that. This is like _fix_metaclass_incompatibility, but we can do it now.</span>
+
+            <span class="synComment"># the case of having an ancestry is not very common, but arises in</span>
+            <span class="synComment"># e.g. Reaction</span>
+            <span class="synConditional">unless</span> ( <span class="synIdentifier">$metaclass-&gt;isa</span>( <span class="synIdentifier">$ancestor_meta_class</span> ) ) {
+                <span class="synConditional">if</span> ( <span class="synIdentifier">$ancestor_meta_class-&gt;isa</span>(<span class="synIdentifier">$metaclass</span>) ) {
+                    <span class="synIdentifier">$metaclass</span> = <span class="synIdentifier">$ancestor_meta_class</span>;
+                }
+            }
+        }
+
+        <span class="synIdentifier">$meta</span> = <span class="synIdentifier">$metaclass-&gt;initialize</span>(<span class="synIdentifier">$class</span>);
+    }
+
+    <span class="synConditional">if</span> (<span class="synOperator">defined</span> <span class="synIdentifier">$meta_name</span>) {
+        <span class="synComment"># also check for inherited non moose 'meta' method?</span>
+        <span class="synStatement">my</span> <span class="synIdentifier">$existing</span> = <span class="synIdentifier">$meta-&gt;get_method</span>(<span class="synIdentifier">$meta_name</span>);
+        <span class="synConditional">if</span> (<span class="synIdentifier">$existing</span> &amp;&amp; !<span class="synIdentifier">$existing-&gt;isa</span>(<span class="synString">'Class::MOP::Method::Meta'</span>)) {
+            Carp::cluck <span class="synString">&quot;Moose is overwriting an existing method named &quot;</span>
+                      . <span class="synString">&quot;</span><span class="synIdentifier">$meta_name</span><span class="synString"> in class </span><span class="synIdentifier">$class</span><span class="synString"> with a method &quot;</span>
+                      . <span class="synString">&quot;which returns the class's metaclass. If this is &quot;</span>
+                      . <span class="synString">&quot;actually what you want, you should remove the &quot;</span>
+                      . <span class="synString">&quot;existing method, otherwise, you should rename or &quot;</span>
+                      . <span class="synString">&quot;disable this generated method using the &quot;</span>
+                      . <span class="synString">&quot;'-meta_name' option to 'use Moose'.&quot;</span>;
+        }
+        <span class="synIdentifier">$meta-&gt;_add_meta_method</span>(<span class="synIdentifier">$meta_name</span>);
+    }
+
+    <span class="synComment"># make sure they inherit from Moose::Object</span>
+    <span class="synIdentifier">$meta-&gt;superclasses</span>(<span class="synIdentifier">$base_class</span>)
+      <span class="synConditional">unless</span> <span class="synIdentifier">$meta-&gt;superclasses</span>();
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$meta</span>;
+}
+
+<span class="synComment"># This may be used in some older MooseX extensions.</span>
+<span class="synKeyword">sub </span><span class="synFunction">_get_caller </span>{
+    <span class="synStatement">goto</span> <span class="synIdentifier">&amp;</span><span class="synType">Moose::Exporter::</span><span class="synIdentifier">_get_caller</span>;
+}
+
+<span class="synComment">## make 'em all immutable</span>
+
+<span class="synIdentifier">$_-&gt;make_immutable</span>(
+    <span class="synString">inline_constructor</span> =&gt; <span class="synNumber">1</span>,
+    <span class="synString">constructor_name</span>   =&gt; <span class="synString">&quot;_new&quot;</span>,
+    <span class="synComment"># these are Class::MOP accessors, so they need inlining</span>
+    <span class="synString">inline_accessors</span> =&gt; <span class="synNumber">1</span>
+    ) <span class="synRepeat">for</span> <span class="synStatement">grep</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;is_mutable</span> <span class="synStatement">}</span>
+    <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;meta</span> <span class="synStatement">}</span>
+    <span class="synString">qw(</span>
+<span class="synString">    Moose::Meta::Attribute</span>
+<span class="synString">    Moose::Meta::Class</span>
+<span class="synString">    Moose::Meta::Instance</span>
+
+<span class="synString">    Moose::Meta::TypeCoercion</span>
+<span class="synString">    Moose::Meta::TypeCoercion::Union</span>
+
+<span class="synString">    Moose::Meta::Method</span>
+<span class="synString">    Moose::Meta::Method::Constructor</span>
+<span class="synString">    Moose::Meta::Method::Destructor</span>
+<span class="synString">    Moose::Meta::Method::Overridden</span>
+<span class="synString">    Moose::Meta::Method::Augmented</span>
+
+<span class="synString">    Moose::Meta::Role</span>
+<span class="synString">    Moose::Meta::Role::Attribute</span>
+<span class="synString">    Moose::Meta::Role::Method</span>
+<span class="synString">    Moose::Meta::Role::Method::Required</span>
+<span class="synString">    Moose::Meta::Role::Method::Conflicting</span>
+
+<span class="synString">    Moose::Meta::Role::Composite</span>
+
+<span class="synString">    Moose::Meta::Role::Application</span>
+<span class="synString">    Moose::Meta::Role::Application::RoleSummation</span>
+<span class="synString">    Moose::Meta::Role::Application::ToClass</span>
+<span class="synString">    Moose::Meta::Role::Application::ToRole</span>
+<span class="synString">    Moose::Meta::Role::Application::ToInstance</span>
+<span class="synString">)</span>;
+
+<span class="synIdentifier">$_-&gt;make_immutable</span>(
+    <span class="synString">inline_constructor</span> =&gt; <span class="synNumber">0</span>,
+    <span class="synString">constructor_name</span>   =&gt; <span class="synOperator">undef</span>,
+    <span class="synComment"># these are Class::MOP accessors, so they need inlining</span>
+    <span class="synString">inline_accessors</span> =&gt; <span class="synNumber">1</span>
+    ) <span class="synRepeat">for</span> <span class="synStatement">grep</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;is_mutable</span> <span class="synStatement">}</span>
+    <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;meta</span> <span class="synStatement">}</span>
+    <span class="synString">qw(</span>
+<span class="synString">    Moose::Meta::Method::Accessor</span>
+<span class="synString">    Moose::Meta::Method::Delegation</span>
+<span class="synString">    Moose::Meta::Mixin::AttributeCore</span>
+<span class="synString">)</span>;
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: A postmodern object system for Perl 5</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Moose - A postmodern object system for Perl 5
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> SYNOPSIS</span>
+
+<span class="synPreProc">  package Point;</span>
+<span class="synPreProc">  use Moose; # automatically turns on strict and warnings</span>
+
+<span class="synPreProc">  has 'x' =&gt; (is =&gt; 'rw', isa =&gt; 'Int');</span>
+<span class="synPreProc">  has 'y' =&gt; (is =&gt; 'rw', isa =&gt; 'Int');</span>
+
+<span class="synPreProc">  sub clear {</span>
+<span class="synPreProc">      my $self = shift;</span>
+<span class="synPreProc">      $self-&gt;x(0);</span>
+<span class="synPreProc">      $self-&gt;y(0);</span>
+<span class="synPreProc">  }</span>
+
+<span class="synPreProc">  package Point3D;</span>
+<span class="synPreProc">  use Moose;</span>
+
+<span class="synPreProc">  extends 'Point';</span>
+
+<span class="synPreProc">  has 'z' =&gt; (is =&gt; 'rw', isa =&gt; 'Int');</span>
+
+<span class="synPreProc">  after 'clear' =&gt; sub {</span>
+<span class="synPreProc">      my $self = shift;</span>
+<span class="synPreProc">      $self-&gt;z(0);</span>
+<span class="synPreProc">  };</span>
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+Moose is an extension of the Perl 5 object system.
+
+The main goal of Moose is to make Perl 5 Object Oriented programming
+easier, more consistent, and less tedious. With Moose you can think
+more about what you want to do and less about the mechanics of OOP.
+
+Additionally, Moose is built on top of <span class="synIdentifier">L&lt;Class::MOP&gt;</span>, which is a
+metaclass system for Perl 5. This means that Moose not only makes
+building normal Perl 5 objects better, but it provides the power of
+metaclass programming as well.
+
+<span class="synStatement">=head2</span><span class="synString"> New to Moose?</span>
+
+If you're new to Moose, the best place to start is the
+<span class="synIdentifier">L&lt;Moose::Manual&gt;</span> docs, followed by the <span class="synIdentifier">L&lt;Moose::Cookbook&gt;</span>. The intro
+will show you what Moose is, and how it makes Perl 5 OO better.
+
+The cookbook recipes on Moose basics will get you up to speed with
+many of Moose's features quickly. Once you have an idea of what Moose
+can do, you can use the API documentation to get more detail on
+features which interest you.
+
+<span class="synStatement">=head2</span><span class="synString"> Moose Extensions</span>
+
+The <span class="synIdentifier">C&lt;MooseX::&gt;</span> namespace is the official place to find Moose extensions.
+These extensions can be found on the CPAN.  The easiest way to find them
+is to search for them (<span class="synIdentifier">L&lt;http://search.cpan.org/search?query=MooseX::&gt;</span>),
+or to examine <span class="synIdentifier">L&lt;Task::Moose&gt;</span> which aims to keep an up-to-date, easily
+installable list of Moose extensions.
+
+<span class="synStatement">=head1</span><span class="synString"> TRANSLATIONS</span>
+
+Much of the Moose documentation has been translated into other languages.
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> Japanese</span>
+
+Japanese docs can be found at
+<span class="synIdentifier">L&lt;http://perldoc.perlassociation.org/pod/Moose-Doc-JA/index.html&gt;</span>. The
+source POD files can be found in GitHub:
+<span class="synIdentifier">L&lt;http://github.com/jpa/Moose-Doc-JA&gt;</span>
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> BUILDING CLASSES WITH MOOSE</span>
+
+Moose makes every attempt to provide as much convenience as possible during
+class construction/definition, but still stay out of your way if you want it
+to. Here are a few items to note when building classes with Moose.
+
+When you <span class="synIdentifier">C&lt;use Moose&gt;</span>, Moose will set the class's parent class to
+<span class="synIdentifier">L&lt;Moose::Object&gt;</span>, <span class="synIdentifier">I&lt;unless&gt;</span> the class using Moose already has a parent
+class. In addition, specifying a parent with <span class="synIdentifier">C&lt;extends&gt;</span> will change the parent
+class.
+
+Moose will also manage all attributes (including inherited ones) that are
+defined with <span class="synIdentifier">C&lt;has&gt;</span>. And (assuming you call <span class="synIdentifier">C&lt;new&gt;</span>, which is inherited from
+<span class="synIdentifier">L&lt;Moose::Object&gt;</span>) this includes properly initializing all instance slots,
+setting defaults where appropriate, and performing any type constraint checking
+or coercion.
+
+<span class="synStatement">=head1</span><span class="synString"> PROVIDED METHODS</span>
+
+Moose provides a number of methods to all your classes, mostly through the
+inheritance of <span class="synIdentifier">L&lt;Moose::Object&gt;</span>. There is however, one exception.
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;meta&gt;</span>
+
+This is a method which provides access to the current class's metaclass.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> EXPORTED FUNCTIONS</span>
+
+Moose will export a number of functions into the class's namespace which
+may then be used to set up the class. These functions all work directly
+on the current class.
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;extends (@superclasses)&gt;</span>
+
+This function will set the <span class="synIdentifier">superclass(es)</span> for the current class. If the parent
+classes are not yet loaded, then <span class="synIdentifier">C&lt;extends&gt;</span> tries to load them.
+
+This approach is recommended instead of <span class="synIdentifier">C&lt;use base&gt;</span>, because <span class="synIdentifier">C&lt;use base&gt;</span>
+actually <span class="synIdentifier">C&lt;push&gt;</span>es onto the class's <span class="synIdentifier">C&lt;@ISA&gt;</span>, whereas <span class="synIdentifier">C&lt;extends&gt;</span> will
+replace it. This is important to ensure that classes which do not have
+superclasses still properly inherit from <span class="synIdentifier">L&lt;Moose::Object&gt;</span>.
+
+Each superclass can be followed by a hash reference with options. Currently,
+only <span class="synIdentifier">L&lt;-version|Class::MOP/Class Loading Options&gt;</span> is recognized:
+
+<span class="synPreProc">    extends 'My::Parent'      =&gt; { -version =&gt; 0.01 },</span>
+<span class="synPreProc">            'My::OtherParent' =&gt; { -version =&gt; 0.03 };</span>
+
+An exception will be thrown if the version requirements are not
+satisfied.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;with (@roles)&gt;</span>
+
+This will apply a given set of <span class="synIdentifier">C&lt;@roles&gt;</span> to the local class.
+
+Like with <span class="synIdentifier">C&lt;extends&gt;</span>, each specified role can be followed by a hash
+reference with a <span class="synIdentifier">L&lt;-version|Class::MOP/Class Loading Options&gt;</span> option:
+
+<span class="synPreProc">    with 'My::Role'      =&gt; { -version =&gt; 0.32 },</span>
+<span class="synPreProc">         'My::Otherrole' =&gt; { -version =&gt; 0.23 };</span>
+
+The specified version requirements must be satisfied, otherwise an
+exception will be thrown.
+
+If your role takes options or arguments, they can be passed along in the
+hash reference as well.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;has $name|@$names =E&lt;</span><span class="synString">gt</span><span class="synIdentifier">&gt; %options&gt;</span>
+
+This will install an attribute of a given <span class="synIdentifier">C&lt;$name&gt;</span> into the current class. If
+the first parameter is an array reference, it will create an attribute for
+every <span class="synIdentifier">C&lt;$name&gt;</span> in the list. The <span class="synIdentifier">C&lt;%options&gt;</span> will be passed to the constructor
+for <span class="synIdentifier">L&lt;Moose::Meta::Attribute&gt;</span> (which inherits from <span class="synIdentifier">L&lt;Class::MOP::Attribute&gt;</span>),
+so the full documentation for the valid options can be found there. These are
+the most commonly used options:
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">I&lt;is =E&lt;</span><span class="synString">gt</span><span class="synIdentifier">&gt; 'rw'|'ro'&gt;</span>
+
+The <span class="synIdentifier">I&lt;is&gt;</span> option accepts either <span class="synIdentifier">I&lt;rw&gt;</span> (for read/write) or <span class="synIdentifier">I&lt;ro&gt;</span> (for read
+only). These will create either a read/write accessor or a read-only
+accessor respectively, using the same name as the <span class="synIdentifier">C&lt;$name&gt;</span> of the attribute.
+
+If you need more control over how your accessors are named, you can
+use the <span class="synIdentifier">L&lt;reader|Class::MOP::Attribute/reader&gt;</span>,
+<span class="synIdentifier">L&lt;writer|Class::MOP::Attribute/writer&gt;</span> and
+<span class="synIdentifier">L&lt;accessor|Class::MOP::Attribute/accessor&gt;</span> options inherited from
+<span class="synIdentifier">L&lt;Class::MOP::Attribute&gt;</span>, however if you use those, you won't need the
+<span class="synIdentifier">I&lt;is&gt;</span> option.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">I&lt;isa =E&lt;</span><span class="synString">gt</span><span class="synIdentifier">&gt; $type_name&gt;</span>
+
+The <span class="synIdentifier">I&lt;isa&gt;</span> option uses Moose's type constraint facilities to set up runtime
+type checking for this attribute. Moose will perform the checks during class
+construction, and within any accessors. The <span class="synIdentifier">C&lt;$type_name&gt;</span> argument must be a
+string. The string may be either a class name or a type defined using
+Moose's type definition features. (Refer to <span class="synIdentifier">L&lt;Moose::Util::TypeConstraints&gt;</span>
+for information on how to define a new type, and how to retrieve type meta-data).
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">I&lt;coerce =E&lt;</span><span class="synString">gt</span><span class="synIdentifier">&gt; (1|0)&gt;</span>
+
+This will attempt to use coercion with the supplied type constraint to change
+the value passed into any accessors or constructors. You <span class="synIdentifier">B&lt;must&gt;</span> supply a type
+constraint, and that type constraint <span class="synIdentifier">B&lt;must&gt;</span> define a coercion. See
+<span class="synIdentifier">L&lt;Moose::Cookbook::Basics::HTTP_SubtypesAndCoercion&gt;</span> for an example.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">I&lt;does =E&lt;</span><span class="synString">gt</span><span class="synIdentifier">&gt; $role_name&gt;</span>
+
+This will accept the name of a role which the value stored in this attribute
+is expected to have consumed.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">I&lt;required =E&lt;</span><span class="synString">gt</span><span class="synIdentifier">&gt; (1|0)&gt;</span>
+
+This marks the attribute as being required. This means a value must be
+supplied during class construction, <span class="synIdentifier">I&lt;or&gt;</span> the attribute must be lazy
+and have either a default or a builder. Note that c&lt;required&gt; does not
+say anything about the attribute's value, which can be <span class="synIdentifier">C&lt;undef&gt;</span>.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">I&lt;weak_ref =E&lt;</span><span class="synString">gt</span><span class="synIdentifier">&gt; (1|0)&gt;</span>
+
+This will tell the class to store the value of this attribute as a weakened
+reference. If an attribute is a weakened reference, it <span class="synIdentifier">B&lt;cannot&gt;</span> also be
+coerced. Note that when a weak ref expires, the attribute's value becomes
+undefined, and is still considered to be set for purposes of predicate,
+default, etc.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">I&lt;lazy =E&lt;</span><span class="synString">gt</span><span class="synIdentifier">&gt; (1|0)&gt;</span>
+
+This will tell the class to not create this slot until absolutely necessary.
+If an attribute is marked as lazy it <span class="synIdentifier">B&lt;must&gt;</span> have a default or builder
+supplied.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">I&lt;trigger =E&lt;</span><span class="synString">gt</span><span class="synIdentifier">&gt; $code&gt;</span>
+
+The <span class="synIdentifier">I&lt;trigger&gt;</span> option is a CODE reference which will be called after
+the value of the attribute is set. The CODE ref is passed the
+instance itself, the updated value, and the original value if the
+attribute was already set.
+
+You <span class="synIdentifier">B&lt;can&gt;</span> have a trigger on a read-only attribute.
+
+<span class="synIdentifier">B&lt;NOTE:&gt;</span> Triggers will only fire when you <span class="synIdentifier">B&lt;assign&gt;</span> to the attribute,
+either in the constructor, or using the writer. Default and built values will
+<span class="synIdentifier">B&lt;not&gt;</span> cause the trigger to be fired.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">I&lt;handles =E&lt;</span><span class="synString">gt</span><span class="synIdentifier">&gt; ARRAY | HASH | REGEXP | ROLE | ROLETYPE | DUCKTYPE | CODE&gt;</span>
+
+The <span class="synIdentifier">I&lt;handles&gt;</span> option provides Moose classes with automated delegation features.
+This is a pretty complex and powerful option. It accepts many different option
+formats, each with its own benefits and drawbacks.
+
+<span class="synIdentifier">B&lt;NOTE:&gt;</span> The class being delegated to does not need to be a Moose based class,
+which is why this feature is especially useful when wrapping non-Moose classes.
+
+All <span class="synIdentifier">I&lt;handles&gt;</span> option formats share the following traits:
+
+You cannot override a locally defined method with a delegated method; an
+exception will be thrown if you try. That is to say, if you define <span class="synIdentifier">C&lt;foo&gt;</span> in
+your class, you cannot override it with a delegated <span class="synIdentifier">C&lt;foo&gt;</span>. This is almost never
+something you would want to do, and if it is, you should do it by hand and not
+use Moose.
+
+You cannot override any of the methods found in Moose::Object, or the <span class="synIdentifier">C&lt;BUILD&gt;</span>
+and <span class="synIdentifier">C&lt;DEMOLISH&gt;</span> methods. These will not throw an exception, but will silently
+move on to the next method in the list. My reasoning for this is that you would
+almost never want to do this, since it usually breaks your class. As with
+overriding locally defined methods, if you do want to do this, you should do it
+manually, not with Moose.
+
+You do not <span class="synIdentifier">I&lt;need&gt;</span> to have a reader (or accessor) for the attribute in order
+to delegate to it. Moose will create a means of accessing the value for you,
+however this will be several times <span class="synIdentifier">B&lt;less&gt;</span> efficient then if you had given
+the attribute a reader (or accessor) to use.
+
+Below is the documentation for each option format:
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">C&lt;ARRAY&gt;</span>
+
+This is the most common usage for <span class="synIdentifier">I&lt;handles&gt;</span>. You basically pass a list of
+method names to be delegated, and Moose will install a delegation method
+for each one.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">C&lt;HASH&gt;</span>
+
+This is the second most common usage for <span class="synIdentifier">I&lt;handles&gt;</span>. Instead of a list of
+method names, you pass a HASH ref where each key is the method name you
+want installed locally, and its value is the name of the original method
+in the class being delegated to.
+
+This can be very useful for recursive classes like trees. Here is a
+quick example (soon to be expanded into a Moose::Cookbook recipe):
+
+<span class="synPreProc">  package Tree;</span>
+<span class="synPreProc">  use Moose;</span>
+
+<span class="synPreProc">  has 'node' =&gt; (is =&gt; 'rw', isa =&gt; 'Any');</span>
+
+<span class="synPreProc">  has 'children' =&gt; (</span>
+<span class="synPreProc">      is      =&gt; 'ro',</span>
+<span class="synPreProc">      isa     =&gt; 'ArrayRef',</span>
+<span class="synPreProc">      default =&gt; sub { [] }</span>
+<span class="synPreProc">  );</span>
+
+<span class="synPreProc">  has 'parent' =&gt; (</span>
+<span class="synPreProc">      is          =&gt; 'rw',</span>
+<span class="synPreProc">      isa         =&gt; 'Tree',</span>
+<span class="synPreProc">      weak_ref    =&gt; 1,</span>
+<span class="synPreProc">      handles     =&gt; {</span>
+<span class="synPreProc">          parent_node =&gt; 'node',</span>
+<span class="synPreProc">          siblings    =&gt; 'children',</span>
+<span class="synPreProc">      }</span>
+<span class="synPreProc">  );</span>
+
+In this example, the Tree package gets <span class="synIdentifier">C&lt;parent_node&gt;</span> and <span class="synIdentifier">C&lt;siblings&gt;</span> methods,
+which delegate to the <span class="synIdentifier">C&lt;node&gt;</span> and <span class="synIdentifier">C&lt;children&gt;</span> methods (respectively) of the Tree
+instance stored in the <span class="synIdentifier">C&lt;parent&gt;</span> slot.
+
+You may also use an array reference to curry arguments to the original method.
+
+<span class="synPreProc">  has 'thing' =&gt; (</span>
+<span class="synPreProc">      ...</span>
+<span class="synPreProc">      handles =&gt; { set_foo =&gt; [ set =&gt; 'foo' ] },</span>
+<span class="synPreProc">  );</span>
+
+<span class="synPreProc">  # $self-&gt;set_foo(...) calls $self-&gt;thing-&gt;set('foo', ...)</span>
+
+The first element of the array reference is the original method name, and the
+rest is a list of curried arguments.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">C&lt;REGEXP&gt;</span>
+
+The regexp option works very similar to the ARRAY option, except that it builds
+the list of methods for you. It starts by collecting all possible methods of the
+class being delegated to, then filters that list using the regexp supplied here.
+
+<span class="synIdentifier">B&lt;NOTE:&gt;</span> An <span class="synIdentifier">I&lt;isa&gt;</span> option is required when using the regexp option format. This
+is so that we can determine (at compile time) the method list from the class.
+Without an <span class="synIdentifier">I&lt;isa&gt;</span> this is just not possible.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">C&lt;ROLE&gt;</span><span class="synString"> or </span><span class="synIdentifier">C&lt;ROLETYPE&gt;</span>
+
+With the role option, you specify the name of a role or a
+<span class="synIdentifier">L&lt;role type|Moose::Meta::TypeConstraint::Role&gt;</span> whose &quot;interface&quot; then becomes
+the list of methods to handle. The &quot;interface&quot; can be defined as; the methods
+of the role and any required methods of the role. It should be noted that this
+does <span class="synIdentifier">B&lt;not&gt;</span> include any method modifiers or generated attribute methods (which
+is consistent with role composition).
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">C&lt;DUCKTYPE&gt;</span>
+
+With the duck type option, you pass a duck type object whose &quot;interface&quot; then
+becomes the list of methods to handle. The &quot;interface&quot; can be defined as the
+list of methods passed to <span class="synIdentifier">C&lt;duck_type&gt;</span> to create a duck type object. For more
+information on <span class="synIdentifier">C&lt;duck_type&gt;</span> please check
+<span class="synIdentifier">L&lt;Moose::Util::TypeConstraints&gt;</span>.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">C&lt;CODE&gt;</span>
+
+This is the option to use when you really want to do something funky. You should
+only use it if you really know what you are doing, as it involves manual
+metaclass twiddling.
+
+This takes a code reference, which should expect two arguments. The first is the
+attribute meta-object this <span class="synIdentifier">I&lt;handles&gt;</span> is attached to. The second is the
+metaclass of the class being delegated to. It expects you to return a hash (not
+a HASH ref) of the methods you want mapped.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">I&lt;traits =E&lt;</span><span class="synString">gt</span><span class="synIdentifier">&gt; [ @role_names ]&gt;</span>
+
+This tells Moose to take the list of <span class="synIdentifier">C&lt;@role_names&gt;</span> and apply them to the
+attribute meta-object. Custom attribute metaclass traits are useful for
+extending the capabilities of the <span class="synIdentifier">I&lt;has&gt;</span> keyword: they are the simplest way to
+extend the MOP, but they are still a fairly advanced topic and too much to
+cover here.
+
+See <span class="synIdentifier">L&lt;Metaclass and Trait Name Resolution&gt;</span> for details on how a trait name is
+resolved to a role name.
+
+Also see <span class="synIdentifier">L&lt;Moose::Cookbook::Meta::Labeled_AttributeTrait&gt;</span> for a metaclass
+trait example.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">I&lt;builder&gt;</span><span class="synString"> =&gt; Str</span>
+
+The value of this key is the name of the method that will be called to obtain
+the value used to initialize the attribute. See the L&lt;builder option docs in
+Class::MOP::Attribute|Class::MOP::Attribute/builder&gt; and/or
+<span class="synIdentifier">L&lt;Moose::Cookbook::Basics::BinaryTree_BuilderAndLazyBuild&gt;</span> for more
+information.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">I&lt;default&gt;</span><span class="synString"> =&gt; SCALAR | CODE</span>
+
+The value of this key is the default value which will initialize the attribute.
+
+<span class="synTodo">NOTE:</span> If the value is a simple scalar (string or number), then it can
+be just passed as is.  However, if you wish to initialize it with a
+HASH or ARRAY ref, then you need to wrap that inside a CODE reference.
+See the L&lt;default option docs in
+Class::MOP::Attribute|Class::MOP::Attribute/default&gt; for more
+information.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">I&lt;clearer&gt;</span><span class="synString"> =&gt; Str</span>
+
+Creates a method allowing you to clear the value. See the L&lt;clearer option
+docs in Class::MOP::Attribute|Class::MOP::Attribute/clearer&gt; for more
+information.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">I&lt;predicate&gt;</span><span class="synString"> =&gt; Str</span>
+
+Creates a method to perform a basic test to see if a value has been set in the
+attribute. See the L&lt;predicate option docs in
+Class::MOP::Attribute|Class::MOP::Attribute/predicate&gt; for more information.
+
+Note that the predicate will return true even for a <span class="synIdentifier">C&lt;weak_ref&gt;</span> attribute
+whose value has expired.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">I&lt;documentation&gt;</span><span class="synString"> =&gt; $string</span>
+
+An arbitrary string that can be retrieved later by calling C&lt;&lt;
+<span class="synIdentifier">$attr</span>-&gt;documentation &gt;&gt;.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;has +$name =E&lt;</span><span class="synString">gt</span><span class="synIdentifier">&gt; %options&gt;</span>
+
+This is variation on the normal attribute creator <span class="synIdentifier">C&lt;has&gt;</span> which allows you to
+clone and extend an attribute from a superclass or from a role. Here is an
+example of the superclass usage:
+
+<span class="synPreProc">  package Foo;</span>
+<span class="synPreProc">  use Moose;</span>
+
+<span class="synPreProc">  has 'message' =&gt; (</span>
+<span class="synPreProc">      is      =&gt; 'rw',</span>
+<span class="synPreProc">      isa     =&gt; 'Str',</span>
+<span class="synPreProc">      default =&gt; 'Hello, I am a Foo'</span>
+<span class="synPreProc">  );</span>
+
+<span class="synPreProc">  package My::Foo;</span>
+<span class="synPreProc">  use Moose;</span>
+
+<span class="synPreProc">  extends 'Foo';</span>
+
+<span class="synPreProc">  has '+message' =&gt; (default =&gt; 'Hello I am My::Foo');</span>
+
+What is happening here is that <span class="synIdentifier">B&lt;My::Foo&gt;</span> is cloning the <span class="synIdentifier">C&lt;message&gt;</span> attribute
+from its parent class <span class="synIdentifier">B&lt;Foo&gt;</span>, retaining the <span class="synIdentifier">C&lt;is =E&lt;</span><span class="synString">gt</span><span class="synIdentifier">&gt; 'rw'&gt;</span> and <span class="synIdentifier">C&lt;isa =E&lt;</span><span class="synString">gt</span><span class="synIdentifier">&gt;</span>
+'Str'&gt; characteristics, but changing the value in <span class="synIdentifier">C&lt;default&gt;</span>.
+
+Here is another example, but within the context of a role:
+
+<span class="synPreProc">  package Foo::Role;</span>
+<span class="synPreProc">  use Moose::Role;</span>
+
+<span class="synPreProc">  has 'message' =&gt; (</span>
+<span class="synPreProc">      is      =&gt; 'rw',</span>
+<span class="synPreProc">      isa     =&gt; 'Str',</span>
+<span class="synPreProc">      default =&gt; 'Hello, I am a Foo'</span>
+<span class="synPreProc">  );</span>
+
+<span class="synPreProc">  package My::Foo;</span>
+<span class="synPreProc">  use Moose;</span>
+
+<span class="synPreProc">  with 'Foo::Role';</span>
+
+<span class="synPreProc">  has '+message' =&gt; (default =&gt; 'Hello I am My::Foo');</span>
+
+In this case, we are basically taking the attribute which the role supplied
+and altering it within the bounds of this feature.
+
+Note that you can only extend an attribute from either a superclass or a role,
+you cannot extend an attribute in a role that composes over an attribute from
+another role.
+
+Aside from where the attributes come from (one from superclass, the other
+from a role), this feature works exactly the same. This feature is restricted
+somewhat, so as to try and force at least <span class="synIdentifier">I&lt;some&gt;</span> sanity into it. Most options work the same, but there are some exceptions:
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">I&lt;reader&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">I&lt;writer&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">I&lt;accessor&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">I&lt;clearer&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">I&lt;predicate&gt;</span>
+
+These options can be added, but cannot override a superclass definition.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">I&lt;traits&gt;</span>
+
+You are allowed to <span class="synIdentifier">B&lt;add&gt;</span> additional traits to the <span class="synIdentifier">C&lt;traits&gt;</span> definition.
+These traits will be composed into the attribute, but preexisting traits
+<span class="synIdentifier">B&lt;are not&gt;</span> overridden, or removed.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;before $name|@names|\@names|qr/.../ =E&lt;</span><span class="synString">gt</span><span class="synIdentifier">&gt; sub { ... }&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;after $name|@names|\@names|qr/.../ =E&lt;</span><span class="synString">gt</span><span class="synIdentifier">&gt; sub { ... }&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;around $name|@names|\@names|qr/.../ =E&lt;</span><span class="synString">gt</span><span class="synIdentifier">&gt; sub { ... }&gt;</span>
+
+These three items are syntactic sugar for the before, after, and around method
+modifier features that <span class="synIdentifier">L&lt;Class::MOP&gt;</span> provides. More information on these may be
+found in <span class="synIdentifier">L&lt;Moose::Manual::MethodModifiers&gt;</span> and the
+<span class="synIdentifier">L&lt;Class::MOP::Class documentation|Class::MOP::Class/&quot;Method Modifiers&quot;&gt;</span>.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;override ($name, &amp;sub)&gt;</span>
+
+An <span class="synIdentifier">C&lt;override&gt;</span> method is a way of explicitly saying &quot;I am overriding this
+method from my superclass&quot;. You can call <span class="synIdentifier">C&lt;super&gt;</span> within this method, and
+it will work as expected. The same thing <span class="synIdentifier">I&lt;can&gt;</span> be accomplished with a normal
+method call and the <span class="synIdentifier">C&lt;SUPER::&gt;</span> pseudo-package; it is really your choice.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;super&gt;</span>
+
+The keyword <span class="synIdentifier">C&lt;super&gt;</span> is a no-op when called outside of an <span class="synIdentifier">C&lt;override&gt;</span> method. In
+the context of an <span class="synIdentifier">C&lt;override&gt;</span> method, it will call the next most appropriate
+superclass method with the same arguments as the original method.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;augment ($name, &amp;sub)&gt;</span>
+
+An <span class="synIdentifier">C&lt;augment&gt;</span> method, is a way of explicitly saying &quot;I am augmenting this
+method from my superclass&quot;. Once again, the details of how <span class="synIdentifier">C&lt;inner&gt;</span> and
+<span class="synIdentifier">C&lt;augment&gt;</span> work is best described in the
+<span class="synIdentifier">L&lt;Moose::Cookbook::Basics::Document_AugmentAndInner&gt;</span>.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;inner&gt;</span>
+
+The keyword <span class="synIdentifier">C&lt;inner&gt;</span>, much like <span class="synIdentifier">C&lt;super&gt;</span>, is a no-op outside of the context of
+an <span class="synIdentifier">C&lt;augment&gt;</span> method. You can think of <span class="synIdentifier">C&lt;inner&gt;</span> as being the inverse of
+<span class="synIdentifier">C&lt;super&gt;</span>; the details of how <span class="synIdentifier">C&lt;inner&gt;</span> and <span class="synIdentifier">C&lt;augment&gt;</span> work is best described in
+the <span class="synIdentifier">L&lt;Moose::Cookbook::Basics::Document_AugmentAndInner&gt;</span>.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;blessed&gt;</span>
+
+This is the <span class="synIdentifier">C&lt;Scalar::Util::blessed&gt;</span> function. It is highly recommended that
+this is used instead of <span class="synIdentifier">C&lt;ref&gt;</span> anywhere you need to test for an object's class
+name.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;confess&gt;</span>
+
+This is the <span class="synIdentifier">C&lt;Carp::confess&gt;</span> function, and exported here for historical
+reasons.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> METACLASS</span>
+
+When you use Moose, you can specify traits which will be applied to your
+metaclass:
+
+<span class="synPreProc">    use Moose -traits =&gt; 'My::Trait';</span>
+
+This is very similar to the attribute traits feature. When you do
+this, your class's <span class="synIdentifier">C&lt;meta&gt;</span> object will have the specified traits
+applied to it. See <span class="synIdentifier">L&lt;Metaclass and Trait Name Resolution&gt;</span> for more
+details.
+
+<span class="synStatement">=head2</span><span class="synString"> Metaclass and Trait Name Resolution</span>
+
+By default, when given a trait name, Moose simply tries to load a
+class of the same name. If such a class does not exist, it then looks
+for a class matching
+<span class="synIdentifier">B&lt;Moose::Meta::$type::Custom::Trait::$trait_name&gt;</span>. The <span class="synIdentifier">C&lt;$type&gt;</span>
+variable here will be one of <span class="synIdentifier">B&lt;Attribute&gt;</span> or <span class="synIdentifier">B&lt;Class&gt;</span>, depending on
+what the trait is being applied to.
+
+If a class with this long name exists, Moose checks to see if it has
+the method <span class="synIdentifier">C&lt;register_implementation&gt;</span>. This method is expected to
+return the <span class="synIdentifier">I&lt;real&gt;</span> class name of the trait. If there is no
+<span class="synIdentifier">C&lt;register_implementation&gt;</span> method, it will fall back to using
+<span class="synIdentifier">B&lt;Moose::Meta::$type::Custom::Trait::$trait&gt;</span> as the trait name.
+
+The lookup method for metaclasses is the same, except that it looks
+for a class matching <span class="synIdentifier">B&lt;Moose::Meta::$type::Custom::$metaclass_name&gt;</span>.
+
+If all this is confusing, take a look at
+<span class="synIdentifier">L&lt;Moose::Cookbook::Meta::Labeled_AttributeTrait&gt;</span>, which demonstrates how to
+create an attribute trait.
+
+<span class="synStatement">=head1</span><span class="synString"> UNIMPORTING FUNCTIONS</span>
+
+<span class="synStatement">=head2</span><span class="synString"> </span><span class="synIdentifier">B&lt;unimport&gt;</span>
+
+Moose offers a way to remove the keywords it exports, through the <span class="synIdentifier">C&lt;unimport&gt;</span>
+method. You simply have to say <span class="synIdentifier">C&lt;no Moose&gt;</span> at the bottom of your code for this
+to work. Here is an example:
+
+<span class="synPreProc">    package Person;</span>
+<span class="synPreProc">    use Moose;</span>
+
+<span class="synPreProc">    has 'first_name' =&gt; (is =&gt; 'rw', isa =&gt; 'Str');</span>
+<span class="synPreProc">    has 'last_name'  =&gt; (is =&gt; 'rw', isa =&gt; 'Str');</span>
+
+<span class="synPreProc">    sub full_name {</span>
+<span class="synPreProc">        my $self = shift;</span>
+<span class="synPreProc">        $self-&gt;first_name . ' ' . $self-&gt;last_name</span>
+<span class="synPreProc">    }</span>
+
+<span class="synPreProc">    no Moose; # keywords are removed from the Person package</span>
+
+<span class="synStatement">=head1</span><span class="synString"> EXTENDING AND EMBEDDING MOOSE</span>
+
+To learn more about extending Moose, we recommend checking out the
+&quot;Extending&quot; recipes in the <span class="synIdentifier">L&lt;Moose::Cookbook&gt;</span>, starting with
+<span class="synIdentifier">L&lt;Moose::Cookbook::Extending::ExtensionOverview&gt;</span>, which provides an overview of
+all the different ways you might extend Moose. <span class="synIdentifier">L&lt;Moose::Exporter&gt;</span> and
+<span class="synIdentifier">L&lt;Moose::Util::MetaRole&gt;</span> are the modules which provide the majority of the
+extension functionality, so reading their documentation should also be helpful.
+
+<span class="synStatement">=head2</span><span class="synString"> The MooseX:: namespace</span>
+
+Generally if you're writing an extension <span class="synIdentifier">I&lt;for&gt;</span> Moose itself you'll want
+to put your extension in the <span class="synIdentifier">C&lt;MooseX::&gt;</span> namespace. This namespace is
+specifically for extensions that make Moose better or different in some
+fundamental way. It is traditionally <span class="synIdentifier">B&lt;not&gt;</span> for a package that just happens
+to use Moose. This namespace follows from the examples of the <span class="synIdentifier">C&lt;LWPx::&gt;</span>
+and <span class="synIdentifier">C&lt;DBIx::&gt;</span> namespaces that perform the same function for <span class="synIdentifier">C&lt;LWP&gt;</span> and <span class="synIdentifier">C&lt;DBI&gt;</span>
+respectively.
+
+<span class="synStatement">=head1</span><span class="synString"> METACLASS COMPATIBILITY AND MOOSE</span>
+
+Metaclass compatibility is a thorny subject. You should start by
+reading the &quot;About Metaclass compatibility&quot; section in the
+<span class="synIdentifier">C&lt;Class::MOP&gt;</span> docs.
+
+Moose will attempt to resolve a few cases of metaclass incompatibility
+when you set the superclasses for a class, in addition to the cases that
+<span class="synIdentifier">C&lt;Class::MOP&gt;</span> handles.
+
+Moose tries to determine if the metaclasses only &quot;differ by roles&quot;. This
+means that the parent and child's metaclass share a common ancestor in
+their respective hierarchies, and that the subclasses under the common
+ancestor are only different because of role applications. This case is
+actually fairly common when you mix and match various <span class="synIdentifier">C&lt;MooseX::*&gt;</span>
+modules, many of which apply roles to the metaclass.
+
+If the parent and child do differ by roles, Moose replaces the
+metaclass in the child with a newly created metaclass. This metaclass
+is a subclass of the parent's metaclass which does all of the roles that
+the child's metaclass did before being replaced. Effectively, this
+means the new metaclass does all of the roles done by both the
+parent's and child's original metaclasses.
+
+Ultimately, this is all transparent to you except in the case of an
+unresolvable conflict.
+
+<span class="synStatement">=head1</span><span class="synString"> CAVEATS</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> *</span>
+
+It should be noted that <span class="synIdentifier">C&lt;super&gt;</span> and <span class="synIdentifier">C&lt;inner&gt;</span> <span class="synIdentifier">B&lt;cannot&gt;</span> be used in the same
+method. However, they may be combined within the same class hierarchy; see
+<span class="synIdentifier">F&lt;t/basics/override_augment_inner_super.t&gt;</span> for an example.
+
+The reason for this is that <span class="synIdentifier">C&lt;super&gt;</span> is only valid within a method
+with the <span class="synIdentifier">C&lt;override&gt;</span> modifier, and <span class="synIdentifier">C&lt;inner&gt;</span> will never be valid within an
+<span class="synIdentifier">C&lt;override&gt;</span> method. In fact, <span class="synIdentifier">C&lt;augment&gt;</span> will skip over any <span class="synIdentifier">C&lt;override&gt;</span> methods
+when searching for its appropriate <span class="synIdentifier">C&lt;inner&gt;</span>.
+
+This might seem like a restriction, but I am of the opinion that keeping these
+two features separate (yet interoperable) actually makes them easy to use, since
+their behavior is then easier to predict. Time will tell whether I am right or
+not (UPDATE: so far so good).
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> GETTING HELP</span>
+
+We offer both a mailing list and a very active IRC channel.
+
+The mailing list is <span class="synIdentifier">L&lt;mailto:moose@perl.org&gt;</span>. You must be subscribed to send
+a message. To subscribe, send an empty message to
+<span class="synIdentifier">L&lt;mailto:moose-subscribe@perl.org&gt;</span>
+
+You can also visit us at <span class="synIdentifier">C&lt;#moose&gt;</span> on <span class="synIdentifier">L&lt;irc://irc.perl.org/#moose&gt;</span>
+This channel is quite active, and questions at all levels (on Moose-related
+topics ;) are welcome.
+
+<span class="synStatement">=head1</span><span class="synString"> WHAT DOES MOOSE STAND FOR?</span>
+
+Moose doesn't stand for one thing in particular, however, if you want, here
+are a few of our favorites. Feel free to contribute more!
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Make Other Object Systems Envious</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Makes Object Orientation So Easy</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Makes Object Orientation Spiffy- Er (sorry ingy)</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Most Other Object Systems Emasculate</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Moose Often Ovulate Sorta Early</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Moose Offers Often Super Extensions</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Meta Object Obligates Salivary Excitation</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Meta Object Orientation Syntax Extensions</span>
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> ACKNOWLEDGEMENTS</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> I blame Sam Vilain for introducing me to the insanity that is meta-models.</span>
+
+<span class="synStatement">=item</span><span class="synString"> I blame Audrey Tang for then encouraging my meta-model habit in #perl6.</span>
+
+<span class="synStatement">=item</span><span class="synString"> Without Yuval &quot;nothingmuch&quot; Kogman this module would not be possible,</span>
+and it certainly wouldn't have this name ;P
+
+<span class="synStatement">=item</span><span class="synString"> The basis of the TypeContraints module was Rob Kinyon's idea</span>
+originally, I just ran with it.
+
+<span class="synStatement">=item</span><span class="synString"> Thanks to mst &amp; chansen and the whole #moose posse for all the</span>
+early ideas/feature-requests/encouragement/bug-finding.
+
+<span class="synStatement">=item</span><span class="synString"> Thanks to David &quot;Theory&quot; Wheeler for meta-discussions and spelling fixes.</span>
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> SEE ALSO</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">L&lt;http://www.iinteractive.com/moose&gt;</span>
+
+This is the official web home of Moose. It contains links to our public git
+repository, as well as links to a number of talks and articles on Moose and
+Moose related technologies.
+
+<span class="synStatement">=item</span><span class="synString"> the </span><span class="synIdentifier">L&lt;Moose manual|Moose::Manual&gt;</span>
+
+This is an introduction to Moose which covers most of the basics.
+
+<span class="synStatement">=item</span><span class="synString"> Modern Perl, by chromatic</span>
+
+This is an introduction to modern Perl programming, which includes a section on
+Moose. It is available in print and as a free download from
+<span class="synIdentifier">L&lt;http://onyxneon.com/books/modern_perl/&gt;</span>.
+
+<span class="synStatement">=item</span><span class="synString"> The Moose is flying, a tutorial by Randal Schwartz</span>
+
+Part 1 - <span class="synIdentifier">L&lt;http://www.stonehenge.com/merlyn/LinuxMag/col94.html&gt;</span>
+
+Part 2 - <span class="synIdentifier">L&lt;http://www.stonehenge.com/merlyn/LinuxMag/col95.html&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> Several Moose extension modules in the </span><span class="synIdentifier">C&lt;MooseX::&gt;</span><span class="synString"> namespace.</span>
+
+See <span class="synIdentifier">L&lt;http://search.cpan.org/search?query=MooseX::&gt;</span> for extensions.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head2</span><span class="synString"> Books</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> The Art of the MetaObject Protocol</span>
+
+I mention this in the <span class="synIdentifier">L&lt;Class::MOP&gt;</span> docs too, as this book was critical in
+the development of both modules and is highly recommended.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head2</span><span class="synString"> Papers</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">L&lt;http://www.cs.utah.edu/plt/publications/oopsla04-gff.pdf&gt;</span>
+
+This paper (suggested by lbr on #moose) was what lead to the implementation
+of the <span class="synIdentifier">C&lt;super&gt;</span>/<span class="synIdentifier">C&lt;override&gt;</span> and <span class="synIdentifier">C&lt;inner&gt;</span>/<span class="synIdentifier">C&lt;augment&gt;</span> features. If you really
+want to understand them, I suggest you read this.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> BUGS</span>
+
+All complex software has bugs lurking in it, and this module is no
+exception.
+
+Please report any bugs to <span class="synIdentifier">C&lt;bug-moose@rt.cpan.org&gt;</span>, or through the web
+interface at <span class="synIdentifier">L&lt;http://rt.cpan.org&gt;</span>.
+
+You can also discuss feature requests or possible bugs on the Moose mailing
+list (moose<span class="synIdentifier">@perl</span>.org) or on IRC at <span class="synIdentifier">L&lt;irc://irc.perl.org/#moose&gt;</span>.
+
+<span class="synStatement">=head1</span><span class="synString"> FEATURE REQUESTS</span>
+
+We are very strict about what features we add to the Moose core, especially
+the user-visible features. Instead we have made sure that the underlying
+meta-system of Moose is as extensible as possible so that you can add your
+own features easily.
+
+That said, occasionally there is a feature needed in the meta-system
+to support your planned extension, in which case you should either
+email the mailing list (moose<span class="synIdentifier">@perl</span>.org) or join us on IRC at
+<span class="synIdentifier">L&lt;irc://irc.perl.org/#moose&gt;</span> to discuss. The
+<span class="synIdentifier">L&lt;Moose::Manual::Contributing&gt;</span> has more detail about how and when you
+can contribute.
+
+<span class="synStatement">=head1</span><span class="synString"> CABAL</span>
+
+There are only a few people with the rights to release a new version
+of Moose. The Moose Cabal are the people to go to with questions regarding
+the wider purview of Moose. They help maintain not just the code
+but the community as well.
+
+Stevan (stevan) Little <span class="synIdentifier">E&lt;</span><span class="synString">lt</span><span class="synIdentifier">&gt;</span>stevan<span class="synIdentifier">@iinteractive</span>.com<span class="synIdentifier">E&lt;</span><span class="synString">gt</span><span class="synIdentifier">&gt;</span>
+
+Jesse (doy) Luehrs <span class="synIdentifier">E&lt;</span><span class="synString">lt</span><span class="synIdentifier">&gt;</span>doy at tozt dot net<span class="synIdentifier">E&lt;</span><span class="synString">gt</span><span class="synIdentifier">&gt;</span>
+
+Yuval (nothingmuch) Kogman
+
+Shawn (sartak) Moore <span class="synIdentifier">E&lt;</span><span class="synString">lt</span><span class="synIdentifier">&gt;</span>sartak<span class="synIdentifier">@bestpractical</span>.com<span class="synIdentifier">E&lt;</span><span class="synString">gt</span><span class="synIdentifier">&gt;</span>
+
+Hans Dieter (confound) Pearcey <span class="synIdentifier">E&lt;</span><span class="synString">lt</span><span class="synIdentifier">&gt;</span>hdp<span class="synIdentifier">@pobox</span>.com<span class="synIdentifier">E&lt;</span><span class="synString">gt</span><span class="synIdentifier">&gt;</span>
+
+Chris (perigrin) Prather
+
+Florian Ragwitz <span class="synIdentifier">E&lt;</span><span class="synString">lt</span><span class="synIdentifier">&gt;</span>rafl<span class="synIdentifier">@debian</span>.org<span class="synIdentifier">E&lt;</span><span class="synString">gt</span><span class="synIdentifier">&gt;</span>
+
+Dave (autarch) Rolsky <span class="synIdentifier">E&lt;</span><span class="synString">lt</span><span class="synIdentifier">&gt;</span>autarch<span class="synIdentifier">@urth</span>.org<span class="synIdentifier">E&lt;</span><span class="synString">gt</span><span class="synIdentifier">&gt;</span>
+
+Karen (ether) Etheridge <span class="synIdentifier">E&lt;</span><span class="synString">lt</span><span class="synIdentifier">&gt;</span>ether<span class="synIdentifier">@cpan</span>.org<span class="synIdentifier">E&lt;</span><span class="synString">gt</span><span class="synIdentifier">&gt;</span>
+
+<span class="synStatement">=head1</span><span class="synString"> CONTRIBUTORS</span>
+
+Moose is a community project, and as such, involves the work of many, many
+members of the community beyond just the members in the cabal. In particular:
+
+Dave (autarch) Rolsky wrote most of the documentation in <span class="synIdentifier">L&lt;Moose::Manual&gt;</span>.
+
+John (jgoulah) Goulah wrote <span class="synIdentifier">L&lt;Moose::Cookbook::Snack::Keywords&gt;</span>.
+
+Jess (castaway) Robinson wrote <span class="synIdentifier">L&lt;Moose::Cookbook::Snack::Types&gt;</span>.
+
+Aran (bluefeet) Clary Deltac wrote
+<span class="synIdentifier">L&lt;Moose::Cookbook::Basics::Genome_OverloadingSubtypesAndCoercion&gt;</span>.
+
+Anders (Debolaz) Nor Berle contributed <span class="synIdentifier">L&lt;Test::Moose&gt;</span> and <span class="synIdentifier">L&lt;Moose::Util&gt;</span>.
+
+Also, the code in <span class="synIdentifier">L&lt;Moose::Meta::Attribute::Native&gt;</span> is based on code from the
+<span class="synIdentifier">L&lt;MooseX::AttributeHelpers&gt;</span> distribution, which had contributions from:
+
+Chris (perigrin) Prather
+
+Cory (gphat) Watson
+
+Evan Carroll
+
+Florian (rafl) Ragwitz
+
+Jason May
+
+Jay Hannah
+
+Jesse (doy) Luehrs
+
+Paul (frodwith) Driver
+
+Robert (rlb3) Boone
+
+Robert Buels
+
+Robert (phaylon) Sedlacek
+
+Shawn (Sartak) Moore
+
+Stevan Little
+
+Tom (dec) Lanyon
+
+Yuval Kogman
+
+Finally, these people also contributed various tests, bug fixes,
+documentation, and features to the Moose codebase:
+
+Aankhen
+
+Adam (Alias) Kennedy
+
+Christian (chansen) Hansen
+
+Cory (gphat) Watson
+
+Dylan Hardison (doc fixes)
+
+Eric (ewilhelm) Wilhelm
+
+Evan Carroll
+
+Guillermo (groditi) Roditi
+
+Jason May
+
+Jay Hannah
+
+Jonathan (jrockway) Rockway
+
+Matt (mst) Trout
+
+Nathan (kolibrie) Gray
+
+Paul (frodwith) Driver
+
+Piotr (dexter) Roszatycki
+
+Robert Buels
+
+Robert (phaylon) Sedlacek
+
+Robert (rlb3) Boone
+
+Sam (mugwump) Vilain
+
+Scott (konobi) McWhirter
+
+Shlomi (rindolf) Fish
+
+Tom (dec) Lanyon
+
+Wallace (wreis) Reis
+
+... and many other #moose folks
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

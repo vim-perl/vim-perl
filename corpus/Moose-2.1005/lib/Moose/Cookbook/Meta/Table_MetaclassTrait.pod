@@ -1,0 +1,113 @@
+package Moose::Cookbook::Meta::Table_MetaclassTrait;
+
+# ABSTRACT: Adding a "table" attribute as a metaclass trait
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Moose::Cookbook::Meta::Table_MetaclassTrait - Adding a "table" attribute as a metaclass trait
+
+=head1 VERSION
+
+version 2.1005
+
+=head1 SYNOPSIS
+
+  # in lib/MyApp/Meta/Class/Trait/HasTable.pm
+  package MyApp::Meta::Class::Trait::HasTable;
+  use Moose::Role;
+  Moose::Util::meta_class_alias('HasTable');
+
+  has table => (
+      is  => 'rw',
+      isa => 'Str',
+  );
+
+  # in lib/MyApp/User.pm
+  package MyApp::User;
+  use Moose -traits => 'HasTable';
+
+  __PACKAGE__->meta->table('User');
+
+=head1 DESCRIPTION
+
+In this recipe, we'll create a class metaclass trait which has a "table"
+attribute. This trait is for classes associated with a DBMS table, as one
+might do for an ORM.
+
+In this example, the table name is just a string, but in a real ORM
+the table might be an object describing the table.
+
+=begin testing-SETUP
+
+BEGIN {
+  package MyApp::Meta::Class::Trait::HasTable;
+  use Moose::Role;
+  Moose::Util::meta_class_alias('HasTable');
+
+  has table => (
+      is  => 'rw',
+      isa => 'Str',
+  );
+}
+
+=end testing-SETUP
+
+=head1 THE METACLASS TRAIT
+
+This really is as simple as the recipe L</SYNOPSIS> shows. The trick is
+getting your classes to use this metaclass, and providing some sort of sugar
+for declaring the table. This is covered in
+L<Moose::Cookbook::Extending::Debugging_BaseClassRole>, which shows how to
+make a module like C<Moose.pm> itself, with sugar like C<has_table()>.
+
+=head2 Using this Metaclass Trait in Practice
+
+Accessing this new C<table> attribute is quite simple. Given a class
+named C<MyApp::User>, we could simply write the following:
+
+  my $table = MyApp::User->meta->table;
+
+As long as C<MyApp::User> has arranged to apply the
+C<MyApp::Meta::Class::Trait::HasTable> to its metaclass, this method call just
+works. If we want to be more careful, we can check that the class metaclass
+object has a C<table> method:
+
+  $table = MyApp::User->meta->table
+      if MyApp::User->meta->can('table');
+
+In theory, this is not entirely correct, since the metaclass might be getting
+its C<table> method from a I<different> trait. In practice, you are unlikely
+to encounter this sort of problem.
+
+=head1 RECIPE CAVEAT
+
+This recipe doesn't work when you paste it all into a single file. This is
+because the C<< use Moose -traits => 'HasTable'; >> line ends up being
+executed before the C<table> attribute is defined.
+
+When the two packages are separate files, this just works.
+
+=head1 SEE ALSO
+
+L<Moose::Cookbook::Meta::Labeled_AttributeTrait> - Labels implemented via
+attribute traits
+
+=for testing can_ok( MyApp::User->meta, 'table' );
+is( MyApp::User->meta->table, 'User', 'My::User table is User' );
+
+=head1 AUTHOR
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See L<Moose/CABAL> and L<Moose/CONTRIBUTORS> for details.
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut

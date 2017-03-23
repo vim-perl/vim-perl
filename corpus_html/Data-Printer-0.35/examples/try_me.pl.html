@@ -1,0 +1,51 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synPreProc">#!/usr/bin/env perl</span>
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+<span class="synStatement">use </span>Scalar::Util <span class="synString">qw(weaken)</span>;
+
+<span class="synComment"># This sample code is available to you so you</span>
+<span class="synComment"># can see Data::Printer working out of the box.</span>
+<span class="synComment"># It can be used as a quick way to test your</span>
+<span class="synComment"># color palette scheme!</span>
+
+<span class="synStatement">package</span><span class="synType"> My::SampleClass</span>;
+<span class="synKeyword">sub </span><span class="synFunction">new </span>{ <span class="synOperator">bless</span> {}, <span class="synStatement">shift</span> }
+<span class="synKeyword">sub </span><span class="synFunction">public_method </span>{ <span class="synNumber">42</span> }
+<span class="synKeyword">sub </span><span class="synFunction">_private_method </span>{ <span class="synString">'sample'</span> }
+
+
+<span class="synStatement">package</span><span class="synType"> main</span>;
+
+<span class="synStatement">my</span> <span class="synIdentifier">$obj</span> = My::SampleClass-&gt;new;
+
+<span class="synStatement">my</span> <span class="synIdentifier">%sample</span> = (
+  <span class="synString">number</span> =&gt; <span class="synFloat">123.456</span>,
+  <span class="synString">string</span> =&gt; <span class="synString">'a string'</span>,
+  <span class="synString">array</span>  =&gt; [ <span class="synString">&quot;foo</span><span class="synSpecial">\0</span><span class="synString">has</span><span class="synSpecial">\t</span><span class="synString">escapes&quot;</span>, <span class="synNumber">6</span>, <span class="synOperator">undef</span> ],
+  <span class="synString">hash</span>   =&gt; {
+    <span class="synString">foo</span> =&gt; <span class="synString">'bar'</span>,
+    <span class="synString">baz</span> =&gt; <span class="synNumber">789</span>,
+  },
+  <span class="synString">regexp</span> =&gt; <span class="synString">qr/foo</span><span class="synSpecial">.*</span><span class="synString">bar/i</span>,
+  <span class="synString">glob</span>   =&gt; \*STDOUT,
+  <span class="synString">code</span>   =&gt; <span class="synKeyword">sub </span>{ <span class="synStatement">return</span> <span class="synNumber">42</span> },
+  <span class="synString">class</span>  =&gt; <span class="synIdentifier">$obj</span>,
+);
+
+<span class="synIdentifier">$sample{</span><span class="synString">ref</span><span class="synIdentifier">}</span> = \<span class="synIdentifier">%sample</span>;
+weaken <span class="synIdentifier">$sample{</span><span class="synString">ref</span><span class="synIdentifier">}</span>;
+
+<span class="synStatement">use </span>DDP; p <span class="synIdentifier">%sample</span>;
+
+</pre>
+
+ </body>
+</html>

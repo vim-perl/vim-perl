@@ -1,0 +1,39 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synPreProc">#!perl -w</span>
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use </span>Benchmark <span class="synString">qw(:all)</span>;
+
+<span class="synStatement">my</span> ( <span class="synIdentifier">$count</span>, <span class="synIdentifier">$module</span> ) = <span class="synIdentifier">@ARGV</span>;
+<span class="synIdentifier">$count</span>  ||= <span class="synNumber">10</span>;
+<span class="synIdentifier">$module</span> ||= <span class="synString">'Moose'</span>;
+
+<span class="synStatement">my</span> <span class="synIdentifier">@blib</span>
+    = <span class="synString">qw(-Iblib/lib -Iblib/arch -I../Moose/blib/lib -I../Moose/blib/arch -I../Moose/lib)</span>;
+
+<span class="synIdentifier">$|</span> = <span class="synNumber">1</span>;    <span class="synComment"># autoflush</span>
+
+<span class="synStatement">print</span> <span class="synString">'Installed: '</span>;
+<span class="synStatement">system</span> <span class="synIdentifier">$^X</span>, <span class="synString">'-le'</span>, <span class="synString">'require Moose; print $INC{q{Moose.pm}}'</span>;
+
+<span class="synStatement">print</span> <span class="synString">'Blead:     '</span>;
+<span class="synStatement">system</span> <span class="synIdentifier">$^X</span>, <span class="synIdentifier">@blib</span>, <span class="synString">'-le'</span>, <span class="synString">'require Moose; print $INC{q{Moose.pm}}'</span>;
+
+cmpthese timethese <span class="synIdentifier">$count</span> =&gt; {
+    <span class="synString">released</span> =&gt; <span class="synKeyword">sub </span>{
+        <span class="synStatement">system</span>( <span class="synIdentifier">$^X</span>, <span class="synString">'-e'</span>, <span class="synString">&quot;require </span><span class="synIdentifier">$module</span><span class="synString">&quot;</span> ) == <span class="synNumber">0</span> <span class="synOperator">or</span> <span class="synStatement">die</span>;
+    },
+    <span class="synString">blead</span> =&gt; <span class="synKeyword">sub </span>{
+        <span class="synStatement">system</span>( <span class="synIdentifier">$^X</span>, <span class="synIdentifier">@blib</span>, <span class="synString">'-e'</span>, <span class="synString">&quot;require </span><span class="synIdentifier">$module</span><span class="synString">&quot;</span> ) == <span class="synNumber">0</span> <span class="synOperator">or</span> <span class="synStatement">die</span>;
+    },
+};
+</pre>
+
+ </body>
+</html>

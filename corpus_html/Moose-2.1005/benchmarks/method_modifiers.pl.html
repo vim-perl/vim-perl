@@ -1,0 +1,129 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synPreProc">#!perl</span>
+
+<span class="synComment">### MODULES</span>
+
+{
+    <span class="synStatement">package</span><span class="synType"> PlainParent</span>;
+    <span class="synKeyword">sub </span><span class="synFunction">new </span>{ <span class="synOperator">bless</span> {} =&gt; <span class="synStatement">shift</span> }
+    <span class="synKeyword">sub </span><span class="synFunction">method </span>{ <span class="synString">&quot;P&quot;</span> }
+}
+{
+    <span class="synStatement">package</span><span class="synType"> MooseParent</span>;
+    <span class="synStatement">use </span>Moose;
+    <span class="synKeyword">sub </span><span class="synFunction">method </span>{ <span class="synString">&quot;P&quot;</span> }
+}
+
+{
+    <span class="synStatement">package</span><span class="synType"> CMMChild::Before</span>;
+    <span class="synStatement">use </span>Class::Method::Modifiers;
+    <span class="synStatement">use base</span> <span class="synString">'PlainParent'</span>;
+
+    before <span class="synString">method</span> =&gt; <span class="synKeyword">sub </span>{ <span class="synString">&quot;B&quot;</span> };
+}
+{
+    <span class="synStatement">package</span><span class="synType"> MooseBefore</span>;
+    <span class="synStatement">use </span>Moose;
+    extends <span class="synString">'MooseParent'</span>;
+
+    before <span class="synString">method</span> =&gt; <span class="synKeyword">sub </span>{ <span class="synString">&quot;B&quot;</span> };
+}
+
+{
+    <span class="synStatement">package</span><span class="synType"> CMMChild::Around</span>;
+    <span class="synStatement">use </span>Class::Method::Modifiers;
+    <span class="synStatement">use base</span> <span class="synString">'PlainParent'</span>;
+
+    around <span class="synString">method</span> =&gt; <span class="synKeyword">sub </span>{ <span class="synStatement">shift</span>-&gt;() . <span class="synString">&quot;A&quot;</span> };
+}
+{
+    <span class="synStatement">package</span><span class="synType"> MooseAround</span>;
+    <span class="synStatement">use </span>Moose;
+    extends <span class="synString">'MooseParent'</span>;
+
+    around <span class="synString">method</span> =&gt; <span class="synKeyword">sub </span>{ <span class="synStatement">shift</span>-&gt;() . <span class="synString">&quot;A&quot;</span> };
+}
+
+{
+    <span class="synStatement">package</span><span class="synType"> CMMChild::AllThree</span>;
+    <span class="synStatement">use </span>Class::Method::Modifiers;
+    <span class="synStatement">use base</span> <span class="synString">'PlainParent'</span>;
+
+    before <span class="synString">method</span> =&gt; <span class="synKeyword">sub </span>{ <span class="synString">&quot;B&quot;</span> };
+    around <span class="synString">method</span> =&gt; <span class="synKeyword">sub </span>{ <span class="synStatement">shift</span>-&gt;() . <span class="synString">&quot;A&quot;</span> };
+    after  <span class="synString">method</span> =&gt; <span class="synKeyword">sub </span>{ <span class="synString">&quot;Z&quot;</span> };
+}
+{
+    <span class="synStatement">package</span><span class="synType"> MooseAllThree</span>;
+    <span class="synStatement">use </span>Moose;
+    extends <span class="synString">'MooseParent'</span>;
+
+    before <span class="synString">method</span> =&gt; <span class="synKeyword">sub </span>{ <span class="synString">&quot;B&quot;</span> };
+    around <span class="synString">method</span> =&gt; <span class="synKeyword">sub </span>{ <span class="synStatement">shift</span>-&gt;() . <span class="synString">&quot;A&quot;</span> };
+    after  <span class="synString">method</span> =&gt; <span class="synKeyword">sub </span>{ <span class="synString">&quot;Z&quot;</span> };
+}
+{
+    <span class="synStatement">package</span><span class="synType"> CMM::Install</span>;
+    <span class="synStatement">use </span>Class::Method::Modifiers;
+    <span class="synStatement">use base</span> <span class="synString">'PlainParent'</span>;
+}
+{
+    <span class="synStatement">package</span><span class="synType"> Moose::Install</span>;
+    <span class="synStatement">use </span>Moose;
+    extends <span class="synString">'MooseParent'</span>;
+}
+
+<span class="synStatement">use </span>Benchmark <span class="synString">qw(cmpthese)</span>;
+<span class="synStatement">use </span>Benchmark <span class="synString">':hireswallclock'</span>;
+
+<span class="synStatement">my</span> <span class="synIdentifier">$rounds</span> = -<span class="synNumber">5</span>;
+
+<span class="synStatement">my</span> <span class="synIdentifier">$cmm_before</span>   = CMMChild::Before-&gt;new();
+<span class="synStatement">my</span> <span class="synIdentifier">$cmm_around</span>   = CMMChild::Around-&gt;new();
+<span class="synStatement">my</span> <span class="synIdentifier">$cmm_allthree</span> = CMMChild::AllThree-&gt;new();
+
+<span class="synStatement">my</span> <span class="synIdentifier">$moose_before</span>   = MooseBefore-&gt;new();
+<span class="synStatement">my</span> <span class="synIdentifier">$moose_around</span>   = MooseAround-&gt;new();
+<span class="synStatement">my</span> <span class="synIdentifier">$moose_allthree</span> = MooseAllThree-&gt;new();
+
+<span class="synStatement">print</span> <span class="synString">&quot;</span><span class="synSpecial">\n</span><span class="synString">BEFORE</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+cmpthese(<span class="synIdentifier">$rounds</span>, {
+    <span class="synString">Moose</span>                       =&gt; <span class="synKeyword">sub </span>{ <span class="synIdentifier">$moose_before-&gt;method</span>() },
+    <span class="synString">ClassMethodModifiers</span>        =&gt; <span class="synKeyword">sub </span>{ <span class="synIdentifier">$cmm_before-&gt;method</span>() },
+}, <span class="synString">'noc'</span>);
+
+<span class="synStatement">print</span> <span class="synString">&quot;</span><span class="synSpecial">\n</span><span class="synString">AROUND</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+cmpthese(<span class="synIdentifier">$rounds</span>, {
+    <span class="synString">Moose</span>                       =&gt; <span class="synKeyword">sub </span>{ <span class="synIdentifier">$moose_around-&gt;method</span>() },
+    <span class="synString">ClassMethodModifiers</span>        =&gt; <span class="synKeyword">sub </span>{ <span class="synIdentifier">$cmm_around-&gt;method</span>() },
+}, <span class="synString">'noc'</span>);
+
+<span class="synStatement">print</span> <span class="synString">&quot;</span><span class="synSpecial">\n</span><span class="synString">ALL THREE</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+cmpthese(<span class="synIdentifier">$rounds</span>, {
+    <span class="synString">Moose</span>                       =&gt; <span class="synKeyword">sub </span>{ <span class="synIdentifier">$moose_allthree-&gt;method</span>() },
+    <span class="synString">ClassMethodModifiers</span>        =&gt; <span class="synKeyword">sub </span>{ <span class="synIdentifier">$cmm_allthree-&gt;method</span>() },
+}, <span class="synString">'noc'</span>);
+
+<span class="synStatement">print</span> <span class="synString">&quot;</span><span class="synSpecial">\n</span><span class="synString">INSTALL AROUND</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+cmpthese(<span class="synIdentifier">$rounds</span>, {
+    <span class="synString">Moose</span>                       =&gt; <span class="synKeyword">sub </span>{
+        <span class="synStatement">package</span><span class="synType"> Moose::Install</span>;
+        Moose::Install::around(<span class="synString">method</span> =&gt; <span class="synKeyword">sub </span>{});
+    },
+    <span class="synString">ClassMethodModifiers</span>        =&gt; <span class="synKeyword">sub </span>{
+        <span class="synStatement">package</span><span class="synType"> CMM::Install</span>;
+        CMM::Install::around(<span class="synString">method</span> =&gt; <span class="synKeyword">sub </span>{});
+    },
+}, <span class="synString">'noc'</span>);
+
+</pre>
+
+ </body>
+</html>

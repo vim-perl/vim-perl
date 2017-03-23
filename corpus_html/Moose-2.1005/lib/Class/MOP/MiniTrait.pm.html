@@ -1,0 +1,85 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Class::MOP::MiniTrait</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Class::MOP::MiniTrait::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Class::MOP::MiniTrait::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Class::Load <span class="synString">qw(load_class)</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">apply </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$to_class</span>, <span class="synIdentifier">$trait</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synRepeat">for</span> ( <span class="synStatement">grep</span> <span class="synStatement">{</span> !<span class="synOperator">ref</span> <span class="synStatement">}</span> <span class="synIdentifier">$to_class</span>, <span class="synIdentifier">$trait</span> ) {
+        load_class(<span class="synIdentifier">$_</span>);
+        <span class="synIdentifier">$_</span> = Class::MOP::Class-&gt;initialize(<span class="synIdentifier">$_</span>);
+    }
+
+    <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$meth</span> ( <span class="synStatement">grep</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;package_name</span> <span class="synOperator">ne</span> <span class="synString">'UNIVERSAL'</span> <span class="synStatement">}</span> <span class="synIdentifier">$trait-&gt;get_all_methods</span> ) {
+        <span class="synStatement">my</span> <span class="synIdentifier">$meth_name</span> = <span class="synIdentifier">$meth-&gt;name</span>;
+
+        <span class="synConditional">if</span> ( <span class="synIdentifier">$to_class-&gt;find_method_by_name</span>(<span class="synIdentifier">$meth_name</span>) ) {
+            <span class="synIdentifier">$to_class-&gt;add_around_method_modifier</span>( <span class="synIdentifier">$meth_name</span>, <span class="synIdentifier">$meth-&gt;body</span> );
+        }
+        <span class="synConditional">else</span> {
+            <span class="synIdentifier">$to_class-&gt;add_method</span>( <span class="synIdentifier">$meth_name</span>, <span class="synIdentifier">$meth-&gt;clone</span> );
+        }
+    }
+}
+
+<span class="synComment"># We can't load this with use, since it may be loaded and used from Class::MOP</span>
+<span class="synComment"># (via CMOP::Class, etc). However, if for some reason this module is loaded</span>
+<span class="synComment"># _without_ first loading Class::MOP we need to require Class::MOP so we can</span>
+<span class="synComment"># use it and CMOP::Class.</span>
+<span class="synStatement">require</span> Class::MOP;
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: Extremely limited trait application</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Class::MOP::MiniTrait - Extremely limited trait application
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This package provides a single function, <span class="synIdentifier">C&lt;apply&gt;</span>, which does a half-assed job
+of applying a trait to a class. It exists solely for use inside Class::MOP and
+<span class="synIdentifier">L&lt;Moose&gt;</span> core classes.
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

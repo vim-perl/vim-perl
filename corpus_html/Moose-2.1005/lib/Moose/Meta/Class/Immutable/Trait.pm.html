@@ -1,0 +1,94 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Moose::Meta::Class::Immutable::Trait</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Class::Immutable::Trait::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Class::Immutable::Trait::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Class::MOP;
+<span class="synStatement">use </span>Scalar::Util <span class="synString">qw( blessed )</span>;
+
+<span class="synStatement">use base</span> <span class="synString">'Class::MOP::Class::Immutable::Trait'</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">add_role </span>{ <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]-&gt;_immutable_cannot_call</span> }
+
+<span class="synKeyword">sub </span><span class="synFunction">calculate_all_roles </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$orig</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synIdentifier">@{</span> <span class="synIdentifier">$self-&gt;{</span><span class="synString">__immutable</span><span class="synIdentifier">}{</span><span class="synString">calculate_all_roles</span><span class="synIdentifier">}</span> ||= [ <span class="synIdentifier">$self-&gt;$orig</span> ] <span class="synIdentifier">}</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">calculate_all_roles_with_inheritance </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$orig</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synIdentifier">@{</span> <span class="synIdentifier">$self-&gt;{</span><span class="synString">__immutable</span><span class="synIdentifier">}{</span><span class="synString">calculate_all_roles_with_inheritance</span><span class="synIdentifier">}</span> ||= [ <span class="synIdentifier">$self-&gt;$orig</span> ] <span class="synIdentifier">}</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">does_role </span>{
+    <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$role</span> = <span class="synStatement">shift</span>;
+
+    (<span class="synOperator">defined</span> <span class="synIdentifier">$role</span>)
+        || <span class="synIdentifier">$self-&gt;throw_error</span>(<span class="synString">&quot;You must supply a role name to look for&quot;</span>);
+
+    <span class="synIdentifier">$self-&gt;{</span><span class="synString">__immutable</span><span class="synIdentifier">}{</span><span class="synString">does_role</span><span class="synIdentifier">}</span> ||= { <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;name</span> =&gt; <span class="synNumber">1</span> <span class="synStatement">}</span> <span class="synIdentifier">$self-&gt;calculate_all_roles_with_inheritance</span> };
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$name</span> = blessed <span class="synIdentifier">$role</span> ? <span class="synIdentifier">$role-&gt;name</span> : <span class="synIdentifier">$role</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;{</span><span class="synString">__immutable</span><span class="synIdentifier">}{</span><span class="synString">does_role</span><span class="synIdentifier">}{$name}</span>;
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: Implements immutability for metaclass objects</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Moose::Meta::Class::Immutable::Trait - Implements immutability for metaclass objects
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This class makes some Moose-specific metaclass methods immutable. This
+is deep guts.
+
+<span class="synStatement">=head1</span><span class="synString"> BUGS</span>
+
+See <span class="synIdentifier">L&lt;Moose/BUGS&gt;</span> for details on reporting bugs.
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

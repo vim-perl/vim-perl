@@ -1,0 +1,141 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre>
+<span class="synStatement">package</span><span class="synType"> Class::MOP::Method::Meta</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Class::MOP::Method::Meta::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Class::MOP::Method::Meta::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Carp         <span class="synString">'confess'</span>;
+<span class="synStatement">use </span>Scalar::Util <span class="synString">'blessed'</span>, <span class="synString">'weaken'</span>;
+
+<span class="synStatement">use constant</span> <span class="synString">DEBUG_NO_META</span> =&gt; <span class="synIdentifier">$ENV{</span><span class="synString">DEBUG_NO_META</span><span class="synIdentifier">}</span> ? <span class="synNumber">1</span> : <span class="synNumber">0</span>;
+
+<span class="synStatement">use base</span> <span class="synString">'Class::MOP::Method'</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">_is_caller_mop_internal </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$caller</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">return</span> <span class="synIdentifier">$caller</span> =~ <span class="synStatement">/</span><span class="synString">^</span><span class="synSpecial">(?:</span><span class="synString">Class::MOP|metaclass</span><span class="synSpecial">)(?:</span><span class="synString">::|$</span><span class="synSpecial">)</span><span class="synStatement">/</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_generate_meta_method </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$method_self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$metaclass</span>   = <span class="synStatement">shift</span>;
+    weaken(<span class="synIdentifier">$metaclass</span>);
+
+    <span class="synKeyword">sub </span>{
+        <span class="synComment"># this will be compiled out if the env var wasn't set</span>
+        <span class="synConditional">if</span> (DEBUG_NO_META) {
+            confess <span class="synString">&quot;'meta' method called by MOP internals&quot;</span>
+                <span class="synComment"># it's okay to call meta methods on metaclasses, since we</span>
+                <span class="synComment"># explicitly ask for them</span>
+                <span class="synConditional">if</span> !<span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;isa</span>(<span class="synString">'Class::MOP::Object'</span>)
+                &amp;&amp; !<span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;isa</span>(<span class="synString">'Class::MOP::Mixin'</span>)
+                <span class="synComment"># it's okay if the test itself calls -&gt;meta, we only care about</span>
+                <span class="synComment"># if the mop internals call -&gt;meta</span>
+                &amp;&amp; <span class="synIdentifier">$method_self-&gt;_is_caller_mop_internal</span>(<span class="synStatement">scalar</span> <span class="synStatement">caller</span>);
+        }
+        <span class="synComment"># we must re-initialize so that it</span>
+        <span class="synComment"># works as expected in subclasses,</span>
+        <span class="synComment"># since metaclass instances are</span>
+        <span class="synComment"># singletons, this is not really a</span>
+        <span class="synComment"># big deal anyway.</span>
+        <span class="synIdentifier">$metaclass-&gt;initialize</span>(blessed(<span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>) || <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>)
+    };
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">wrap </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$class</span>, <span class="synIdentifier">@args</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">unshift</span> <span class="synIdentifier">@args</span>, <span class="synString">'body'</span> <span class="synConditional">if</span> <span class="synIdentifier">@args</span> % <span class="synNumber">2</span> == <span class="synNumber">1</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">%params</span> = <span class="synIdentifier">@args</span>;
+    confess <span class="synString">&quot;Overriding the body of meta methods is not allowed&quot;</span>
+        <span class="synConditional">if</span> <span class="synIdentifier">$params{</span><span class="synString">body</span><span class="synIdentifier">}</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$metaclass_class</span> = <span class="synIdentifier">$params{</span><span class="synString">associated_metaclass</span><span class="synIdentifier">}-&gt;meta</span>;
+    <span class="synIdentifier">$params{</span><span class="synString">body</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$class-&gt;_generate_meta_method</span>(<span class="synIdentifier">$metaclass_class</span>);
+    <span class="synStatement">return</span> <span class="synIdentifier">$class-&gt;SUPER</span>::wrap(<span class="synIdentifier">%params</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_make_compatible_with </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$other</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synComment"># </span><span class="synTodo">XXX:</span><span class="synComment"> this is pretty gross. the issue here is that CMOP::Method::Meta</span>
+    <span class="synComment"># objects are subclasses of CMOP::Method, but when we get to moose, they'll</span>
+    <span class="synComment"># need to be compatible with Moose::Meta::Method, which isn't possible. the</span>
+    <span class="synComment"># right solution here is to make ::Meta into a role that gets applied to</span>
+    <span class="synComment"># whatever the method_metaclass happens to be and get rid of</span>
+    <span class="synComment"># _meta_method_metaclass entirely, but that's not going to happen until</span>
+    <span class="synComment"># we ditch cmop and get roles into the bootstrapping, so. i'm not</span>
+    <span class="synComment"># maintaining the previous behavior of turning them into instances of the</span>
+    <span class="synComment"># new method_metaclass because that's equally broken, and at least this way</span>
+    <span class="synComment"># any issues will at least be detectable and potentially fixable. -doy</span>
+    <span class="synStatement">return</span> <span class="synIdentifier">$self</span> <span class="synConditional">unless</span> <span class="synIdentifier">$other-&gt;_is_compatible_with</span>(<span class="synIdentifier">$self-&gt;_real_ref_name</span>);
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;SUPER</span>::_make_compatible_with(<span class="synIdentifier">@_</span>);
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: Method Meta Object for C&lt;meta&gt; methods</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Class::MOP::Method::Meta - Method Meta Object for <span class="synIdentifier">C&lt;meta&gt;</span> methods
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This is a <span class="synIdentifier">L&lt;Class::MOP::Method&gt;</span> subclass which represents <span class="synIdentifier">C&lt;meta&gt;</span>
+methods installed into classes by Class::MOP.
+
+<span class="synStatement">=head1</span><span class="synString"> METHODS</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; Class::MOP::Method::Wrapped-&gt;wrap($metamethod, %options) &gt;&gt;</span>
+
+This is the constructor. It accepts a <span class="synIdentifier">L&lt;Class::MOP::Method&gt;</span> object and
+a hash of options. The options accepted are identical to the ones
+accepted by <span class="synIdentifier">L&lt;Class::MOP::Method&gt;</span>, except that <span class="synIdentifier">C&lt;body&gt;</span> cannot be passed
+(it will be generated automatically).
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

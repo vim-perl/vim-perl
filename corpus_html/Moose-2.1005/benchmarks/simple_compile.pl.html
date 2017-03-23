@@ -1,0 +1,46 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synPreProc">#!/usr/bin/perl</span>
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Benchmark::Forking <span class="synString">qw[cmpthese]</span>;
+
+<span class="synStatement">=pod</span>
+
+This compare the overhead of Class::MOP
+to the overhead of Moose.
+
+The goal here is to see how much more
+startup cost Moose adds to Class::MOP.
+
+<span class="synTodo">NOTE:</span>
+This benchmark may not be all that
+relevant really, but it's helpful to
+see maybe.
+
+<span class="synStatement">=cut</span>
+
+cmpthese(<span class="synNumber">5_000</span>,
+    {
+        <span class="synString">'w/out_moose'</span> =&gt; <span class="synKeyword">sub </span>{
+            <span class="synStatement">eval</span> <span class="synString">'use Class::MOP;'</span>;
+        },
+        <span class="synString">'w_moose'</span> =&gt; <span class="synKeyword">sub </span>{
+            <span class="synStatement">eval</span> <span class="synString">'use Moose;'</span>;
+        },
+    }
+);
+
+<span class="synNumber">1</span>;
+</pre>
+
+ </body>
+</html>

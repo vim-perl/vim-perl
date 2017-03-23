@@ -1,0 +1,300 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synPreProc">#!/usr/bin/perl</span>
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Data::Dumper;
+<span class="synStatement">use </span>B::Deparse;
+<span class="synStatement">use </span>Template;
+<span class="synStatement">use </span>Getopt::Long;
+<span class="synStatement">use </span>CGI;
+
+<span class="synStatement">use </span>Class::MOP;
+
+<span class="synStatement">my</span> <span class="synIdentifier">$stand_alone</span> = <span class="synNumber">0</span>;
+GetOptions(<span class="synString">&quot;s&quot;</span> =&gt; \<span class="synIdentifier">$stand_alone</span>);
+
+<span class="synConditional">if</span> (<span class="synIdentifier">$stand_alone</span>) {
+    <span class="synStatement">require</span> HTTP::Server::Simple::CGI;
+    {
+        package <span class="synComment"># hide me from PAUSE</span>
+            Class::MOP::Browser::Server;
+        <span class="synStatement">our</span> <span class="synIdentifier">@ISA</span> = <span class="synString">qw(HTTP::Server::Simple::CGI)</span>;
+        <span class="synKeyword">sub </span><span class="synFunction">handle_request </span>{ ::process_template() }
+    }
+    Class::MOP::Browser::Server-&gt;new()-&gt;run();
+}
+<span class="synConditional">else</span> {
+    <span class="synStatement">print</span> CGI::header();
+    process_template();
+}
+
+{
+    <span class="synStatement">my</span> <span class="synIdentifier">$DATA</span>;
+    <span class="synKeyword">sub </span><span class="synFunction">process_template </span>{
+        <span class="synIdentifier">$DATA</span> ||= <span class="synStatement">join</span> <span class="synString">&quot;&quot;</span> =&gt; <span class="synIdentifier">&lt;DATA&gt;</span>;
+        Template-&gt;new-&gt;process(
+            \<span class="synIdentifier">$DATA</span>,
+            {
+                <span class="synString">'get_all_metaclasses'</span>   =&gt; \<span class="synIdentifier">&amp;</span><span class="synType">::</span><span class="synIdentifier">get_all_metaclasses</span>,
+                <span class="synString">'get_metaclass_by_name'</span> =&gt; \<span class="synIdentifier">&amp;</span><span class="synType">::</span><span class="synIdentifier">get_metaclass_by_name</span>,
+                <span class="synString">'deparse_method'</span>        =&gt; \<span class="synIdentifier">&amp;</span><span class="synType">::</span><span class="synIdentifier">deparse_method</span>,
+                <span class="synString">'deparse_item'</span>          =&gt; \<span class="synIdentifier">&amp;</span><span class="synType">::</span><span class="synIdentifier">deparse_item</span>,
+            }
+        ) <span class="synOperator">or</span> <span class="synStatement">warn</span> Template-&gt;error;
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">get_all_metaclasses </span>{
+    <span class="synStatement">sort</span> <span class="synStatement">{</span> <span class="synIdentifier">$a-&gt;name</span> <span class="synOperator">cmp</span> <span class="synIdentifier">$b-&gt;name</span> <span class="synStatement">}</span> Class::MOP::get_all_metaclass_instances()
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">get_metaclass_by_name </span>{
+    Class::MOP::get_metaclass_by_name(<span class="synIdentifier">@_</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">deparse_method </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$method</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$deparse</span> = B::Deparse-&gt;new(<span class="synString">&quot;-d&quot;</span>);
+    <span class="synStatement">my</span> <span class="synIdentifier">$body</span> = <span class="synIdentifier">$deparse-&gt;coderef2text</span>(<span class="synIdentifier">$method-&gt;body</span>());
+    <span class="synStatement">return</span> <span class="synString">&quot;sub &quot;</span> . <span class="synIdentifier">$method-&gt;name</span> . <span class="synString">' '</span> . _clean_deparse_code(<span class="synIdentifier">$body</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">deparse_item </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$item</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">return</span> <span class="synIdentifier">$item</span> <span class="synConditional">unless</span> <span class="synOperator">ref</span> <span class="synIdentifier">$item</span>;
+    <span class="synStatement">local</span> <span class="synIdentifier">$</span><span class="synType">Data::Dumper::</span><span class="synIdentifier">Deparse</span> = <span class="synNumber">1</span>;
+    <span class="synStatement">local</span> <span class="synIdentifier">$</span><span class="synType">Data::Dumper::</span><span class="synIdentifier">Indent</span>  = <span class="synNumber">1</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$dumped</span> = Dumper <span class="synIdentifier">$item</span>;
+    <span class="synIdentifier">$dumped</span> =~ <span class="synStatement">s/</span><span class="synString">^</span><span class="synSpecial">\$</span><span class="synString">VAR1</span><span class="synSpecial">\s</span><span class="synString">=</span><span class="synSpecial">\s</span><span class="synStatement">//</span>;
+    <span class="synIdentifier">$dumped</span> =~ <span class="synStatement">s/</span><span class="synSpecial">\;</span><span class="synString">$</span><span class="synStatement">//</span>;
+    <span class="synStatement">return</span> _clean_deparse_code(<span class="synIdentifier">$dumped</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_clean_deparse_code </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">@body</span> = <span class="synStatement">split</span> <span class="synStatement">/</span><span class="synSpecial">\n</span><span class="synStatement">/</span> =&gt; <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">@cleaned</span>;
+    <span class="synRepeat">foreach</span> (<span class="synIdentifier">@body</span>) {
+        <span class="synStatement">next</span> <span class="synConditional">if</span> <span class="synStatement">/</span><span class="synString">^</span><span class="synSpecial">\s+</span><span class="synString">use</span><span class="synStatement">/</span>;
+        <span class="synStatement">next</span> <span class="synConditional">if</span> <span class="synStatement">/</span><span class="synString">^</span><span class="synSpecial">\s+</span><span class="synString">BEGIN</span><span class="synStatement">/</span>;
+        <span class="synStatement">next</span> <span class="synConditional">if</span> <span class="synStatement">/</span><span class="synString">^</span><span class="synSpecial">\s+</span><span class="synString">package</span><span class="synStatement">/</span>;
+        <span class="synStatement">push</span> <span class="synIdentifier">@cleaned</span> =&gt; <span class="synIdentifier">$_</span>;
+    }
+    <span class="synStatement">return</span> (<span class="synStatement">join</span> <span class="synString">&quot;</span><span class="synSpecial">\n</span><span class="synString">&quot;</span> =&gt; <span class="synIdentifier">@cleaned</span>);
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment">## This is the template file to be used</span>
+
+<span class="synComment">__DATA__</span>
+<span class="synComment">[% USE q = CGI %]</span>
+
+<span class="synComment">[% area = 'attributes' %]</span>
+<span class="synComment">[% IF q.param('area') %]</span>
+<span class="synComment">    [% area = q.param('area') %]</span>
+<span class="synComment">[% END %]</span>
+
+<span class="synComment">&lt;html&gt;</span>
+<span class="synComment">&lt;head&gt;</span>
+<span class="synComment">&lt;title&gt;Class::MOP Browser&lt;/title&gt;</span>
+<span class="synComment">&lt;style type='text/css'&gt;</span>
+
+<span class="synComment">body {</span>
+<span class="synComment">    font-family: arial;</span>
+<span class="synComment">}</span>
+
+<span class="synComment">td { font-size: 12px; }</span>
+<span class="synComment">b  { font-size: 12px; }</span>
+
+<span class="synComment">pre {</span>
+<span class="synComment">    font-family: courier;</span>
+<span class="synComment">    font-size:   12px;</span>
+<span class="synComment">    width:       330px;</span>
+<span class="synComment">    padding:     10px;</span>
+<span class="synComment">    overflow:    auto;</span>
+<span class="synComment">    border:      1px dotted green;</span>
+<span class="synComment">}</span>
+
+<span class="synComment">A {</span>
+<span class="synComment">    font-family: arial;</span>
+<span class="synComment">    font-size:   12px;</span>
+<span class="synComment">    color: black;</span>
+<span class="synComment">    text-decoration: none;</span>
+<span class="synComment">}</span>
+
+<span class="synComment">A:hover {</span>
+<span class="synComment">    text-decoration: underline;</span>
+<span class="synComment">}</span>
+
+<span class="synComment">td.lightblue  {</span>
+<span class="synComment">    background-color: #99BBFF;</span>
+<span class="synComment">    border-right:  1px solid #336699;</span>
+<span class="synComment">    border-bottom: 1px solid #336699;</span>
+<span class="synComment">    border-top:    1px solid #BBDDFF;</span>
+<span class="synComment">    border-left:   1px solid #BBDDFF;</span>
+<span class="synComment">}</span>
+
+<span class="synComment">td.grey       {</span>
+<span class="synComment">    background-color: #CCCCCC;</span>
+<span class="synComment">    border-right:  1px solid #888888;</span>
+<span class="synComment">    border-bottom: 1px solid #888888;</span>
+<span class="synComment">    border-top:    1px solid #DDDDDD;</span>
+<span class="synComment">    border-left:   1px solid #DDDDDD;</span>
+<span class="synComment">}</span>
+
+<span class="synComment">td.manila     {</span>
+<span class="synComment">    background-color: #FFDD99;</span>
+<span class="synComment">    border-right:  2px solid #CC9933;</span>
+<span class="synComment">    border-bottom: 2px solid #CC9933;</span>
+<span class="synComment">    border-top:    2px solid #FFFFBB;</span>
+<span class="synComment">    border-left:   2px solid #FFFFBB;</span>
+<span class="synComment">}</span>
+
+<span class="synComment">td.darkgreen  {</span>
+<span class="synComment">    background-color: #33CC33;</span>
+<span class="synComment">    border-right:  1px solid #009900;</span>
+<span class="synComment">    border-bottom: 1px solid #009900;</span>
+<span class="synComment">    color: #CCFFCC;</span>
+<span class="synComment">}</span>
+
+<span class="synComment">td.lightgreen {</span>
+<span class="synComment">    background-color: #AAFFAA;</span>
+<span class="synComment">    border-right:  1px solid #33FF33;</span>
+<span class="synComment">    border-bottom: 1px solid #33FF33;</span>
+<span class="synComment">}</span>
+
+<span class="synComment">&lt;/style&gt;</span>
+<span class="synComment">&lt;/head&gt;</span>
+<span class="synComment">&lt;body&gt;</span>
+<span class="synComment">&lt;h1&gt;Class::MOP Browser&lt;/h1&gt;</span>
+<span class="synComment">&lt;table bgcolor='#CCCCCC' cellpadding='0' cellspacing='0' border='0' align='center' height='400'&gt;</span>
+<span class="synComment">&lt;tr valign='top'&gt;</span>
+
+<span class="synComment">&lt;td rowspan='2' width='200'&gt;&lt;table cellspacing='0' cellpadding='5' border='0' width='100%'&gt;</span>
+<span class="synComment">    [% FOREACH metaclass IN get_all_metaclasses() %]</span>
+<span class="synComment">        &lt;tr&gt;</span>
+<span class="synComment">        [% IF q.param('class') == metaclass.name %]</span>
+<span class="synComment">            &lt;td class='lightblue'&gt;&lt;b&gt;[% metaclass.name %]&lt;/b&gt;&lt;/td&gt;</span>
+<span class="synComment">        [% ELSE %]</span>
+<span class="synComment">            &lt;td class='grey'&gt;&lt;a href='?class=[% metaclass.name %]'&gt;[% metaclass.name %]&lt;/a&gt;&lt;/td&gt;</span>
+<span class="synComment">        [% END %]</span>
+<span class="synComment">        &lt;/tr&gt;</span>
+<span class="synComment">    [% END %]</span>
+<span class="synComment">    &lt;/table&gt;&lt;/td&gt;</span>
+<span class="synComment">&lt;td height='10' width='250'&gt;&lt;table cellspacing='0' cellpadding='5' border='0' width='100%'&gt;</span>
+<span class="synComment">    &lt;tr align='center'&gt;</span>
+<span class="synComment">    [% FOREACH area_name IN [ 'attributes', 'methods', 'superclasses' ] %]</span>
+<span class="synComment">        [% IF q.param('class') %]</span>
+<span class="synComment">            [% IF area == area_name %]</span>
+<span class="synComment">                &lt;td class='manila'&gt;&lt;b&gt;[% area_name %]&lt;/b&gt;&lt;/td&gt;</span>
+<span class="synComment">            [% ELSE %]</span>
+<span class="synComment">                &lt;td class='lightblue'&gt;&lt;a href='?class=[% q.param('class') %]&amp;area=[% area_name %]'&gt;[% area_name %]&lt;/a&gt;&lt;/td&gt;</span>
+<span class="synComment">            [% END %]</span>
+<span class="synComment">        [% ELSE %]</span>
+<span class="synComment">            &lt;td class='lightblue' style=&quot;color: #336699;&quot;&gt;[% area_name %]&lt;/td&gt;</span>
+<span class="synComment">        [% END %]</span>
+<span class="synComment">    [% END %]</span>
+<span class="synComment">    &lt;/tr&gt;</span>
+<span class="synComment">    &lt;/table&gt;&lt;/td&gt;</span>
+
+<span class="synComment">&lt;td valign='top' rowspan='2' class='lightgreen' width='450'&gt;</span>
+<span class="synComment">    &lt;table cellspacing='0' cellpadding='3' border='0'&gt;</span>
+<span class="synComment">    &lt;tr&gt;</span>
+<span class="synComment">    &lt;td class='darkgreen' width='100'&gt;&lt;/td&gt;</span>
+<span class="synComment">    &lt;td class='darkgreen' width='350'&gt;&lt;/td&gt;</span>
+<span class="synComment">    &lt;/tr&gt;</span>
+<span class="synComment">    [% IF q.param('class') &amp;&amp; area == 'attributes' &amp;&amp; q.param('attr') %]</span>
+
+<span class="synComment">    [%</span>
+<span class="synComment">        meta = get_metaclass_by_name(q.param('class'))</span>
+<span class="synComment">        attr = meta.get_attribute(q.param('attr'))</span>
+<span class="synComment">    %]</span>
+
+<span class="synComment">        [% FOREACH aspect IN [ 'name', 'init_arg', 'reader', 'writer', 'accessor', 'predicate', 'default' ]%]</span>
+<span class="synComment">            [% item = attr.$aspect() %]</span>
+<span class="synComment">            &lt;tr&gt;</span>
+<span class="synComment">            &lt;td class='darkgreen' align='right' valign='top'&gt;[% aspect %]&lt;/td&gt;</span>
+<span class="synComment">            &lt;td class='lightgreen'&gt;[% IF item == undef %]&amp;mdash;[% ELSE %]&lt;pre&gt;[% deparse_item(item) %]&lt;/pre&gt;[% END %]&lt;/td&gt;</span>
+<span class="synComment">            &lt;/tr&gt;</span>
+<span class="synComment">        [% END %]</span>
+
+<span class="synComment">    [% ELSIF q.param('class') &amp;&amp; area == 'methods' &amp;&amp; q.param('method') %]</span>
+
+<span class="synComment">    [%</span>
+<span class="synComment">        meta = get_metaclass_by_name(q.param('class'))</span>
+<span class="synComment">        method = meta.get_method(q.param('method'))</span>
+<span class="synComment">    %]</span>
+
+<span class="synComment">        [% FOREACH aspect IN [ 'name', 'package_name', 'fully_qualified_name' ]%]</span>
+<span class="synComment">            &lt;tr&gt;</span>
+<span class="synComment">            &lt;td class='darkgreen' align='right' valign='top'&gt;[% aspect %]&lt;/td&gt;</span>
+<span class="synComment">            &lt;td class='lightgreen'&gt;[% method.$aspect() %]&lt;/td&gt;</span>
+<span class="synComment">            &lt;/tr&gt;</span>
+<span class="synComment">        [% END %]</span>
+<span class="synComment">            &lt;tr&gt;</span>
+<span class="synComment">            &lt;td class='darkgreen' align='right' valign='top'&gt;body&lt;/td&gt;</span>
+<span class="synComment">            &lt;td class='lightgreen'&gt;&lt;pre&gt;[% deparse_method(method) %]&lt;/pre&gt;&lt;/td&gt;</span>
+<span class="synComment">            &lt;/tr&gt;</span>
+
+<span class="synComment">    [% END %]</span>
+<span class="synComment">    &lt;/table&gt;&lt;/td&gt;</span>
+
+<span class="synComment">&lt;/tr&gt;</span>
+<span class="synComment">&lt;tr&gt;</span>
+
+<span class="synComment">[% IF q.param('class') &amp;&amp; area %]</span>
+
+<span class="synComment">[% meta = get_metaclass_by_name(q.param('class')) %]</span>
+
+<span class="synComment">&lt;td class='lightblue' valign='top'&gt;&lt;div style='height: 100%; overflow: auto;'&gt;&lt;table cellspacing='0' cellpadding='5' border='0' width='100%'&gt;</span>
+
+<span class="synComment">    [% IF area == 'methods' %]</span>
+<span class="synComment">        [% FOREACH method IN meta.get_method_list.sort %]</span>
+<span class="synComment">            &lt;tr&gt;</span>
+<span class="synComment">                [% IF q.param('method') == method %]</span>
+<span class="synComment">                    &lt;td class='darkgreen'&gt;&lt;b&gt;[% method %]&lt;/b&gt;&lt;/td&gt;</span>
+<span class="synComment">                [% ELSE %]</span>
+<span class="synComment">                    &lt;td class='manila'&gt;&lt;a href='?class=[% q.param('class') %]&amp;area=[% q.param('area') %]&amp;method=[% method %]'&gt;[% method %]&lt;/a&gt;&lt;/td&gt;</span>
+<span class="synComment">                [% END %]</span>
+<span class="synComment">            &lt;/tr&gt;</span>
+<span class="synComment">        [% END %]</span>
+<span class="synComment">    [% END %]</span>
+<span class="synComment">    [% IF area == 'attributes' %]</span>
+<span class="synComment">        [% FOREACH attr IN meta.get_attribute_list.sort %]</span>
+<span class="synComment">            &lt;tr&gt;</span>
+<span class="synComment">                [% IF q.param('attr') == attr %]</span>
+<span class="synComment">                    &lt;td class='darkgreen'&gt;&lt;b&gt;[% attr %]&lt;/b&gt;&lt;/td&gt;</span>
+<span class="synComment">                [% ELSE %]</span>
+<span class="synComment">                    &lt;td class='manila'&gt;&lt;a href='?class=[% q.param('class') %]&amp;area=[% q.param('area') %]&amp;attr=[% attr %]'&gt;[% attr %]&lt;/a&gt;&lt;/td&gt;</span>
+<span class="synComment">                [% END %]</span>
+<span class="synComment">            &lt;/tr&gt;</span>
+<span class="synComment">        [% END %]</span>
+<span class="synComment">    [% END %]</span>
+<span class="synComment">    [% IF area == 'superclasses' %]</span>
+<span class="synComment">        [% FOREACH super IN meta.superclasses.sort %]</span>
+<span class="synComment">            &lt;tr&gt;</span>
+<span class="synComment">                &lt;td class='manila'&gt;&lt;a href='?class=[% super %]'&gt;[% super %]&lt;/a&gt;&lt;/td&gt;</span>
+<span class="synComment">            &lt;/tr&gt;</span>
+<span class="synComment">        [% END %]</span>
+<span class="synComment">    [% END %]</span>
+<span class="synComment">    &lt;/table&gt;&lt;/div&gt;&lt;/td&gt;</span>
+<span class="synComment">[% END %]</span>
+
+<span class="synComment">&lt;/tr&gt;</span>
+<span class="synComment">&lt;/table&gt;</span>
+<span class="synComment">&lt;/body&gt;</span>
+<span class="synComment">&lt;/html&gt;</span>
+
+</pre>
+
+ </body>
+</html>

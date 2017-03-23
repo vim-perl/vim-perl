@@ -1,0 +1,133 @@
+
+package # hide the package from PAUSE
+    ArrayBasedStorage::Instance;
+
+use strict;
+use warnings;
+use Scalar::Util qw/refaddr/;
+
+use Carp 'confess';
+
+our $VERSION = '0.01';
+my $unbound = \'empty-slot-value';
+
+use base 'Class::MOP::Instance';
+
+sub new {
+    my ($class, $meta, @attrs) = @_;
+    my $self = $class->SUPER::new($meta, @attrs);
+    my $index = 0;
+    $self->{'slot_index_map'} = { map { $_ => $index++ } $self->get_all_slots };
+    return $self;
+}
+
+sub create_instance {
+    my $self = shift;
+    my $instance = bless [], $self->_class_name;
+    $self->initialize_all_slots($instance);
+    return $instance;
+}
+
+sub clone_instance {
+    my ($self, $instance) = shift;
+    $self->bless_instance_structure([ @$instance ]);
+}
+
+# operations on meta instance
+
+sub get_slot_index_map { (shift)->{'slot_index_map'} }
+
+sub initialize_slot {
+    my ($self, $instance, $slot_name) = @_;
+    $self->set_slot_value($instance, $slot_name, $unbound);
+}
+
+sub deinitialize_slot {
+    my ( $self, $instance, $slot_name ) = @_;
+    $self->set_slot_value($instance, $slot_name, $unbound);
+}
+
+sub get_all_slots {
+    my $self = shift;
+    return sort $self->SUPER::get_all_slots;
+}
+
+sub get_slot_value {
+    my ($self, $instance, $slot_name) = @_;
+    my $value = $instance->[ $self->{'slot_index_map'}->{$slot_name} ];
+    return $value unless ref $value;
+    refaddr $value eq refaddr $unbound ? undef : $value;
+}
+
+sub set_slot_value {
+    my ($self, $instance, $slot_name, $value) = @_;
+    $instance->[ $self->{'slot_index_map'}->{$slot_name} ] = $value;
+}
+
+sub is_slot_initialized {
+    my ($self, $instance, $slot_name) = @_;
+    # NOTE: maybe use CLOS's *special-unbound-value* for this?
+    my $value = $instance->[ $self->{'slot_index_map'}->{$slot_name} ];
+    return 1 unless ref $value;
+    refaddr $value eq refaddr $unbound ? 0 : 1;
+}
+
+sub is_dependent_on_superclasses { 1 }
+
+1;
+
+__END__
+
+=pod
+
+=head1 NAME
+
+ArrayBasedStorage - An example of an Array based instance storage
+
+=head1 SYNOPSIS
+
+  package Foo;
+
+  use metaclass (
+    ':instance_metaclass'  => 'ArrayBasedStorage::Instance'
+  );
+
+  __PACKAGE__->meta->add_attribute('foo' => (
+      reader => 'get_foo',
+      writer => 'set_foo'
+  ));
+
+  sub new  {
+      my $class = shift;
+      $class->meta->new_object(@_);
+  }
+
+  # now you can just use the class as normal
+
+=head1 DESCRIPTION
+
+This is a proof of concept using the Instance sub-protocol
+which uses ARRAY refs to store the instance data.
+
+This is very similar now to the InsideOutClass example, and
+in fact, they both share the exact same test suite, with
+the only difference being the Instance metaclass they use.
+
+=head1 AUTHORS
+
+Stevan Little E<lt>stevan@iinteractive.comE<gt>
+
+Yuval Kogman E<lt>nothingmuch@woobling.comE<gt>
+
+=head1 SEE ALSO
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2006-2008 by Infinity Interactive, Inc.
+
+L<http://www.iinteractive.com>
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut

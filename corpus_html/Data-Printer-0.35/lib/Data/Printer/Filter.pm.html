@@ -1,0 +1,377 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Data::Printer::Filter</span>;
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+<span class="synStatement">use </span>Clone::PP <span class="synString">qw(clone)</span>;
+<span class="synStatement">require</span> Carp;
+<span class="synStatement">require</span> Data::Printer;
+
+<span class="synStatement">my</span> <span class="synIdentifier">%_filters_for</span>   = ();
+<span class="synStatement">my</span> <span class="synIdentifier">%_extras_for</span>    = ();
+
+<span class="synKeyword">sub </span><span class="synFunction">import </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$caller</span> = <span class="synStatement">caller</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$id</span> = Data::Printer::_object_id( \<span class="synIdentifier">$caller</span> );
+
+    <span class="synStatement">my</span> <span class="synIdentifier">%properties</span> = ();
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$filter</span> = <span class="synKeyword">sub </span>{
+        <span class="synStatement">my</span> (<span class="synIdentifier">$type</span>, <span class="synIdentifier">$code</span>, <span class="synIdentifier">$extra</span>) = <span class="synIdentifier">@_</span>;
+
+        Carp::croak( <span class="synString">&quot;syntax: filter 'Class', sub { ... }&quot;</span> )
+          <span class="synConditional">unless</span> <span class="synIdentifier">$type</span> <span class="synOperator">and</span> <span class="synIdentifier">$code</span> <span class="synOperator">and</span> <span class="synOperator">ref</span> <span class="synIdentifier">$code</span> <span class="synOperator">eq</span> <span class="synString">'CODE'</span>;
+
+        <span class="synConditional">if</span> (<span class="synIdentifier">$extra</span>) {
+            Carp::croak( <span class="synString">'extra filter field must be a hashref'</span> )
+                <span class="synConditional">unless</span> <span class="synOperator">ref</span> <span class="synIdentifier">$extra</span> <span class="synOperator">and</span> <span class="synOperator">ref</span> <span class="synIdentifier">$extra</span> <span class="synOperator">eq</span> <span class="synString">'HASH'</span>;
+
+            <span class="synIdentifier">$_extras_for{$id}{$type}</span> = <span class="synIdentifier">$extra</span>;
+        }
+        <span class="synConditional">else</span> {
+            <span class="synIdentifier">$_extras_for{$id}{$type}</span> = {};
+        }
+
+        <span class="synStatement">unshift</span> <span class="synIdentifier">@{</span> <span class="synIdentifier">$_filters_for{$id}{$type}</span> <span class="synIdentifier">}</span>, <span class="synKeyword">sub </span>{
+            <span class="synStatement">my</span> (<span class="synIdentifier">$item</span>, <span class="synIdentifier">$p</span>) = <span class="synIdentifier">@_</span>;
+
+            <span class="synComment"># send our closured %properties var instead</span>
+            <span class="synComment"># so newline(), indent(), etc can work it</span>
+            <span class="synIdentifier">%properties</span> = <span class="synIdentifier">%{</span> clone <span class="synIdentifier">$p</span> <span class="synIdentifier">}</span>;
+            <span class="synStatement">delete</span> <span class="synIdentifier">$properties{</span><span class="synString">filters</span><span class="synIdentifier">}</span>; <span class="synComment"># no need to rework filters</span>
+            <span class="synIdentifier">$code</span>-&gt;(<span class="synIdentifier">$item</span>, \<span class="synIdentifier">%properties</span>);
+        };
+    };
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$filters</span> = <span class="synKeyword">sub </span>{
+        <span class="synStatement">return</span> <span class="synIdentifier">$_filters_for{$id}</span>;
+    };
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$extras</span> = <span class="synKeyword">sub </span>{
+        <span class="synStatement">return</span> <span class="synIdentifier">$_extras_for{$id}</span>;
+    };
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$newline</span> = <span class="synKeyword">sub </span>{
+        <span class="synStatement">return</span> <span class="synIdentifier">${$properties{</span><span class="synString">_linebreak</span><span class="synIdentifier">}}</span> . (<span class="synString">' '</span> x <span class="synIdentifier">$properties{</span><span class="synString">_current_indent</span><span class="synIdentifier">}</span>);
+    };
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$indent</span> = <span class="synKeyword">sub </span>{
+        <span class="synIdentifier">$properties{</span><span class="synString">_current_indent</span><span class="synIdentifier">}</span> += <span class="synIdentifier">$properties{</span><span class="synString">indent</span><span class="synIdentifier">}</span>;
+        <span class="synIdentifier">$properties{</span><span class="synString">_depth</span><span class="synIdentifier">}</span>++;
+        <span class="synStatement">return</span>;
+    };
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$outdent</span> = <span class="synKeyword">sub </span>{
+        <span class="synIdentifier">$properties{</span><span class="synString">_current_indent</span><span class="synIdentifier">}</span> -= <span class="synIdentifier">$properties{</span><span class="synString">indent</span><span class="synIdentifier">}</span>;
+        <span class="synIdentifier">$properties{</span><span class="synString">_depth</span><span class="synIdentifier">}</span>--;
+        <span class="synStatement">return</span>;
+    };
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$imported</span> = <span class="synKeyword">sub </span><span class="synType">(\[@$%&amp;];%) </span>{
+        <span class="synStatement">my</span> (<span class="synIdentifier">$item</span>, <span class="synIdentifier">$p</span>) = <span class="synIdentifier">@_</span>;
+        <span class="synStatement">return</span> Data::Printer::p( <span class="synIdentifier">$item</span>, <span class="synIdentifier">%properties</span> );
+    };
+
+    {
+        <span class="synStatement">no strict</span> <span class="synString">'refs'</span>;
+        <span class="synIdentifier">*{</span><span class="synString">&quot;</span><span class="synIdentifier">$caller</span><span class="synSpecial">\:</span><span class="synString">:filter&quot;</span><span class="synIdentifier">}</span>  = <span class="synIdentifier">$filter</span>;
+        <span class="synIdentifier">*{</span><span class="synString">&quot;</span><span class="synIdentifier">$caller</span><span class="synSpecial">\:</span><span class="synString">:indent&quot;</span><span class="synIdentifier">}</span>  = <span class="synIdentifier">$indent</span>;
+        <span class="synIdentifier">*{</span><span class="synString">&quot;</span><span class="synIdentifier">$caller</span><span class="synSpecial">\:</span><span class="synString">:outdent&quot;</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$outdent</span>;
+        <span class="synIdentifier">*{</span><span class="synString">&quot;</span><span class="synIdentifier">$caller</span><span class="synSpecial">\:</span><span class="synString">:newline&quot;</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$newline</span>;
+
+        <span class="synIdentifier">*{</span><span class="synString">&quot;</span><span class="synIdentifier">$caller</span><span class="synSpecial">\:</span><span class="synString">:p&quot;</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$imported</span>;
+
+        <span class="synIdentifier">*{</span><span class="synString">&quot;</span><span class="synIdentifier">$caller</span><span class="synSpecial">\:</span><span class="synString">:_filter_list&quot;</span><span class="synIdentifier">}</span>   = <span class="synIdentifier">$filters</span>;
+        <span class="synIdentifier">*{</span><span class="synString">&quot;</span><span class="synIdentifier">$caller</span><span class="synSpecial">\:</span><span class="synString">:_extra_options&quot;</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$extras</span>;
+    }
+};
+
+
+<span class="synNumber">1</span>;
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Data::Printer::Filter - Create powerful stand-alone filters for Data::Printer
+
+<span class="synStatement">=head1</span><span class="synString"> SYNOPSIS</span>
+
+Create your filter module:
+
+<span class="synPreProc">  package Data::Printer::Filter::MyFilter;</span>
+<span class="synPreProc">  use strict;</span>
+<span class="synPreProc">  use warnings;</span>
+
+<span class="synPreProc">  use Data::Printer::Filter;</span>
+
+<span class="synPreProc">  # type filter</span>
+<span class="synPreProc">  filter 'SCALAR', sub {</span>
+<span class="synPreProc">      my ($ref, $properties) = @_;</span>
+<span class="synPreProc">      my $val = $$ref;</span>
+<span class="synPreProc">      </span>
+<span class="synPreProc">      if ($val &gt; 100) {</span>
+<span class="synPreProc">          return 'too big!!';</span>
+<span class="synPreProc">      }</span>
+<span class="synPreProc">      else {</span>
+<span class="synPreProc">          return $val;</span>
+<span class="synPreProc">      }</span>
+<span class="synPreProc">  };</span>
+
+<span class="synPreProc">  # you can also filter objects of any class</span>
+<span class="synPreProc">  filter 'Some::Class', sub {</span>
+<span class="synPreProc">      my ($object, $properties) = @_;</span>
+
+<span class="synPreProc">      return $ref-&gt;some_method;   # or whatever</span>
+
+<span class="synPreProc">      # see 'HELPER FUNCTIONS' below for</span>
+<span class="synPreProc">      # customization options, including</span>
+<span class="synPreProc">      # proper indentation.</span>
+<span class="synPreProc">  };</span>
+
+<span class="synPreProc">  1;</span>
+
+
+Later, in your main code:
+
+<span class="synPreProc">  use Data::Printer {</span>
+<span class="synPreProc">      filters =&gt; {</span>
+<span class="synPreProc">          -external =&gt; [ 'MyFilter', 'OtherFilter' ],</span>
+
+<span class="synPreProc">          # you can still add regular (inline) filters</span>
+<span class="synPreProc">          SCALAR =&gt; sub {</span>
+<span class="synPreProc">              ...</span>
+<span class="synPreProc">          }</span>
+<span class="synPreProc">      },</span>
+<span class="synPreProc">  };</span>
+
+
+
+<span class="synStatement">=head1</span><span class="synString"> WARNING - ALPHA CODE (VERY LOOSE API)</span>
+
+We are still experimenting with the standalone filter syntax, so
+<span class="synIdentifier">B&lt;&lt; filters written like so may break in the future without any warning! &gt;&gt;</span>
+
+<span class="synIdentifier">B&lt;&lt; If you care, or have any suggestions &gt;&gt;</span>, please drop me a line via RT, email,
+or find me ('garu') on irc.perl.org.
+
+You have been warned.
+
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+<span class="synIdentifier">L&lt;Data::Printer&gt;</span> lets you add custom filters to display data structures and
+objects, by either specifying them during &quot;use&quot;, in the <span class="synIdentifier">C&lt;.dataprinter&gt;</span>
+configuration file, or even in runtime customizations.
+
+But there are times when you may want to group similar filters, or make
+them standalone in order to be easily reutilized in other environments and
+applications, or even upload them to CPAN so other people can benefit from
+a cleaner - and clearer - object/structure dump.
+
+This is where <span class="synIdentifier">C&lt;Data::Printer::Filter&gt;</span> comes in. It <span class="synIdentifier">B&lt;exports&gt;</span> into your
+package's namespace the <span class="synIdentifier">L&lt;/filter&gt;</span> function, along with some helpers to
+create custom filter packages.
+
+<span class="synIdentifier">L&lt;Data::Printer&gt;</span> recognizes all filters in the <span class="synIdentifier">C&lt;Data::Printer::Filter::*&gt;</span>
+namespace. You can load them by specifying them in the '-external' filter
+list (note the dash, to avoid clashing with a potential class or pragma
+labelled 'external'):
+
+<span class="synPreProc">  use Data::Printer {</span>
+<span class="synPreProc">      filters =&gt; {</span>
+<span class="synPreProc">          -external =&gt; 'MyFilter',</span>
+<span class="synPreProc">      },</span>
+<span class="synPreProc">  };</span>
+
+This will load all filters defined by the <span class="synIdentifier">C&lt;Data::Printer::Filter::MyFilter&gt;</span>
+module.
+
+If there are more than one filter, use an array reference instead:
+
+<span class="synPreProc">  -external =&gt; [ 'MyFilter', 'MyOtherFilter' ]</span>
+
+B&lt;&lt; IMPORTANT: THIS WAY OF LOADING EXTERNAL PLUGINS IS EXPERIMENTAL AND
+SUBJECT TO SUDDEN CHANGE! IF YOU CARE, AND/OR HAVE IDEAS ON A BETTER API,
+PLEASE LET US KNOW &gt;&gt;
+
+<span class="synStatement">=head1</span><span class="synString"> HELPER FUNCTIONS</span>
+
+<span class="synStatement">=head2</span><span class="synString"> filter TYPE, sub { ... };</span>
+
+The <span class="synIdentifier">C&lt;filter&gt;</span> function creates a new filter for <span class="synIdentifier">I&lt;TYPE&gt;</span>, using
+the given subref. The subref receives two arguments: the item
+itself - be it an object or a reference to a standard Perl type -
+and the properties in effect (so you can inspect for certain
+options, etc). The subroutine is expected to return a string
+containing whatever it wants <span class="synIdentifier">C&lt;Data::Printer&gt;</span> to display on screen.
+
+<span class="synStatement">=head2</span><span class="synString"> p()</span>
+
+This is the same as <span class="synIdentifier">C&lt;Data::Printer&gt;</span>'s <span class="synIdentifier">p()</span>, only you can't rename it.
+You can use this to throw some data structures back at <span class="synIdentifier">C&lt;Data::Printer&gt;</span>
+and use the results in your own return string - like when manipulating
+hashes or arrays.
+
+<span class="synStatement">=head2</span><span class="synString"> newline()</span>
+
+This helper returns a string using the linebreak as specified by the
+caller's settings. For instance, it provides the proper indentation
+level of spaces for you and considers the <span class="synIdentifier">C&lt;multiline&gt;</span> option to
+avoid line breakage.
+
+In other words, if you do this:
+
+<span class="synPreProc">   filter ARRAY =&gt; {</span>
+<span class="synPreProc">       my ($ref, $p) = @_;</span>
+<span class="synPreProc">       my $string = &quot;Hey!! I got this array:&quot;;</span>
+
+<span class="synPreProc">       foreach my $val (@$ref) {</span>
+<span class="synPreProc">           $string .= newline . p($val);</span>
+<span class="synPreProc">       }</span>
+
+<span class="synPreProc">       return $string;</span>
+<span class="synPreProc">   };</span>
+
+... your <span class="synIdentifier">C&lt;p($val)&gt;</span> returns will be properly indented, vertically aligned
+to your level of the data structure, while simply using &quot;\n&quot; would just
+make things messy if your structure has more than one level of depth.
+
+<span class="synStatement">=head2</span><span class="synString"> indent()</span>
+
+<span class="synStatement">=head2</span><span class="synString"> outdent()</span>
+
+These two helpers let you increase/decrease the indentation level of
+your data display, for <span class="synIdentifier">C&lt;newline()&gt;</span> and nested <span class="synIdentifier">C&lt;p()&gt;</span> calls inside your filters.
+
+For example, the filter defined in the <span class="synIdentifier">C&lt;newline&gt;</span> explanation above would
+show the values on the same (vertically aligned) level as the &quot;I got this array&quot;
+message. If you wanted your array to be one level further deep, you could use
+this instead:
+
+<span class="synPreProc">  filter ARRAY =&gt; {</span>
+<span class="synPreProc">      my ($ref, $p) = @_;</span>
+<span class="synPreProc">      my $string = &quot;Hey!! I got this array:&quot;;</span>
+
+<span class="synPreProc">      indent;</span>
+<span class="synPreProc">      foreach my $val (@$ref) {</span>
+<span class="synPreProc">          $string .= newline . p($val);</span>
+<span class="synPreProc">      }</span>
+<span class="synPreProc">      outdent;</span>
+
+<span class="synPreProc">      return $string;</span>
+<span class="synPreProc">  };</span>
+
+
+<span class="synStatement">=head1</span><span class="synString"> COLORIZATION</span>
+
+You can use <span class="synIdentifier">L&lt;Term::ANSIColor&gt;</span>'s <span class="synIdentifier">C&lt;colored()&gt;</span>' for string
+colorization. Data::Printer will automatically enable/disable
+colors for you.
+
+<span class="synStatement">=head1</span><span class="synString"> EXISTING FILTERS</span>
+
+This is meant to provide a complete list of standalone filters for
+Data::Printer available on CPAN. If you write one, please put it under
+the <span class="synIdentifier">C&lt;Data::Printer::Filter::*&gt;</span> namespace, and drop me a line so I can
+add it to this list!
+
+<span class="synStatement">=head2</span><span class="synString"> Databases</span>
+
+<span class="synIdentifier">L&lt;Data::Printer::Filter::DB&gt;</span> provides filters for Database objects. So
+far only DBI is covered, but more to come!
+
+<span class="synStatement">=head2</span><span class="synString"> Dates &amp; Times</span>
+
+<span class="synIdentifier">L&lt;Data::Printer::Filter::DateTime&gt;</span> pretty-prints several date
+and time objects (not just DateTime) for you on the fly, including
+duration/delta objects!
+
+<span class="synStatement">=head2</span><span class="synString"> Digest</span>
+
+<span class="synIdentifier">L&lt;Data::Printer::Filter::Digest&gt;</span> displays a string containing the
+hash of the actual message digest instead of the object. Works on
+<span class="synIdentifier">C&lt;Digest::MD5&gt;</span>, <span class="synIdentifier">C&lt;Digest::SHA&gt;</span>, any digest class that inherits from
+<span class="synIdentifier">C&lt;Digest::base&gt;</span> and some others that implement their own thing!
+
+<span class="synStatement">=head2</span><span class="synString"> ClassicRegex</span>
+
+<span class="synIdentifier">L&lt;Data::Printer::Filter::ClassicRegex&gt;</span> changes the way Data::Printer
+dumps regular expressions, doing it the classic <span class="synIdentifier">C&lt;qr//&gt;</span> way that got
+popular in <span class="synIdentifier">C&lt;Data::Dumper&gt;</span>.
+
+<span class="synStatement">=head2</span><span class="synString"> URI</span>
+
+<span class="synIdentifier">L&lt;Data::Printer::Filter::URI&gt;</span> pretty-prints <span class="synIdentifier">L&lt;URI&gt;</span> objects, displaying
+the URI as a string instead of dumping the object.
+
+<span class="synStatement">=head2</span><span class="synString"> JSON</span>
+
+<span class="synIdentifier">L&lt;Data::Printer::Filter::JSON&gt;</span> lets you see your JSON structures
+replacing boolean objects with simple <span class="synIdentifier">C&lt;true/false&gt;</span> strings!
+
+<span class="synStatement">=head2</span><span class="synString"> URIs</span>
+
+<span class="synIdentifier">L&lt;Data::Printer::Filter::URI&gt;</span> filters through several <span class="synIdentifier">L&lt;URI&gt;</span> manipulation
+classes and displays the URI as a colored string. A very nice addition
+by Stanislaw Pusep (SYP).
+
+<span class="synStatement">=head1</span><span class="synString"> USING MORE THAN ONE FILTER FOR THE SAME TYPE/CLASS</span>
+
+As of version 0.13, standalone filters let you stack together
+filters for the same type or class. Filters of the same type are
+called in order, until one of them returns a string. This lets
+you have several filters inspecting the same given value until
+one of them decides to actually treat it somehow.
+
+If your filter catched a value and you don't want to treat it,
+simply return and the next filter will be called. If there are no
+other filters for that particular class or type available, the
+standard Data::Printer calls will be used.
+
+For example:
+
+<span class="synPreProc">  filter SCALAR =&gt; sub {</span>
+<span class="synPreProc">      my ($ref, $properties) = @_;</span>
+<span class="synPreProc">      if ( Scalar::Util::looks_like_number $$ref ) {</span>
+<span class="synPreProc">          return sprintf &quot;%.8d&quot;, $$ref;</span>
+<span class="synPreProc">      }</span>
+<span class="synPreProc">      return; # lets the other SCALAR filter have a go</span>
+<span class="synPreProc">  };</span>
+
+<span class="synPreProc">  filter SCALAR =&gt; sub {</span>
+<span class="synPreProc">      my ($ref, $properties) = @_;</span>
+<span class="synPreProc">      return qq[&quot;$$ref&quot;];</span>
+<span class="synPreProc">  };</span>
+
+Note that this &quot;filter stack&quot; is not possible on inline filters, since
+it's a hash and keys with the same name are overwritten. Instead, you
+can pass them as an array reference:
+
+<span class="synPreProc">  use Data::Printer filters =&gt; {</span>
+<span class="synPreProc">      SCALAR =&gt; [ sub { ... }, sub { ... } ],</span>
+<span class="synPreProc">  };</span>
+
+
+<span class="synStatement">=head1</span><span class="synString"> SEE ALSO</span>
+
+<span class="synIdentifier">L&lt;Data::Printer&gt;</span>
+
+
+<span class="synStatement">=head1</span><span class="synString"> LICENSE AND COPYRIGHT</span>
+
+Copyright 2011 Breno G. de Oliveira <span class="synIdentifier">C&lt;&lt; &lt;garu at cpan.org&gt; &gt;&gt;</span>. All rights reserved.
+
+This module is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself. See <span class="synIdentifier">L&lt;perlartistic&gt;</span>.
+
+
+</pre>
+
+ </body>
+</html>

@@ -1,0 +1,176 @@
+MooseX-Compile, wherein Yuval explains how MooseX::Compile is supposed to work and what needs doing.
+
+TODO: PLEASE EDIT ME
+
+19:11 <obra> hiya
+19:12 <nothingmuch> hola
+19:13 <obra> so, my empty mail was an attempted abort
+19:13 <obra> but was going to be "MX::Compile doesn't depend on MX::Compile::CLI. should it?"
+19:13 <nothingmuch> ah, ok =)
+19:13 <obra> but i'm without my laptop, so i couldn't actually check my assumption
+19:14 <nothingmuch> no, because MX::Compile::CLI is "just a a frontend" and at the time the dependencies were a little sketchy
+19:14 <nothingmuch> they've since matured, so maybe it should dep
+19:21  * obra nods
+19:21 <obra> I was on a plane and was trying to see if MX::Compile was at the point where I could try trivial tests
+19:22 <nothingmuch> ah
+19:22 <nothingmuch> so the answer is definitely maybe ;-)
+19:22 <nothingmuch> i haven't been able to make time for it in the past week
+19:23 <nothingmuch> if you guys hand me small, targetted test cases (just commit to it) of code that passes under plain Moose and should pass with MX::Compile i can probably do that stuff pretty quickly
+19:23 <nothingmuch> but the biggest barrier MXC has right now is testing, in order for it to progress towards something production worthy it basically needs to pass the Moose test suite
+19:23 <nothingmuch> except without the Moose test suite's assumptions
+19:23 <nothingmuch> about state and module loading, and all that
+19:24 <nothingmuch> and doing that is a much more daunting prospect than hacking on MXC itself
+19:24 <obra> understood. the problem is that I still don't have a good sense of how to get it going, even manually
+19:24 <nothingmuch> ah
+19:24 <obra> none of the test files seem to show off what I need
+19:24 <nothingmuch> i can walk you through thjat
+19:25 <nothingmuch> the assumptions of the system are:
+19:25 <nothingmuch> the class you are compiling is in its own .pm using standard moose sugar
+19:25 <nothingmuch> there is one package in that file
+19:26 <nothingmuch> the compiler object takes the metaclass and the .pm file as args
+19:26 <nothingmuch> it serializes the metaclass to a .mopc file, and the generated code into a .pmc
+19:26 <nothingmuch> the .pmc contains the original .pm verbatim
+19:26 <nothingmuch> except that all the moose sugar does nothing
+19:27 <nothingmuch> meta is overriden to lazy load .mopc
+19:27 <nothingmuch> and the class is supposed to be usable without loading Moose at all
+19:27 <obra> what is the point of containing the original pm verbatim?
+19:27 <nothingmuch> the user code
+19:28 <nothingmuch> could open and slurp and eval
+19:28 <nothingmuch> but this is a little more flexible
+19:28 <nothingmuch> basically any subroutines the user has written, global/lexical variable initialization, loading of assorted modules etc all must work
+19:28 <obra> are you using the flexibility?
+19:28 <obra> (open, slurp, eval sounds suspiciously like "do")
+19:29 <nothingmuch> can't use do/require/etc because it will go to the .pmc
+19:29 <nothingmuch> instead of the .pm
+19:29 <nothingmuch> the flexibility is helpful because you get a lexical set if the code is compiled
+19:29 <nothingmuch> for when you need to do trickery
+19:29 <nothingmuch> see Moose/Object.pm
+19:29 <obra> I didn't think 'do' had that logic. but ok :)
+19:30 <obra> anyway
+19:30 <obra> do go on
+19:30 <nothingmuch> now that we have Devel::Declare that might prove even simpler
+19:30 <nothingmuch> simply replacing has() etc to export the subs inline
+19:30 <nothingmuch> and write the resulting buffers to a .pmc
+19:30 <nothingmuch> but that's for Later™
+19:30 <obra> The fact that the TM shows up in my terminal scare me
+19:30 <obra> but only a bit less than that you typed it ;)
+19:30 <nothingmuch> utf8++
+19:31 <obra> ubuntu++
+19:31 <nothingmuch> most linuxes seem to get that refreshingly right
+19:31 <nothingmuch> so, erm
+19:31 <obra> yeah. it's pleasant.
+19:31 <nothingmuch> mxcompile
+19:31 <obra> anyway
+19:31 <nothingmuch> that is a nice frontend to the compiler object
+19:31 <obra> I guess "what do I need to do to try MX::Compile for prophet+sd?"
+19:31 <nothingmuch> it can recurse through a directory of modules, or take a list of classes
+19:31 <nothingmuch> for starters, role support
+19:31 <nothingmuch> i know how to do it
+19:31 <nothingmuch> but haven't yet
+19:32 <nothingmuch> type constraint support is very primitive
+19:32 <obra> is that essentially the same code sartak needs to write to give Mouse roles?
+19:32 <nothingmuch> i don't know what that is but doesn't sound likely
+19:32 <nothingmuch> in MXC moose has already done the role composition
+19:32 <nothingmuch> i just need to figure where the data came from, load that file and realias the subs
+19:33 <nothingmuch> (at bootstrap time)
+19:33 <nothingmuch> no role composition per se
+19:33 <nothingmuch> it's nice to make clear that MXC has two "levels" of awesome
+19:33 <nothingmuch> so you can figure out what you can hope to achieve
+19:34 <nothingmuch> 100% compiled everything means you don't load Moose or Class::MOP
+19:34 <nothingmuch> until you need runtime reflection
+19:34 <nothingmuch> no codegen at compile time
+19:34 <nothingmuch> it should load as fast as hand written code
+19:34 <nothingmuch> i've had it beating Object::Tiny in some benchmarks =)
+19:35 <obra> oo
+19:35 <nothingmuch> Moose::XS should aid in making MooseX::Compile's supported feature set easier
+19:35 <nothingmuch> the less awesome level of awesome is just some classes
+19:35 <nothingmuch> you don't pay for those classes' compilation (Role composition, etc)
+19:35 <obra> (especially since for me perl -MMoose -e1 takes up 50% of "sd help"'s runtime
+19:36 <obra> (.4s here)
+19:36 <nothingmuch> 5.8.8/
+19:36 <nothingmuch> ?
+19:36 <obra> yeah
+19:36 <obra> "that's what's in the wild"
+19:36 <nothingmuch> i'm just curious if it makes a dfif
+19:36  * obra nods
+19:36 <obra> I don't have my macbook right now or I'd test
+19:36 <nothingmuch> trunk moose loads slower
+19:36 <obra> how much slower?
+19:36 <nothingmuch> but 5.10 loads faster
+19:36 <nothingmuch> negligiably
+19:36 <nothingmuch> i think like 10%
+19:36 <obra> this was trunk moose as of friday
+19:36 <nothingmuch> but we can fix that
+19:36 <nothingmuch> ah
+19:36 <obra> my tests aren't scientific.
+19:36 <nothingmuch> trunk moose as of you sending me nytprofs
+19:37 <nothingmuch> actually that's CPAN moose now
+19:37 <obra> 0.35 - 0.45
+19:37 <nothingmuch> ouch
+19:37 <nothingmuch> well, part of the problem is that it loads *EVERYTHING*
+19:37 <nothingmuch> every type of meta method class, meta type constraint, the role system, etc
+19:37 <nothingmuch> for a big app these probably will get loaded
+19:38 <nothingmuch> but for a small app, especially if you load the various sub modules only as needed, you shouldn't pay for these
+19:38 <nothingmuch> that's a trivial fix that perigrin started working on
+19:38 <obra> yeah. I played with his branch and saw no change as of last night
+19:39 <obra> so yeah, we're using roles. if roles aren't ready yet, I won't get far at all.
+19:39 <obra> (Also, I do really appreciate all the work you're doing. That I'm not paying for, even ;)
+19:39 <obra> Thank you.
+19:39 <nothingmuch> i will try shaving Moose's own load time with a profile based approach
+19:39 <obra> It's SO MUCH better than it was
+19:39 <nothingmuch> well, everybody wins =)
+19:39 <nothingmuch> a. you're a friend
+19:40 <nothingmuch> b. part of my job is making Moose work well
+19:40 <nothingmuch> c. your using Moose helps moose directly and indirectly
+19:40 <nothingmuch> d. I LIKE TACOS
+19:40 <nothingmuch> erm, i mean sushi
+19:40 <nothingmuch> so no worries on that
+19:41 <nothingmuch> so, long term goals:
+19:41 <nothingmuch> App::SD etc has all the meta calculations already cached in .mopc and .pmc
+19:41 <nothingmuch> moose is not loaded
+19:41 <nothingmuch> all generated code is cached
+19:41 <nothingmuch> at worst Moose::XS is loaded to install subs with newXS
+19:41 <obra> that would be really cool
+19:41 <nothingmuch> depending on which actually fairs better
+19:42 <nothingmuch> that goal is realistic, but involves a lot of work
+19:42 <nothingmuch> more realistic short term goals:
+19:42 <obra> I started playing with try to dump the symbol table, etc
+19:42 <nothingmuch> MooseX::Compile partly speeding up SD
+19:42 <nothingmuch> we can incrementally improve on that
+19:42 <obra> and found that DD::Streamer is a lot closer than anything has ever been, but it craps out around not being able to dump lvalue subs
+19:43 <nothingmuch> Moose::XS replacing some code gen
+19:43 <nothingmuch> yes, the initial approach was to to try and marshall Moose classes into DDS
+19:43 <nothingmuch> but it wasn't stable enough
+19:43 <nothingmuch> and also there's the problem of imports
+19:43 <nothingmuch> you must serialize the whole table at once
+19:43 <nothingmuch> or manage an intricate web of inter dependencies
+19:43  * obra nods
+19:44 <nothingmuch> i sort of work around that by making all the require()/use() statements stay verbatim
+19:44 <nothingmuch> also it doesn't handle xsubs
+19:44 <obra> how hard would it be to get moose's codegen to write out source code instead of blowing subs into memory?
+19:44 <nothingmuch> so there's guesswork for where ::bootstrap was called
+19:44 <nothingmuch> i was just getting to that =
+19:44 <nothingmuch> =)
+19:44 <nothingmuch> pretty trivial
+19:44 <obra> heh
+19:44 <nothingmuch> just grunt work
+19:44 <obra> is that a more viable approach?
+19:44 <nothingmuch> it's one of the limiting parts of MooseX::Compile
+19:45 <nothingmuch> if we clean up that code it will be easier to add support for more features
+19:45 <nothingmuch> but it's not a huge hurdle since it's a very contained problem
+19:45 <nothingmuch> it doesn't directly affect the design of MXC
+19:45 <obra> is this stuff written down anywhere other than this buffer?
+19:45 <nothingmuch> i don't think so
+19:46 <obra> where should it get pasted?
+19:46 <nothingmuch> good question =)
+19:46 <nothingmuch> i think #moose-dev is pretty aware
+19:46 <obra> is there a moose wiki?
+19:46 <nothingmuch> but documenting is good for people to help out
+19:46 <nothingmuch> no, there should be
+19:46 <obra> yeah. but the goal is to turn it into written docs.
+19:46 <obra> ok. for now, it should end up in MooseX-Compile/doc/design
+19:46 <nothingmuch> sounds good
+19:46 <obra> . o O { Thank god I don't have a moose commit bit }
+19:47 <nothingmuch> though most of this affects moose itself though
+19:47  * obra nods
+19:47 <obra> Moose/doc/moosex-compile, then

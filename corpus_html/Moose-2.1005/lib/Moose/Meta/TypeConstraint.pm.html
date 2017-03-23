@@ -1,0 +1,658 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre>
+<span class="synStatement">package</span><span class="synType"> Moose::Meta::TypeConstraint</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::TypeConstraint::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::TypeConstraint::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+<span class="synStatement">use </span>metaclass;
+
+<span class="synStatement">use overload</span> <span class="synString">'0+'</span>     =&gt; <span class="synKeyword">sub </span>{ refaddr(<span class="synStatement">shift</span>) }, <span class="synComment"># id an object</span>
+             <span class="synString">'&quot;&quot;'</span>     =&gt; <span class="synKeyword">sub </span>{ <span class="synStatement">shift</span>-&gt;name },   <span class="synComment"># stringify to tc name</span>
+             <span class="synString">bool</span>     =&gt; <span class="synKeyword">sub </span>{ <span class="synNumber">1</span> },
+             <span class="synString">fallback</span> =&gt; <span class="synNumber">1</span>;
+
+<span class="synStatement">use </span>Carp <span class="synString">qw(confess)</span>;
+<span class="synStatement">use </span>Class::Load <span class="synString">qw(load_class)</span>;
+<span class="synStatement">use </span>Eval::Closure;
+<span class="synStatement">use </span>Scalar::Util <span class="synString">qw(blessed refaddr)</span>;
+<span class="synStatement">use </span>Sub::Name <span class="synString">qw(subname)</span>;
+<span class="synStatement">use </span>Try::Tiny;
+
+<span class="synStatement">use base</span> <span class="synString">qw(Class::MOP::Object)</span>;
+
+__PACKAGE__<span class="synIdentifier">-&gt;meta-&gt;add_attribute</span>(<span class="synString">'name'</span>       =&gt; (
+    <span class="synString">reader</span> =&gt; <span class="synString">'name'</span>,
+    Class::MOP::_definition_context(),
+));
+__PACKAGE__<span class="synIdentifier">-&gt;meta-&gt;add_attribute</span>(<span class="synString">'parent'</span>     =&gt; (
+    <span class="synString">reader</span>    =&gt; <span class="synString">'parent'</span>,
+    <span class="synString">predicate</span> =&gt; <span class="synString">'has_parent'</span>,
+    Class::MOP::_definition_context(),
+));
+
+<span class="synStatement">my</span> <span class="synIdentifier">$null_constraint</span> = <span class="synKeyword">sub </span>{ <span class="synNumber">1</span> };
+__PACKAGE__<span class="synIdentifier">-&gt;meta-&gt;add_attribute</span>(<span class="synString">'constraint'</span> =&gt; (
+    <span class="synString">reader</span>  =&gt; <span class="synString">'constraint'</span>,
+    <span class="synString">writer</span>  =&gt; <span class="synString">'_set_constraint'</span>,
+    <span class="synString">default</span> =&gt; <span class="synKeyword">sub </span>{ <span class="synIdentifier">$null_constraint</span> },
+    Class::MOP::_definition_context(),
+));
+
+__PACKAGE__<span class="synIdentifier">-&gt;meta-&gt;add_attribute</span>(<span class="synString">'message'</span>   =&gt; (
+    <span class="synString">accessor</span>  =&gt; <span class="synString">'message'</span>,
+    <span class="synString">predicate</span> =&gt; <span class="synString">'has_message'</span>,
+    Class::MOP::_definition_context(),
+));
+
+__PACKAGE__<span class="synIdentifier">-&gt;meta-&gt;add_attribute</span>(<span class="synString">'_default_message'</span> =&gt; (
+    <span class="synString">accessor</span>  =&gt; <span class="synString">'_default_message'</span>,
+    Class::MOP::_definition_context(),
+));
+
+<span class="synComment"># can't make this a default because it has to close over the type name, and</span>
+<span class="synComment"># cmop attributes don't have lazy</span>
+<span class="synStatement">my</span> <span class="synIdentifier">$_default_message_generator</span> = <span class="synKeyword">sub </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$name</span> = <span class="synStatement">shift</span>;
+    <span class="synKeyword">sub </span>{
+        <span class="synStatement">my</span> <span class="synIdentifier">$value</span> = <span class="synStatement">shift</span>;
+        <span class="synComment"># have to load it late like this, since it uses Moose itself</span>
+        <span class="synStatement">my</span> <span class="synIdentifier">$can_partialdump</span> = try {
+            <span class="synComment"># versions prior to 0.14 had a potential infinite loop bug</span>
+            load_class(<span class="synString">'Devel::PartialDump'</span>, { <span class="synString">-version</span> =&gt; <span class="synFloat">0.14</span> });
+            <span class="synNumber">1</span>;
+        };
+        <span class="synConditional">if</span> (<span class="synIdentifier">$can_partialdump</span>) {
+            <span class="synIdentifier">$value</span> = Devel::PartialDump-&gt;new-&gt;<span class="synStatement">dump</span>(<span class="synIdentifier">$value</span>);
+        }
+        <span class="synConditional">else</span> {
+            <span class="synIdentifier">$value</span> = (<span class="synOperator">defined</span> <span class="synIdentifier">$value</span> ? overload::StrVal(<span class="synIdentifier">$value</span>) : <span class="synString">'undef'</span>);
+        }
+        <span class="synStatement">return</span> <span class="synString">&quot;Validation failed for '&quot;</span> . <span class="synIdentifier">$name</span> . <span class="synString">&quot;' with value </span><span class="synIdentifier">$value</span><span class="synString">&quot;</span>;
+    }
+};
+__PACKAGE__<span class="synIdentifier">-&gt;meta-&gt;add_attribute</span>(<span class="synString">'coercion'</span>   =&gt; (
+    <span class="synString">accessor</span>  =&gt; <span class="synString">'coercion'</span>,
+    <span class="synString">predicate</span> =&gt; <span class="synString">'has_coercion'</span>,
+    Class::MOP::_definition_context(),
+));
+
+__PACKAGE__<span class="synIdentifier">-&gt;meta-&gt;add_attribute</span>(<span class="synString">'hand_optimized_type_constraint'</span> =&gt; (
+    <span class="synString">init_arg</span>  =&gt; <span class="synString">'optimized'</span>,
+    <span class="synString">accessor</span>  =&gt; <span class="synString">'hand_optimized_type_constraint'</span>,
+    <span class="synString">predicate</span> =&gt; <span class="synString">'has_hand_optimized_type_constraint'</span>,
+    Class::MOP::_definition_context(),
+));
+
+__PACKAGE__<span class="synIdentifier">-&gt;meta-&gt;add_attribute</span>(<span class="synString">'inlined'</span> =&gt; (
+    <span class="synString">init_arg</span>  =&gt; <span class="synString">'inlined'</span>,
+    <span class="synString">accessor</span>  =&gt; <span class="synString">'inlined'</span>,
+    <span class="synString">predicate</span> =&gt; <span class="synString">'_has_inlined_type_constraint'</span>,
+    Class::MOP::_definition_context(),
+));
+
+__PACKAGE__<span class="synIdentifier">-&gt;meta-&gt;add_attribute</span>(<span class="synString">'inline_environment'</span> =&gt; (
+    <span class="synString">init_arg</span> =&gt; <span class="synString">'inline_environment'</span>,
+    <span class="synString">accessor</span> =&gt; <span class="synString">'_inline_environment'</span>,
+    <span class="synString">default</span>  =&gt; <span class="synKeyword">sub </span>{ {} },
+    Class::MOP::_definition_context(),
+));
+
+<span class="synKeyword">sub </span><span class="synFunction">parents </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synIdentifier">$self-&gt;parent</span>;
+}
+
+<span class="synComment"># private accessors</span>
+
+__PACKAGE__<span class="synIdentifier">-&gt;meta-&gt;add_attribute</span>(<span class="synString">'compiled_type_constraint'</span> =&gt; (
+    <span class="synString">accessor</span>  =&gt; <span class="synString">'_compiled_type_constraint'</span>,
+    <span class="synString">predicate</span> =&gt; <span class="synString">'_has_compiled_type_constraint'</span>,
+    Class::MOP::_definition_context(),
+));
+
+__PACKAGE__<span class="synIdentifier">-&gt;meta-&gt;add_attribute</span>(<span class="synString">'package_defined_in'</span> =&gt; (
+    <span class="synString">accessor</span> =&gt; <span class="synString">'_package_defined_in'</span>,
+    Class::MOP::_definition_context(),
+));
+
+<span class="synKeyword">sub </span><span class="synFunction">new </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$class</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$first</span>, <span class="synIdentifier">@rest</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">%args</span> = <span class="synOperator">ref</span> <span class="synIdentifier">$first</span> ? <span class="synIdentifier">%$first</span> : <span class="synIdentifier">$first</span> ? (<span class="synIdentifier">$first</span>, <span class="synIdentifier">@rest</span>) : ();
+    <span class="synIdentifier">$args{</span><span class="synString">name</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$args{</span><span class="synString">name</span><span class="synIdentifier">}</span> ? <span class="synString">&quot;</span><span class="synIdentifier">$args{</span><span class="synString">name</span><span class="synIdentifier">}</span><span class="synString">&quot;</span> : <span class="synString">&quot;__ANON__&quot;</span>;
+
+    <span class="synConditional">if</span> ( <span class="synIdentifier">$args{</span><span class="synString">optimized</span><span class="synIdentifier">}</span> ) {
+        Moose::Deprecated::deprecated(
+            <span class="synString">feature</span> =&gt; <span class="synString">'optimized type constraint sub ref'</span>,
+            <span class="synString">message</span> =&gt;
+                <span class="synString">'Providing an optimized subroutine ref for type constraints is deprecated.'</span>
+                . <span class="synString">' Use the inlining feature (inline_as) instead.'</span>
+        );
+    }
+
+    <span class="synConditional">if</span> ( <span class="synStatement">exists</span> <span class="synIdentifier">$args{</span><span class="synString">message</span><span class="synIdentifier">}</span>
+      &amp;&amp; (!<span class="synOperator">ref</span>(<span class="synIdentifier">$args{</span><span class="synString">message</span><span class="synIdentifier">}</span>) || <span class="synOperator">ref</span>(<span class="synIdentifier">$args{</span><span class="synString">message</span><span class="synIdentifier">}</span>) <span class="synOperator">ne</span> <span class="synString">'CODE'</span>) ) {
+        confess(<span class="synString">&quot;The 'message' parameter must be a coderef&quot;</span>);
+    }
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span>  = <span class="synIdentifier">$class-&gt;_new</span>(<span class="synIdentifier">%args</span>);
+    <span class="synIdentifier">$self-&gt;compile_type_constraint</span>()
+        <span class="synConditional">unless</span> <span class="synIdentifier">$self-&gt;_has_compiled_type_constraint</span>;
+    <span class="synIdentifier">$self-&gt;_default_message</span>(<span class="synIdentifier">$_default_message_generator</span>-&gt;(<span class="synIdentifier">$self-&gt;name</span>))
+        <span class="synConditional">unless</span> <span class="synIdentifier">$self-&gt;has_message</span>;
+    <span class="synStatement">return</span> <span class="synIdentifier">$self</span>;
+}
+
+
+
+<span class="synKeyword">sub </span><span class="synFunction">coerce </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$coercion</span> = <span class="synIdentifier">$self-&gt;coercion</span>;
+
+    <span class="synConditional">unless</span> (<span class="synIdentifier">$coercion</span>) {
+        <span class="synStatement">require</span> Moose;
+        Moose-&gt;throw_error(<span class="synString">&quot;Cannot coerce without a type coercion&quot;</span>);
+    }
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> <span class="synConditional">if</span> <span class="synIdentifier">$self-&gt;check</span>(<span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>);
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$coercion-&gt;coerce</span>(<span class="synIdentifier">@_</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">assert_coerce </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$result</span> = <span class="synIdentifier">$self-&gt;coerce</span>(<span class="synIdentifier">@_</span>);
+
+    <span class="synIdentifier">$self-&gt;assert_valid</span>(<span class="synIdentifier">$result</span>);
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$result</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">check </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">@args</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$constraint_subref</span> = <span class="synIdentifier">$self-&gt;_compiled_type_constraint</span>;
+    <span class="synStatement">return</span> <span class="synIdentifier">$constraint_subref</span>-&gt;(<span class="synIdentifier">@args</span>) ? <span class="synNumber">1</span> : <span class="synOperator">undef</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">validate </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">$value</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synConditional">if</span> (<span class="synIdentifier">$self-&gt;_compiled_type_constraint</span>-&gt;(<span class="synIdentifier">$value</span>)) {
+        <span class="synStatement">return</span> <span class="synOperator">undef</span>;
+    }
+    <span class="synConditional">else</span> {
+        <span class="synIdentifier">$self-&gt;get_message</span>(<span class="synIdentifier">$value</span>);
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">can_be_inlined </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synConditional">if</span> ( <span class="synIdentifier">$self-&gt;has_parent</span> &amp;&amp; <span class="synIdentifier">$self-&gt;constraint</span> == <span class="synIdentifier">$null_constraint</span> ) {
+        <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;parent-&gt;can_be_inlined</span>;
+    }
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;_has_inlined_type_constraint</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_check </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synConditional">unless</span> ( <span class="synIdentifier">$self-&gt;can_be_inlined</span> ) {
+        <span class="synStatement">require</span> Moose;
+        Moose-&gt;throw_error( <span class="synString">'Cannot inline a type constraint check for '</span> . <span class="synIdentifier">$self-&gt;name</span> );
+    }
+
+    <span class="synConditional">if</span> ( <span class="synIdentifier">$self-&gt;has_parent</span> &amp;&amp; <span class="synIdentifier">$self-&gt;constraint</span> == <span class="synIdentifier">$null_constraint</span> ) {
+        <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;parent-&gt;_inline_check</span>(<span class="synIdentifier">@_</span>);
+    }
+
+    <span class="synStatement">return</span> <span class="synString">'( do { '</span> . <span class="synIdentifier">$self-&gt;inlined</span>-&gt;( <span class="synIdentifier">$self</span>, <span class="synIdentifier">@_</span> ) . <span class="synString">' } )'</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">inline_environment </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synConditional">if</span> ( <span class="synIdentifier">$self-&gt;has_parent</span> &amp;&amp; <span class="synIdentifier">$self-&gt;constraint</span> == <span class="synIdentifier">$null_constraint</span> ) {
+        <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;parent-&gt;inline_environment</span>;
+    }
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;_inline_environment</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">assert_valid </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">$value</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$error</span> = <span class="synIdentifier">$self-&gt;validate</span>(<span class="synIdentifier">$value</span>);
+    <span class="synStatement">return</span> <span class="synNumber">1</span> <span class="synConditional">if</span> ! <span class="synOperator">defined</span> <span class="synIdentifier">$error</span>;
+
+    <span class="synStatement">require</span> Moose;
+    Moose-&gt;throw_error(<span class="synIdentifier">$error</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">get_message </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">$value</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$msg</span> = <span class="synIdentifier">$self-&gt;has_message</span>
+        ? <span class="synIdentifier">$self-&gt;message</span>
+        : <span class="synIdentifier">$self-&gt;_default_message</span>;
+    <span class="synStatement">local</span> <span class="synIdentifier">$_</span> = <span class="synIdentifier">$value</span>;
+    <span class="synStatement">return</span> <span class="synIdentifier">$msg</span>-&gt;(<span class="synIdentifier">$value</span>);
+}
+
+<span class="synComment">## type predicates ...</span>
+
+<span class="synKeyword">sub </span><span class="synFunction">equals </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$self</span>, <span class="synIdentifier">$type_or_name</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$other</span> = Moose::Util::TypeConstraints::find_type_constraint(<span class="synIdentifier">$type_or_name</span>) <span class="synOperator">or</span> <span class="synStatement">return</span>;
+
+    <span class="synStatement">return</span> <span class="synNumber">1</span> <span class="synConditional">if</span> <span class="synIdentifier">$self</span> == <span class="synIdentifier">$other</span>;
+
+    <span class="synConditional">if</span> ( <span class="synIdentifier">$self-&gt;has_hand_optimized_type_constraint</span> <span class="synOperator">and</span> <span class="synIdentifier">$other-&gt;has_hand_optimized_type_constraint</span> ) {
+        <span class="synStatement">return</span> <span class="synNumber">1</span> <span class="synConditional">if</span> <span class="synIdentifier">$self-&gt;hand_optimized_type_constraint</span> == <span class="synIdentifier">$other-&gt;hand_optimized_type_constraint</span>;
+    }
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$self-&gt;constraint</span> == <span class="synIdentifier">$other-&gt;constraint</span>;
+
+    <span class="synConditional">if</span> ( <span class="synIdentifier">$self-&gt;has_parent</span> ) {
+        <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$other-&gt;has_parent</span>;
+        <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$self-&gt;parent-&gt;equals</span>( <span class="synIdentifier">$other-&gt;parent</span> );
+    } <span class="synConditional">else</span> {
+        <span class="synStatement">return</span> <span class="synConditional">if</span> <span class="synIdentifier">$other-&gt;has_parent</span>;
+    }
+
+    <span class="synStatement">return</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">is_a_type_of </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">$type_or_name</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$type</span> = Moose::Util::TypeConstraints::find_type_constraint(<span class="synIdentifier">$type_or_name</span>) <span class="synOperator">or</span> <span class="synStatement">return</span>;
+
+    (<span class="synIdentifier">$self-&gt;equals</span>(<span class="synIdentifier">$type</span>) || <span class="synIdentifier">$self-&gt;is_subtype_of</span>(<span class="synIdentifier">$type</span>));
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">is_subtype_of </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">$type_or_name</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$type</span> = Moose::Util::TypeConstraints::find_type_constraint(<span class="synIdentifier">$type_or_name</span>) <span class="synOperator">or</span> <span class="synStatement">return</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$current</span> = <span class="synIdentifier">$self</span>;
+
+    <span class="synRepeat">while</span> (<span class="synStatement">my</span> <span class="synIdentifier">$parent</span> = <span class="synIdentifier">$current-&gt;parent</span>) {
+        <span class="synStatement">return</span> <span class="synNumber">1</span> <span class="synConditional">if</span> <span class="synIdentifier">$parent-&gt;equals</span>(<span class="synIdentifier">$type</span>);
+        <span class="synIdentifier">$current</span> = <span class="synIdentifier">$parent</span>;
+    }
+
+    <span class="synStatement">return</span> <span class="synNumber">0</span>;
+}
+
+<span class="synComment">## compiling the type constraint</span>
+
+<span class="synKeyword">sub </span><span class="synFunction">compile_type_constraint </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synIdentifier">$self-&gt;_compiled_type_constraint</span>(<span class="synIdentifier">$self-&gt;_actually_compile_type_constraint</span>);
+}
+
+<span class="synComment">## type compilers ...</span>
+
+<span class="synKeyword">sub </span><span class="synFunction">_actually_compile_type_constraint </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;_compile_hand_optimized_type_constraint</span>
+        <span class="synConditional">if</span> <span class="synIdentifier">$self-&gt;has_hand_optimized_type_constraint</span>;
+
+    <span class="synConditional">if</span> ( <span class="synIdentifier">$self-&gt;can_be_inlined</span> ) {
+        <span class="synStatement">return</span> eval_closure(
+            <span class="synString">source</span>      =&gt; <span class="synString">'sub { '</span> . <span class="synIdentifier">$self-&gt;_inline_check</span>(<span class="synString">'$_[0]'</span>) . <span class="synString">' }'</span>,
+            <span class="synString">environment</span> =&gt; <span class="synIdentifier">$self-&gt;inline_environment</span>,
+        );
+    }
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$check</span> = <span class="synIdentifier">$self-&gt;constraint</span>;
+    <span class="synConditional">unless</span> ( <span class="synOperator">defined</span> <span class="synIdentifier">$check</span> ) {
+        <span class="synStatement">require</span> Moose;
+        Moose-&gt;throw_error( <span class="synString">&quot;Could not compile type constraint '&quot;</span>
+                . <span class="synIdentifier">$self-&gt;name</span>
+                . <span class="synString">&quot;' because no constraint check&quot;</span> );
+    }
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;_compile_subtype</span>(<span class="synIdentifier">$check</span>)
+        <span class="synConditional">if</span> <span class="synIdentifier">$self-&gt;has_parent</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;_compile_type</span>(<span class="synIdentifier">$check</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_compile_hand_optimized_type_constraint </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$type_constraint</span> = <span class="synIdentifier">$self-&gt;hand_optimized_type_constraint</span>;
+
+    <span class="synConditional">unless</span> ( <span class="synOperator">ref</span> <span class="synIdentifier">$type_constraint</span> ) {
+        <span class="synStatement">require</span> Moose;
+        Moose-&gt;throw_error(<span class="synString">&quot;Hand optimized type constraint is not a code reference&quot;</span>);
+    }
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$type_constraint</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_compile_subtype </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">$check</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synComment"># gather all the parent constraints in order</span>
+    <span class="synStatement">my</span> <span class="synIdentifier">@parents</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$optimized_parent</span>;
+    <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$parent</span> (<span class="synIdentifier">$self-&gt;_collect_all_parents</span>) {
+        <span class="synComment"># if a parent is optimized, the optimized constraint already includes</span>
+        <span class="synComment"># all of its parents tcs, so we can break the loop</span>
+        <span class="synConditional">if</span> (<span class="synIdentifier">$parent-&gt;has_hand_optimized_type_constraint</span>) {
+            <span class="synStatement">push</span> <span class="synIdentifier">@parents</span> =&gt; <span class="synIdentifier">$optimized_parent</span> = <span class="synIdentifier">$parent-&gt;hand_optimized_type_constraint</span>;
+            <span class="synStatement">last</span>;
+        }
+        <span class="synConditional">else</span> {
+            <span class="synStatement">push</span> <span class="synIdentifier">@parents</span> =&gt; <span class="synIdentifier">$parent-&gt;constraint</span>;
+        }
+    }
+
+    <span class="synIdentifier">@parents</span> = <span class="synStatement">grep</span> <span class="synStatement">{</span> <span class="synIdentifier">$_</span> != <span class="synIdentifier">$null_constraint</span> <span class="synStatement">}</span> <span class="synStatement">reverse</span> <span class="synIdentifier">@parents</span>;
+
+    <span class="synConditional">unless</span> ( <span class="synIdentifier">@parents</span> ) {
+        <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;_compile_type</span>(<span class="synIdentifier">$check</span>);
+    } <span class="synConditional">elsif</span>( <span class="synIdentifier">$optimized_parent</span> <span class="synOperator">and</span> <span class="synIdentifier">@parents</span> == <span class="synNumber">1</span> ) {
+        <span class="synComment"># the case of just one optimized parent is optimized to prevent</span>
+        <span class="synComment"># looping and the unnecessary localization</span>
+        <span class="synConditional">if</span> ( <span class="synIdentifier">$check</span> == <span class="synIdentifier">$null_constraint</span> ) {
+            <span class="synStatement">return</span> <span class="synIdentifier">$optimized_parent</span>;
+        } <span class="synConditional">else</span> {
+            <span class="synStatement">return</span> subname(<span class="synIdentifier">$self-&gt;name</span>, <span class="synKeyword">sub </span>{
+                <span class="synStatement">return</span> <span class="synOperator">undef</span> <span class="synConditional">unless</span> <span class="synIdentifier">$optimized_parent</span>-&gt;(<span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>);
+                <span class="synStatement">my</span> (<span class="synIdentifier">@args</span>) = <span class="synIdentifier">@_</span>;
+                <span class="synStatement">local</span> <span class="synIdentifier">$_</span> = <span class="synIdentifier">$args[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>;
+                <span class="synIdentifier">$check</span>-&gt;(<span class="synIdentifier">@args</span>);
+            });
+        }
+    } <span class="synConditional">else</span> {
+        <span class="synComment"># general case, check all the constraints, from the first parent to ourselves</span>
+        <span class="synStatement">my</span> <span class="synIdentifier">@checks</span> = <span class="synIdentifier">@parents</span>;
+        <span class="synStatement">push</span> <span class="synIdentifier">@checks</span>, <span class="synIdentifier">$check</span> <span class="synConditional">if</span> <span class="synIdentifier">$check</span> != <span class="synIdentifier">$null_constraint</span>;
+        <span class="synStatement">return</span> subname(<span class="synIdentifier">$self-&gt;name</span> =&gt; <span class="synKeyword">sub </span>{
+            <span class="synStatement">my</span> (<span class="synIdentifier">@args</span>) = <span class="synIdentifier">@_</span>;
+            <span class="synStatement">local</span> <span class="synIdentifier">$_</span> = <span class="synIdentifier">$args[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>;
+            <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$check</span> (<span class="synIdentifier">@checks</span>) {
+                <span class="synStatement">return</span> <span class="synOperator">undef</span> <span class="synConditional">unless</span> <span class="synIdentifier">$check</span>-&gt;(<span class="synIdentifier">@args</span>);
+            }
+            <span class="synStatement">return</span> <span class="synNumber">1</span>;
+        });
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_compile_type </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">$check</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$check</span> <span class="synConditional">if</span> <span class="synIdentifier">$check</span> == <span class="synIdentifier">$null_constraint</span>; <span class="synComment"># Item, Any</span>
+
+    <span class="synStatement">return</span> subname(<span class="synIdentifier">$self-&gt;name</span> =&gt; <span class="synKeyword">sub </span>{
+        <span class="synStatement">my</span> (<span class="synIdentifier">@args</span>) = <span class="synIdentifier">@_</span>;
+        <span class="synStatement">local</span> <span class="synIdentifier">$_</span> = <span class="synIdentifier">$args[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>;
+        <span class="synIdentifier">$check</span>-&gt;(<span class="synIdentifier">@args</span>);
+    });
+}
+
+<span class="synComment">## other utils ...</span>
+
+<span class="synKeyword">sub </span><span class="synFunction">_collect_all_parents </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">@parents</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$current</span> = <span class="synIdentifier">$self-&gt;parent</span>;
+    <span class="synRepeat">while</span> (<span class="synOperator">defined</span> <span class="synIdentifier">$current</span>) {
+        <span class="synStatement">push</span> <span class="synIdentifier">@parents</span> =&gt; <span class="synIdentifier">$current</span>;
+        <span class="synIdentifier">$current</span> = <span class="synIdentifier">$current-&gt;parent</span>;
+    }
+    <span class="synStatement">return</span> <span class="synIdentifier">@parents</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">create_child_type </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">%opts</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$class</span> = <span class="synOperator">ref</span> <span class="synIdentifier">$self</span>;
+    <span class="synStatement">return</span> <span class="synIdentifier">$class-&gt;new</span>(<span class="synIdentifier">%opts</span>, <span class="synString">parent</span> =&gt; <span class="synIdentifier">$self</span>);
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: The Moose Type Constraint metaclass</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Moose::Meta::TypeConstraint - The Moose Type Constraint metaclass
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This class represents a single type constraint. Moose's built-in type
+constraints, as well as constraints you define, are all stored in a
+<span class="synIdentifier">L&lt;Moose::Meta::TypeConstraint::Registry&gt;</span> object as objects of this
+class.
+
+<span class="synStatement">=head1</span><span class="synString"> INHERITANCE</span>
+
+<span class="synIdentifier">C&lt;Moose::Meta::TypeConstraint&gt;</span> is a subclass of <span class="synIdentifier">L&lt;Class::MOP::Object&gt;</span>.
+
+<span class="synStatement">=head1</span><span class="synString"> METHODS</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; Moose::Meta::TypeConstraint-&gt;new(%options) &gt;&gt;</span>
+
+This creates a new type constraint based on the provided <span class="synIdentifier">C&lt;%options&gt;</span>:
+
+<span class="synStatement">=over</span> <span class="synNumber">8</span>
+
+<span class="synStatement">=item</span><span class="synString"> * name</span>
+
+The constraint name. If a name is not provided, it will be set to
+&quot;__ANON__&quot;.
+
+<span class="synStatement">=item</span><span class="synString"> * parent</span>
+
+A <span class="synIdentifier">C&lt;Moose::Meta::TypeConstraint&gt;</span> object which is the parent type for
+the type being created. This is optional.
+
+<span class="synStatement">=item</span><span class="synString"> * constraint</span>
+
+This is the subroutine reference that implements the actual constraint
+check. This defaults to a subroutine which always returns true.
+
+<span class="synStatement">=item</span><span class="synString"> * message</span>
+
+A subroutine reference which is used to generate an error message when
+the constraint fails. This is optional.
+
+<span class="synStatement">=item</span><span class="synString"> * coercion</span>
+
+A <span class="synIdentifier">L&lt;Moose::Meta::TypeCoercion&gt;</span> object representing the coercions to
+the type. This is optional.
+
+<span class="synStatement">=item</span><span class="synString"> * inlined</span>
+
+A subroutine which returns a string suitable for inlining this type
+constraint. It will be called as a method on the type constraint object, and
+will receive a single additional parameter, a variable name to be tested
+(usually <span class="synIdentifier">C&lt;&quot;$_&quot;&gt;</span> or <span class="synIdentifier">C&lt;&quot;$_[0]&quot;&gt;</span>.
+
+This is optional.
+
+<span class="synStatement">=item</span><span class="synString"> * inline_environment</span>
+
+A hash reference of variables to close over. The keys are variables names, and
+the values are <span class="synIdentifier">I&lt;references&gt;</span> to the variables.
+
+<span class="synStatement">=item</span><span class="synString"> * optimized</span>
+
+<span class="synIdentifier">B&lt;This option is deprecated.&gt;</span>
+
+This is a variant of the <span class="synIdentifier">C&lt;constraint&gt;</span> parameter that is somehow
+optimized. Typically, this means incorporating both the type's
+constraint and all of its parents' constraints into a single
+subroutine reference.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $constraint-&gt;equals($type_name_or_object) &gt;&gt;</span>
+
+Returns true if the supplied name or type object is the same as the
+current type.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $constraint-&gt;is_subtype_of($type_name_or_object) &gt;&gt;</span>
+
+Returns true if the supplied name or type object is a parent of the
+current type.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $constraint-&gt;is_a_type_of($type_name_or_object) &gt;&gt;</span>
+
+Returns true if the given type is the same as the current type, or is
+a parent of the current type. This is a shortcut for checking
+<span class="synIdentifier">C&lt;equals&gt;</span> and <span class="synIdentifier">C&lt;is_subtype_of&gt;</span>.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $constraint-&gt;coerce($value) &gt;&gt;</span>
+
+This will attempt to coerce the value to the type. If the type does not
+have any defined coercions this will throw an error.
+
+If no coercion can produce a value matching <span class="synIdentifier">C&lt;$constraint&gt;</span>, the original
+value is returned.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $constraint-&gt;assert_coerce($value) &gt;&gt;</span>
+
+This method behaves just like <span class="synIdentifier">C&lt;coerce&gt;</span>, but if the result is not valid
+according to <span class="synIdentifier">C&lt;$constraint&gt;</span>, an error is thrown.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $constraint-&gt;check($value) &gt;&gt;</span>
+
+Returns true if the given value passes the constraint for the type.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $constraint-&gt;validate($value) &gt;&gt;</span>
+
+This is similar to <span class="synIdentifier">C&lt;check&gt;</span>. However, if the type <span class="synIdentifier">I&lt;is valid&gt;</span> then the
+method returns an explicit <span class="synIdentifier">C&lt;undef&gt;</span>. If the type is not valid, we call
+<span class="synIdentifier">C&lt;&lt; $self-&gt;get_message($value) &gt;&gt;</span> internally to generate an error
+message.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $constraint-&gt;assert_valid($value) &gt;&gt;</span>
+
+Like <span class="synIdentifier">C&lt;check&gt;</span> and <span class="synIdentifier">C&lt;validate&gt;</span>, this method checks whether <span class="synIdentifier">C&lt;$value&gt;</span> is
+valid under the constraint.  If it is, it will return true.  If it is not,
+an exception will be thrown with the results of
+<span class="synIdentifier">C&lt;&lt; $self-&gt;get_message($value) &gt;&gt;</span>.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $constraint-&gt;name &gt;&gt;</span>
+
+Returns the type's name, as provided to the constructor.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $constraint-&gt;parent &gt;&gt;</span>
+
+Returns the type's parent, as provided to the constructor, if any.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $constraint-&gt;has_parent &gt;&gt;</span>
+
+Returns true if the type has a parent type.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $constraint-&gt;parents &gt;&gt;</span>
+
+Returns all of the types parents as an list of type constraint objects.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $constraint-&gt;constraint &gt;&gt;</span>
+
+Returns the type's constraint, as provided to the constructor.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $constraint-&gt;get_message($value) &gt;&gt;</span>
+
+This generates a method for the given value. If the type does not have
+an explicit message, we generate a default message.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $constraint-&gt;has_message &gt;&gt;</span>
+
+Returns true if the type has a message.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $constraint-&gt;message &gt;&gt;</span>
+
+Returns the type's message as a subroutine reference.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $constraint-&gt;coercion &gt;&gt;</span>
+
+Returns the type's <span class="synIdentifier">L&lt;Moose::Meta::TypeCoercion&gt;</span> object, if one
+exists.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $constraint-&gt;has_coercion &gt;&gt;</span>
+
+Returns true if the type has a coercion.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $constraint-&gt;can_be_inlined &gt;&gt;</span>
+
+Returns true if this type constraint can be inlined. A type constraint which
+subtypes an inlinable constraint and does not add an additional constraint
+&quot;inherits&quot; its parent type's inlining.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $constraint-&gt;hand_optimized_type_constraint &gt;&gt;</span>
+
+<span class="synIdentifier">B&lt;This method is deprecated.&gt;</span>
+
+Returns the type's hand optimized constraint, as provided to the
+constructor via the <span class="synIdentifier">C&lt;optimized&gt;</span> option.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $constraint-&gt;has_hand_optimized_type_constraint &gt;&gt;</span>
+
+<span class="synIdentifier">B&lt;This method is deprecated.&gt;</span>
+
+Returns true if the type has an optimized constraint.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $constraint-&gt;create_child_type(%options) &gt;&gt;</span>
+
+This returns a new type constraint of the same class using the
+provided <span class="synIdentifier">C&lt;%options&gt;</span>. The <span class="synIdentifier">C&lt;parent&gt;</span> option will be the current type.
+
+This method exists so that subclasses of this class can override this
+behavior and change how child types are created.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> BUGS</span>
+
+See <span class="synIdentifier">L&lt;Moose/BUGS&gt;</span> for details on reporting bugs.
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

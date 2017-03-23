@@ -1,0 +1,161 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre>
+<span class="synStatement">package</span><span class="synType"> Class::MOP::Object</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Class::MOP::Object::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Class::MOP::Object::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Carp <span class="synString">qw(confess)</span>;
+<span class="synStatement">use </span>Scalar::Util <span class="synString">'blessed'</span>;
+
+<span class="synComment"># introspection</span>
+
+<span class="synKeyword">sub </span><span class="synFunction">meta </span>{
+    <span class="synStatement">require</span> Class::MOP::Class;
+    Class::MOP::Class-&gt;initialize(blessed(<span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>) || <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_new </span>{
+    Class::MOP::class_of(<span class="synStatement">shift</span>)-&gt;new_object(<span class="synIdentifier">@_</span>);
+}
+
+<span class="synComment"># RANT:</span>
+<span class="synComment"># Cmon, how many times have you written</span>
+<span class="synComment"># the following code while debugging:</span>
+<span class="synComment">#</span>
+<span class="synComment">#  use Data::Dumper;</span>
+<span class="synComment">#  warn Dumper $obj;</span>
+<span class="synComment">#</span>
+<span class="synComment"># It can get seriously annoying, so why</span>
+<span class="synComment"># not just do this ...</span>
+<span class="synKeyword">sub </span><span class="synFunction">dump </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">require</span> Data::Dumper;
+    <span class="synStatement">local</span> <span class="synIdentifier">$</span><span class="synType">Data::Dumper::</span><span class="synIdentifier">Maxdepth</span> = <span class="synStatement">shift</span> || <span class="synNumber">1</span>;
+    Data::Dumper::Dumper <span class="synIdentifier">$self</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_real_ref_name </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">return</span> blessed(<span class="synIdentifier">$self</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_is_compatible_with </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$other_name</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;isa</span>(<span class="synIdentifier">$other_name</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_can_be_made_compatible_with </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">return</span> !<span class="synIdentifier">$self-&gt;_is_compatible_with</span>(<span class="synIdentifier">@_</span>)
+        &amp;&amp; <span class="synOperator">defined</span>(<span class="synIdentifier">$self-&gt;_get_compatible_metaclass</span>(<span class="synIdentifier">@_</span>));
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_make_compatible_with </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$other_name</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$new_metaclass</span> = <span class="synIdentifier">$self-&gt;_get_compatible_metaclass</span>(<span class="synIdentifier">$other_name</span>);
+
+    confess <span class="synString">&quot;Can't make </span><span class="synIdentifier">$self</span><span class="synString"> compatible with metaclass </span><span class="synIdentifier">$other_name</span><span class="synString">&quot;</span>
+        <span class="synConditional">unless</span> <span class="synOperator">defined</span> <span class="synIdentifier">$new_metaclass</span>;
+
+    <span class="synComment"># can't use rebless_instance here, because it might not be an actual</span>
+    <span class="synComment"># subclass in the case of, e.g. moose role reconciliation</span>
+    <span class="synIdentifier">$new_metaclass-&gt;meta-&gt;_force_rebless_instance</span>(<span class="synIdentifier">$self</span>)
+        <span class="synConditional">if</span> blessed(<span class="synIdentifier">$self</span>) <span class="synOperator">ne</span> <span class="synIdentifier">$new_metaclass</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$self</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_get_compatible_metaclass </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$other_name</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;_get_compatible_metaclass_by_subclassing</span>(<span class="synIdentifier">$other_name</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_get_compatible_metaclass_by_subclassing </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$other_name</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$meta_name</span> = blessed(<span class="synIdentifier">$self</span>) ? <span class="synIdentifier">$self-&gt;_real_ref_name</span> : <span class="synIdentifier">$self</span>;
+
+    <span class="synConditional">if</span> (<span class="synIdentifier">$meta_name-&gt;isa</span>(<span class="synIdentifier">$other_name</span>)) {
+        <span class="synStatement">return</span> <span class="synIdentifier">$meta_name</span>;
+    }
+    <span class="synConditional">elsif</span> (<span class="synIdentifier">$other_name-&gt;isa</span>(<span class="synIdentifier">$meta_name</span>)) {
+        <span class="synStatement">return</span> <span class="synIdentifier">$other_name</span>;
+    }
+
+    <span class="synStatement">return</span>;
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: Base class for metaclasses</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Class::MOP::Object - Base class for metaclasses
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This class is a very minimal base class for metaclasses.
+
+<span class="synStatement">=head1</span><span class="synString"> METHODS</span>
+
+This class provides a few methods which are useful in all metaclasses.
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; Class::MOP::???-&gt;meta &gt;&gt;</span>
+
+This returns a <span class="synIdentifier">L&lt;Class::MOP::Class&gt;</span> object.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metaobject-&gt;dump($max_depth) &gt;&gt;</span>
+
+This method uses <span class="synIdentifier">L&lt;Data::Dumper&gt;</span> to dump the object. You can pass an
+optional maximum depth, which will set <span class="synIdentifier">C&lt;$Data::Dumper::Maxdepth&gt;</span>. The
+default maximum depth is 1.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

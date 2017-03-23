@@ -1,0 +1,312 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre>
+<span class="synStatement">package</span><span class="synType"> Class::MOP::Method</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Class::MOP::Method::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Class::MOP::Method::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Carp         <span class="synString">'confess'</span>;
+<span class="synStatement">use </span>Scalar::Util <span class="synString">'weaken'</span>, <span class="synString">'reftype'</span>, <span class="synString">'blessed'</span>;
+
+<span class="synStatement">use base</span> <span class="synString">'Class::MOP::Object'</span>;
+
+<span class="synComment"># </span><span class="synTodo">NOTE:</span>
+<span class="synComment"># if poked in the right way,</span>
+<span class="synComment"># they should act like CODE refs.</span>
+<span class="synStatement">use overload</span> <span class="synString">'&amp;{}'</span> =&gt; <span class="synKeyword">sub </span>{ <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;body</span> }, <span class="synString">fallback</span> =&gt; <span class="synNumber">1</span>;
+
+<span class="synComment"># construction</span>
+
+<span class="synKeyword">sub </span><span class="synFunction">wrap </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$class</span>, <span class="synIdentifier">@args</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">unshift</span> <span class="synIdentifier">@args</span>, <span class="synString">'body'</span> <span class="synConditional">if</span> <span class="synIdentifier">@args</span> % <span class="synNumber">2</span> == <span class="synNumber">1</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">%params</span> = <span class="synIdentifier">@args</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$code</span> = <span class="synIdentifier">$params{</span><span class="synString">body</span><span class="synIdentifier">}</span>;
+
+    <span class="synConditional">if</span> (blessed(<span class="synIdentifier">$code</span>) &amp;&amp; <span class="synIdentifier">$code-&gt;isa</span>(__PACKAGE__)) {
+        <span class="synStatement">my</span> <span class="synIdentifier">$method</span> = <span class="synIdentifier">$code-&gt;clone</span>;
+        <span class="synStatement">delete</span> <span class="synIdentifier">$params{</span><span class="synString">body</span><span class="synIdentifier">}</span>;
+        Class::MOP::class_of(<span class="synIdentifier">$class</span>)-&gt;rebless_instance(<span class="synIdentifier">$method</span>, <span class="synIdentifier">%params</span>);
+        <span class="synStatement">return</span> <span class="synIdentifier">$method</span>;
+    }
+    <span class="synConditional">elsif</span> (!<span class="synOperator">ref</span> <span class="synIdentifier">$code</span> || <span class="synString">'CODE'</span> <span class="synOperator">ne</span> reftype(<span class="synIdentifier">$code</span>)) {
+        confess <span class="synString">&quot;You must supply a CODE reference to bless, not (&quot;</span> . (<span class="synIdentifier">$code</span> || <span class="synString">'undef'</span>) . <span class="synString">&quot;)&quot;</span>;
+    }
+
+    (<span class="synIdentifier">$params{</span><span class="synString">package_name</span><span class="synIdentifier">}</span> &amp;&amp; <span class="synIdentifier">$params{</span><span class="synString">name</span><span class="synIdentifier">}</span>)
+        || confess <span class="synString">&quot;You must supply the package_name and name parameters&quot;</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synIdentifier">$class-&gt;_new</span>(\<span class="synIdentifier">%params</span>);
+
+    weaken(<span class="synIdentifier">$self-&gt;{</span><span class="synString">associated_metaclass</span><span class="synIdentifier">}</span>) <span class="synConditional">if</span> <span class="synIdentifier">$self-&gt;{</span><span class="synString">associated_metaclass</span><span class="synIdentifier">}</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$self</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_new </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$class</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">return</span> Class::MOP::Class-&gt;initialize(<span class="synIdentifier">$class</span>)-&gt;new_object(<span class="synIdentifier">@_</span>)
+        <span class="synConditional">if</span> <span class="synIdentifier">$class</span> <span class="synOperator">ne</span> __PACKAGE__;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$params</span> = <span class="synIdentifier">@_</span> == <span class="synNumber">1</span> ? <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> : {<span class="synIdentifier">@_</span>};
+
+    <span class="synStatement">return</span> <span class="synOperator">bless</span> {
+        <span class="synString">'body'</span>                 =&gt; <span class="synIdentifier">$params-&gt;{</span><span class="synString">body</span><span class="synIdentifier">}</span>,
+        <span class="synString">'associated_metaclass'</span> =&gt; <span class="synIdentifier">$params-&gt;{</span><span class="synString">associated_metaclass</span><span class="synIdentifier">}</span>,
+        <span class="synString">'package_name'</span>         =&gt; <span class="synIdentifier">$params-&gt;{</span><span class="synString">package_name</span><span class="synIdentifier">}</span>,
+        <span class="synString">'name'</span>                 =&gt; <span class="synIdentifier">$params-&gt;{</span><span class="synString">name</span><span class="synIdentifier">}</span>,
+        <span class="synString">'original_method'</span>      =&gt; <span class="synIdentifier">$params-&gt;{</span><span class="synString">original_method</span><span class="synIdentifier">}</span>,
+    } =&gt; <span class="synIdentifier">$class</span>;
+}
+
+<span class="synComment">## accessors</span>
+
+<span class="synKeyword">sub </span><span class="synFunction">associated_metaclass </span>{ <span class="synStatement">shift</span>-&gt;{<span class="synString">'associated_metaclass'</span>} }
+
+<span class="synKeyword">sub </span><span class="synFunction">attach_to_class </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$self</span>, <span class="synIdentifier">$class</span> ) = <span class="synIdentifier">@_</span>;
+    <span class="synIdentifier">$self-&gt;{</span><span class="synString">associated_metaclass</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$class</span>;
+    weaken(<span class="synIdentifier">$self-&gt;{</span><span class="synString">associated_metaclass</span><span class="synIdentifier">}</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">detach_from_class </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">delete</span> <span class="synIdentifier">$self-&gt;{</span><span class="synString">associated_metaclass</span><span class="synIdentifier">}</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">fully_qualified_name </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synIdentifier">$self-&gt;package_name</span> . <span class="synString">'::'</span> . <span class="synIdentifier">$self-&gt;name</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">original_method </span>{ (<span class="synStatement">shift</span>)-&gt;{<span class="synString">'original_method'</span>} }
+
+<span class="synKeyword">sub </span><span class="synFunction">_set_original_method </span>{ <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;{</span><span class="synString">'original_method'</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span> }
+
+<span class="synComment"># It's possible that this could cause a loop if there is a circular</span>
+<span class="synComment"># reference in here. That shouldn't ever happen in normal</span>
+<span class="synComment"># circumstances, since original method only gets set when clone is</span>
+<span class="synComment"># called. We _could_ check for such a loop, but it'd involve some sort</span>
+<span class="synComment"># of package-lexical variable, and wouldn't be terribly subclassable.</span>
+<span class="synKeyword">sub </span><span class="synFunction">original_package_name </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synIdentifier">$self-&gt;original_method</span>
+        ? <span class="synIdentifier">$self-&gt;original_method-&gt;original_package_name</span>
+        : <span class="synIdentifier">$self-&gt;package_name</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">original_name </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synIdentifier">$self-&gt;original_method</span>
+        ? <span class="synIdentifier">$self-&gt;original_method-&gt;original_name</span>
+        : <span class="synIdentifier">$self-&gt;name</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">original_fully_qualified_name </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synIdentifier">$self-&gt;original_method</span>
+        ? <span class="synIdentifier">$self-&gt;original_method-&gt;original_fully_qualified_name</span>
+        : <span class="synIdentifier">$self-&gt;fully_qualified_name</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">execute </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synIdentifier">$self-&gt;body</span>-&gt;(<span class="synIdentifier">@_</span>);
+}
+
+<span class="synComment"># We used to go through use Class::MOP::Class-&gt;clone_instance to do this, but</span>
+<span class="synComment"># this was awfully slow. This method may be called a number of times when</span>
+<span class="synComment"># classes are loaded (especially during Moose role application), so it is</span>
+<span class="synComment"># worth optimizing. - DR</span>
+<span class="synKeyword">sub </span><span class="synFunction">clone </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$clone</span> = <span class="synOperator">bless</span> { <span class="synIdentifier">%{$self}</span>, <span class="synIdentifier">@_</span> }, blessed(<span class="synIdentifier">$self</span>);
+    weaken(<span class="synIdentifier">$clone-&gt;{</span><span class="synString">associated_metaclass</span><span class="synIdentifier">}</span>) <span class="synConditional">if</span> <span class="synIdentifier">$clone-&gt;{</span><span class="synString">associated_metaclass</span><span class="synIdentifier">}</span>;
+
+    <span class="synIdentifier">$clone-&gt;_set_original_method</span>(<span class="synIdentifier">$self</span>);
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$clone</span>;
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: Method Meta Object</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Class::MOP::Method - Method Meta Object
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+The Method Protocol is very small, since methods in Perl 5 are just
+subroutines in a specific package. We provide a very basic
+introspection interface.
+
+<span class="synStatement">=head1</span><span class="synString"> METHODS</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; Class::MOP::Method-&gt;wrap($code, %options) &gt;&gt;</span>
+
+This is the constructor. It accepts a method body in the form of
+either a code reference or a <span class="synIdentifier">L&lt;Class::MOP::Method&gt;</span> instance, followed
+by a hash of options.
+
+The options are:
+
+<span class="synStatement">=over</span> <span class="synNumber">8</span>
+
+<span class="synStatement">=item</span><span class="synString"> * name</span>
+
+The method name (without a package name). This is required if <span class="synIdentifier">C&lt;$code&gt;</span>
+is a coderef.
+
+<span class="synStatement">=item</span><span class="synString"> * package_name</span>
+
+The package name for the method. This is required if <span class="synIdentifier">C&lt;$code&gt;</span> is a
+coderef.
+
+<span class="synStatement">=item</span><span class="synString"> * associated_metaclass</span>
+
+An optional <span class="synIdentifier">L&lt;Class::MOP::Class&gt;</span> object. This is the metaclass for the
+method's class.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metamethod-&gt;clone(%params) &gt;&gt;</span>
+
+This makes a shallow clone of the method object. In particular,
+subroutine reference itself is shared between all clones of a given
+method.
+
+When a method is cloned, the original method object will be available
+by calling <span class="synIdentifier">C&lt;original_method&gt;</span> on the clone.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metamethod-&gt;body &gt;&gt;</span>
+
+This returns a reference to the method's subroutine.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metamethod-&gt;name &gt;&gt;</span>
+
+This returns the method's name
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metamethod-&gt;package_name &gt;&gt;</span>
+
+This returns the method's package name.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metamethod-&gt;fully_qualified_name &gt;&gt;</span>
+
+This returns the method's fully qualified name (package name and
+method name).
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metamethod-&gt;associated_metaclass &gt;&gt;</span>
+
+This returns the <span class="synIdentifier">L&lt;Class::MOP::Class&gt;</span> object for the method, if one
+exists.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metamethod-&gt;original_method &gt;&gt;</span>
+
+If this method object was created as a clone of some other method
+object, this returns the object that was cloned.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metamethod-&gt;original_name &gt;&gt;</span>
+
+This returns the method's original name, wherever it was first
+defined.
+
+If this method is a clone of a clone (of a clone, etc.), this method
+returns the name from the <span class="synIdentifier">I&lt;first&gt;</span> method in the chain of clones.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metamethod-&gt;original_package_name &gt;&gt;</span>
+
+This returns the method's original package name, wherever it was first
+defined.
+
+If this method is a clone of a clone (of a clone, etc.), this method
+returns the package name from the <span class="synIdentifier">I&lt;first&gt;</span> method in the chain of
+clones.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metamethod-&gt;original_fully_qualified_name &gt;&gt;</span>
+
+This returns the method's original fully qualified name, wherever it
+was first defined.
+
+If this method is a clone of a clone (of a clone, etc.), this method
+returns the fully qualified name from the <span class="synIdentifier">I&lt;first&gt;</span> method in the chain
+of clones.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metamethod-&gt;is_stub &gt;&gt;</span>
+
+Returns true if the method is just a stub:
+
+<span class="synPreProc">  sub foo;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metamethod-&gt;attach_to_class($metaclass) &gt;&gt;</span>
+
+Given a <span class="synIdentifier">L&lt;Class::MOP::Class&gt;</span> object, this method sets the associated
+metaclass for the method. This will overwrite any existing associated
+metaclass.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metamethod-&gt;detach_from_class &gt;&gt;</span>
+
+Removes any associated metaclass object for the method.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metamethod-&gt;execute(...) &gt;&gt;</span>
+
+This executes the method. Any arguments provided will be passed on to
+the method itself.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; Class::MOP::Method-&gt;meta &gt;&gt;</span>
+
+This will return a <span class="synIdentifier">L&lt;Class::MOP::Class&gt;</span> instance for this class.
+
+It should also be noted that <span class="synIdentifier">L&lt;Class::MOP&gt;</span> will actually bootstrap
+this module by installing a number of attribute meta-objects into its
+metaclass.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

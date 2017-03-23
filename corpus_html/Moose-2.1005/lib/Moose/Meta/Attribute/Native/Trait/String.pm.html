@@ -1,0 +1,162 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Moose::Meta::Attribute::Native::Trait::String</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Attribute::Native::Trait::String::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Attribute::Native::Trait::String::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+<span class="synStatement">use </span>Moose::Role;
+
+with <span class="synString">'Moose::Meta::Attribute::Native::Trait'</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">_default_default </span>{ <span class="synString">q{}</span> }
+<span class="synKeyword">sub </span><span class="synFunction">_default_is </span>{ <span class="synString">'rw'</span> }
+<span class="synKeyword">sub </span><span class="synFunction">_helper_type </span>{ <span class="synString">'Str'</span> }
+
+<span class="synStatement">no </span>Moose::Role;
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: Helper trait for Str attributes</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Moose::Meta::Attribute::Native::Trait::String - Helper trait for Str attributes
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> SYNOPSIS</span>
+
+<span class="synPreProc">  package MyHomePage;</span>
+<span class="synPreProc">  use Moose;</span>
+
+<span class="synPreProc">  has 'text' =&gt; (</span>
+<span class="synPreProc">      traits  =&gt; ['String'],</span>
+<span class="synPreProc">      is      =&gt; 'rw',</span>
+<span class="synPreProc">      isa     =&gt; 'Str',</span>
+<span class="synPreProc">      default =&gt; q{},</span>
+<span class="synPreProc">      handles =&gt; {</span>
+<span class="synPreProc">          add_text     =&gt; 'append',</span>
+<span class="synPreProc">          replace_text =&gt; 'replace',</span>
+<span class="synPreProc">      },</span>
+<span class="synPreProc">  );</span>
+
+<span class="synPreProc">  my $page = MyHomePage-&gt;new();</span>
+<span class="synPreProc">  $page-&gt;add_text(&quot;foo&quot;);    # same as $page-&gt;text($page-&gt;text . &quot;foo&quot;);</span>
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This trait provides native delegation methods for strings.
+
+<span class="synStatement">=head1</span><span class="synString"> DEFAULT TYPE</span>
+
+If you don't provide an <span class="synIdentifier">C&lt;isa&gt;</span> value for your attribute, it will default to
+<span class="synIdentifier">C&lt;Str&gt;</span>.
+
+<span class="synStatement">=head1</span><span class="synString"> PROVIDED METHODS</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;inc&gt;</span>
+
+Increments the value stored in this slot using the magical string autoincrement
+operator. Note that Perl doesn't provide analogous behavior in <span class="synIdentifier">C&lt;--&gt;</span>, so
+<span class="synIdentifier">C&lt;dec&gt;</span> is not available. This method returns the new value.
+
+This method does not accept any arguments.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;append($string)&gt;</span>
+
+Appends to the string, like <span class="synIdentifier">C&lt;.=&gt;</span>, and returns the new value.
+
+This method requires a single argument.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;prepend($string)&gt;</span>
+
+Prepends to the string and returns the new value.
+
+This method requires a single argument.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;replace($pattern, $replacement)&gt;</span>
+
+Performs a regexp substitution (<span class="synIdentifier">L&lt;perlop/s&gt;</span>). There is no way to provide the
+<span class="synIdentifier">C&lt;g&gt;</span> flag, but code references will be accepted for the replacement, causing
+the regex to be modified with a single <span class="synIdentifier">C&lt;e&gt;</span>. <span class="synIdentifier">C&lt;/smxi&gt;</span> can be applied using the
+<span class="synIdentifier">C&lt;qr&gt;</span> operator. This method returns the new value.
+
+This method requires two arguments.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;match($pattern)&gt;</span>
+
+Runs the regex against the string and returns the matching <span class="synIdentifier">value(s)</span>.
+
+This method requires a single argument.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;chop&gt;</span>
+
+Just like <span class="synIdentifier">L&lt;perlfunc/chop&gt;</span>. This method returns the chopped character.
+
+This method does not accept any arguments.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;chomp&gt;</span>
+
+Just like <span class="synIdentifier">L&lt;perlfunc/chomp&gt;</span>. This method returns the number of characters
+removed.
+
+This method does not accept any arguments.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;clear&gt;</span>
+
+Sets the string to the empty string (not the value passed to <span class="synIdentifier">C&lt;default&gt;</span>).
+
+This method does not have a defined return value.
+
+This method does not accept any arguments.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;length&gt;</span>
+
+Just like <span class="synIdentifier">L&lt;perlfunc/length&gt;</span>, returns the length of the string.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;substr&gt;</span>
+
+This acts just like <span class="synIdentifier">L&lt;perlfunc/substr&gt;</span>. When called as a writer, it returns
+the substring that was replaced, just like the Perl builtin.
+
+This method requires at least one argument, and accepts no more than three.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> BUGS</span>
+
+See <span class="synIdentifier">L&lt;Moose/BUGS&gt;</span> for details on reporting bugs.
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre>
+<span class="synStatement">package</span><span class="synType"> Moose::Meta::TypeCoercion::Union</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::TypeCoercion::Union::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::TypeCoercion::Union::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+<span class="synStatement">use </span>metaclass;
+
+<span class="synStatement">use </span>Scalar::Util <span class="synString">'blessed'</span>;
+
+<span class="synStatement">use base</span> <span class="synString">'Moose::Meta::TypeCoercion'</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">compile_type_coercion </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span>            = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$type_constraint</span> = <span class="synIdentifier">$self-&gt;type_constraint</span>;
+
+    (blessed <span class="synIdentifier">$type_constraint</span> &amp;&amp; <span class="synIdentifier">$type_constraint-&gt;isa</span>(<span class="synString">'Moose::Meta::TypeConstraint::Union'</span>))
+     || Moose-&gt;throw_error(<span class="synString">&quot;You can only create a Moose::Meta::TypeCoercion::Union for a &quot;</span> .
+                <span class="synString">&quot;Moose::Meta::TypeConstraint::Union, not a </span><span class="synIdentifier">$type_constraint</span><span class="synString">&quot;</span>);
+
+    <span class="synIdentifier">$self-&gt;_compiled_type_coercion</span>(
+        <span class="synKeyword">sub </span>{
+            <span class="synStatement">my</span> <span class="synIdentifier">$value</span> = <span class="synStatement">shift</span>;
+
+            <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$type</span> ( <span class="synStatement">grep</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;has_coercion</span> <span class="synStatement">}</span>
+                <span class="synIdentifier">@{</span> <span class="synIdentifier">$type_constraint-&gt;type_constraints</span> <span class="synIdentifier">}</span> ) {
+                <span class="synStatement">my</span> <span class="synIdentifier">$temp</span> = <span class="synIdentifier">$type-&gt;coerce</span>(<span class="synIdentifier">$value</span>);
+                <span class="synStatement">return</span> <span class="synIdentifier">$temp</span> <span class="synConditional">if</span> <span class="synIdentifier">$type_constraint-&gt;check</span>(<span class="synIdentifier">$temp</span>);
+            }
+
+            <span class="synStatement">return</span> <span class="synIdentifier">$value</span>;
+        }
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">has_coercion_for_type </span>{ <span class="synNumber">0</span> }
+
+<span class="synKeyword">sub </span><span class="synFunction">add_type_coercions </span>{
+    <span class="synStatement">require</span> Moose;
+    Moose-&gt;throw_error(<span class="synString">&quot;Cannot add additional type coercions to Union types&quot;</span>);
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: The Moose Type Coercion metaclass for Unions</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Moose::Meta::TypeCoercion::Union - The Moose Type Coercion metaclass for Unions
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This is a subclass of <span class="synIdentifier">L&lt;Moose::Meta::TypeCoercion&gt;</span> that is used for
+<span class="synIdentifier">L&lt;Moose::Meta::TypeConstraint::Union&gt;</span> objects.
+<span class="synStatement">=head1</span><span class="synString"> METHODS</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $coercion-&gt;has_coercion_for_type &gt;&gt;</span>
+
+This method always returns false.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $coercion-&gt;add_type_coercions &gt;&gt;</span>
+
+This method always throws an error. You cannot add coercions to a
+union type coercion.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $coercion-&gt;coerce($value) &gt;&gt;</span>
+
+This method will coerce by trying the coercions for each type in the
+union.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> BUGS</span>
+
+See <span class="synIdentifier">L&lt;Moose/BUGS&gt;</span> for details on reporting bugs.
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

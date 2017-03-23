@@ -1,0 +1,132 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Moose::Meta::Method::Overridden</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Method::Overridden::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Method::Overridden::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use base</span> <span class="synString">'Moose::Meta::Method'</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">new </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$class</span>, <span class="synIdentifier">%args</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synComment"># the package can be overridden by roles</span>
+    <span class="synComment"># it is really more like body's compilation stash</span>
+    <span class="synComment"># this is where we need to override the definition of super() so that the</span>
+    <span class="synComment"># body of the code can call the right overridden version</span>
+    <span class="synStatement">my</span> <span class="synIdentifier">$super_package</span> = <span class="synIdentifier">$args{</span><span class="synString">package</span><span class="synIdentifier">}</span> || <span class="synIdentifier">$args{</span><span class="synString">class</span><span class="synIdentifier">}-&gt;name</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$name</span> = <span class="synIdentifier">$args{</span><span class="synString">name</span><span class="synIdentifier">}</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$super</span> = <span class="synIdentifier">$args{</span><span class="synString">class</span><span class="synIdentifier">}-&gt;find_next_method_by_name</span>(<span class="synIdentifier">$name</span>);
+
+    (<span class="synOperator">defined</span> <span class="synIdentifier">$super</span>)
+        || <span class="synIdentifier">$class-&gt;throw_error</span>(<span class="synString">&quot;You cannot override '</span><span class="synIdentifier">$name</span><span class="synString">' because it has no super method&quot;</span>, <span class="synString">data</span> =&gt; <span class="synIdentifier">$name</span>);
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$super_body</span> = <span class="synIdentifier">$super-&gt;body</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$method</span> = <span class="synIdentifier">$args{</span><span class="synString">method</span><span class="synIdentifier">}</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$body</span> = <span class="synKeyword">sub </span>{
+        <span class="synStatement">local</span> <span class="synIdentifier">$</span><span class="synType">Moose::</span><span class="synIdentifier">SUPER_PACKAGE</span> = <span class="synIdentifier">$super_package</span>;
+        <span class="synStatement">local</span> <span class="synIdentifier">@</span><span class="synType">Moose::</span><span class="synIdentifier">SUPER_ARGS</span> = <span class="synIdentifier">@_</span>;
+        <span class="synStatement">local</span> <span class="synIdentifier">$</span><span class="synType">Moose::</span><span class="synIdentifier">SUPER_BODY</span> = <span class="synIdentifier">$super_body</span>;
+        <span class="synStatement">return</span> <span class="synIdentifier">$method</span>-&gt;(<span class="synIdentifier">@_</span>);
+    };
+
+    <span class="synComment"># </span><span class="synTodo">FIXME</span><span class="synComment"> do we need this make sure this works for next::method?</span>
+    <span class="synComment"># subname &quot;${super_package}::${name}&quot;, $method;</span>
+
+    <span class="synComment"># </span><span class="synTodo">FIXME</span><span class="synComment"> store additional attrs</span>
+    <span class="synIdentifier">$class-&gt;wrap</span>(
+        <span class="synIdentifier">$body</span>,
+        <span class="synString">package_name</span> =&gt; <span class="synIdentifier">$args{</span><span class="synString">class</span><span class="synIdentifier">}-&gt;name</span>,
+        <span class="synString">name</span>         =&gt; <span class="synIdentifier">$name</span>
+    );
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: A Moose Method metaclass for overridden methods</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Moose::Meta::Method::Overridden - A Moose Method metaclass for overridden methods
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This class implements method overriding logic for the <span class="synIdentifier">L&lt;Moose&gt;</span>
+<span class="synIdentifier">C&lt;override&gt;</span> keyword.
+
+The overriding subroutine's parent will be invoked explicitly using
+the <span class="synIdentifier">C&lt;super&gt;</span> keyword from the parent class's method definition.
+
+<span class="synStatement">=head1</span><span class="synString"> METHODS</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; Moose::Meta::Method::Overridden-&gt;new(%options) &gt;&gt;</span>
+
+This constructs a new object. It accepts the following options:
+
+<span class="synStatement">=over</span> <span class="synNumber">8</span>
+
+<span class="synStatement">=item</span><span class="synString"> * class</span>
+
+The metaclass object for the class in which the override is being
+declared. This option is required.
+
+<span class="synStatement">=item</span><span class="synString"> * name</span>
+
+The name of the method which we are overriding. This method must exist
+in one of the class's superclasses. This option is required.
+
+<span class="synStatement">=item</span><span class="synString"> * method</span>
+
+The subroutine reference which implements the overriding. This option
+is required.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> BUGS</span>
+
+See <span class="synIdentifier">L&lt;Moose/BUGS&gt;</span> for details on reporting bugs.
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

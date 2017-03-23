@@ -1,0 +1,67 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synPreProc">#!/usr/bin/perl</span>
+
+<span class="synStatement">package</span><span class="synType"> Bench::Run</span>;
+<span class="synStatement">use </span>Moose;
+
+<span class="synStatement">use </span>Benchmark <span class="synString">qw/:hireswallclock :all/</span>;
+
+has <span class="synString">classes</span> =&gt; (
+    <span class="synString">isa</span> =&gt; <span class="synString">&quot;ArrayRef&quot;</span>,
+    <span class="synString">is</span>  =&gt; <span class="synString">&quot;rw&quot;</span>,
+    <span class="synString">auto_deref</span> =&gt; <span class="synNumber">1</span>,
+);
+
+has <span class="synString">benchmarks</span> =&gt; (
+    <span class="synString">isa</span> =&gt; <span class="synString">&quot;ArrayRef&quot;</span>,
+    <span class="synString">is</span>  =&gt; <span class="synString">&quot;rw&quot;</span>,
+    <span class="synString">auto_deref</span> =&gt; <span class="synNumber">1</span>,
+);
+
+has <span class="synString">min_time</span> =&gt; (
+    <span class="synString">isa</span> =&gt; <span class="synString">&quot;Num&quot;</span>,
+    <span class="synString">is</span>  =&gt; <span class="synString">&quot;rw&quot;</span>,
+    <span class="synString">default</span> =&gt; <span class="synNumber">5</span>,
+);
+
+<span class="synKeyword">sub </span><span class="synFunction">run </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$bench</span> ( <span class="synIdentifier">$self-&gt;benchmarks</span> ) {
+        <span class="synStatement">my</span> <span class="synIdentifier">$bench_class</span> = <span class="synStatement">delete</span> <span class="synIdentifier">$bench-&gt;{</span><span class="synString">class</span><span class="synIdentifier">}</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$name</span>        = <span class="synStatement">delete</span> <span class="synIdentifier">$bench-&gt;{</span><span class="synString">name</span><span class="synIdentifier">}</span> || <span class="synIdentifier">$bench_class</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">@bench_args</span>  = <span class="synIdentifier">%$bench</span>;
+
+        <span class="synStatement">eval</span> <span class="synString">&quot;require </span><span class="synIdentifier">$bench_class</span><span class="synString">&quot;</span>;
+        <span class="synStatement">die</span> <span class="synIdentifier">$@</span> <span class="synConditional">if</span> <span class="synIdentifier">$@</span>;
+
+        <span class="synStatement">my</span> <span class="synIdentifier">%res</span>;
+
+        <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$class</span> ( <span class="synIdentifier">$self-&gt;classes</span> ) {
+            <span class="synStatement">eval</span> <span class="synString">&quot;require </span><span class="synIdentifier">$class</span><span class="synString">&quot;</span>;
+            <span class="synStatement">die</span> <span class="synIdentifier">$@</span> <span class="synConditional">if</span> <span class="synIdentifier">$@</span>;
+
+            <span class="synStatement">my</span> <span class="synIdentifier">$b</span> = <span class="synIdentifier">$bench_class-&gt;new</span>( <span class="synIdentifier">@bench_args</span>, <span class="synString">class</span> =&gt; <span class="synIdentifier">$class</span> );
+            <span class="synIdentifier">$res{$class}</span> = countit( <span class="synIdentifier">$self-&gt;min_time</span>, <span class="synIdentifier">$b-&gt;code</span> );
+        }
+
+        <span class="synStatement">print</span> <span class="synString">&quot;- </span><span class="synIdentifier">$name</span><span class="synString">:</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+        cmpthese( \<span class="synIdentifier">%res</span> );
+        <span class="synStatement">print</span> <span class="synString">&quot;</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+    }
+}
+
+__PACKAGE__;
+
+<span class="synComment">__END__</span>
+</pre>
+
+ </body>
+</html>

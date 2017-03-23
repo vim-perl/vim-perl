@@ -1,0 +1,323 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Moose::Util::MetaRole</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Util::MetaRole::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Util::MetaRole::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+<span class="synStatement">use </span>Scalar::Util <span class="synString">'blessed'</span>;
+
+<span class="synStatement">use </span>Carp <span class="synString">qw( croak )</span>;
+<span class="synStatement">use </span>List::MoreUtils <span class="synString">qw( all )</span>;
+<span class="synStatement">use </span>List::Util <span class="synString">qw( first )</span>;
+<span class="synStatement">use </span>Moose::Deprecated;
+<span class="synStatement">use </span>Scalar::Util <span class="synString">qw( blessed )</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">apply_metaroles </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">%args</span> = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$for</span> = _metathing_for( <span class="synIdentifier">$args{</span><span class="synString">for</span><span class="synIdentifier">}</span> );
+
+    <span class="synConditional">if</span> ( <span class="synIdentifier">$for-&gt;isa</span>(<span class="synString">'Moose::Meta::Role'</span>) ) {
+        <span class="synStatement">return</span> _make_new_metaclass( <span class="synIdentifier">$for</span>, <span class="synIdentifier">$args{</span><span class="synString">role_metaroles</span><span class="synIdentifier">}</span>, <span class="synString">'role'</span> );
+    }
+    <span class="synConditional">else</span> {
+        <span class="synStatement">return</span> _make_new_metaclass( <span class="synIdentifier">$for</span>, <span class="synIdentifier">$args{</span><span class="synString">class_metaroles</span><span class="synIdentifier">}</span>, <span class="synString">'class'</span> );
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_metathing_for </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$passed</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$found</span>
+        = blessed <span class="synIdentifier">$passed</span>
+        ? <span class="synIdentifier">$passed</span>
+        : Class::MOP::class_of(<span class="synIdentifier">$passed</span>);
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$found</span>
+        <span class="synConditional">if</span> <span class="synOperator">defined</span> <span class="synIdentifier">$found</span>
+            &amp;&amp; blessed <span class="synIdentifier">$found</span>
+            &amp;&amp; (   <span class="synIdentifier">$found-&gt;isa</span>(<span class="synString">'Moose::Meta::Role'</span>)
+                || <span class="synIdentifier">$found-&gt;isa</span>(<span class="synString">'Moose::Meta::Class'</span>) );
+
+    <span class="synStatement">local</span> <span class="synIdentifier">$</span><span class="synType">Carp::</span><span class="synIdentifier">CarpLevel</span> = <span class="synIdentifier">$</span><span class="synType">Carp::</span><span class="synIdentifier">CarpLevel</span> + <span class="synNumber">1</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$error_start</span>
+        = <span class="synString">'When using Moose::Util::MetaRole, you must pass a Moose class name,'</span>
+        . <span class="synString">' role name, metaclass object, or metarole object.'</span>;
+
+    <span class="synConditional">if</span> ( <span class="synOperator">defined</span> <span class="synIdentifier">$found</span> &amp;&amp; blessed <span class="synIdentifier">$found</span> ) {
+        croak <span class="synIdentifier">$error_start</span>
+            . <span class="synString">&quot; You passed </span><span class="synIdentifier">$passed</span><span class="synString">, and we resolved this to a &quot;</span>
+            . ( blessed <span class="synIdentifier">$found</span> )
+            . <span class="synString">' object.'</span>;
+    }
+
+    <span class="synConditional">if</span> ( <span class="synOperator">defined</span> <span class="synIdentifier">$passed</span> &amp;&amp; !<span class="synOperator">defined</span> <span class="synIdentifier">$found</span> ) {
+        croak <span class="synIdentifier">$error_start</span>
+            . <span class="synString">&quot; You passed </span><span class="synIdentifier">$passed</span><span class="synString">, and this did not resolve to a metaclass or metarole.&quot;</span>
+            . <span class="synString">' Maybe you need to call Moose-&gt;init_meta to initialize the metaclass first?'</span>;
+    }
+
+    <span class="synConditional">if</span> ( !<span class="synOperator">defined</span> <span class="synIdentifier">$passed</span> ) {
+        croak <span class="synIdentifier">$error_start</span>
+            . <span class="synString">&quot; You passed an undef.&quot;</span>
+            . <span class="synString">' Maybe you need to call Moose-&gt;init_meta to initialize the metaclass first?'</span>;
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_make_new_metaclass </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$for</span>     = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$roles</span>   = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$primary</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$for</span> <span class="synConditional">unless</span> <span class="synStatement">keys</span> <span class="synIdentifier">%{$roles}</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$new_metaclass</span>
+        = <span class="synStatement">exists</span> <span class="synIdentifier">$roles-&gt;{$primary}</span>
+        ? _make_new_class( <span class="synOperator">ref</span> <span class="synIdentifier">$for</span>, <span class="synIdentifier">$roles-&gt;{$primary}</span> )
+        : blessed <span class="synIdentifier">$for</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">%classes</span>;
+
+    <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$key</span> ( <span class="synStatement">grep</span> <span class="synStatement">{</span> <span class="synIdentifier">$_</span> <span class="synOperator">ne</span> <span class="synIdentifier">$primary</span> <span class="synStatement">}</span> <span class="synStatement">keys</span> <span class="synIdentifier">%{$roles}</span> ) {
+        <span class="synStatement">my</span> <span class="synIdentifier">$attr</span> = first {<span class="synIdentifier">$_</span>}
+            <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$for-&gt;meta-&gt;find_attribute_by_name</span>(<span class="synIdentifier">$_</span>) <span class="synStatement">}</span> (
+            <span class="synIdentifier">$key</span> . <span class="synString">'_metaclass'</span>,
+            <span class="synIdentifier">$key</span> . <span class="synString">'_class'</span>
+        );
+
+        <span class="synStatement">my</span> <span class="synIdentifier">$reader</span> = <span class="synIdentifier">$attr-&gt;get_read_method</span>;
+
+        <span class="synIdentifier">$classes{</span> <span class="synIdentifier">$attr-&gt;init_arg</span> <span class="synIdentifier">}</span>
+            = _make_new_class( <span class="synIdentifier">$for-&gt;$reader</span>(), <span class="synIdentifier">$roles-&gt;{$key}</span> );
+    }
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$new_meta</span> = <span class="synIdentifier">$new_metaclass-&gt;reinitialize</span>( <span class="synIdentifier">$for</span>, <span class="synIdentifier">%classes</span> );
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$new_meta</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">apply_base_class_roles </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">%args</span> = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$meta</span> = _metathing_for( <span class="synIdentifier">$args{</span><span class="synString">for</span><span class="synIdentifier">}</span> || <span class="synIdentifier">$args{</span><span class="synString">for_class</span><span class="synIdentifier">}</span> );
+    croak <span class="synString">'You can only apply base class roles to a Moose class, not a role.'</span>
+        <span class="synConditional">if</span> <span class="synIdentifier">$meta-&gt;isa</span>(<span class="synString">'Moose::Meta::Role'</span>);
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$new_base</span> = _make_new_class(
+        <span class="synIdentifier">$meta-&gt;name</span>,
+        <span class="synIdentifier">$args{</span><span class="synString">roles</span><span class="synIdentifier">}</span>,
+        [ <span class="synIdentifier">$meta-&gt;superclasses</span>() ],
+    );
+
+    <span class="synIdentifier">$meta-&gt;superclasses</span>(<span class="synIdentifier">$new_base</span>)
+        <span class="synConditional">if</span> <span class="synIdentifier">$new_base</span> <span class="synOperator">ne</span> <span class="synIdentifier">$meta-&gt;name</span>();
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_make_new_class </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$existing_class</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$roles</span>          = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$superclasses</span>   = <span class="synStatement">shift</span> || [<span class="synIdentifier">$existing_class</span>];
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$existing_class</span> <span class="synConditional">unless</span> <span class="synIdentifier">$roles</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$meta</span> = Class::MOP::Class-&gt;initialize(<span class="synIdentifier">$existing_class</span>);
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$existing_class</span>
+        <span class="synConditional">if</span> <span class="synIdentifier">$meta-&gt;can</span>(<span class="synString">'does_role'</span>) &amp;&amp; all  { <span class="synIdentifier">$meta-&gt;does_role</span>(<span class="synIdentifier">$_</span>) }
+                                      <span class="synStatement">grep</span> <span class="synStatement">{</span> !<span class="synOperator">ref</span> <span class="synIdentifier">$_</span> <span class="synStatement">}</span> <span class="synIdentifier">@{$roles}</span>;
+
+    <span class="synStatement">return</span> Moose::Meta::Class-&gt;create_anon_class(
+        <span class="synString">superclasses</span> =&gt; <span class="synIdentifier">$superclasses</span>,
+        <span class="synString">roles</span>        =&gt; <span class="synIdentifier">$roles</span>,
+        <span class="synString">cache</span>        =&gt; <span class="synNumber">1</span>,
+    )-&gt;name();
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: Apply roles to any metaclass, as well as the object base class</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Moose::Util::MetaRole - Apply roles to any metaclass, as well as the object base class
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> SYNOPSIS</span>
+
+<span class="synPreProc">  package MyApp::Moose;</span>
+
+<span class="synPreProc">  use Moose ();</span>
+<span class="synPreProc">  use Moose::Exporter;</span>
+<span class="synPreProc">  use Moose::Util::MetaRole;</span>
+
+<span class="synPreProc">  use MyApp::Role::Meta::Class;</span>
+<span class="synPreProc">  use MyApp::Role::Meta::Method::Constructor;</span>
+<span class="synPreProc">  use MyApp::Role::Object;</span>
+
+<span class="synPreProc">  Moose::Exporter-&gt;setup_import_methods( also =&gt; 'Moose' );</span>
+
+<span class="synPreProc">  sub init_meta {</span>
+<span class="synPreProc">      shift;</span>
+<span class="synPreProc">      my %args = @_;</span>
+
+<span class="synPreProc">      Moose-&gt;init_meta(%args);</span>
+
+<span class="synPreProc">      Moose::Util::MetaRole::apply_metaroles(</span>
+<span class="synPreProc">          for             =&gt; $args{for_class},</span>
+<span class="synPreProc">          class_metaroles =&gt; {</span>
+<span class="synPreProc">              class =&gt; =&gt; ['MyApp::Role::Meta::Class'],</span>
+<span class="synPreProc">              constructor =&gt; ['MyApp::Role::Meta::Method::Constructor'],</span>
+<span class="synPreProc">          },</span>
+<span class="synPreProc">      );</span>
+
+<span class="synPreProc">      Moose::Util::MetaRole::apply_base_class_roles(</span>
+<span class="synPreProc">          for   =&gt; $args{for_class},</span>
+<span class="synPreProc">          roles =&gt; ['MyApp::Role::Object'],</span>
+<span class="synPreProc">      );</span>
+
+<span class="synPreProc">      return $args{for_class}-&gt;meta();</span>
+<span class="synPreProc">  }</span>
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This utility module is designed to help authors of Moose extensions
+write extensions that are able to cooperate with other Moose
+extensions. To do this, you must write your extensions as roles, which
+can then be dynamically applied to the caller's metaclasses.
+
+This module makes sure to preserve any existing superclasses and roles
+already set for the meta objects, which means that any number of
+extensions can apply roles in any order.
+
+<span class="synStatement">=head1</span><span class="synString"> USAGE</span>
+
+The easiest way to use this module is through <span class="synIdentifier">L&lt;Moose::Exporter&gt;</span>, which can
+generate the appropriate <span class="synIdentifier">C&lt;init_meta&gt;</span> method for you, and make sure it is
+called when imported.
+
+<span class="synStatement">=head1</span><span class="synString"> FUNCTIONS</span>
+
+This module provides two functions.
+
+<span class="synStatement">=head2</span><span class="synString"> apply_metaroles( ... )</span>
+
+This function will apply roles to one or more metaclasses for the specified
+class. It will return a new metaclass object for the class or role passed in
+the &quot;for&quot; parameter.
+
+It accepts the following parameters:
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> * for =&gt; $name</span>
+
+This specifies the class or for which to alter the meta classes. This can be a
+package name, or an appropriate meta-object (a <span class="synIdentifier">L&lt;Moose::Meta::Class&gt;</span> or
+<span class="synIdentifier">L&lt;Moose::Meta::Role&gt;</span>).
+
+<span class="synStatement">=item</span><span class="synString"> * class_metaroles =&gt; \%roles</span>
+
+This is a hash reference specifying which metaroles will be applied to the
+class metaclass and its contained metaclasses and helper classes.
+
+Each key should in turn point to an array reference of role names.
+
+It accepts the following keys:
+
+<span class="synStatement">=over</span> <span class="synNumber">8</span>
+
+<span class="synStatement">=item</span><span class="synString"> class</span>
+
+<span class="synStatement">=item</span><span class="synString"> attribute</span>
+
+<span class="synStatement">=item</span><span class="synString"> method</span>
+
+<span class="synStatement">=item</span><span class="synString"> wrapped_method</span>
+
+<span class="synStatement">=item</span><span class="synString"> instance</span>
+
+<span class="synStatement">=item</span><span class="synString"> constructor</span>
+
+<span class="synStatement">=item</span><span class="synString"> destructor</span>
+
+<span class="synStatement">=item</span><span class="synString"> error</span>
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=item</span><span class="synString"> * role_metaroles =&gt; \%roles</span>
+
+This is a hash reference specifying which metaroles will be applied to the
+role metaclass and its contained metaclasses and helper classes.
+
+It accepts the following keys:
+
+<span class="synStatement">=over</span> <span class="synNumber">8</span>
+
+<span class="synStatement">=item</span><span class="synString"> role</span>
+
+<span class="synStatement">=item</span><span class="synString"> attribute</span>
+
+<span class="synStatement">=item</span><span class="synString"> method</span>
+
+<span class="synStatement">=item</span><span class="synString"> required_method</span>
+
+<span class="synStatement">=item</span><span class="synString"> conflicting_method</span>
+
+<span class="synStatement">=item</span><span class="synString"> application_to_class</span>
+
+<span class="synStatement">=item</span><span class="synString"> application_to_role</span>
+
+<span class="synStatement">=item</span><span class="synString"> application_to_instance</span>
+
+<span class="synStatement">=item</span><span class="synString"> application_role_summation</span>
+
+<span class="synStatement">=item</span><span class="synString"> applied_attribute</span>
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head2</span><span class="synString"> apply_base_class_roles( for =&gt; $class, roles =&gt; \@roles )</span>
+
+This function will apply the specified roles to the object's base class.
+
+<span class="synStatement">=head1</span><span class="synString"> BUGS</span>
+
+See <span class="synIdentifier">L&lt;Moose/BUGS&gt;</span> for details on reporting bugs.
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

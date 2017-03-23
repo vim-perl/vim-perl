@@ -1,0 +1,242 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre>
+<span class="synStatement">package</span><span class="synType"> Moose::Object</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Object::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Object::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Carp ();
+<span class="synStatement">use </span>Devel::GlobalDestruction ();
+<span class="synStatement">use </span>MRO::Compat ();
+<span class="synStatement">use </span>Scalar::Util ();
+<span class="synStatement">use </span>Try::Tiny ();
+
+<span class="synStatement">use if</span> ( <span class="synOperator">not</span> <span class="synStatement">our</span> <span class="synIdentifier">$__mx_is_compiled</span> ), <span class="synString">'Moose::Meta::Class'</span>;
+<span class="synStatement">use if</span> ( <span class="synOperator">not</span> <span class="synStatement">our</span> <span class="synIdentifier">$__mx_is_compiled</span> ), <span class="synString">metaclass</span> =&gt; <span class="synString">'Moose::Meta::Class'</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">new </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$class</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$real_class</span> = Scalar::Util::blessed(<span class="synIdentifier">$class</span>) || <span class="synIdentifier">$class</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$params</span> = <span class="synIdentifier">$real_class-&gt;BUILDARGS</span>(<span class="synIdentifier">@_</span>);
+
+    <span class="synStatement">return</span> Class::MOP::Class-&gt;initialize(<span class="synIdentifier">$real_class</span>)-&gt;new_object(<span class="synIdentifier">$params</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">BUILDARGS </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$class</span> = <span class="synStatement">shift</span>;
+    <span class="synConditional">if</span> ( <span class="synStatement">scalar</span> <span class="synIdentifier">@_</span> == <span class="synNumber">1</span> ) {
+        <span class="synConditional">unless</span> ( <span class="synOperator">defined</span> <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> &amp;&amp; <span class="synOperator">ref</span> <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> <span class="synOperator">eq</span> <span class="synString">'HASH'</span> ) {
+            Class::MOP::class_of(<span class="synIdentifier">$class</span>)-&gt;throw_error(
+                <span class="synString">&quot;Single parameters to new() must be a HASH ref&quot;</span>,
+                <span class="synString">data</span> =&gt; <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> );
+        }
+        <span class="synStatement">return</span> { <span class="synIdentifier">%{</span> <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> <span class="synIdentifier">}</span> };
+    }
+    <span class="synConditional">elsif</span> ( <span class="synIdentifier">@_</span> % <span class="synNumber">2</span> ) {
+        Carp::carp(
+            <span class="synString">&quot;The new() method for </span><span class="synIdentifier">$class</span><span class="synString"> expects a hash reference or a key/value list.&quot;</span>
+                . <span class="synString">&quot; You passed an odd number of arguments&quot;</span> );
+        <span class="synStatement">return</span> { <span class="synIdentifier">@_</span>, <span class="synOperator">undef</span> };
+    }
+    <span class="synConditional">else</span> {
+        <span class="synStatement">return</span> {<span class="synIdentifier">@_</span>};
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">BUILDALL </span>{
+    <span class="synComment"># </span><span class="synTodo">NOTE:</span><span class="synComment"> we ask Perl if we even</span>
+    <span class="synComment"># need to do this first, to avoid</span>
+    <span class="synComment"># extra meta level calls</span>
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;can</span>(<span class="synString">'BUILD'</span>);
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">$params</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$method</span> (<span class="synStatement">reverse</span> Class::MOP::class_of(<span class="synIdentifier">$self</span>)-&gt;find_all_methods_by_name(<span class="synString">'BUILD'</span>)) {
+        <span class="synIdentifier">$method-&gt;{</span><span class="synString">code</span><span class="synIdentifier">}-&gt;execute</span>(<span class="synIdentifier">$self</span>, <span class="synIdentifier">$params</span>);
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">DEMOLISHALL </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$in_global_destruction</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synComment"># </span><span class="synTodo">NOTE:</span><span class="synComment"> we ask Perl if we even</span>
+    <span class="synComment"># need to do this first, to avoid</span>
+    <span class="synComment"># extra meta level calls</span>
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$self-&gt;can</span>(<span class="synString">'DEMOLISH'</span>);
+
+    <span class="synStatement">my</span> <span class="synIdentifier">@isa</span>;
+    <span class="synConditional">if</span> ( <span class="synStatement">my</span> <span class="synIdentifier">$meta</span> = Class::MOP::class_of(<span class="synIdentifier">$self</span> ) ) {
+        <span class="synIdentifier">@isa</span> = <span class="synIdentifier">$meta-&gt;linearized_isa</span>;
+    } <span class="synConditional">else</span> {
+        <span class="synComment"># We cannot count on being able to retrieve a previously made</span>
+        <span class="synComment"># metaclass, _or_ being able to make a new one during global</span>
+        <span class="synComment"># destruction. However, we should still be able to use mro at</span>
+        <span class="synComment"># that time (at least tests suggest so ;)</span>
+        <span class="synStatement">my</span> <span class="synIdentifier">$class_name</span> = <span class="synOperator">ref</span> <span class="synIdentifier">$self</span>;
+        <span class="synIdentifier">@isa</span> = <span class="synIdentifier">@{</span> mro::get_linear_isa(<span class="synIdentifier">$class_name</span>) <span class="synIdentifier">}</span>
+    }
+
+    <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$class</span> (<span class="synIdentifier">@isa</span>) {
+        <span class="synStatement">no strict</span> <span class="synString">'refs'</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$demolish</span> = <span class="synIdentifier">*{</span><span class="synString">&quot;</span><span class="synIdentifier">${class}</span><span class="synString">::DEMOLISH&quot;</span><span class="synIdentifier">}{</span><span class="synString">CODE</span><span class="synIdentifier">}</span>;
+        <span class="synIdentifier">$self-&gt;$demolish</span>(<span class="synIdentifier">$in_global_destruction</span>)
+            <span class="synConditional">if</span> <span class="synOperator">defined</span> <span class="synIdentifier">$demolish</span>;
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">DESTROY </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">local</span> <span class="synIdentifier">$?</span>;
+
+    Try::Tiny::try {
+        <span class="synIdentifier">$self-&gt;DEMOLISHALL</span>(Devel::GlobalDestruction::in_global_destruction);
+    }
+    Try::Tiny::catch {
+        <span class="synStatement">die</span> <span class="synIdentifier">$_</span>;
+    };
+
+    <span class="synStatement">return</span>;
+}
+
+<span class="synComment"># support for UNIVERSAL::DOES ...</span>
+<span class="synPreProc">BEGIN </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$does</span> = UNIVERSAL-&gt;can(<span class="synString">&quot;DOES&quot;</span>) ? <span class="synString">&quot;SUPER::DOES&quot;</span> : <span class="synString">&quot;isa&quot;</span>;
+    <span class="synStatement">eval</span> <span class="synString">'sub DOES {</span>
+<span class="synString">        my ( $self, $class_or_role_name ) = @_;</span>
+<span class="synString">        return $self-&gt;'</span>.<span class="synIdentifier">$does</span>.<span class="synString">'($class_or_role_name)</span>
+<span class="synString">            || $self-&gt;does($class_or_role_name);</span>
+<span class="synString">    }'</span>;
+}
+
+<span class="synComment"># new does() methods will be created</span>
+<span class="synComment"># as appropriate see Moose::Meta::Role</span>
+<span class="synKeyword">sub </span><span class="synFunction">does </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">$role_name</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$class</span> = Scalar::Util::blessed(<span class="synIdentifier">$self</span>) || <span class="synIdentifier">$self</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$meta</span> = Class::MOP::Class-&gt;initialize(<span class="synIdentifier">$class</span>);
+    (<span class="synOperator">defined</span> <span class="synIdentifier">$role_name</span>)
+        || <span class="synIdentifier">$meta-&gt;throw_error</span>(<span class="synString">&quot;You must supply a role name to does()&quot;</span>);
+    <span class="synStatement">return</span> <span class="synNumber">1</span> <span class="synConditional">if</span> <span class="synIdentifier">$meta-&gt;can</span>(<span class="synString">'does_role'</span>) &amp;&amp; <span class="synIdentifier">$meta-&gt;does_role</span>(<span class="synIdentifier">$role_name</span>);
+    <span class="synStatement">return</span> <span class="synNumber">0</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">dump </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">require</span> Data::Dumper;
+    <span class="synStatement">local</span> <span class="synIdentifier">$</span><span class="synType">Data::Dumper::</span><span class="synIdentifier">Maxdepth</span> = <span class="synStatement">shift</span> <span class="synConditional">if</span> <span class="synIdentifier">@_</span>;
+    Data::Dumper::Dumper <span class="synIdentifier">$self</span>;
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: The base object for Moose</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Moose::Object - The base object for Moose
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This class is the default base class for all Moose-using classes. When
+you <span class="synIdentifier">C&lt;use Moose&gt;</span> in this class, your class will inherit from this
+class.
+
+It provides a default constructor and destructor, which run all of the
+<span class="synIdentifier">C&lt;BUILD&gt;</span> and <span class="synIdentifier">C&lt;DEMOLISH&gt;</span> methods in the inheritance hierarchy,
+respectively.
+
+You don't actually <span class="synIdentifier">I&lt;need&gt;</span> to inherit from this in order to use Moose,
+but it makes it easier to take advantage of all of Moose's features.
+
+<span class="synStatement">=head1</span><span class="synString"> METHODS</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; Moose::Object-&gt;new(%params|$params) &gt;&gt;</span>
+
+This method calls <span class="synIdentifier">C&lt;&lt; $class-&gt;BUILDARGS(@_) &gt;&gt;</span>, and then creates a new
+instance of the appropriate class. Once the instance is created, it
+calls <span class="synIdentifier">C&lt;&lt; $instance-&gt;BUILD($params) &gt;&gt;</span> for each <span class="synIdentifier">C&lt;BUILD&gt;</span> method in the
+inheritance hierarchy.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; Moose::Object-&gt;BUILDARGS(%params|$params) &gt;&gt;</span>
+
+The default implementation of this method accepts a hash or hash
+reference of named parameters. If it receives a single argument that
+<span class="synIdentifier">I&lt;isn't&gt;</span> a hash reference it throws an error.
+
+You can override this method in your class to handle other types of
+options passed to the constructor.
+
+This method should always return a hash reference of named options.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $object-&gt;does($role_name) &gt;&gt;</span>
+
+This returns true if the object does the given role.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $object-&gt;DOES($class_or_role_name) &gt;&gt;</span>
+
+This is a Moose role-aware implementation of <span class="synIdentifier">L&lt;UNIVERSAL/DOES&gt;</span>.
+
+This is effectively the same as writing:
+
+<span class="synPreProc">  $object-&gt;does($name) || $object-&gt;isa($name)</span>
+
+This method will work with Perl 5.8, which did not implement
+<span class="synIdentifier">C&lt;UNIVERSAL::DOES&gt;</span>.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $object-&gt;dump($maxdepth) &gt;&gt;</span>
+
+This is a handy utility for <span class="synIdentifier">C&lt;Data::Dumper&gt;</span>ing an object. By default,
+the maximum depth is 1, to avoid making a mess.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $object-&gt;DESTROY &gt;&gt;</span>
+
+A default destructor is provided, which calls
+<span class="synIdentifier">C&lt;&lt; $instance-&gt;DEMOLISH($in_global_destruction) &gt;&gt;</span> for each <span class="synIdentifier">C&lt;DEMOLISH&gt;</span>
+method in the inheritance hierarchy.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> BUGS</span>
+
+See <span class="synIdentifier">L&lt;Moose/BUGS&gt;</span> for details on reporting bugs.
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

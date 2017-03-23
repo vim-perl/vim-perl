@@ -1,0 +1,37 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synPreProc">#!perl -w</span>
+<span class="synComment"># Usage: perl bench/profile.pl (no other options including -Mblib are reqired)</span>
+
+<span class="synStatement">use strict</span>;
+
+<span class="synStatement">my</span> <span class="synIdentifier">$script</span> = <span class="synString">'bench/foo.pl'</span>;
+
+<span class="synStatement">my</span> <span class="synIdentifier">$branch</span> = <span class="synOperator">do</span> {
+    <span class="synStatement">open</span> <span class="synStatement">my</span> <span class="synIdentifier">$in</span>, <span class="synString">'.git/HEAD'</span> <span class="synOperator">or</span> <span class="synStatement">die</span> <span class="synString">&quot;Cannot open .git/HEAD: </span><span class="synIdentifier">$!</span><span class="synString">&quot;</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$s</span> = <span class="synStatement">scalar</span> &lt;<span class="synIdentifier">$in</span>&gt;;
+    <span class="synStatement">chomp</span> <span class="synIdentifier">$s</span>;
+    <span class="synIdentifier">$s</span> =~ <span class="synStatement">s{</span><span class="synString">^ref: </span><span class="synSpecial">\s+</span><span class="synString"> refs/heads/</span><span class="synStatement">}{}xms</span>;
+    <span class="synIdentifier">$s</span> =~ <span class="synStatement">s{</span><span class="synString">/</span><span class="synStatement">}{</span><span class="synString">_</span><span class="synStatement">}xmsg</span>;
+    <span class="synIdentifier">$s</span>;
+};
+
+<span class="synStatement">print</span> <span class="synString">&quot;Profiling </span><span class="synIdentifier">$branch</span><span class="synString"> ...</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+
+<span class="synStatement">my</span> <span class="synIdentifier">@cmd</span> = ( <span class="synIdentifier">$^X</span>, <span class="synString">'-Iblib/lib'</span>, <span class="synString">'-Iblib/arch'</span>, <span class="synIdentifier">$script</span> );
+<span class="synStatement">print</span> <span class="synString">&quot;&gt; </span><span class="synIdentifier">@cmd</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+<span class="synStatement">system</span>(<span class="synIdentifier">@cmd</span>) == <span class="synNumber">0</span> <span class="synOperator">or</span> <span class="synStatement">die</span> <span class="synString">&quot;Cannot profile&quot;</span>;
+
+<span class="synIdentifier">@cmd</span> = ( <span class="synIdentifier">$^X</span>, <span class="synString">'-S'</span>, <span class="synString">'nytprofhtml'</span>, <span class="synString">'--out'</span>, <span class="synString">&quot;nytprof-</span><span class="synIdentifier">$branch</span><span class="synString">&quot;</span> );
+<span class="synStatement">print</span> <span class="synString">&quot;&gt; </span><span class="synIdentifier">@cmd</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+<span class="synStatement">system</span>(<span class="synIdentifier">@cmd</span>) == <span class="synNumber">0</span> <span class="synOperator">or</span> <span class="synStatement">die</span> <span class="synString">&quot;Cannot profile&quot;</span>;
+</pre>
+
+ </body>
+</html>

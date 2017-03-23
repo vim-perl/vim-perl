@@ -1,0 +1,187 @@
+package Moose::Cookbook::Roles::Restartable_AdvancedComposition
+
+# ABSTRACT: Advanced Role Composition - method exclusion and aliasing
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Moose::Cookbook::Roles::Restartable_AdvancedComposition - Advanced Role Composition - method exclusion and aliasing
+
+=head1 VERSION
+
+version 2.1005
+
+=head1 SYNOPSIS
+
+  package Restartable;
+  use Moose::Role;
+
+  has 'is_paused' => (
+      is      => 'rw',
+      isa     => 'Bool',
+      default => 0,
+  );
+
+  requires 'save_state', 'load_state';
+
+  sub stop { 1 }
+
+  sub start { 1 }
+
+  package Restartable::ButUnreliable;
+  use Moose::Role;
+
+  with 'Restartable' => {
+      -alias => {
+          stop  => '_stop',
+          start => '_start'
+      },
+      -excludes => [ 'stop', 'start' ],
+  };
+
+  sub stop {
+      my $self = shift;
+
+      $self->explode() if rand(1) > .5;
+
+      $self->_stop();
+  }
+
+  sub start {
+      my $self = shift;
+
+      $self->explode() if rand(1) > .5;
+
+      $self->_start();
+  }
+
+  package Restartable::ButBroken;
+  use Moose::Role;
+
+  with 'Restartable' => { -excludes => [ 'stop', 'start' ] };
+
+  sub stop {
+      my $self = shift;
+
+      $self->explode();
+  }
+
+  sub start {
+      my $self = shift;
+
+      $self->explode();
+  }
+
+=head1 DESCRIPTION
+
+In this example, we demonstrate how to exercise fine-grained control
+over what methods we consume from a role. We have a C<Restartable>
+role which provides an C<is_paused> attribute, and two methods,
+C<stop> and C<start>.
+
+Then we have two more roles which implement the same interface, each
+putting their own spin on the C<stop> and C<start> methods.
+
+In the C<Restartable::ButUnreliable> role, we want to provide a new
+implementation of C<stop> and C<start>, but still have access to the
+original implementation. To do this, we alias the methods from
+C<Restartable> to private methods, and provide wrappers around the
+originals (1).
+
+Note that aliasing simply I<adds> a name, so we also need to exclude the
+methods with their original names.
+
+  with 'Restartable' => {
+      -alias => {
+          stop  => '_stop',
+          start => '_start'
+      },
+      -excludes => [ 'stop', 'start' ],
+  };
+
+In the C<Restartable::ButBroken> role, we want to provide an entirely
+new behavior for C<stop> and C<start>. We exclude them entirely when
+composing the C<Restartable> role into C<Restartable::ButBroken>.
+
+It's worth noting that the C<-excludes> parameter also accepts a single
+string as an argument if you just want to exclude one method.
+
+  with 'Restartable' => { -excludes => [ 'stop', 'start' ] };
+
+=head1 CONCLUSION
+
+Exclusion and renaming are a power tool that can be handy, especially
+when building roles out of other roles. In this example, all of our
+roles implement the C<Restartable> role. Each role provides same API,
+but each has a different implementation under the hood.
+
+You can also use the method aliasing and excluding features when
+composing a role into a class.
+
+=head1 FOOTNOTES
+
+=over 4
+
+=item (1)
+
+The mention of wrapper should tell you that we could do the same thing
+using method modifiers, but for the sake of this example, we don't.
+
+=back
+
+=begin testing
+
+{
+    my $unreliable = Moose::Meta::Class->create_anon_class(
+        superclasses => [],
+        roles        => [qw/Restartable::ButUnreliable/],
+        methods      => {
+            explode      => sub { },    # nop.
+            'save_state' => sub { },
+            'load_state' => sub { },
+        },
+    )->new_object();
+    ok( $unreliable, 'made anon class with Restartable::ButUnreliable role' );
+    can_ok( $unreliable, qw/start stop/ );
+}
+
+{
+    my $cnt    = 0;
+    my $broken = Moose::Meta::Class->create_anon_class(
+        superclasses => [],
+        roles        => [qw/Restartable::ButBroken/],
+        methods      => {
+            explode      => sub { $cnt++ },
+            'save_state' => sub { },
+            'load_state' => sub { },
+        },
+    )->new_object();
+
+    ok( $broken, 'made anon class with Restartable::ButBroken role' );
+
+    $broken->start();
+
+    is( $cnt, 1, '... start called explode' );
+
+    $broken->stop();
+
+    is( $cnt, 2, '... stop also called explode' );
+}
+
+=end testing
+
+=head1 AUTHOR
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See L<Moose/CABAL> and L<Moose/CONTRIBUTORS> for details.
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut

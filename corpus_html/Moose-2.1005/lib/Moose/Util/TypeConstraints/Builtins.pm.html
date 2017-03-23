@@ -1,0 +1,324 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Moose::Util::TypeConstraints::Builtins</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Util::TypeConstraints::Builtins::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Util::TypeConstraints::Builtins::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Class::Load <span class="synString">qw( is_class_loaded )</span>;
+<span class="synStatement">use </span>List::MoreUtils ();
+<span class="synStatement">use </span>Scalar::Util <span class="synString">qw( blessed looks_like_number reftype )</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">type </span>{ <span class="synStatement">goto</span> <span class="synIdentifier">&amp;</span><span class="synType">Moose::Util::TypeConstraints::</span><span class="synIdentifier">type</span> }
+<span class="synKeyword">sub </span><span class="synFunction">subtype </span>{ <span class="synStatement">goto</span> <span class="synIdentifier">&amp;</span><span class="synType">Moose::Util::TypeConstraints::</span><span class="synIdentifier">subtype</span> }
+<span class="synKeyword">sub </span><span class="synFunction">as </span>{ <span class="synStatement">goto</span> <span class="synIdentifier">&amp;</span><span class="synType">Moose::Util::TypeConstraints::</span><span class="synIdentifier">as</span> }
+<span class="synKeyword">sub </span><span class="synFunction">where </span><span class="synType">(&amp;) </span>{ <span class="synStatement">goto</span> <span class="synIdentifier">&amp;</span><span class="synType">Moose::Util::TypeConstraints::</span><span class="synIdentifier">where</span> }
+<span class="synKeyword">sub </span><span class="synFunction">optimize_as </span><span class="synType">(&amp;) </span>{ <span class="synStatement">goto</span> <span class="synIdentifier">&amp;</span><span class="synType">Moose::Util::TypeConstraints::</span><span class="synIdentifier">optimize_as</span> }
+<span class="synKeyword">sub </span><span class="synFunction">inline_as </span><span class="synType">(&amp;) </span>{ <span class="synStatement">goto</span> <span class="synIdentifier">&amp;</span><span class="synType">Moose::Util::TypeConstraints::</span><span class="synIdentifier">inline_as</span> }
+
+<span class="synKeyword">sub </span><span class="synFunction">define_builtins </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$registry</span> = <span class="synStatement">shift</span>;
+
+    type <span class="synString">'Any'</span>    <span class="synComment"># meta-type including all</span>
+        =&gt; where {<span class="synNumber">1</span>}
+        =&gt; inline_as { <span class="synString">'1'</span> };
+
+    subtype <span class="synString">'Item'</span>  <span class="synComment"># base type</span>
+        =&gt; as <span class="synString">'Any'</span>
+        =&gt; inline_as { <span class="synString">'1'</span> };
+
+    subtype <span class="synString">'Undef'</span>
+        =&gt; as <span class="synString">'Item'</span>
+        =&gt; where { !<span class="synOperator">defined</span>(<span class="synIdentifier">$_</span>) }
+        =&gt; inline_as {
+            <span class="synString">'!defined('</span> . <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span> . <span class="synString">')'</span>
+        };
+
+    subtype <span class="synString">'Defined'</span>
+        =&gt; as <span class="synString">'Item'</span>
+        =&gt; where { <span class="synOperator">defined</span>(<span class="synIdentifier">$_</span>) }
+        =&gt; inline_as {
+            <span class="synString">'defined('</span> . <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span> . <span class="synString">')'</span>
+        };
+
+    subtype <span class="synString">'Bool'</span>
+        =&gt; as <span class="synString">'Item'</span>
+        =&gt; where { !<span class="synOperator">defined</span>(<span class="synIdentifier">$_</span>) || <span class="synIdentifier">$_</span> <span class="synOperator">eq</span> <span class="synString">&quot;&quot;</span> || <span class="synString">&quot;</span><span class="synIdentifier">$_</span><span class="synString">&quot;</span> <span class="synOperator">eq</span> <span class="synString">'1'</span> || <span class="synString">&quot;</span><span class="synIdentifier">$_</span><span class="synString">&quot;</span> <span class="synOperator">eq</span> <span class="synString">'0'</span> }
+        =&gt; inline_as {
+            <span class="synString">'('</span>
+                . <span class="synString">'!defined('</span> . <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span> . <span class="synString">') '</span>
+                . <span class="synString">'|| '</span> . <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span> . <span class="synString">' eq &quot;&quot; '</span>
+                . <span class="synString">'|| ('</span> . <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span> . <span class="synString">'.&quot;&quot;) eq &quot;1&quot; '</span>
+                . <span class="synString">'|| ('</span> . <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span> . <span class="synString">'.&quot;&quot;) eq &quot;0&quot;'</span>
+            . <span class="synString">')'</span>
+        };
+
+    subtype <span class="synString">'Value'</span>
+        =&gt; as <span class="synString">'Defined'</span>
+        =&gt; where { !<span class="synOperator">ref</span>(<span class="synIdentifier">$_</span>) }
+        =&gt; inline_as {
+            <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;parent</span>()-&gt;_inline_check(<span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span>)
+            . <span class="synString">' &amp;&amp; !ref('</span> . <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span> . <span class="synString">')'</span>
+        };
+
+    subtype <span class="synString">'Ref'</span>
+        =&gt; as <span class="synString">'Defined'</span>
+        =&gt; where { <span class="synOperator">ref</span>(<span class="synIdentifier">$_</span>) }
+            <span class="synComment"># no need to call parent - ref also checks for definedness</span>
+        =&gt; inline_as { <span class="synString">'ref('</span> . <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span> . <span class="synString">')'</span> };
+
+    subtype <span class="synString">'Str'</span>
+        =&gt; as <span class="synString">'Value'</span>
+        =&gt; where { <span class="synOperator">ref</span>(\<span class="synIdentifier">$_</span>) <span class="synOperator">eq</span> <span class="synString">'SCALAR'</span> || <span class="synOperator">ref</span>(\(<span class="synStatement">my</span> <span class="synIdentifier">$val</span> = <span class="synIdentifier">$_</span>)) <span class="synOperator">eq</span> <span class="synString">'SCALAR'</span> }
+        =&gt; inline_as {
+            <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;parent</span>()-&gt;_inline_check(<span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span>)
+            . <span class="synString">' &amp;&amp; ('</span>
+                . <span class="synString">'ref(</span><span class="synSpecial">\\</span><span class="synString">'</span> . <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span> . <span class="synString">') eq &quot;SCALAR&quot;'</span>
+                . <span class="synString">' || ref(</span><span class="synSpecial">\\</span><span class="synString">(my $val = '</span> . <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span> . <span class="synString">')) eq &quot;SCALAR&quot;'</span>
+            . <span class="synString">')'</span>
+        };
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$value_type</span> = Moose::Util::TypeConstraints::find_type_constraint(<span class="synString">'Value'</span>);
+    subtype <span class="synString">'Num'</span>
+        =&gt; as <span class="synString">'Str'</span>
+        =&gt; where {
+        <span class="synStatement">my</span> <span class="synIdentifier">$val</span> = <span class="synIdentifier">$_</span>;
+        (<span class="synIdentifier">$val</span> =~ <span class="synStatement">/</span><span class="synSpecial">\A[+-]?[0-9]+\z</span><span class="synStatement">/</span>) ||
+        ( <span class="synIdentifier">$val</span> =~ <span class="synStatement">/</span><span class="synSpecial">\A(?:[+-]?)</span><span class="synString">                #matches optional </span><span class="synSpecial">+</span><span class="synString">- in the beginning</span>
+<span class="synString">        </span><span class="synSpecial">(?=[0-9]</span><span class="synString">|</span><span class="synSpecial">\.[0-9])</span><span class="synString">                     #matches previous </span><span class="synSpecial">+</span><span class="synString">- only if there is something like 3 or </span><span class="synSpecial">.</span><span class="synString">3</span>
+<span class="synString">        </span><span class="synSpecial">[0-9]*</span><span class="synString">                                #matches 0-9 zero or more times</span>
+<span class="synString">        </span><span class="synSpecial">(?:\.[0-9]+)?</span><span class="synString">                         #matches optional </span><span class="synSpecial">.</span><span class="synString">89 or nothing</span>
+<span class="synString">            </span><span class="synSpecial">(?:[Ee](?:[+-]?[0-9]+))?</span><span class="synString">              #matches E1 or e1 or e-1 or e</span><span class="synSpecial">+</span><span class="synString">1 etc</span>
+<span class="synString">        </span><span class="synSpecial">\z</span><span class="synStatement">/x</span> );
+           }
+        =&gt; inline_as {
+            <span class="synComment"># the long Str tests are redundant here</span>
+        <span class="synComment">#storing $_[1] in a temporary value,</span>
+        <span class="synComment">#so that $_[1] won't get converted to a string for regex match</span>
+        <span class="synComment">#see t/attributes/numeric_defaults.t for more details</span>
+        <span class="synString">'my $val = '</span>.<span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span>.<span class="synString">';'</span>.
+        <span class="synIdentifier">$value_type-&gt;_inline_check</span>(<span class="synString">'$val'</span>)
+        .<span class="synString">' &amp;&amp; ( $val =~ /\A[+-]?[0-9]+\z/ || '</span>
+        . <span class="synString">'$val =~ /\A(?:[+-]?)               #matches optional +- in the beginning</span>
+<span class="synString">                (?=[0-9]|\.[0-9])                 #matches previous +- only if there is something like 3 or .3</span>
+<span class="synString">                [0-9]*                            #matches 0-9 zero or more times</span>
+<span class="synString">                (?:\.[0-9]+)?                     #matches optional .89 or nothing</span>
+<span class="synString">                (?:[Ee](?:[+-]?[0-9]+))?          #matches E1 or e1 or e-1 or e+1 etc</span>
+<span class="synString">                \z/x ); '</span>
+        };
+
+    subtype <span class="synString">'Int'</span>
+        =&gt; as <span class="synString">'Num'</span>
+        =&gt; where { (<span class="synStatement">my</span> <span class="synIdentifier">$val</span> = <span class="synIdentifier">$_</span>) =~ <span class="synStatement">/</span><span class="synSpecial">\A</span><span class="synString">-</span><span class="synSpecial">?[0-9]+\z</span><span class="synStatement">/</span> }
+        =&gt; inline_as {
+            <span class="synIdentifier">$value_type-&gt;_inline_check</span>(<span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span>)
+            . <span class="synString">' &amp;&amp; (my $val = '</span> . <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span> . <span class="synString">') =~ /\A-?[0-9]+\z/'</span>
+        };
+
+    subtype <span class="synString">'CodeRef'</span>
+        =&gt; as <span class="synString">'Ref'</span>
+        =&gt; where { <span class="synOperator">ref</span>(<span class="synIdentifier">$_</span>) <span class="synOperator">eq</span> <span class="synString">'CODE'</span> }
+        =&gt; inline_as { <span class="synString">'ref('</span> . <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span> . <span class="synString">') eq &quot;CODE&quot;'</span> };
+
+    subtype <span class="synString">'RegexpRef'</span>
+        =&gt; as <span class="synString">'Ref'</span>
+        =&gt; where( \<span class="synIdentifier">&amp;_RegexpRef</span> )
+        =&gt; inline_as {
+            <span class="synString">'Moose::Util::TypeConstraints::Builtins::_RegexpRef('</span> . <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span> . <span class="synString">')'</span>
+        };
+
+    subtype <span class="synString">'GlobRef'</span>
+        =&gt; as <span class="synString">'Ref'</span>
+        =&gt; where { <span class="synOperator">ref</span>(<span class="synIdentifier">$_</span>) <span class="synOperator">eq</span> <span class="synString">'GLOB'</span> }
+        =&gt; inline_as { <span class="synString">'ref('</span> . <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span> . <span class="synString">') eq &quot;GLOB&quot;'</span> };
+
+    <span class="synComment"># </span><span class="synTodo">NOTE:</span><span class="synComment"> scalar filehandles are GLOB refs, but a GLOB ref is not always a</span>
+    <span class="synComment"># filehandle</span>
+    subtype <span class="synString">'FileHandle'</span>
+        =&gt; as <span class="synString">'Ref'</span>
+        =&gt; where {
+            (<span class="synOperator">ref</span>(<span class="synIdentifier">$_</span>) <span class="synOperator">eq</span> <span class="synString">&quot;GLOB&quot;</span> &amp;&amp; Scalar::Util::openhandle(<span class="synIdentifier">$_</span>))
+         || (blessed(<span class="synIdentifier">$_</span>) &amp;&amp; <span class="synIdentifier">$_-&gt;isa</span>(<span class="synString">&quot;IO::Handle&quot;</span>));
+        }
+        =&gt; inline_as {
+            <span class="synString">'(ref('</span> . <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span> . <span class="synString">') eq &quot;GLOB&quot; '</span>
+            . <span class="synString">'&amp;&amp; Scalar::Util::openhandle('</span> . <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span> . <span class="synString">')) '</span>
+            . <span class="synString">'|| (Scalar::Util::blessed('</span> . <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span> . <span class="synString">') '</span>
+            . <span class="synString">'&amp;&amp; '</span> . <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span> . <span class="synString">'-&gt;isa(&quot;IO::Handle&quot;))'</span>
+        };
+
+    subtype <span class="synString">'Object'</span>
+        =&gt; as <span class="synString">'Ref'</span>
+        =&gt; where { blessed(<span class="synIdentifier">$_</span>) }
+        =&gt; inline_as { <span class="synString">'Scalar::Util::blessed('</span> . <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span> . <span class="synString">')'</span> };
+
+    subtype <span class="synString">'ClassName'</span>
+        =&gt; as <span class="synString">'Str'</span>
+        =&gt; where { is_class_loaded(<span class="synIdentifier">$_</span>) }
+            <span class="synComment"># the long Str tests are redundant here</span>
+        =&gt; inline_as { <span class="synString">'Class::Load::is_class_loaded('</span> . <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span> . <span class="synString">')'</span> };
+
+    subtype <span class="synString">'RoleName'</span>
+        =&gt; as <span class="synString">'ClassName'</span>
+        =&gt; where {
+            (Class::MOP::class_of(<span class="synIdentifier">$_</span>) || <span class="synStatement">return</span>)-&gt;isa(<span class="synString">'Moose::Meta::Role'</span>);
+        }
+        =&gt; inline_as {
+            <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;parent</span>()-&gt;_inline_check(<span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span>)
+            . <span class="synString">' &amp;&amp; do {'</span>
+                . <span class="synString">'my $meta = Class::MOP::class_of('</span> . <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span> . <span class="synString">');'</span>
+                . <span class="synString">'$meta &amp;&amp; $meta-&gt;isa(&quot;Moose::Meta::Role&quot;);'</span>
+            . <span class="synString">'}'</span>
+        };
+
+    <span class="synIdentifier">$registry-&gt;add_type_constraint</span>(
+        Moose::Meta::TypeConstraint::Parameterizable-&gt;new(
+            <span class="synString">name</span>               =&gt; <span class="synString">'ScalarRef'</span>,
+            <span class="synString">package_defined_in</span> =&gt; __PACKAGE__,
+            <span class="synString">parent</span> =&gt;
+                Moose::Util::TypeConstraints::find_type_constraint(<span class="synString">'Ref'</span>),
+            <span class="synString">constraint</span> =&gt; <span class="synKeyword">sub </span>{ <span class="synOperator">ref</span>(<span class="synIdentifier">$_</span>) <span class="synOperator">eq</span> <span class="synString">'SCALAR'</span> || <span class="synOperator">ref</span>(<span class="synIdentifier">$_</span>) <span class="synOperator">eq</span> <span class="synString">'REF'</span> },
+            <span class="synString">constraint_generator</span> =&gt; <span class="synKeyword">sub </span>{
+                <span class="synStatement">my</span> <span class="synIdentifier">$type_parameter</span> = <span class="synStatement">shift</span>;
+                <span class="synStatement">my</span> <span class="synIdentifier">$check</span> = <span class="synIdentifier">$type_parameter-&gt;_compiled_type_constraint</span>;
+                <span class="synStatement">return</span> <span class="synKeyword">sub </span>{
+                    <span class="synStatement">return</span> <span class="synIdentifier">$check</span>-&gt;( <span class="synIdentifier">${$_}</span> );
+                };
+            },
+            <span class="synString">inlined</span> =&gt; <span class="synKeyword">sub </span>{
+                <span class="synString">'ref('</span> . <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span> . <span class="synString">') eq &quot;SCALAR&quot; '</span>
+                  . <span class="synString">'|| ref('</span> . <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span> . <span class="synString">') eq &quot;REF&quot;'</span>
+            },
+            <span class="synString">inline_generator</span> =&gt; <span class="synKeyword">sub </span>{
+                <span class="synStatement">my</span> <span class="synIdentifier">$self</span>           = <span class="synStatement">shift</span>;
+                <span class="synStatement">my</span> <span class="synIdentifier">$type_parameter</span> = <span class="synStatement">shift</span>;
+                <span class="synStatement">my</span> <span class="synIdentifier">$val</span>            = <span class="synStatement">shift</span>;
+                <span class="synString">'(ref('</span> . <span class="synIdentifier">$val</span> . <span class="synString">') eq &quot;SCALAR&quot; || ref('</span> . <span class="synIdentifier">$val</span> . <span class="synString">') eq &quot;REF&quot;) '</span>
+                  . <span class="synString">'&amp;&amp; '</span> . <span class="synIdentifier">$type_parameter-&gt;_inline_check</span>(<span class="synString">'${('</span> . <span class="synIdentifier">$val</span> . <span class="synString">')}'</span>)
+            },
+        )
+    );
+
+    <span class="synIdentifier">$registry-&gt;add_type_constraint</span>(
+        Moose::Meta::TypeConstraint::Parameterizable-&gt;new(
+            <span class="synString">name</span>               =&gt; <span class="synString">'ArrayRef'</span>,
+            <span class="synString">package_defined_in</span> =&gt; __PACKAGE__,
+            <span class="synString">parent</span> =&gt;
+                Moose::Util::TypeConstraints::find_type_constraint(<span class="synString">'Ref'</span>),
+            <span class="synString">constraint</span> =&gt; <span class="synKeyword">sub </span>{ <span class="synOperator">ref</span>(<span class="synIdentifier">$_</span>) <span class="synOperator">eq</span> <span class="synString">'ARRAY'</span> },
+            <span class="synString">constraint_generator</span> =&gt; <span class="synKeyword">sub </span>{
+                <span class="synStatement">my</span> <span class="synIdentifier">$type_parameter</span> = <span class="synStatement">shift</span>;
+                <span class="synStatement">my</span> <span class="synIdentifier">$check</span> = <span class="synIdentifier">$type_parameter-&gt;_compiled_type_constraint</span>;
+                <span class="synStatement">return</span> <span class="synKeyword">sub </span>{
+                    <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$x</span> (<span class="synIdentifier">@$_</span>) {
+                        ( <span class="synIdentifier">$check</span>-&gt;(<span class="synIdentifier">$x</span>) ) || <span class="synStatement">return</span>;
+                    }
+                    <span class="synNumber">1</span>;
+                    }
+            },
+            <span class="synString">inlined</span>          =&gt; <span class="synKeyword">sub </span>{ <span class="synString">'ref('</span> . <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span> . <span class="synString">') eq &quot;ARRAY&quot;'</span> },
+            <span class="synString">inline_generator</span> =&gt; <span class="synKeyword">sub </span>{
+                <span class="synStatement">my</span> <span class="synIdentifier">$self</span>           = <span class="synStatement">shift</span>;
+                <span class="synStatement">my</span> <span class="synIdentifier">$type_parameter</span> = <span class="synStatement">shift</span>;
+                <span class="synStatement">my</span> <span class="synIdentifier">$val</span>            = <span class="synStatement">shift</span>;
+
+                <span class="synString">'do {'</span>
+                    . <span class="synString">'my $check = '</span> . <span class="synIdentifier">$val</span> . <span class="synString">';'</span>
+                    . <span class="synString">'ref($check) eq &quot;ARRAY&quot; '</span>
+                        . <span class="synString">'&amp;&amp; &amp;List::MoreUtils::all('</span>
+                            . <span class="synString">'sub { '</span> . <span class="synIdentifier">$type_parameter-&gt;_inline_check</span>(<span class="synString">'$_'</span>) . <span class="synString">' }, '</span>
+                            . <span class="synString">'@{$check}'</span>
+                        . <span class="synString">')'</span>
+                . <span class="synString">'}'</span>;
+            },
+        )
+    );
+
+    <span class="synIdentifier">$registry-&gt;add_type_constraint</span>(
+        Moose::Meta::TypeConstraint::Parameterizable-&gt;new(
+            <span class="synString">name</span>               =&gt; <span class="synString">'HashRef'</span>,
+            <span class="synString">package_defined_in</span> =&gt; __PACKAGE__,
+            <span class="synString">parent</span> =&gt;
+                Moose::Util::TypeConstraints::find_type_constraint(<span class="synString">'Ref'</span>),
+            <span class="synString">constraint</span> =&gt; <span class="synKeyword">sub </span>{ <span class="synOperator">ref</span>(<span class="synIdentifier">$_</span>) <span class="synOperator">eq</span> <span class="synString">'HASH'</span> },
+            <span class="synString">constraint_generator</span> =&gt; <span class="synKeyword">sub </span>{
+                <span class="synStatement">my</span> <span class="synIdentifier">$type_parameter</span> = <span class="synStatement">shift</span>;
+                <span class="synStatement">my</span> <span class="synIdentifier">$check</span> = <span class="synIdentifier">$type_parameter-&gt;_compiled_type_constraint</span>;
+                <span class="synStatement">return</span> <span class="synKeyword">sub </span>{
+                    <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$x</span> ( <span class="synStatement">values</span> <span class="synIdentifier">%$_</span> ) {
+                        ( <span class="synIdentifier">$check</span>-&gt;(<span class="synIdentifier">$x</span>) ) || <span class="synStatement">return</span>;
+                    }
+                    <span class="synNumber">1</span>;
+                    }
+            },
+            <span class="synString">inlined</span>          =&gt; <span class="synKeyword">sub </span>{ <span class="synString">'ref('</span> . <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span> . <span class="synString">') eq &quot;HASH&quot;'</span> },
+            <span class="synString">inline_generator</span> =&gt; <span class="synKeyword">sub </span>{
+                <span class="synStatement">my</span> <span class="synIdentifier">$self</span>           = <span class="synStatement">shift</span>;
+                <span class="synStatement">my</span> <span class="synIdentifier">$type_parameter</span> = <span class="synStatement">shift</span>;
+                <span class="synStatement">my</span> <span class="synIdentifier">$val</span>            = <span class="synStatement">shift</span>;
+
+                <span class="synString">'do {'</span>
+                    . <span class="synString">'my $check = '</span> . <span class="synIdentifier">$val</span> . <span class="synString">';'</span>
+                    . <span class="synString">'ref($check) eq &quot;HASH&quot; '</span>
+                        . <span class="synString">'&amp;&amp; &amp;List::MoreUtils::all('</span>
+                            . <span class="synString">'sub { '</span> . <span class="synIdentifier">$type_parameter-&gt;_inline_check</span>(<span class="synString">'$_'</span>) . <span class="synString">' }, '</span>
+                            . <span class="synString">'values %{$check}'</span>
+                        . <span class="synString">')'</span>
+                . <span class="synString">'}'</span>;
+            },
+        )
+    );
+
+    <span class="synIdentifier">$registry-&gt;add_type_constraint</span>(
+        Moose::Meta::TypeConstraint::Parameterizable-&gt;new(
+            <span class="synString">name</span>               =&gt; <span class="synString">'Maybe'</span>,
+            <span class="synString">package_defined_in</span> =&gt; __PACKAGE__,
+            <span class="synString">parent</span> =&gt;
+                Moose::Util::TypeConstraints::find_type_constraint(<span class="synString">'Item'</span>),
+            <span class="synString">constraint</span>           =&gt; <span class="synKeyword">sub </span>{<span class="synNumber">1</span>},
+            <span class="synString">constraint_generator</span> =&gt; <span class="synKeyword">sub </span>{
+                <span class="synStatement">my</span> <span class="synIdentifier">$type_parameter</span> = <span class="synStatement">shift</span>;
+                <span class="synStatement">my</span> <span class="synIdentifier">$check</span> = <span class="synIdentifier">$type_parameter-&gt;_compiled_type_constraint</span>;
+                <span class="synStatement">return</span> <span class="synKeyword">sub </span>{
+                    <span class="synStatement">return</span> <span class="synNumber">1</span> <span class="synConditional">if</span> <span class="synOperator">not</span>( <span class="synOperator">defined</span>(<span class="synIdentifier">$_</span>) ) || <span class="synIdentifier">$check</span>-&gt;(<span class="synIdentifier">$_</span>);
+                    <span class="synStatement">return</span>;
+                    }
+            },
+            <span class="synString">inlined</span>          =&gt; <span class="synKeyword">sub </span>{<span class="synString">'1'</span>},
+            <span class="synString">inline_generator</span> =&gt; <span class="synKeyword">sub </span>{
+                <span class="synStatement">my</span> <span class="synIdentifier">$self</span>           = <span class="synStatement">shift</span>;
+                <span class="synStatement">my</span> <span class="synIdentifier">$type_parameter</span> = <span class="synStatement">shift</span>;
+                <span class="synStatement">my</span> <span class="synIdentifier">$val</span>            = <span class="synStatement">shift</span>;
+                <span class="synString">'!defined('</span> . <span class="synIdentifier">$val</span> . <span class="synString">') '</span>
+                  . <span class="synString">'|| ('</span> . <span class="synIdentifier">$type_parameter-&gt;_inline_check</span>(<span class="synIdentifier">$val</span>) . <span class="synString">')'</span>
+            },
+        )
+    );
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=for</span> <span class="synIdentifier">pod_coverage_needs_some_pod</span>
+
+<span class="synStatement">=cut</span>
+
+</pre>
+
+ </body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synPreProc">#!/usr/bin/perl</span>
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+
+{
+    <span class="synStatement">package</span><span class="synType"> Foo</span>;
+    <span class="synStatement">use </span>Moose;
+
+    <span class="synKeyword">sub </span><span class="synFunction">DEMOLISH </span>{
+        <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+        <span class="synStatement">my</span> (<span class="synIdentifier">$igd</span>) = <span class="synIdentifier">@_</span>;
+
+        <span class="synStatement">print</span> <span class="synIdentifier">$igd</span>;
+    }
+}
+
+{
+    <span class="synStatement">package</span><span class="synType"> Bar</span>;
+    <span class="synStatement">use </span>Moose;
+
+    <span class="synKeyword">sub </span><span class="synFunction">DEMOLISH </span>{
+        <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+        <span class="synStatement">my</span> (<span class="synIdentifier">$igd</span>) = <span class="synIdentifier">@_</span>;
+
+        <span class="synStatement">print</span> <span class="synIdentifier">$igd</span>;
+    }
+
+    __PACKAGE__<span class="synIdentifier">-&gt;meta-&gt;make_immutable</span>;
+}
+
+<span class="synStatement">our</span> <span class="synIdentifier">$foo</span> = Foo-&gt;new;
+<span class="synStatement">our</span> <span class="synIdentifier">$bar</span> = Bar-&gt;new;
+</pre>
+
+ </body>
+</html>

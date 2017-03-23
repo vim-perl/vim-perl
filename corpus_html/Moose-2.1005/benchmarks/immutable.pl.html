@@ -1,0 +1,112 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synPreProc">#!/usr/bin/perl</span>
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Scalar::Util <span class="synString">'blessed'</span>;
+<span class="synStatement">use </span>Benchmark <span class="synString">qw[cmpthese]</span>;
+
+<span class="synStatement">use </span>Moose::Util::TypeConstraints;
+
+{
+    <span class="synStatement">package</span><span class="synType"> Foo</span>;
+    <span class="synStatement">use </span>Moose;
+    Foo-&gt;meta-&gt;make_immutable(<span class="synString">debug</span> =&gt; <span class="synNumber">0</span>);
+}
+
+coerce <span class="synString">'Foo'</span>
+    =&gt; from <span class="synString">'ArrayRef'</span>
+    =&gt; via { Foo-&gt;new(<span class="synIdentifier">@{$_}</span>) };
+
+{
+    <span class="synStatement">package</span><span class="synType"> Foo::Normal</span>;
+    <span class="synStatement">use </span>Moose;
+
+    has <span class="synString">'default'</span>         =&gt; (<span class="synString">is</span> =&gt; <span class="synString">'rw'</span>, <span class="synString">default</span> =&gt; <span class="synNumber">10</span>);
+    has <span class="synString">'default_sub'</span>     =&gt; (<span class="synString">is</span> =&gt; <span class="synString">'rw'</span>, <span class="synString">default</span> =&gt; <span class="synKeyword">sub </span>{ [] });
+    has <span class="synString">'lazy'</span>            =&gt; (<span class="synString">is</span> =&gt; <span class="synString">'rw'</span>, <span class="synString">default</span> =&gt; <span class="synNumber">10</span>, <span class="synString">lazy</span> =&gt; <span class="synNumber">1</span>);
+    has <span class="synString">'required'</span>        =&gt; (<span class="synString">is</span> =&gt; <span class="synString">'rw'</span>, <span class="synString">required</span> =&gt; <span class="synNumber">1</span>);
+    has <span class="synString">'weak_ref'</span>        =&gt; (<span class="synString">is</span> =&gt; <span class="synString">'rw'</span>, <span class="synString">weak_ref</span> =&gt; <span class="synNumber">1</span>);
+    has <span class="synString">'type_constraint'</span> =&gt; (<span class="synString">is</span> =&gt; <span class="synString">'rw'</span>, <span class="synString">isa</span> =&gt; <span class="synString">'Foo'</span>);
+    has <span class="synString">'coercion'</span>        =&gt; (<span class="synString">is</span> =&gt; <span class="synString">'rw'</span>, <span class="synString">isa</span> =&gt; <span class="synString">'Foo'</span>, <span class="synString">coerce</span> =&gt; <span class="synNumber">1</span>);
+
+    <span class="synStatement">package</span><span class="synType"> Bar::Normal</span>;
+    <span class="synStatement">use </span>Moose;
+
+    extends <span class="synString">'Foo::Normal'</span>;
+
+    has <span class="synString">'default_w_type_constraint'</span> =&gt; (
+        <span class="synString">is</span>      =&gt; <span class="synString">'rw'</span>,
+        <span class="synString">isa</span>     =&gt; <span class="synString">'Int'</span>,
+        <span class="synString">default</span> =&gt; <span class="synNumber">10</span>,
+    );
+}
+
+{
+    <span class="synStatement">package</span><span class="synType"> Foo::Immutable</span>;
+    <span class="synStatement">use </span>Moose;
+
+    has <span class="synString">'default'</span>         =&gt; (<span class="synString">is</span> =&gt; <span class="synString">'rw'</span>, <span class="synString">default</span> =&gt; <span class="synNumber">10</span>);
+    has <span class="synString">'default_sub'</span>     =&gt; (<span class="synString">is</span> =&gt; <span class="synString">'rw'</span>, <span class="synString">default</span> =&gt; <span class="synKeyword">sub </span>{ [] });
+    has <span class="synString">'lazy'</span>            =&gt; (<span class="synString">is</span> =&gt; <span class="synString">'rw'</span>, <span class="synString">default</span> =&gt; <span class="synNumber">10</span>, <span class="synString">lazy</span> =&gt; <span class="synNumber">1</span>);
+    has <span class="synString">'required'</span>        =&gt; (<span class="synString">is</span> =&gt; <span class="synString">'rw'</span>, <span class="synString">required</span> =&gt; <span class="synNumber">1</span>);
+    has <span class="synString">'weak_ref'</span>        =&gt; (<span class="synString">is</span> =&gt; <span class="synString">'rw'</span>, <span class="synString">weak_ref</span> =&gt; <span class="synNumber">1</span>);
+    has <span class="synString">'type_constraint'</span> =&gt; (<span class="synString">is</span> =&gt; <span class="synString">'rw'</span>, <span class="synString">isa</span> =&gt; <span class="synString">'Foo'</span>);
+    has <span class="synString">'coercion'</span>        =&gt; (<span class="synString">is</span> =&gt; <span class="synString">'rw'</span>, <span class="synString">isa</span> =&gt; <span class="synString">'Foo'</span>, <span class="synString">coerce</span> =&gt; <span class="synNumber">1</span>);
+
+    <span class="synComment">#sub BUILD {</span>
+    <span class="synComment">#    # ...</span>
+    <span class="synComment">#}</span>
+
+    Foo::Immutable-&gt;meta-&gt;make_immutable(<span class="synString">debug</span> =&gt; <span class="synNumber">0</span>);
+
+    <span class="synStatement">package</span><span class="synType"> Bar::Immutable</span>;
+    <span class="synStatement">use </span>Moose;
+
+    extends <span class="synString">'Foo::Immutable'</span>;
+
+    has <span class="synString">'default_w_type_constraint'</span> =&gt; (
+        <span class="synString">is</span>      =&gt; <span class="synString">'rw'</span>,
+        <span class="synString">isa</span>     =&gt; <span class="synString">'Int'</span>,
+        <span class="synString">default</span> =&gt; <span class="synNumber">10</span>,
+    );
+
+    Bar::Immutable-&gt;meta-&gt;make_immutable(<span class="synString">debug</span> =&gt; <span class="synNumber">0</span>);
+}
+
+<span class="synComment">#__END__</span>
+
+<span class="synStatement">my</span> <span class="synIdentifier">$foo</span> = Foo-&gt;new;
+
+cmpthese(<span class="synNumber">10_000</span>,
+    {
+        <span class="synString">'normal'</span> =&gt; <span class="synKeyword">sub </span>{
+            Foo::Normal-&gt;new(
+                <span class="synString">required</span>        =&gt; <span class="synString">'BAR'</span>,
+                <span class="synString">type_constraint</span> =&gt; <span class="synIdentifier">$foo</span>,
+                <span class="synString">coercion</span>        =&gt; [],
+                <span class="synString">weak_ref</span>        =&gt; {},
+            );
+        },
+        <span class="synString">'immutable'</span> =&gt; <span class="synKeyword">sub </span>{
+            Foo::Immutable-&gt;new(
+                <span class="synString">required</span>        =&gt; <span class="synString">'BAR'</span>,
+                <span class="synString">type_constraint</span> =&gt; <span class="synIdentifier">$foo</span>,
+                <span class="synString">coercion</span>        =&gt; [],
+                <span class="synString">weak_ref</span>        =&gt; {},
+            );
+        },
+    }
+);
+</pre>
+
+ </body>
+</html>

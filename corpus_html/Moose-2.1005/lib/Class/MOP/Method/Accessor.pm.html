@@ -1,0 +1,356 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre>
+<span class="synStatement">package</span><span class="synType"> Class::MOP::Method::Accessor</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Class::MOP::Method::Accessor::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Class::MOP::Method::Accessor::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Carp         <span class="synString">'confess'</span>;
+<span class="synStatement">use </span>Scalar::Util <span class="synString">'blessed'</span>, <span class="synString">'weaken'</span>;
+<span class="synStatement">use </span>Try::Tiny;
+
+<span class="synStatement">use base</span> <span class="synString">'Class::MOP::Method::Generated'</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">new </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$class</span>   = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">%options</span> = <span class="synIdentifier">@_</span>;
+
+    (<span class="synStatement">exists</span> <span class="synIdentifier">$options{</span><span class="synString">attribute</span><span class="synIdentifier">}</span>)
+        || confess <span class="synString">&quot;You must supply an attribute to construct with&quot;</span>;
+
+    (<span class="synStatement">exists</span> <span class="synIdentifier">$options{</span><span class="synString">accessor_type</span><span class="synIdentifier">}</span>)
+        || confess <span class="synString">&quot;You must supply an accessor_type to construct with&quot;</span>;
+
+    (blessed(<span class="synIdentifier">$options{</span><span class="synString">attribute</span><span class="synIdentifier">}</span>) &amp;&amp; <span class="synIdentifier">$options{</span><span class="synString">attribute</span><span class="synIdentifier">}-&gt;isa</span>(<span class="synString">'Class::MOP::Attribute'</span>))
+        || confess <span class="synString">&quot;You must supply an attribute which is a 'Class::MOP::Attribute' instance&quot;</span>;
+
+    (<span class="synIdentifier">$options{</span><span class="synString">package_name</span><span class="synIdentifier">}</span> &amp;&amp; <span class="synIdentifier">$options{</span><span class="synString">name</span><span class="synIdentifier">}</span>)
+        || confess <span class="synString">&quot;You must supply the package_name and name parameters </span><span class="synIdentifier">$</span><span class="synType">Class::MOP::Method::</span><span class="synIdentifier">UPGRADE_ERROR_TEXT</span><span class="synString">&quot;</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synIdentifier">$class-&gt;_new</span>(\<span class="synIdentifier">%options</span>);
+
+    <span class="synComment"># we don't want this creating</span>
+    <span class="synComment"># a cycle in the code, if not</span>
+    <span class="synComment"># needed</span>
+    weaken(<span class="synIdentifier">$self-&gt;{</span><span class="synString">'attribute'</span><span class="synIdentifier">}</span>);
+
+    <span class="synIdentifier">$self-&gt;_initialize_body</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$self</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_new </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$class</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">return</span> Class::MOP::Class-&gt;initialize(<span class="synIdentifier">$class</span>)-&gt;new_object(<span class="synIdentifier">@_</span>)
+        <span class="synConditional">if</span> <span class="synIdentifier">$class</span> <span class="synOperator">ne</span> __PACKAGE__;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$params</span> = <span class="synIdentifier">@_</span> == <span class="synNumber">1</span> ? <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> : {<span class="synIdentifier">@_</span>};
+
+    <span class="synStatement">return</span> <span class="synOperator">bless</span> {
+        <span class="synComment"># inherited from Class::MOP::Method</span>
+        <span class="synString">body</span>                 =&gt; <span class="synIdentifier">$params-&gt;{</span><span class="synString">body</span><span class="synIdentifier">}</span>,
+        <span class="synString">associated_metaclass</span> =&gt; <span class="synIdentifier">$params-&gt;{</span><span class="synString">associated_metaclass</span><span class="synIdentifier">}</span>,
+        <span class="synString">package_name</span>         =&gt; <span class="synIdentifier">$params-&gt;{</span><span class="synString">package_name</span><span class="synIdentifier">}</span>,
+        <span class="synString">name</span>                 =&gt; <span class="synIdentifier">$params-&gt;{</span><span class="synString">name</span><span class="synIdentifier">}</span>,
+        <span class="synString">original_method</span>      =&gt; <span class="synIdentifier">$params-&gt;{</span><span class="synString">original_method</span><span class="synIdentifier">}</span>,
+
+        <span class="synComment"># inherit from Class::MOP::Generated</span>
+        <span class="synString">is_inline</span>            =&gt; <span class="synIdentifier">$params-&gt;{</span><span class="synString">is_inline</span><span class="synIdentifier">}</span> || <span class="synNumber">0</span>,
+        <span class="synString">definition_context</span>   =&gt; <span class="synIdentifier">$params-&gt;{</span><span class="synString">definition_context</span><span class="synIdentifier">}</span>,
+
+        <span class="synComment"># defined in this class</span>
+        <span class="synString">attribute</span>            =&gt; <span class="synIdentifier">$params-&gt;{</span><span class="synString">attribute</span><span class="synIdentifier">}</span>,
+        <span class="synString">accessor_type</span>        =&gt; <span class="synIdentifier">$params-&gt;{</span><span class="synString">accessor_type</span><span class="synIdentifier">}</span>,
+    } =&gt; <span class="synIdentifier">$class</span>;
+}
+
+<span class="synComment">## accessors</span>
+
+<span class="synKeyword">sub </span><span class="synFunction">associated_attribute </span>{ (<span class="synStatement">shift</span>)-&gt;{<span class="synString">'attribute'</span>}     }
+<span class="synKeyword">sub </span><span class="synFunction">accessor_type        </span>{ (<span class="synStatement">shift</span>)-&gt;{<span class="synString">'accessor_type'</span>} }
+
+<span class="synComment">## factory</span>
+
+<span class="synKeyword">sub </span><span class="synFunction">_initialize_body </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$method_name</span> = <span class="synStatement">join</span> <span class="synString">&quot;_&quot;</span> =&gt; (
+        <span class="synString">'_generate'</span>,
+        <span class="synIdentifier">$self-&gt;accessor_type</span>,
+        <span class="synString">'method'</span>,
+        (<span class="synIdentifier">$self-&gt;is_inline</span> ? <span class="synString">'inline'</span> : ())
+    );
+
+    <span class="synIdentifier">$self-&gt;{</span><span class="synString">'body'</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$self-&gt;$method_name</span>();
+}
+
+<span class="synComment">## generators</span>
+
+<span class="synKeyword">sub </span><span class="synFunction">_generate_accessor_method </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$attr</span> = <span class="synIdentifier">$self-&gt;associated_attribute</span>;
+
+    <span class="synStatement">return</span> <span class="synKeyword">sub </span>{
+        <span class="synConditional">if</span> (<span class="synIdentifier">@_</span> &gt;= <span class="synNumber">2</span>) {
+            <span class="synIdentifier">$attr-&gt;set_value</span>(<span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>, <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span>);
+        }
+        <span class="synIdentifier">$attr-&gt;get_value</span>(<span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>);
+    };
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_generate_accessor_method_inline </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$attr</span> = <span class="synIdentifier">$self-&gt;associated_attribute</span>;
+
+    <span class="synStatement">return</span> try {
+        <span class="synIdentifier">$self-&gt;_compile_code</span>([
+            <span class="synString">'sub {'</span>,
+                <span class="synString">'if (@_ &gt; 1) {'</span>,
+                    <span class="synIdentifier">$attr-&gt;_inline_set_value</span>(<span class="synString">'$_[0]'</span>, <span class="synString">'$_[1]'</span>),
+                <span class="synString">'}'</span>,
+                <span class="synIdentifier">$attr-&gt;_inline_get_value</span>(<span class="synString">'$_[0]'</span>),
+            <span class="synString">'}'</span>,
+        ]);
+    }
+    catch {
+        confess <span class="synString">&quot;Could not generate inline accessor because : </span><span class="synIdentifier">$_</span><span class="synString">&quot;</span>;
+    };
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_generate_reader_method </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$attr</span> = <span class="synIdentifier">$self-&gt;associated_attribute</span>;
+
+    <span class="synStatement">return</span> <span class="synKeyword">sub </span>{
+        confess <span class="synString">&quot;Cannot assign a value to a read-only accessor&quot;</span>
+            <span class="synConditional">if</span> <span class="synIdentifier">@_</span> &gt; <span class="synNumber">1</span>;
+        <span class="synIdentifier">$attr-&gt;get_value</span>(<span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>);
+    };
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_generate_reader_method_inline </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$attr</span> = <span class="synIdentifier">$self-&gt;associated_attribute</span>;
+
+    <span class="synStatement">return</span> try {
+        <span class="synIdentifier">$self-&gt;_compile_code</span>([
+            <span class="synString">'sub {'</span>,
+                <span class="synString">'if (@_ &gt; 1) {'</span>,
+                    <span class="synComment"># </span><span class="synTodo">XXX:</span><span class="synComment"> this is a hack, but our error stuff is terrible</span>
+                    <span class="synIdentifier">$self-&gt;_inline_throw_error</span>(
+                        <span class="synString">'&quot;Cannot assign a value to a read-only accessor&quot;'</span>,
+                        <span class="synString">'data =&gt; \@_'</span>
+                    ) . <span class="synString">';'</span>,
+                <span class="synString">'}'</span>,
+                <span class="synIdentifier">$attr-&gt;_inline_get_value</span>(<span class="synString">'$_[0]'</span>),
+            <span class="synString">'}'</span>,
+        ]);
+    }
+    catch {
+        confess <span class="synString">&quot;Could not generate inline reader because : </span><span class="synIdentifier">$_</span><span class="synString">&quot;</span>;
+    };
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_throw_error </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">return</span> <span class="synString">'Carp::confess '</span> . <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_generate_writer_method </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$attr</span> = <span class="synIdentifier">$self-&gt;associated_attribute</span>;
+
+    <span class="synStatement">return</span> <span class="synKeyword">sub </span>{
+        <span class="synIdentifier">$attr-&gt;set_value</span>(<span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>, <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span>);
+    };
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_generate_writer_method_inline </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$attr</span> = <span class="synIdentifier">$self-&gt;associated_attribute</span>;
+
+    <span class="synStatement">return</span> try {
+        <span class="synIdentifier">$self-&gt;_compile_code</span>([
+            <span class="synString">'sub {'</span>,
+                <span class="synIdentifier">$attr-&gt;_inline_set_value</span>(<span class="synString">'$_[0]'</span>, <span class="synString">'$_[1]'</span>),
+            <span class="synString">'}'</span>,
+        ]);
+    }
+    catch {
+        confess <span class="synString">&quot;Could not generate inline writer because : </span><span class="synIdentifier">$_</span><span class="synString">&quot;</span>;
+    };
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_generate_predicate_method </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$attr</span> = <span class="synIdentifier">$self-&gt;associated_attribute</span>;
+
+    <span class="synStatement">return</span> <span class="synKeyword">sub </span>{
+        <span class="synIdentifier">$attr-&gt;has_value</span>(<span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>)
+    };
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_generate_predicate_method_inline </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$attr</span> = <span class="synIdentifier">$self-&gt;associated_attribute</span>;
+
+    <span class="synStatement">return</span> try {
+        <span class="synIdentifier">$self-&gt;_compile_code</span>([
+            <span class="synString">'sub {'</span>,
+                <span class="synIdentifier">$attr-&gt;_inline_has_value</span>(<span class="synString">'$_[0]'</span>),
+            <span class="synString">'}'</span>,
+        ]);
+    }
+    catch {
+        confess <span class="synString">&quot;Could not generate inline predicate because : </span><span class="synIdentifier">$_</span><span class="synString">&quot;</span>;
+    };
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_generate_clearer_method </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$attr</span> = <span class="synIdentifier">$self-&gt;associated_attribute</span>;
+
+    <span class="synStatement">return</span> <span class="synKeyword">sub </span>{
+        <span class="synIdentifier">$attr-&gt;clear_value</span>(<span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>)
+    };
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_generate_clearer_method_inline </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$attr</span> = <span class="synIdentifier">$self-&gt;associated_attribute</span>;
+
+    <span class="synStatement">return</span> try {
+        <span class="synIdentifier">$self-&gt;_compile_code</span>([
+            <span class="synString">'sub {'</span>,
+                <span class="synIdentifier">$attr-&gt;_inline_clear_value</span>(<span class="synString">'$_[0]'</span>),
+            <span class="synString">'}'</span>,
+        ]);
+    }
+    catch {
+        confess <span class="synString">&quot;Could not generate inline clearer because : </span><span class="synIdentifier">$_</span><span class="synString">&quot;</span>;
+    };
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: Method Meta Object for accessors</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Class::MOP::Method::Accessor - Method Meta Object for accessors
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> SYNOPSIS</span>
+
+<span class="synPreProc">    use Class::MOP::Method::Accessor;</span>
+
+<span class="synPreProc">    my $reader = Class::MOP::Method::Accessor-&gt;new(</span>
+<span class="synPreProc">        attribute     =&gt; $attribute,</span>
+<span class="synPreProc">        is_inline     =&gt; 1,</span>
+<span class="synPreProc">        accessor_type =&gt; 'reader',</span>
+<span class="synPreProc">    );</span>
+
+<span class="synPreProc">    $reader-&gt;body-&gt;execute($instance); # call the reader method</span>
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This is a subclass of <span class="synIdentifier">C&lt;Class::MOP::Method&gt;</span> which is used by
+<span class="synIdentifier">C&lt;Class::MOP::Attribute&gt;</span> to generate accessor code. It handles
+generation of readers, writers, predicates and clearers. For each type
+of method, it can either create a subroutine reference, or actually
+inline code by generating a string and <span class="synIdentifier">C&lt;eval&gt;</span>'ing it.
+
+<span class="synStatement">=head1</span><span class="synString"> METHODS</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; Class::MOP::Method::Accessor-&gt;new(%options) &gt;&gt;</span>
+
+This returns a new <span class="synIdentifier">C&lt;Class::MOP::Method::Accessor&gt;</span> based on the
+<span class="synIdentifier">C&lt;%options&gt;</span> provided.
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> * attribute</span>
+
+This is the <span class="synIdentifier">C&lt;Class::MOP::Attribute&gt;</span> for which accessors are being
+generated. This option is required.
+
+<span class="synStatement">=item</span><span class="synString"> * accessor_type</span>
+
+This is a string which should be one of &quot;reader&quot;, &quot;writer&quot;,
+&quot;accessor&quot;, &quot;predicate&quot;, or &quot;clearer&quot;. This is the type of method
+being generated. This option is required.
+
+<span class="synStatement">=item</span><span class="synString"> * is_inline</span>
+
+This indicates whether or not the accessor should be inlined. This
+defaults to false.
+
+<span class="synStatement">=item</span><span class="synString"> * name</span>
+
+The method name (without a package name). This is required.
+
+<span class="synStatement">=item</span><span class="synString"> * package_name</span>
+
+The package name for the method. This is required.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metamethod-&gt;accessor_type &gt;&gt;</span>
+
+Returns the accessor type which was passed to <span class="synIdentifier">C&lt;new&gt;</span>.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metamethod-&gt;is_inline &gt;&gt;</span>
+
+Returns a boolean indicating whether or not the accessor is inlined.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metamethod-&gt;associated_attribute &gt;&gt;</span>
+
+This returns the <span class="synIdentifier">L&lt;Class::MOP::Attribute&gt;</span> object which was passed to
+<span class="synIdentifier">C&lt;new&gt;</span>.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metamethod-&gt;body &gt;&gt;</span>
+
+The method itself is <span class="synIdentifier">I&lt;generated&gt;</span> when the accessor object is
+constructed.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

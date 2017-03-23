@@ -1,0 +1,66 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre>package <span class="synComment"># pretend this doesn't exist, because it shouldn't</span>
+    Moose::Error::Util;
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synComment"># this intentionally exists to have a place to put this logic that doesn't</span>
+<span class="synComment"># involve loading Class::MOP, so... don't do that</span>
+
+<span class="synStatement">use </span>Carp::Heavy;
+
+<span class="synKeyword">sub </span><span class="synFunction">_create_error_carpmess </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">%args</span> = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$carp_level</span> = <span class="synNumber">3</span> + ( <span class="synIdentifier">$args{</span><span class="synString">depth</span><span class="synIdentifier">}</span> || <span class="synNumber">0</span> );
+    <span class="synStatement">local</span> <span class="synIdentifier">$</span><span class="synType">Carp::</span><span class="synIdentifier">MaxArgNums</span> = <span class="synNumber">20</span>; <span class="synComment"># default is 8, usually we use named args which gets messier though</span>
+
+    <span class="synStatement">my</span> <span class="synIdentifier">@args</span> = <span class="synStatement">exists</span> <span class="synIdentifier">$args{</span><span class="synString">message</span><span class="synIdentifier">}</span> ? <span class="synIdentifier">$args{</span><span class="synString">message</span><span class="synIdentifier">}</span> : ();
+
+    <span class="synConditional">if</span> ( <span class="synIdentifier">$args{</span><span class="synString">longmess</span><span class="synIdentifier">}</span> || <span class="synIdentifier">$</span><span class="synType">Carp::</span><span class="synIdentifier">Verbose</span> ) {
+        <span class="synStatement">local</span> <span class="synIdentifier">$</span><span class="synType">Carp::</span><span class="synIdentifier">CarpLevel</span> = ( <span class="synIdentifier">$</span><span class="synType">Carp::</span><span class="synIdentifier">CarpLevel</span> || <span class="synNumber">0</span> ) + <span class="synIdentifier">$carp_level</span>;
+        <span class="synStatement">return</span> Carp::longmess(<span class="synIdentifier">@args</span>);
+    } <span class="synConditional">else</span> {
+        <span class="synStatement">return</span> Carp::ret_summary(<span class="synIdentifier">$carp_level</span>, <span class="synIdentifier">@args</span>);
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">create_error_croak </span>{
+    _create_error_carpmess(<span class="synIdentifier">@_</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">create_error_confess </span>{
+    _create_error_carpmess(<span class="synIdentifier">@_</span>, <span class="synString">longmess</span> =&gt; <span class="synNumber">1</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">create_error </span>{
+    <span class="synConditional">if</span> (<span class="synOperator">defined</span> <span class="synIdentifier">$ENV{</span><span class="synString">MOOSE_ERROR_STYLE</span><span class="synIdentifier">}</span> &amp;&amp; <span class="synIdentifier">$ENV{</span><span class="synString">MOOSE_ERROR_STYLE</span><span class="synIdentifier">}</span> <span class="synOperator">eq</span> <span class="synString">'croak'</span>) {
+        create_error_croak(<span class="synIdentifier">@_</span>);
+    }
+    <span class="synConditional">else</span> {
+        create_error_confess(<span class="synIdentifier">@_</span>);
+    }
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=for</span> <span class="synIdentifier">pod_coverage_needs_some_pod</span>
+
+<span class="synStatement">=cut</span>
+
+</pre>
+
+ </body>
+</html>

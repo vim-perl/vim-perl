@@ -1,0 +1,226 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre>
+<span class="synStatement">package</span><span class="synType"> Moose::Meta::Method::Delegation</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Method::Delegation::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Method::Delegation::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Carp         <span class="synString">'confess'</span>;
+<span class="synStatement">use </span>Scalar::Util <span class="synString">'blessed'</span>, <span class="synString">'weaken'</span>;
+
+<span class="synStatement">use base</span> <span class="synString">'Moose::Meta::Method'</span>,
+         <span class="synString">'Class::MOP::Method::Generated'</span>;
+
+
+<span class="synKeyword">sub </span><span class="synFunction">new </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$class</span>   = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">%options</span> = <span class="synIdentifier">@_</span>;
+
+    ( <span class="synStatement">exists</span> <span class="synIdentifier">$options{</span><span class="synString">attribute</span><span class="synIdentifier">}</span> )
+        || confess <span class="synString">&quot;You must supply an attribute to construct with&quot;</span>;
+
+    ( blessed( <span class="synIdentifier">$options{</span><span class="synString">attribute</span><span class="synIdentifier">}</span> )
+            &amp;&amp; <span class="synIdentifier">$options{</span><span class="synString">attribute</span><span class="synIdentifier">}-&gt;isa</span>(<span class="synString">'Moose::Meta::Attribute'</span>) )
+        || confess
+        <span class="synString">&quot;You must supply an attribute which is a 'Moose::Meta::Attribute' instance&quot;</span>;
+
+    ( <span class="synIdentifier">$options{</span><span class="synString">package_name</span><span class="synIdentifier">}</span> &amp;&amp; <span class="synIdentifier">$options{</span><span class="synString">name</span><span class="synIdentifier">}</span> )
+        || confess
+        <span class="synString">&quot;You must supply the package_name and name parameters </span><span class="synIdentifier">$</span><span class="synType">Class::MOP::Method::</span><span class="synIdentifier">UPGRADE_ERROR_TEXT</span><span class="synString">&quot;</span>;
+
+    ( <span class="synIdentifier">$options{</span><span class="synString">delegate_to_method</span><span class="synIdentifier">}</span> &amp;&amp; ( !<span class="synOperator">ref</span> <span class="synIdentifier">$options{</span><span class="synString">delegate_to_method</span><span class="synIdentifier">}</span> )
+            || ( <span class="synString">'CODE'</span> <span class="synOperator">eq</span> <span class="synOperator">ref</span> <span class="synIdentifier">$options{</span><span class="synString">delegate_to_method</span><span class="synIdentifier">}</span> ) )
+        || confess
+        <span class="synString">'You must supply a delegate_to_method which is a method name or a CODE reference'</span>;
+
+    <span class="synStatement">exists</span> <span class="synIdentifier">$options{</span><span class="synString">curried_arguments</span><span class="synIdentifier">}</span>
+        || ( <span class="synIdentifier">$options{</span><span class="synString">curried_arguments</span><span class="synIdentifier">}</span> = [] );
+
+    ( <span class="synIdentifier">$options{</span><span class="synString">curried_arguments</span><span class="synIdentifier">}</span> &amp;&amp;
+        ( <span class="synString">'ARRAY'</span> <span class="synOperator">eq</span> <span class="synOperator">ref</span> <span class="synIdentifier">$options{</span><span class="synString">curried_arguments</span><span class="synIdentifier">}</span> ) )
+        || confess <span class="synString">'You must supply a curried_arguments which is an ARRAY reference'</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synIdentifier">$class-&gt;_new</span>( \<span class="synIdentifier">%options</span> );
+
+    weaken( <span class="synIdentifier">$self-&gt;{</span><span class="synString">'attribute'</span><span class="synIdentifier">}</span> );
+
+    <span class="synIdentifier">$self-&gt;_initialize_body</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$self</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_new </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$class</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$options</span> = <span class="synIdentifier">@_</span> == <span class="synNumber">1</span> ? <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> : {<span class="synIdentifier">@_</span>};
+
+    <span class="synStatement">return</span> <span class="synOperator">bless</span> <span class="synIdentifier">$options</span>, <span class="synIdentifier">$class</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">curried_arguments </span>{ (<span class="synStatement">shift</span>)-&gt;{<span class="synString">'curried_arguments'</span>} }
+
+<span class="synKeyword">sub </span><span class="synFunction">associated_attribute </span>{ (<span class="synStatement">shift</span>)-&gt;{<span class="synString">'attribute'</span>} }
+
+<span class="synKeyword">sub </span><span class="synFunction">delegate_to_method </span>{ (<span class="synStatement">shift</span>)-&gt;{<span class="synString">'delegate_to_method'</span>} }
+
+<span class="synKeyword">sub </span><span class="synFunction">_initialize_body </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$method_to_call</span> = <span class="synIdentifier">$self-&gt;delegate_to_method</span>;
+    <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;{</span><span class="synString">body</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$method_to_call</span>
+        <span class="synConditional">if</span> <span class="synOperator">ref</span> <span class="synIdentifier">$method_to_call</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$accessor</span> = <span class="synIdentifier">$self-&gt;_get_delegate_accessor</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$handle_name</span> = <span class="synIdentifier">$self-&gt;name</span>;
+
+    <span class="synComment"># </span><span class="synTodo">NOTE:</span><span class="synComment"> we used to do a goto here, but the goto didn't handle</span>
+    <span class="synComment"># failure correctly (it just returned nothing), so I took that</span>
+    <span class="synComment"># out. However, the more I thought about it, the less I liked it</span>
+    <span class="synComment"># doing the goto, and I preferred the act of delegation being</span>
+    <span class="synComment"># actually represented in the stack trace.  - SL</span>
+    <span class="synComment"># not inlining this, since it won't really speed things up at</span>
+    <span class="synComment"># all... the only thing that would end up different would be</span>
+    <span class="synComment"># interpolating in $method_to_call, and a bunch of things in the</span>
+    <span class="synComment"># error handling that mostly never gets called - doy</span>
+    <span class="synIdentifier">$self-&gt;{</span><span class="synString">body</span><span class="synIdentifier">}</span> = <span class="synKeyword">sub </span>{
+        <span class="synStatement">my</span> <span class="synIdentifier">$instance</span> = <span class="synStatement">shift</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$proxy</span>    = <span class="synIdentifier">$instance-&gt;$accessor</span>();
+
+        <span class="synStatement">my</span> <span class="synIdentifier">$error</span>
+            = !<span class="synOperator">defined</span> <span class="synIdentifier">$proxy</span>                 ? <span class="synString">' is not defined'</span>
+            : <span class="synOperator">ref</span>(<span class="synIdentifier">$proxy</span>) &amp;&amp; !blessed(<span class="synIdentifier">$proxy</span>) ? <span class="synString">qq{ is not an object (got '</span><span class="synIdentifier">$proxy</span><span class="synString">')}</span>
+            : <span class="synOperator">undef</span>;
+
+        <span class="synConditional">if</span> (<span class="synIdentifier">$error</span>) {
+            <span class="synIdentifier">$self-&gt;throw_error</span>(
+                <span class="synString">&quot;Cannot delegate </span><span class="synIdentifier">$handle_name</span><span class="synString"> to </span><span class="synIdentifier">$method_to_call</span><span class="synString"> because &quot;</span>
+                    . <span class="synString">&quot;the value of &quot;</span>
+                    . <span class="synIdentifier">$self-&gt;associated_attribute-&gt;name</span>
+                    . <span class="synIdentifier">$error</span>,
+                <span class="synString">method_name</span> =&gt; <span class="synIdentifier">$method_to_call</span>,
+                <span class="synString">object</span>      =&gt; <span class="synIdentifier">$instance</span>
+            );
+        }
+        <span class="synStatement">unshift</span> <span class="synIdentifier">@_</span>, <span class="synIdentifier">@{</span> <span class="synIdentifier">$self-&gt;curried_arguments</span> <span class="synIdentifier">}</span>;
+        <span class="synIdentifier">$proxy-&gt;$method_to_call</span>(<span class="synIdentifier">@_</span>);
+    };
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_get_delegate_accessor </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$attr</span> = <span class="synIdentifier">$self-&gt;associated_attribute</span>;
+
+    <span class="synComment"># </span><span class="synTodo">NOTE:</span>
+    <span class="synComment"># always use a named method when</span>
+    <span class="synComment"># possible, if you use the method</span>
+    <span class="synComment"># ref and there are modifiers on</span>
+    <span class="synComment"># the accessors then it will not</span>
+    <span class="synComment"># pick up the modifiers too. Only</span>
+    <span class="synComment"># the named method will assure that</span>
+    <span class="synComment"># we also have any modifiers run.</span>
+    <span class="synComment"># - SL</span>
+    <span class="synStatement">my</span> <span class="synIdentifier">$accessor</span> = <span class="synIdentifier">$attr-&gt;has_read_method</span>
+        ? <span class="synIdentifier">$attr-&gt;get_read_method</span>
+        : <span class="synIdentifier">$attr-&gt;get_read_method_ref</span>;
+
+    <span class="synIdentifier">$accessor</span> = <span class="synIdentifier">$accessor-&gt;body</span> <span class="synConditional">if</span> Scalar::Util::blessed <span class="synIdentifier">$accessor</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$accessor</span>;
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: A Moose Method metaclass for delegation methods</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Moose::Meta::Method::Delegation - A Moose Method metaclass for delegation methods
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This is a subclass of <span class="synIdentifier">L&lt;Moose::Meta::Method&gt;</span> for delegation
+methods.
+
+<span class="synStatement">=head1</span><span class="synString"> METHODS</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; Moose::Meta::Method::Delegation-&gt;new(%options) &gt;&gt;</span>
+
+This creates the delegation methods based on the provided <span class="synIdentifier">C&lt;%options&gt;</span>.
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">I&lt;attribute&gt;</span>
+
+This must be an instance of <span class="synIdentifier">C&lt;Moose::Meta::Attribute&gt;</span> which this
+accessor is being generated for. This options is <span class="synIdentifier">B&lt;required&gt;</span>.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">I&lt;delegate_to_method&gt;</span>
+
+The method in the associated attribute's value to which we
+delegate. This can be either a method name or a code reference.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">I&lt;curried_arguments&gt;</span>
+
+An array reference of arguments that will be prepended to the argument list for
+any call to the delegating method.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metamethod-&gt;associated_attribute &gt;&gt;</span>
+
+Returns the attribute associated with this method.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metamethod-&gt;curried_arguments &gt;&gt;</span>
+
+Return any curried arguments that will be passed to the delegated method.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metamethod-&gt;delegate_to_method &gt;&gt;</span>
+
+Returns the method to which this method delegates, as passed to the
+constructor.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> BUGS</span>
+
+See <span class="synIdentifier">L&lt;Moose/BUGS&gt;</span> for details on reporting bugs.
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

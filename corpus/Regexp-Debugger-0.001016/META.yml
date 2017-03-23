@@ -1,0 +1,24 @@
+--- #YAML:1.0
+name:               Regexp-Debugger
+version:            0.001016
+abstract:           Visually debug regexes in-place
+author:
+    - Damian Conway <DCONWAY@CPAN.org>
+license:            unknown
+distribution_type:  module
+configure_requires:
+    ExtUtils::MakeMaker:  0
+build_requires:
+    ExtUtils::MakeMaker:  0
+requires:
+    perl:        5.010001
+    Test::More:  0
+    version:     0
+no_index:
+    directory:
+        - t
+        - inc
+generated_by:       ExtUtils::MakeMaker version 6.57_05
+meta-spec:
+    url:      http://module-build.sourceforge.net/META-spec-v1.4.html
+    version:  1.4

@@ -1,0 +1,46 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use lib 'inc';
+use File::Find::Rule;
+use Getopt::Long;
+use MyInline;
+use Test::Inline;
+
+my $quiet;
+GetOptions( 'quiet' => \$quiet );
+
+my $inline = Test::Inline->new(
+    verbose        => !$quiet,
+    ExtractHandler => 'My::Extract',
+    ContentHandler => 'My::Content',
+    OutputHandler  => 'My::Output',
+);
+
+for my $pod (
+    File::Find::Rule->file->name(qr/\.pod$/)->in('lib/Moose/Cookbook') ) {
+    $inline->add($pod);
+}
+
+$inline->save;
+
+{
+
+    package My::Output;
+
+    use File::Slurp qw( write_file );
+
+    sub write {
+        my $class   = shift;
+        my $name    = shift;
+        my $content = shift;
+
+        $name =~ s/^moose_cookbook_//;
+
+        write_file( "t/recipes/$name", $content );
+
+        return 1;
+    }
+}

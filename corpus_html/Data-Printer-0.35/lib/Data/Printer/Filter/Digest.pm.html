@@ -1,0 +1,159 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Data::Printer::Filter::Digest</span>;
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+<span class="synStatement">use </span>Data::Printer::Filter;
+<span class="synStatement">use </span>Term::ANSIColor;
+
+<span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$digest</span> ( <span class="synString">qw( Digest::MD2 Digest::MD4 Digest::Haval256)</span>) {
+    filter <span class="synIdentifier">$digest</span> =&gt; \<span class="synIdentifier">&amp;_print_digest</span>;
+}
+
+filter <span class="synString">'-class'</span>, <span class="synKeyword">sub </span>{
+  <span class="synStatement">my</span> (<span class="synIdentifier">$obj</span>, <span class="synIdentifier">$p</span>) = <span class="synIdentifier">@_</span>;
+  <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$obj-&gt;isa</span>( <span class="synString">'Digest::base'</span> );
+  <span class="synStatement">return</span> _print_digest( <span class="synIdentifier">$obj</span>, <span class="synIdentifier">$p</span> );
+};
+
+
+<span class="synKeyword">sub </span><span class="synFunction">_print_digest </span>{
+  <span class="synStatement">my</span> (<span class="synIdentifier">$obj</span>, <span class="synIdentifier">$p</span>) = <span class="synIdentifier">@_</span>;
+  <span class="synStatement">my</span> <span class="synIdentifier">$digest</span> = <span class="synIdentifier">$obj-&gt;clone-&gt;hexdigest</span>;
+  <span class="synStatement">my</span> <span class="synIdentifier">$str</span> = <span class="synIdentifier">$digest</span>;
+  <span class="synStatement">my</span> <span class="synIdentifier">$ref</span> = <span class="synOperator">ref</span> <span class="synIdentifier">$obj</span>;
+
+  <span class="synConditional">if</span> ( <span class="synIdentifier">$p-&gt;{</span><span class="synString">digest</span><span class="synIdentifier">}{</span><span class="synString">show_class_name</span><span class="synIdentifier">}</span> ) {
+      <span class="synIdentifier">$str</span> .= <span class="synString">&quot; (</span><span class="synIdentifier">$ref</span><span class="synString">)&quot;</span>;
+  }
+
+  <span class="synConditional">unless</span> ( <span class="synStatement">exists</span>  <span class="synIdentifier">$p-&gt;{</span><span class="synString">digest</span><span class="synIdentifier">}{</span><span class="synString">show_reset</span><span class="synIdentifier">}</span>
+              <span class="synOperator">and</span> !<span class="synIdentifier">$p-&gt;{</span><span class="synString">digest</span><span class="synIdentifier">}{</span><span class="synString">show_reset</span><span class="synIdentifier">}</span>
+   ) {
+     <span class="synConditional">if</span> (<span class="synIdentifier">$digest</span> <span class="synOperator">eq</span> <span class="synIdentifier">$ref-&gt;new-&gt;hexdigest</span>) {
+         <span class="synIdentifier">$str</span> .= <span class="synString">' [reset]'</span>;
+     }
+  }
+
+  <span class="synStatement">my</span> <span class="synIdentifier">$color</span> = <span class="synIdentifier">$p-&gt;{</span><span class="synString">color</span><span class="synIdentifier">}{</span><span class="synString">digest</span><span class="synIdentifier">}</span>;
+  <span class="synIdentifier">$color</span> = <span class="synString">'bright_green'</span> <span class="synConditional">unless</span> <span class="synOperator">defined</span> <span class="synIdentifier">$color</span>;
+
+  <span class="synStatement">return</span> colored( <span class="synIdentifier">$str</span>, <span class="synIdentifier">$color</span> );
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Data::Printer::Filter::Digest - pretty-printing MD5, SHA and friends
+
+<span class="synStatement">=head1</span><span class="synString"> SYNOPSIS</span>
+
+In your program:
+
+<span class="synPreProc">  use Data::Printer filters =&gt; {</span>
+<span class="synPreProc">    -external =&gt; [ 'Digest' ],</span>
+<span class="synPreProc">  };</span>
+
+or, in your <span class="synIdentifier">C&lt;.dataprinter&gt;</span> file:
+
+<span class="synPreProc">  {</span>
+<span class="synPreProc">    filters =&gt; {</span>
+<span class="synPreProc">       -external =&gt; [ 'Digest' ],</span>
+<span class="synPreProc">    },</span>
+<span class="synPreProc">  };</span>
+
+You can also setup color and display details:
+
+<span class="synPreProc">  use Data::Printer</span>
+<span class="synPreProc">      filters =&gt; {</span>
+<span class="synPreProc">          -external =&gt; [ 'Digest' ],</span>
+<span class="synPreProc">      },</span>
+<span class="synPreProc">      color   =&gt; {</span>
+<span class="synPreProc">          digest =&gt; 'bright_green',</span>
+<span class="synPreProc">      }</span>
+<span class="synPreProc">      digest =&gt; {</span>
+<span class="synPreProc">          show_class_name =&gt; 0,  # default.</span>
+<span class="synPreProc">          show_reset      =&gt; 1,  # default.</span>
+<span class="synPreProc">      },</span>
+<span class="synPreProc">  };</span>
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This is a filter plugin for <span class="synIdentifier">L&lt;Data::Printer&gt;</span>. It filters through
+several digest classes and displays their current value in
+hexadecimal format as a string.
+
+<span class="synStatement">=head2</span><span class="synString"> Parsed Modules</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">L&lt;Digest::Adler32&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">L&lt;Digest::MD2&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">L&lt;Digest::MD4&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">L&lt;Digest::MD5&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">L&lt;Digest::SHA&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">L&lt;Digest::SHA1&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">L&lt;Digest::Whirlpool&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">L&lt;Digest::Haval256&gt;</span>
+
+<span class="synStatement">=back</span>
+
+If you have any suggestions for more modules or better output,
+please let us know.
+
+<span class="synStatement">=head2</span><span class="synString"> Extra Options</span>
+
+Aside from the display color, there are a few other options to
+be customized via the <span class="synIdentifier">C&lt;digest&gt;</span> option key:
+
+<span class="synStatement">=head3</span><span class="synString"> show_class_name</span>
+
+Set this to true to display the class name right next to the
+hexadecimal digest. Default is 0 (false).
+
+<span class="synStatement">=head3</span><span class="synString"> show_reset</span>
+
+If set to true (the default), the filter will add a <span class="synIdentifier">C&lt;[reset]&gt;</span>
+tag after dumping an empty digest object. See the rationale below.
+
+<span class="synStatement">=head2</span><span class="synString"> Note on dumping Digest::* objects</span>
+
+The digest operation is effectively a destructive, read-once operation. Once it has been performed, most Digest::* objects are automatically reset and can be used to calculate another digest value.
+
+This behaviour - or, rather, forgetting about this behaviour - is
+a common source of issues when working with Digests.
+
+This Data::Printer filter will <span class="synIdentifier">B&lt;not&gt;</span> destroy your object. Instead, we work on a cloned version to display the hexdigest, leaving your
+original object untouched.
+
+As another debugging convenience for developers, since the empty
+object will produce a digest even after being used, this filter
+adds by default a <span class="synIdentifier">C&lt;[reset]&gt;</span> tag to indicate that the object is
+empty, in a 'reset' state - i.e. its hexdigest is the same as
+the hexdigest of a new, empty object of that same class.
+
+<span class="synStatement">=head1</span><span class="synString"> SEE ALSO</span>
+
+<span class="synIdentifier">L&lt;Data::Printer&gt;</span>
+
+
+</pre>
+
+ </body>
+</html>

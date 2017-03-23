@@ -1,0 +1,355 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre>
+<span class="synStatement">package</span><span class="synType"> Moose::Meta::Attribute::Native::Trait::Array</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Attribute::Native::Trait::Array::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Attribute::Native::Trait::Array::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+<span class="synStatement">use </span>Moose::Role;
+
+with <span class="synString">'Moose::Meta::Attribute::Native::Trait'</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">_helper_type </span>{ <span class="synString">'ArrayRef'</span> }
+
+<span class="synStatement">no </span>Moose::Role;
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: Helper trait for ArrayRef attributes</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Moose::Meta::Attribute::Native::Trait::Array - Helper trait for ArrayRef attributes
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> SYNOPSIS</span>
+
+<span class="synPreProc">    package Stuff;</span>
+<span class="synPreProc">    use Moose;</span>
+
+<span class="synPreProc">    has 'options' =&gt; (</span>
+<span class="synPreProc">        traits  =&gt; ['Array'],</span>
+<span class="synPreProc">        is      =&gt; 'ro',</span>
+<span class="synPreProc">        isa     =&gt; 'ArrayRef[Str]',</span>
+<span class="synPreProc">        default =&gt; sub { [] },</span>
+<span class="synPreProc">        handles =&gt; {</span>
+<span class="synPreProc">            all_options    =&gt; 'elements',</span>
+<span class="synPreProc">            add_option     =&gt; 'push',</span>
+<span class="synPreProc">            map_options    =&gt; 'map',</span>
+<span class="synPreProc">            filter_options =&gt; 'grep',</span>
+<span class="synPreProc">            find_option    =&gt; 'first',</span>
+<span class="synPreProc">            get_option     =&gt; 'get',</span>
+<span class="synPreProc">            join_options   =&gt; 'join',</span>
+<span class="synPreProc">            count_options  =&gt; 'count',</span>
+<span class="synPreProc">            has_options    =&gt; 'count',</span>
+<span class="synPreProc">            has_no_options =&gt; 'is_empty',</span>
+<span class="synPreProc">            sorted_options =&gt; 'sort',</span>
+<span class="synPreProc">        },</span>
+<span class="synPreProc">    );</span>
+
+<span class="synPreProc">    no Moose;</span>
+<span class="synPreProc">    1;</span>
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This trait provides native delegation methods for array references.
+
+<span class="synStatement">=head1</span><span class="synString"> DEFAULT TYPE</span>
+
+If you don't provide an <span class="synIdentifier">C&lt;isa&gt;</span> value for your attribute, it will default to
+<span class="synIdentifier">C&lt;ArrayRef&gt;</span>.
+
+<span class="synStatement">=head1</span><span class="synString"> PROVIDED METHODS</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;count&gt;</span>
+
+Returns the number of elements in the array.
+
+<span class="synPreProc">  $stuff = Stuff-&gt;new;</span>
+<span class="synPreProc">  $stuff-&gt;options( [ &quot;foo&quot;, &quot;bar&quot;, &quot;baz&quot;, &quot;boo&quot; ] );</span>
+
+<span class="synPreProc">  print $stuff-&gt;count_options; # prints 4</span>
+
+This method does not accept any arguments.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;is_empty&gt;</span>
+
+Returns a boolean value that is true when the array has no elements.
+
+<span class="synPreProc">  $stuff-&gt;has_no_options ? die &quot;No options!\n&quot; : print &quot;Good boy.\n&quot;;</span>
+
+This method does not accept any arguments.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;elements&gt;</span>
+
+Returns all of the elements of the array as an array (not an array reference).
+
+<span class="synPreProc">  my @option = $stuff-&gt;all_options;</span>
+<span class="synPreProc">  print &quot;@options\n&quot;;    # prints &quot;foo bar baz boo&quot;</span>
+
+This method does not accept any arguments.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;get($index)&gt;</span>
+
+Returns an element of the array by its index. You can also use negative index
+numbers, just as with Perl's core array handling.
+
+<span class="synPreProc">  my $option = $stuff-&gt;get_option(1);</span>
+<span class="synPreProc">  print &quot;$option\n&quot;;    # prints &quot;bar&quot;</span>
+
+If the specified element does not exist, this will return <span class="synIdentifier">C&lt;undef&gt;</span>.
+
+This method accepts just one argument.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;pop&gt;</span>
+
+Just like Perl's builtin <span class="synIdentifier">C&lt;pop&gt;</span>.
+
+This method does not accept any arguments.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;push($value1, $value2, value3 ...)&gt;</span>
+
+Just like Perl's builtin <span class="synIdentifier">C&lt;push&gt;</span>. Returns the number of elements in the new
+array.
+
+This method accepts any number of arguments.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;shift&gt;</span>
+
+Just like Perl's builtin <span class="synIdentifier">C&lt;shift&gt;</span>.
+
+This method does not accept any arguments.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;unshift($value1, $value2, value3 ...)&gt;</span>
+
+Just like Perl's builtin <span class="synIdentifier">C&lt;unshift&gt;</span>. Returns the number of elements in the new
+array.
+
+This method accepts any number of arguments.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;splice($offset, $length, @values)&gt;</span>
+
+Just like Perl's builtin <span class="synIdentifier">C&lt;splice&gt;</span>. In scalar context, this returns the last
+element removed, or <span class="synIdentifier">C&lt;undef&gt;</span> if no elements were removed. In list context,
+this returns all the elements removed from the array.
+
+This method requires at least one argument.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;first( sub { ... } )&gt;</span>
+
+This method returns the first matching item in the array, just like
+<span class="synIdentifier">L&lt;List::Util&gt;</span>'s <span class="synIdentifier">C&lt;first&gt;</span> function. The matching is done with a subroutine
+reference you pass to this method. The subroutine will be called against each
+element in the array until one matches or all elements have been checked.
+
+<span class="synPreProc">  my $found = $stuff-&gt;find_option( sub {/^b/} );</span>
+<span class="synPreProc">  print &quot;$found\n&quot;;    # prints &quot;bar&quot;</span>
+
+This method requires a single argument.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;first_index( sub { ... } )&gt;</span>
+
+This method returns the index of the first matching item in the array, just
+like <span class="synIdentifier">L&lt;List::MoreUtils&gt;</span>'s <span class="synIdentifier">C&lt;first_index&gt;</span> function. The matching is done with a
+subroutine reference you pass to this method. The subroutine will be called
+against each element in the array until one matches or all elements have been
+checked.
+
+This method requires a single argument.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;grep( sub { ... } )&gt;</span>
+
+This method returns every element matching a given criteria, just like Perl's
+core <span class="synIdentifier">C&lt;grep&gt;</span> function. This method requires a subroutine which implements the
+matching logic.
+
+<span class="synPreProc">  my @found = $stuff-&gt;filter_options( sub {/^b/} );</span>
+<span class="synPreProc">  print &quot;@found\n&quot;;    # prints &quot;bar baz boo&quot;</span>
+
+This method requires a single argument.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;map( sub { ... } )&gt;</span>
+
+This method transforms every element in the array and returns a new array,
+just like Perl's core <span class="synIdentifier">C&lt;map&gt;</span> function. This method requires a subroutine which
+implements the transformation.
+
+<span class="synPreProc">  my @mod_options = $stuff-&gt;map_options( sub { $_ . &quot;-tag&quot; } );</span>
+<span class="synPreProc">  print &quot;@mod_options\n&quot;;    # prints &quot;foo-tag bar-tag baz-tag boo-tag&quot;</span>
+
+This method requires a single argument.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;reduce( sub { ... } )&gt;</span>
+
+This method turns an array into a single value, by passing a function the
+value so far and the next value in the array, just like <span class="synIdentifier">L&lt;List::Util&gt;</span>'s
+<span class="synIdentifier">C&lt;reduce&gt;</span> function. The reducing is done with a subroutine reference you pass
+to this method.
+
+<span class="synPreProc">  my $found = $stuff-&gt;reduce_options( sub { $_[0] . $_[1] } );</span>
+<span class="synPreProc">  print &quot;$found\n&quot;;    # prints &quot;foobarbazboo&quot;</span>
+
+This method requires a single argument.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;sort&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;sort( sub { ... } )&gt;</span>
+
+Returns the elements of the array in sorted order.
+
+You can provide an optional subroutine reference to sort with (as you can with
+Perl's core <span class="synIdentifier">C&lt;sort&gt;</span> function). However, instead of using <span class="synIdentifier">C&lt;$a&gt;</span> and <span class="synIdentifier">C&lt;$b&gt;</span> in
+this subroutine, you will need to use <span class="synIdentifier">C&lt;$_[0]&gt;</span> and <span class="synIdentifier">C&lt;$_[1]&gt;</span>.
+
+<span class="synPreProc">  # ascending ASCIIbetical</span>
+<span class="synPreProc">  my @sorted = $stuff-&gt;sort_options();</span>
+
+<span class="synPreProc">  # Descending alphabetical order</span>
+<span class="synPreProc">  my @sorted_options = $stuff-&gt;sort_options( sub { lc $_[1] cmp lc $_[0] } );</span>
+<span class="synPreProc">  print &quot;@sorted_options\n&quot;;    # prints &quot;foo boo baz bar&quot;</span>
+
+This method accepts a single argument.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;sort_in_place&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;sort_in_place( sub { ... } )&gt;</span>
+
+Sorts the array <span class="synIdentifier">I&lt;in place&gt;</span>, modifying the value of the attribute.
+
+You can provide an optional subroutine reference to sort with (as you can with
+Perl's core <span class="synIdentifier">C&lt;sort&gt;</span> function). However, instead of using <span class="synIdentifier">C&lt;$a&gt;</span> and <span class="synIdentifier">C&lt;$b&gt;</span>, you
+will need to use <span class="synIdentifier">C&lt;$_[0]&gt;</span> and <span class="synIdentifier">C&lt;$_[1]&gt;</span> instead.
+
+This method does not define a return value.
+
+This method accepts a single argument.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;shuffle&gt;</span>
+
+Returns the elements of the array in random order, like <span class="synIdentifier">C&lt;shuffle&gt;</span> from
+<span class="synIdentifier">L&lt;List::Util&gt;</span>.
+
+This method does not accept any arguments.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;uniq&gt;</span>
+
+Returns the array with all duplicate elements removed, like <span class="synIdentifier">C&lt;uniq&gt;</span> from
+<span class="synIdentifier">L&lt;List::MoreUtils&gt;</span>.
+
+This method does not accept any arguments.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;join($str)&gt;</span>
+
+Joins every element of the array using the separator given as argument, just
+like Perl's core <span class="synIdentifier">C&lt;join&gt;</span> function.
+
+<span class="synPreProc">  my $joined = $stuff-&gt;join_options(':');</span>
+<span class="synPreProc">  print &quot;$joined\n&quot;;    # prints &quot;foo:bar:baz:boo&quot;</span>
+
+This method requires a single argument.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;set($index, $value)&gt;</span>
+
+Given an index and a value, sets the specified array element's value.
+
+This method returns the value at <span class="synIdentifier">C&lt;$index&gt;</span> after the set.
+
+This method requires two arguments.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;delete($index)&gt;</span>
+
+Removes the element at the given index from the array.
+
+This method returns the deleted value. Note that if no value exists, it will
+return <span class="synIdentifier">C&lt;undef&gt;</span>.
+
+This method requires one argument.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;insert($index, $value)&gt;</span>
+
+Inserts a new element into the array at the given index.
+
+This method returns the new value at <span class="synIdentifier">C&lt;$index&gt;</span>.
+
+This method requires two arguments.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;clear&gt;</span>
+
+Empties the entire array, like <span class="synIdentifier">C&lt;@array = ()&gt;</span>.
+
+This method does not define a return value.
+
+This method does not accept any arguments.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;accessor($index)&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;accessor($index, $value)&gt;</span>
+
+This method provides a get/set accessor for the array, based on array indexes.
+If passed one argument, it returns the value at the specified index.  If
+passed two arguments, it sets the value of the specified index.
+
+When called as a setter, this method returns the new value at <span class="synIdentifier">C&lt;$index&gt;</span>.
+
+This method accepts one or two arguments.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;natatime($n)&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;natatime($n, $code)&gt;</span>
+
+This method returns an iterator which, on each call, returns <span class="synIdentifier">C&lt;$n&gt;</span> more items
+from the array, in order, like <span class="synIdentifier">C&lt;natatime&gt;</span> from <span class="synIdentifier">L&lt;List::MoreUtils&gt;</span>.
+
+If you pass a coderef as the second argument, then this code ref will be
+called on each group of <span class="synIdentifier">C&lt;$n&gt;</span> elements in the array until the array is
+exhausted.
+
+This method accepts one or two arguments.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;shallow_clone&gt;</span>
+
+This method returns a shallow clone of the array reference.  The return value
+is a reference to a new array with the same elements.  It is <span class="synIdentifier">I&lt;shallow&gt;</span>
+because any elements that were references in the original will be the <span class="synIdentifier">I&lt;same&gt;</span>
+references in the clone.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> BUGS</span>
+
+See <span class="synIdentifier">L&lt;Moose/BUGS&gt;</span> for details on reporting bugs.
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

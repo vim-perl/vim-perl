@@ -1,0 +1,173 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Moose::Meta::Role::Application</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Role::Application::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Role::Application::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+<span class="synStatement">use </span>metaclass;
+
+__PACKAGE__<span class="synIdentifier">-&gt;meta-&gt;add_attribute</span>(<span class="synString">'method_exclusions'</span> =&gt; (
+    <span class="synString">init_arg</span> =&gt; <span class="synString">'-excludes'</span>,
+    <span class="synString">reader</span>   =&gt; <span class="synString">'get_method_exclusions'</span>,
+    <span class="synString">default</span>  =&gt; <span class="synKeyword">sub </span>{ [] },
+    Class::MOP::_definition_context(),
+));
+
+__PACKAGE__<span class="synIdentifier">-&gt;meta-&gt;add_attribute</span>(<span class="synString">'method_aliases'</span> =&gt; (
+    <span class="synString">init_arg</span> =&gt; <span class="synString">'-alias'</span>,
+    <span class="synString">reader</span>   =&gt; <span class="synString">'get_method_aliases'</span>,
+    <span class="synString">default</span>  =&gt; <span class="synKeyword">sub </span>{ {} },
+    Class::MOP::_definition_context(),
+));
+
+<span class="synKeyword">sub </span><span class="synFunction">new </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$class</span>, <span class="synIdentifier">%params</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synIdentifier">$class-&gt;_new</span>(\<span class="synIdentifier">%params</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">is_method_excluded </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">$method_name</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synRepeat">foreach</span> (<span class="synIdentifier">@{$self-&gt;get_method_exclusions}</span>) {
+        <span class="synStatement">return</span> <span class="synNumber">1</span> <span class="synConditional">if</span> <span class="synIdentifier">$_</span> <span class="synOperator">eq</span> <span class="synIdentifier">$method_name</span>;
+    }
+    <span class="synStatement">return</span> <span class="synNumber">0</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">is_method_aliased </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">$method_name</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">exists</span> <span class="synIdentifier">$self-&gt;get_method_aliases-&gt;{$method_name}</span> ? <span class="synNumber">1</span> : <span class="synNumber">0</span>
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">is_aliased_method </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">$method_name</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">%aliased_names</span> = <span class="synStatement">reverse</span> <span class="synIdentifier">%{$self-&gt;get_method_aliases}</span>;
+    <span class="synStatement">exists</span> <span class="synIdentifier">$aliased_names{$method_name}</span> ? <span class="synNumber">1</span> : <span class="synNumber">0</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">apply </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synIdentifier">$self-&gt;check_role_exclusions</span>(<span class="synIdentifier">@_</span>);
+    <span class="synIdentifier">$self-&gt;check_required_methods</span>(<span class="synIdentifier">@_</span>);
+    <span class="synIdentifier">$self-&gt;check_required_attributes</span>(<span class="synIdentifier">@_</span>);
+
+    <span class="synIdentifier">$self-&gt;apply_attributes</span>(<span class="synIdentifier">@_</span>);
+    <span class="synIdentifier">$self-&gt;apply_methods</span>(<span class="synIdentifier">@_</span>);
+
+    <span class="synIdentifier">$self-&gt;apply_override_method_modifiers</span>(<span class="synIdentifier">@_</span>);
+
+    <span class="synIdentifier">$self-&gt;apply_before_method_modifiers</span>(<span class="synIdentifier">@_</span>);
+    <span class="synIdentifier">$self-&gt;apply_around_method_modifiers</span>(<span class="synIdentifier">@_</span>);
+    <span class="synIdentifier">$self-&gt;apply_after_method_modifiers</span>(<span class="synIdentifier">@_</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">check_role_exclusions           </span>{ Carp::croak <span class="synString">&quot;Abstract Method&quot;</span> }
+<span class="synKeyword">sub </span><span class="synFunction">check_required_methods          </span>{ Carp::croak <span class="synString">&quot;Abstract Method&quot;</span> }
+<span class="synKeyword">sub </span><span class="synFunction">check_required_attributes       </span>{ Carp::croak <span class="synString">&quot;Abstract Method&quot;</span> }
+
+<span class="synKeyword">sub </span><span class="synFunction">apply_attributes                </span>{ Carp::croak <span class="synString">&quot;Abstract Method&quot;</span> }
+<span class="synKeyword">sub </span><span class="synFunction">apply_methods                   </span>{ Carp::croak <span class="synString">&quot;Abstract Method&quot;</span> }
+<span class="synKeyword">sub </span><span class="synFunction">apply_override_method_modifiers </span>{ Carp::croak <span class="synString">&quot;Abstract Method&quot;</span> }
+<span class="synKeyword">sub </span><span class="synFunction">apply_method_modifiers          </span>{ Carp::croak <span class="synString">&quot;Abstract Method&quot;</span> }
+
+<span class="synKeyword">sub </span><span class="synFunction">apply_before_method_modifiers   </span>{ (<span class="synStatement">shift</span>)-&gt;apply_method_modifiers(<span class="synString">'before'</span> =&gt; <span class="synIdentifier">@_</span>) }
+<span class="synKeyword">sub </span><span class="synFunction">apply_around_method_modifiers   </span>{ (<span class="synStatement">shift</span>)-&gt;apply_method_modifiers(<span class="synString">'around'</span> =&gt; <span class="synIdentifier">@_</span>) }
+<span class="synKeyword">sub </span><span class="synFunction">apply_after_method_modifiers    </span>{ (<span class="synStatement">shift</span>)-&gt;apply_method_modifiers(<span class="synString">'after'</span>  =&gt; <span class="synIdentifier">@_</span>) }
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: A base class for role application</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Moose::Meta::Role::Application - A base class for role application
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This is the abstract base class for role applications.
+
+The API for this class and its subclasses still needs some
+consideration, and is intentionally not yet documented.
+
+<span class="synStatement">=head2</span><span class="synString"> METHODS</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;new&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;meta&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;get_method_exclusions&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;is_method_excluded&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;get_method_aliases&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;is_aliased_method&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;is_method_aliased&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;apply&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;check_role_exclusions&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;check_required_methods&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;check_required_attributes&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;apply_attributes&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;apply_methods&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;apply_method_modifiers&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;apply_before_method_modifiers&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;apply_after_method_modifiers&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;apply_around_method_modifiers&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;apply_override_method_modifiers&gt;</span>
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> BUGS</span>
+
+See <span class="synIdentifier">L&lt;Moose/BUGS&gt;</span> for details on reporting bugs.
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

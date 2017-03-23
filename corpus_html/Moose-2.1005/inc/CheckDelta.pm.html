@@ -1,0 +1,32 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> inc::CheckDelta</span>;
+<span class="synStatement">use </span>Moose;
+
+<span class="synStatement">use </span>Path::Class;
+
+with <span class="synString">'Dist::Zilla::Role::AfterBuild'</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">after_build </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$ENV{</span><span class="synString">DZIL_RELEASING</span><span class="synIdentifier">}</span>;
+
+    <span class="synStatement">my</span> (<span class="synIdentifier">$delta</span>) = <span class="synStatement">grep</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;name</span> <span class="synOperator">eq</span> <span class="synString">'lib/Moose/Manual/Delta.pod'</span> <span class="synStatement">}</span>
+                       <span class="synIdentifier">@{</span> <span class="synIdentifier">$self-&gt;zilla-&gt;files</span> <span class="synIdentifier">}</span>;
+
+    <span class="synStatement">die</span> <span class="synString">&quot;Moose::Manual::Delta still contains </span><span class="synSpecial">\$</span><span class="synString">NEXT&quot;</span>
+        <span class="synConditional">if</span> <span class="synIdentifier">$delta-&gt;content</span> =~ <span class="synStatement">/</span><span class="synSpecial">\$</span><span class="synString">NEXT</span><span class="synStatement">/</span>;
+}
+
+<span class="synNumber">1</span>;
+</pre>
+
+ </body>
+</html>

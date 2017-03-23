@@ -1,0 +1,91 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synPreProc">#!/usr/bin/env perl</span>
+
+<span class="synStatement">use warnings</span> <span class="synString">FATAL</span> =&gt; <span class="synString">'all'</span>;
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use </span>File::Temp;
+<span class="synStatement">use </span>Path::Class;
+
+<span class="synStatement">my</span> <span class="synIdentifier">$number_of_classes</span> = <span class="synStatement">shift</span> || <span class="synNumber">1500</span>;
+<span class="synStatement">my</span> <span class="synIdentifier">$number_of_attributes</span> = <span class="synStatement">shift</span> || <span class="synNumber">20</span>;
+<span class="synStatement">my</span> <span class="synIdentifier">$t</span> = <span class="synStatement">shift</span> || File::Temp-&gt;newdir;
+<span class="synStatement">my</span> <span class="synIdentifier">$tmp</span> = dir(<span class="synIdentifier">$t</span>);
+<span class="synIdentifier">$tmp-&gt;rmtree</span>;
+<span class="synIdentifier">$tmp-&gt;mkpath</span>;
+(<span class="synStatement">-d</span> <span class="synIdentifier">$tmp</span>) <span class="synOperator">or</span> <span class="synStatement">die</span> <span class="synString">&quot;not a dir: </span><span class="synIdentifier">$tmp</span><span class="synString">&quot;</span>;
+<span class="synComment">#print &quot;$tmp\n&quot;;</span>
+
+<span class="synStatement">my</span> <span class="synIdentifier">%class_writer</span> = (
+    <span class="synString">'Moose'</span> =&gt; <span class="synKeyword">sub </span>{
+        <span class="synStatement">my</span> <span class="synIdentifier">$name</span> = <span class="synStatement">shift</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$attrs</span> = <span class="synStatement">join</span> <span class="synString">''</span>, <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synString">&quot;has '</span><span class="synIdentifier">$_</span><span class="synString">' =&gt; ( is =&gt; 'ro', isa =&gt; 'Str' );</span><span class="synSpecial">\n</span><span class="synString">&quot;</span> <span class="synStatement">}</span> <span class="synIdentifier">@_</span>;
+        <span class="synStatement">return</span> <span class="synString">qq{package </span><span class="synIdentifier">$name</span><span class="synString">;</span><span class="synSpecial">\n</span><span class="synString">use Moose;</span><span class="synSpecial">\n</span><span class="synIdentifier">$attrs</span><span class="synSpecial">\n</span><span class="synString">1;</span><span class="synSpecial">\n</span><span class="synString">__END__</span><span class="synSpecial">\n</span><span class="synString">}</span>;
+    },
+    <span class="synString">'MooseImmutable'</span> =&gt; <span class="synKeyword">sub </span>{
+        <span class="synStatement">my</span> <span class="synIdentifier">$name</span> = <span class="synStatement">shift</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$attrs</span> = <span class="synStatement">join</span> <span class="synString">''</span>, <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synString">&quot;has '</span><span class="synIdentifier">$_</span><span class="synString">' =&gt; ( is =&gt; 'ro', isa =&gt; 'Str' );</span><span class="synSpecial">\n</span><span class="synString">&quot;</span> <span class="synStatement">}</span> <span class="synIdentifier">@_</span>;
+        <span class="synStatement">return</span> <span class="synString">qq{package </span><span class="synIdentifier">$name</span><span class="synString">;</span><span class="synSpecial">\n</span><span class="synString">use Moose;</span><span class="synSpecial">\n</span><span class="synIdentifier">$attrs</span><span class="synSpecial">\n</span><span class="synString">__PACKAGE__-&gt;meta-&gt;make_immutable;</span><span class="synSpecial">\n</span><span class="synString">1;</span><span class="synSpecial">\n</span><span class="synString">__END__</span><span class="synSpecial">\n</span><span class="synString">}</span>;
+    },
+    <span class="synString">'Moo'</span> =&gt; <span class="synKeyword">sub </span>{
+        <span class="synStatement">my</span> <span class="synIdentifier">$name</span> = <span class="synStatement">shift</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$attrs</span> = <span class="synStatement">join</span><span class="synString">''</span>, <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synString">&quot;has '</span><span class="synIdentifier">$_</span><span class="synString">' =&gt; ( is =&gt; 'ro', isa =&gt; 'Str' );</span><span class="synSpecial">\n</span><span class="synString">&quot;</span> <span class="synStatement">}</span> <span class="synIdentifier">@_</span>;
+        <span class="synStatement">return</span> <span class="synString">qq{package </span><span class="synIdentifier">$name</span><span class="synString">;</span><span class="synSpecial">\n</span><span class="synString">use Moo;</span><span class="synSpecial">\n</span><span class="synIdentifier">$attrs</span><span class="synSpecial">\n</span><span class="synString">1;</span><span class="synSpecial">\n</span><span class="synString">__END__</span><span class="synSpecial">\n</span><span class="synString">}</span>;
+    },
+    <span class="synString">'Mo'</span> =&gt; <span class="synKeyword">sub </span>{
+        <span class="synStatement">my</span> <span class="synIdentifier">$name</span> = <span class="synStatement">shift</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$attrs</span> = <span class="synStatement">join</span><span class="synString">''</span>, <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synString">&quot;has '</span><span class="synIdentifier">$_</span><span class="synString">' =&gt; ( is =&gt; 'ro', isa =&gt; 'Str' );</span><span class="synSpecial">\n</span><span class="synString">&quot;</span> <span class="synStatement">}</span> <span class="synIdentifier">@_</span>;
+        <span class="synStatement">return</span> <span class="synString">qq{package </span><span class="synIdentifier">$name</span><span class="synString">;</span><span class="synSpecial">\n</span><span class="synString">use Mo;</span><span class="synSpecial">\n</span><span class="synIdentifier">$attrs</span><span class="synSpecial">\n</span><span class="synString">1;</span><span class="synSpecial">\n</span><span class="synString">__END__</span><span class="synSpecial">\n</span><span class="synString">}</span>;
+    },
+    <span class="synString">'Mouse'</span> =&gt; <span class="synKeyword">sub </span>{
+        <span class="synStatement">my</span> <span class="synIdentifier">$name</span> = <span class="synStatement">shift</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$attrs</span> = <span class="synStatement">join</span><span class="synString">''</span>, <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synString">&quot;has '</span><span class="synIdentifier">$_</span><span class="synString">' =&gt; ( is =&gt; 'ro', isa =&gt; 'Str' );</span><span class="synSpecial">\n</span><span class="synString">&quot;</span> <span class="synStatement">}</span> <span class="synIdentifier">@_</span>;
+        <span class="synStatement">return</span> <span class="synString">qq{package </span><span class="synIdentifier">$name</span><span class="synString">;</span><span class="synSpecial">\n</span><span class="synString">use Mouse;</span><span class="synSpecial">\n</span><span class="synIdentifier">$attrs</span><span class="synSpecial">\n</span><span class="synString">1;</span><span class="synSpecial">\n</span><span class="synString">__END__</span><span class="synSpecial">\n</span><span class="synString">}</span>;
+    },
+    <span class="synString">'plain-package'</span> =&gt; <span class="synKeyword">sub </span>{
+        <span class="synStatement">my</span> <span class="synIdentifier">$name</span> = <span class="synStatement">shift</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$attrs</span> = <span class="synStatement">join</span><span class="synString">''</span>, <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synString">&quot;sub </span><span class="synIdentifier">$_</span><span class="synString"> {}</span><span class="synSpecial">\n</span><span class="synString">&quot;</span> <span class="synStatement">}</span> <span class="synIdentifier">@_</span>;
+        <span class="synStatement">return</span> <span class="synString">qq{package </span><span class="synIdentifier">$name</span><span class="synString">;</span><span class="synSpecial">\n</span><span class="synIdentifier">$attrs</span><span class="synSpecial">\n</span><span class="synString">1;</span><span class="synSpecial">\n</span><span class="synString">__END__</span><span class="synSpecial">\n</span><span class="synString">}</span>;
+    },
+);
+
+<span class="synStatement">my</span> <span class="synIdentifier">$class_prefix</span> = <span class="synString">'TmpClassThingy'</span>;
+<span class="synStatement">my</span> <span class="synIdentifier">%lib_map</span>;
+<span class="synStatement">my</span> <span class="synIdentifier">@attribute_names</span> = <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synString">'a'</span> . <span class="synIdentifier">$_</span> <span class="synStatement">}</span> <span class="synNumber">1</span> .. <span class="synIdentifier">$number_of_attributes</span>;
+<span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$module</span> (<span class="synStatement">sort</span> <span class="synStatement">keys</span> <span class="synIdentifier">%class_writer</span>) {
+    <span class="synStatement">my</span> <span class="synIdentifier">$lib</span> = <span class="synIdentifier">$tmp-&gt;subdir</span>(<span class="synIdentifier">$module</span> . <span class="synString">'-lib'</span>);
+    <span class="synIdentifier">$lib-&gt;mkpath</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$all_fh</span> = <span class="synIdentifier">$lib-&gt;file</span>(<span class="synString">'All.pm'</span>)-&gt;openw;
+    <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$n</span> (<span class="synNumber">1</span> .. <span class="synIdentifier">$number_of_classes</span>) {
+        <span class="synStatement">my</span> <span class="synIdentifier">$class_name</span> = <span class="synIdentifier">$class_prefix</span> . <span class="synIdentifier">$n</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$fh</span> = <span class="synIdentifier">$lib-&gt;file</span>(<span class="synIdentifier">$class_name</span> . <span class="synString">'.pm'</span>)-&gt;openw;
+        <span class="synIdentifier">$fh-&gt;say</span>(<span class="synIdentifier">$class_writer{$module}</span>-&gt;(<span class="synIdentifier">$class_name</span>, <span class="synIdentifier">@attribute_names</span>)) <span class="synOperator">or</span> <span class="synStatement">die</span>;
+        <span class="synIdentifier">$fh-&gt;close</span> <span class="synOperator">or</span> <span class="synStatement">die</span>;
+        <span class="synIdentifier">$all_fh-&gt;say</span>(<span class="synString">&quot;use </span><span class="synIdentifier">$class_name</span><span class="synString">;&quot;</span>) <span class="synOperator">or</span> <span class="synStatement">die</span>;
+    }
+    <span class="synIdentifier">$all_fh-&gt;say</span>(<span class="synString">'1;'</span>) <span class="synOperator">or</span> <span class="synStatement">die</span>;
+    <span class="synIdentifier">$all_fh-&gt;close</span> <span class="synOperator">or</span> <span class="synStatement">die</span>;
+    <span class="synIdentifier">$lib_map{$module}</span> = <span class="synIdentifier">$lib</span>;
+}
+
+<span class="synComment">#$DB::single = 1;</span>
+<span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$module</span> (<span class="synStatement">sort</span> <span class="synStatement">keys</span> <span class="synIdentifier">%lib_map</span>) {
+    <span class="synStatement">my</span> <span class="synIdentifier">$lib</span> = <span class="synIdentifier">$lib_map{$module}</span>;
+    <span class="synStatement">print</span> <span class="synString">&quot;</span><span class="synIdentifier">$module</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$cmd</span> = <span class="synString">&quot;time -p </span><span class="synIdentifier">$^X</span><span class="synString"> -I</span><span class="synIdentifier">$lib</span><span class="synString"> -MAll -e '1'&quot;</span>;
+    <span class="synStatement">`</span><span class="synIdentifier">$cmd</span><span class="synString"> &gt; /dev/null 2&gt;&amp;1</span><span class="synStatement">`</span>; <span class="synComment"># to cache</span>
+<span class="synComment">#    print &quot;$cmd\n&quot;;</span>
+    <span class="synStatement">system</span>(<span class="synIdentifier">$cmd</span>);
+    <span class="synStatement">print</span> <span class="synString">&quot;</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+}
+
+</pre>
+
+ </body>
+</html>

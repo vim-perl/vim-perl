@@ -1,0 +1,22 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre>
+<span class="synStatement">package</span><span class="synType"> Bar</span>;
+<span class="synStatement">use </span>Moose;
+<span class="synStatement">use </span>Moose::Util::TypeConstraints;
+
+type <span class="synString">Baz</span> =&gt; where { <span class="synNumber">1</span> };
+
+subtype <span class="synString">Bling</span> =&gt; as <span class="synString">Baz</span> =&gt; where { <span class="synNumber">1</span> };
+
+<span class="synNumber">1</span>;
+</pre>
+
+ </body>
+</html>

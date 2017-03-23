@@ -1,0 +1,155 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre>
+<span class="synStatement">package</span><span class="synType"> BinaryTree</span>;
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+<span class="synStatement">use </span>Carp <span class="synString">qw/confess/</span>;
+
+<span class="synStatement">use </span>metaclass;
+
+<span class="synStatement">our</span> <span class="synIdentifier">$VERSION</span> = <span class="synString">'0.02'</span>;
+
+BinaryTree-&gt;meta-&gt;add_attribute(<span class="synString">'uid'</span> =&gt; (
+    <span class="synString">reader</span>  =&gt; <span class="synString">'getUID'</span>,
+    <span class="synString">writer</span>  =&gt; <span class="synString">'setUID'</span>,
+    <span class="synString">default</span> =&gt; <span class="synKeyword">sub </span>{
+        <span class="synStatement">my</span> <span class="synIdentifier">$instance</span> = <span class="synStatement">shift</span>;
+        (<span class="synString">&quot;</span><span class="synIdentifier">$instance</span><span class="synString">&quot;</span> =~ <span class="synStatement">/</span><span class="synSpecial">\((.*?)\)</span><span class="synString">$</span><span class="synStatement">/</span>)[<span class="synNumber">0</span>];
+    }
+));
+
+BinaryTree-&gt;meta-&gt;add_attribute(<span class="synString">'node'</span> =&gt; (
+    <span class="synString">reader</span>   =&gt; <span class="synString">'getNodeValue'</span>,
+    <span class="synString">writer</span>   =&gt; <span class="synString">'setNodeValue'</span>,
+    <span class="synString">clearer</span>  =&gt; <span class="synString">'clearNodeValue'</span>,
+    <span class="synString">init_arg</span> =&gt; <span class="synString">':node'</span>
+));
+
+BinaryTree-&gt;meta-&gt;add_attribute(<span class="synString">'parent'</span> =&gt; (
+    <span class="synString">predicate</span> =&gt; <span class="synString">'hasParent'</span>,
+    <span class="synString">reader</span>    =&gt; <span class="synString">'getParent'</span>,
+    <span class="synString">writer</span>    =&gt; <span class="synString">'setParent'</span>,
+    <span class="synString">clearer</span>   =&gt; <span class="synString">'clearParent'</span>,
+));
+
+BinaryTree-&gt;meta-&gt;add_attribute(<span class="synString">'left'</span> =&gt; (
+    <span class="synString">predicate</span> =&gt; <span class="synString">'hasLeft'</span>,
+    <span class="synString">clearer</span>   =&gt; <span class="synString">'clearLeft'</span>,
+    <span class="synString">reader</span>    =&gt; <span class="synString">'getLeft'</span>,
+    <span class="synString">writer</span> =&gt; {
+        <span class="synString">'setLeft'</span> =&gt; <span class="synKeyword">sub </span>{
+            <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">$tree</span>) = <span class="synIdentifier">@_</span>;
+            confess <span class="synString">&quot;undef left&quot;</span> <span class="synConditional">unless</span> <span class="synOperator">defined</span> <span class="synIdentifier">$tree</span>;
+                <span class="synIdentifier">$tree-&gt;setParent</span>(<span class="synIdentifier">$self</span>) <span class="synConditional">if</span> <span class="synOperator">defined</span> <span class="synIdentifier">$tree</span>;
+            <span class="synIdentifier">$self-&gt;{</span><span class="synString">'left'</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$tree</span>;
+            <span class="synIdentifier">$self</span>;
+        }
+   },
+));
+
+BinaryTree-&gt;meta-&gt;add_attribute(<span class="synString">'right'</span> =&gt; (
+    <span class="synString">predicate</span> =&gt; <span class="synString">'hasRight'</span>,
+    <span class="synString">clearer</span>   =&gt; <span class="synString">'clearRight'</span>,
+    <span class="synString">reader</span>    =&gt; <span class="synString">'getRight'</span>,
+    <span class="synString">writer</span> =&gt; {
+        <span class="synString">'setRight'</span> =&gt; <span class="synKeyword">sub </span>{
+            <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">$tree</span>) = <span class="synIdentifier">@_</span>;
+            confess <span class="synString">&quot;undef right&quot;</span> <span class="synConditional">unless</span> <span class="synOperator">defined</span> <span class="synIdentifier">$tree</span>;
+                <span class="synIdentifier">$tree-&gt;setParent</span>(<span class="synIdentifier">$self</span>) <span class="synConditional">if</span> <span class="synOperator">defined</span> <span class="synIdentifier">$tree</span>;
+            <span class="synIdentifier">$self-&gt;{</span><span class="synString">'right'</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$tree</span>;
+            <span class="synIdentifier">$self</span>;
+        }
+    }
+));
+
+<span class="synKeyword">sub </span><span class="synFunction">new </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$class</span> = <span class="synStatement">shift</span>;
+    <span class="synIdentifier">$class-&gt;meta-&gt;new_object</span>(<span class="synString">':node'</span> =&gt; <span class="synStatement">shift</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">removeLeft </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$left</span> = <span class="synIdentifier">$self-&gt;getLeft</span>();
+    <span class="synIdentifier">$left-&gt;clearParent</span>;
+    <span class="synIdentifier">$self-&gt;clearLeft</span>;
+    <span class="synStatement">return</span> <span class="synIdentifier">$left</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">removeRight </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$right</span> = <span class="synIdentifier">$self-&gt;getRight</span>;
+    <span class="synIdentifier">$right-&gt;clearParent</span>;
+    <span class="synIdentifier">$self-&gt;clearRight</span>;
+    <span class="synStatement">return</span> <span class="synIdentifier">$right</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">isLeaf </span>{
+        <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>) = <span class="synIdentifier">@_</span>;
+        <span class="synStatement">return</span> (!<span class="synIdentifier">$self-&gt;hasLeft</span> &amp;&amp; !<span class="synIdentifier">$self-&gt;hasRight</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">isRoot </span>{
+        <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>) = <span class="synIdentifier">@_</span>;
+        <span class="synStatement">return</span> !<span class="synIdentifier">$self-&gt;hasParent</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">traverse </span>{
+        <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">$func</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synIdentifier">$func</span>-&gt;(<span class="synIdentifier">$self</span>);
+    <span class="synIdentifier">$self-&gt;getLeft-&gt;traverse</span>(<span class="synIdentifier">$func</span>)  <span class="synConditional">if</span> <span class="synIdentifier">$self-&gt;hasLeft</span>;
+    <span class="synIdentifier">$self-&gt;getRight-&gt;traverse</span>(<span class="synIdentifier">$func</span>) <span class="synConditional">if</span> <span class="synIdentifier">$self-&gt;hasRight</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">mirror </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synComment"># swap left for right</span>
+    <span class="synConditional">if</span>( <span class="synIdentifier">$self-&gt;hasLeft</span> &amp;&amp; <span class="synIdentifier">$self-&gt;hasRight</span>) {
+      <span class="synStatement">my</span> <span class="synIdentifier">$left</span> = <span class="synIdentifier">$self-&gt;getLeft</span>;
+      <span class="synStatement">my</span> <span class="synIdentifier">$right</span> = <span class="synIdentifier">$self-&gt;getRight</span>;
+      <span class="synIdentifier">$self-&gt;setLeft</span>(<span class="synIdentifier">$right</span>);
+      <span class="synIdentifier">$self-&gt;setRight</span>(<span class="synIdentifier">$left</span>);
+    } <span class="synConditional">elsif</span>( <span class="synIdentifier">$self-&gt;hasLeft</span> &amp;&amp; !<span class="synIdentifier">$self-&gt;hasRight</span>){
+      <span class="synStatement">my</span> <span class="synIdentifier">$left</span> = <span class="synIdentifier">$self-&gt;getLeft</span>;
+      <span class="synIdentifier">$self-&gt;clearLeft</span>;
+      <span class="synIdentifier">$self-&gt;setRight</span>(<span class="synIdentifier">$left</span>);
+    } <span class="synConditional">elsif</span>( !<span class="synIdentifier">$self-&gt;hasLeft</span> &amp;&amp; <span class="synIdentifier">$self-&gt;hasRight</span>){
+      <span class="synStatement">my</span> <span class="synIdentifier">$right</span> = <span class="synIdentifier">$self-&gt;getRight</span>;
+      <span class="synIdentifier">$self-&gt;clearRight</span>;
+      <span class="synIdentifier">$self-&gt;setLeft</span>(<span class="synIdentifier">$right</span>);
+    }
+
+    <span class="synComment"># and recurse</span>
+    <span class="synIdentifier">$self-&gt;getLeft-&gt;mirror</span>  <span class="synConditional">if</span> <span class="synIdentifier">$self-&gt;hasLeft</span>;
+    <span class="synIdentifier">$self-&gt;getRight-&gt;mirror</span> <span class="synConditional">if</span> <span class="synIdentifier">$self-&gt;hasRight</span>;
+    <span class="synIdentifier">$self</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">size </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$size</span> = <span class="synNumber">1</span>;
+    <span class="synIdentifier">$size</span> += <span class="synIdentifier">$self-&gt;getLeft-&gt;size</span>  <span class="synConditional">if</span> <span class="synIdentifier">$self-&gt;hasLeft</span>;
+    <span class="synIdentifier">$size</span> += <span class="synIdentifier">$self-&gt;getRight-&gt;size</span> <span class="synConditional">if</span> <span class="synIdentifier">$self-&gt;hasRight</span>;
+    <span class="synStatement">return</span> <span class="synIdentifier">$size</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">height </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$left_height</span>, <span class="synIdentifier">$right_height</span>) = (<span class="synNumber">0</span>, <span class="synNumber">0</span>);
+    <span class="synIdentifier">$left_height</span> = <span class="synIdentifier">$self-&gt;getLeft-&gt;height</span>()   <span class="synConditional">if</span> <span class="synIdentifier">$self-&gt;hasLeft</span>();
+    <span class="synIdentifier">$right_height</span> = <span class="synIdentifier">$self-&gt;getRight-&gt;height</span>() <span class="synConditional">if</span> <span class="synIdentifier">$self-&gt;hasRight</span>();
+    <span class="synStatement">return</span> <span class="synNumber">1</span> + ((<span class="synIdentifier">$left_height</span> &gt; <span class="synIdentifier">$right_height</span>) ? <span class="synIdentifier">$left_height</span> : <span class="synIdentifier">$right_height</span>);
+}
+
+<span class="synNumber">1</span>;
+</pre>
+
+ </body>
+</html>

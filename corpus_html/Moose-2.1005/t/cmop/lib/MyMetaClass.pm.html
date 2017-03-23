@@ -1,0 +1,27 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre>
+<span class="synStatement">package</span><span class="synType"> MyMetaClass</span>;
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use base</span> <span class="synString">'Class::MOP::Class'</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">mymetaclass_attributes</span>{
+  <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+  <span class="synStatement">return</span> <span class="synStatement">grep</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;isa</span>(<span class="synString">&quot;MyMetaClass::Attribute&quot;</span>) <span class="synStatement">}</span>
+    <span class="synIdentifier">$self-&gt;get_all_attributes</span>;
+}
+
+<span class="synNumber">1</span>;
+</pre>
+
+ </body>
+</html>

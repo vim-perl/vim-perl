@@ -1,0 +1,198 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Data::Printer::Filter::DB</span>;
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+<span class="synStatement">use </span>Data::Printer::Filter;
+<span class="synStatement">use </span>Term::ANSIColor;
+
+filter <span class="synString">'DBI::db'</span>, <span class="synKeyword">sub </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$dbh</span>, <span class="synIdentifier">$p</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$name</span> = <span class="synIdentifier">$dbh-&gt;{</span><span class="synString">Driver</span><span class="synIdentifier">}{</span><span class="synString">Name</span><span class="synIdentifier">}</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$string</span> = <span class="synString">&quot;</span><span class="synIdentifier">$name</span><span class="synString"> Database Handle (&quot;</span>
+               . (<span class="synIdentifier">$dbh-&gt;{</span><span class="synString">Active</span><span class="synIdentifier">}</span> 
+                  ? colored(<span class="synString">'connected'</span>, <span class="synString">'bright_green'</span>)
+                  : colored(<span class="synString">'disconnected'</span>, <span class="synString">'bright_red'</span>))
+               . <span class="synString">') {'</span>
+               ;
+    indent;
+    <span class="synStatement">my</span> <span class="synIdentifier">%dsn</span> = <span class="synStatement">split</span>( <span class="synStatement">/</span><span class="synSpecial">[;=]</span><span class="synStatement">/</span>, <span class="synIdentifier">$dbh-&gt;{</span><span class="synString">Name</span><span class="synIdentifier">}</span> );
+    <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$k</span> (<span class="synStatement">keys</span> <span class="synIdentifier">%dsn</span>) {
+        <span class="synIdentifier">$string</span> .= newline . <span class="synString">&quot;</span><span class="synIdentifier">$k</span><span class="synString">: &quot;</span> . <span class="synIdentifier">$dsn{$k}</span>;
+    }
+    <span class="synIdentifier">$string</span> .= newline . <span class="synString">'Auto Commit: '</span> . <span class="synIdentifier">$dbh-&gt;{</span><span class="synString">AutoCommit</span><span class="synIdentifier">}</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$kids</span> = <span class="synIdentifier">$dbh-&gt;{</span><span class="synString">Kids</span><span class="synIdentifier">}</span>;
+    <span class="synIdentifier">$string</span> .= newline . <span class="synString">'Statement Handles: '</span> . <span class="synIdentifier">$kids</span>;
+    <span class="synConditional">if</span> (<span class="synIdentifier">$kids</span> &gt; <span class="synNumber">0</span>) {
+        <span class="synIdentifier">$string</span> .= <span class="synString">' ('</span> . <span class="synIdentifier">$dbh-&gt;{</span><span class="synString">ActiveKids</span><span class="synIdentifier">}</span> . <span class="synString">' active)'</span>;
+    }
+
+    <span class="synConditional">if</span> ( <span class="synOperator">defined</span> <span class="synIdentifier">$dbh-&gt;err</span> ) {
+        <span class="synIdentifier">$string</span> .= newline . <span class="synString">'Error: '</span> . <span class="synIdentifier">$dbh-&gt;errstr</span>;
+    }
+    <span class="synIdentifier">$string</span> .= newline . <span class="synString">'Last Statement: '</span>
+            . colored( (<span class="synIdentifier">$dbh-&gt;{</span><span class="synString">Statement</span><span class="synIdentifier">}</span> || <span class="synString">'-'</span>), <span class="synString">'bright_yellow'</span>);
+
+    outdent;
+    <span class="synIdentifier">$string</span> .= newline . <span class="synString">'}'</span>;
+    <span class="synStatement">return</span> <span class="synIdentifier">$string</span>;
+};
+
+filter <span class="synString">'DBI::st'</span>, <span class="synKeyword">sub </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$sth</span>, <span class="synIdentifier">$properties</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$str</span> = colored( (<span class="synIdentifier">$sth-&gt;{</span><span class="synString">Statement</span><span class="synIdentifier">}</span> || <span class="synString">'-'</span>), <span class="synString">'bright_yellow'</span>);
+
+    <span class="synConditional">if</span> (<span class="synIdentifier">$sth-&gt;{</span><span class="synString">NUM_OF_PARAMS</span><span class="synIdentifier">}</span> &gt; <span class="synNumber">0</span>) {
+        <span class="synStatement">my</span> <span class="synIdentifier">$values</span> = <span class="synIdentifier">$sth-&gt;{</span><span class="synString">ParamValues</span><span class="synIdentifier">}</span>;
+        <span class="synConditional">if</span> (<span class="synIdentifier">$values</span>) {
+            <span class="synIdentifier">$str</span> .= <span class="synString">'  ('</span> 
+                 . <span class="synStatement">join</span>(<span class="synString">', '</span>,
+                      <span class="synStatement">map</span> <span class="synStatement">{</span>
+                         <span class="synStatement">my</span> <span class="synIdentifier">$v</span> = <span class="synIdentifier">$values-&gt;{$_}</span>;
+                         <span class="synIdentifier">$v</span> || <span class="synString">'undef'</span>;
+                      <span class="synStatement">}</span> <span class="synNumber">1</span> .. <span class="synIdentifier">$sth-&gt;{</span><span class="synString">NUM_OF_PARAMS</span><span class="synIdentifier">}</span>
+                   )
+                 . <span class="synString">')'</span>;
+        }
+        <span class="synConditional">else</span> {
+            <span class="synIdentifier">$str</span> .= colored(<span class="synString">'  (bindings unavailable)'</span>, <span class="synString">'yellow'</span>);
+        }
+    }
+    <span class="synStatement">return</span> <span class="synIdentifier">$str</span>;
+};
+
+<span class="synComment"># DBIx::Class filters</span>
+filter <span class="synString">'-class'</span> =&gt; <span class="synKeyword">sub </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$obj</span>, <span class="synIdentifier">$properties</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synConditional">if</span> ( <span class="synIdentifier">$obj-&gt;isa</span>(<span class="synString">'DBIx::Class::Schema'</span>) ) {
+        <span class="synStatement">return</span> <span class="synOperator">ref</span>(<span class="synIdentifier">$obj</span>) . <span class="synString">' DBIC Schema with '</span> . p( <span class="synIdentifier">$obj-&gt;storage-&gt;dbh</span> );
+    }
+    <span class="synConditional">elsif</span> ( <span class="synStatement">grep</span> <span class="synStatement">{</span> <span class="synIdentifier">$obj-&gt;isa</span>(<span class="synIdentifier">$_</span>) <span class="synStatement">}</span> <span class="synString">qw(DBIx::Class::ResultSet DBIx::Class::ResultSetColumn)</span> ) {
+
+        <span class="synStatement">my</span> <span class="synIdentifier">$str</span> = colored( <span class="synOperator">ref</span>(<span class="synIdentifier">$obj</span>), <span class="synIdentifier">$properties-&gt;{</span><span class="synString">color</span><span class="synIdentifier">}{</span><span class="synString">class</span><span class="synIdentifier">}</span> );
+        <span class="synIdentifier">$str</span> .= <span class="synString">' ('</span> . <span class="synIdentifier">$obj-&gt;result_class</span> . <span class="synString">')'</span>
+          <span class="synConditional">if</span> <span class="synIdentifier">$obj-&gt;can</span>( <span class="synString">'result_class'</span> );
+
+        <span class="synConditional">if</span> (<span class="synStatement">my</span> <span class="synIdentifier">$query_data</span> = <span class="synIdentifier">$obj-&gt;as_query</span>) {
+          <span class="synStatement">my</span> <span class="synIdentifier">@query_data</span> = <span class="synIdentifier">@$$query_data</span>;
+          indent;
+          <span class="synStatement">my</span> <span class="synIdentifier">$sql</span> = <span class="synStatement">shift</span> <span class="synIdentifier">@query_data</span>;
+          <span class="synIdentifier">$str</span> .= <span class="synString">' {'</span>
+               . newline . colored(<span class="synIdentifier">$sql</span>, <span class="synString">'bright_yellow'</span>)
+               . newline . <span class="synStatement">join</span> ( newline, <span class="synStatement">map</span> <span class="synStatement">{</span>
+                      <span class="synIdentifier">$_-&gt;[</span><span class="synNumber">1</span><span class="synIdentifier">]</span> . <span class="synString">' ('</span> . <span class="synIdentifier">$_-&gt;[</span><span class="synNumber">0</span><span class="synIdentifier">]{</span><span class="synString">sqlt_datatype</span><span class="synIdentifier">}</span> . <span class="synString">')'</span>
+                    <span class="synStatement">}</span> <span class="synIdentifier">@query_data</span>
+               )
+               ;
+          outdent;
+          <span class="synIdentifier">$str</span> .= newline . <span class="synString">'}'</span>;
+        }
+
+        <span class="synStatement">return</span> <span class="synIdentifier">$str</span>;
+    }
+    <span class="synConditional">else</span> {
+        <span class="synStatement">return</span>;
+    }
+};
+
+
+<span class="synNumber">1</span>;
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Data::Printer::Filter::DB - pretty printing database objects
+
+
+<span class="synStatement">=head1</span><span class="synString"> SYNOPSIS</span>
+
+In your program:
+
+<span class="synPreProc">  use Data::Printer filters =&gt; {</span>
+<span class="synPreProc">      -external =&gt; [ 'DB' ],</span>
+<span class="synPreProc">  };</span>
+
+or, in your <span class="synIdentifier">C&lt;.dataprinter&gt;</span> file:
+
+<span class="synPreProc">  {</span>
+<span class="synPreProc">    filters =&gt; {</span>
+<span class="synPreProc">      -external =&gt; [ 'DB' ],</span>
+<span class="synPreProc">    },</span>
+<span class="synPreProc">  };</span>
+
+
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This is a filter plugin for <span class="synIdentifier">L&lt;Data::Printer&gt;</span>. It filters through
+<span class="synIdentifier">L&lt;DBI&gt;</span>'s handlers (dbh) and statement (sth) objects displaying relevant
+information for the user.
+
+<span class="synIdentifier">L&lt;DBI&gt;</span> is an extremely powerful and complete database interface. But
+it does a lot of magic under the hood, making their objects somewhat harder
+to debug. This filter aims to fix that :)
+
+For instance, say you want to debug something like this:
+
+<span class="synPreProc">  use DBI;</span>
+<span class="synPreProc">  my $dbh = DBI-&gt;connect('dbi:DBM(RaiseError=1):', undef, undef );</span>
+
+A regular Data::Dumper output gives you absolutely nothing:
+
+<span class="synIdentifier">$VAR1</span> = <span class="synIdentifier">bless( {}, 'DBI::db' )</span>;
+
+<span class="synIdentifier">L&lt;Data::Printer&gt;</span> makes it better, but only to debug the class itself,
+not helpful at all to see its contents and debug your own code:
+
+<span class="synPreProc">    DBI::db  {</span>
+<span class="synPreProc">        Parents       DBI::common</span>
+<span class="synPreProc">        Linear @ISA   DBI::db, DBI::common</span>
+<span class="synPreProc">        public methods (48) : begin_work, clone, column_info, commit, connected, data_sources, disconnect, do, foreign_key_info, get_info, last_insert_id, ping, prepare, prepare_cached, preparse, primary_key, primary_key_info, quote, quote_identifier, rollback, rows, selectall_arrayref, selectall_hashref, selectcol_arrayref, selectrow_array, selectrow_arrayref, selectrow_hashref, sqlite_backup_from_file, sqlite_backup_to_file, sqlite_busy_timeout, sqlite_collation_needed, sqlite_commit_hook, sqlite_create_aggregate, sqlite_create_collation, sqlite_create_function, sqlite_enable_load_extension, sqlite_last_insert_rowid, sqlite_progress_handler, sqlite_register_fts3_perl_tokenizer, sqlite_rollback_hook, sqlite_set_authorizer, sqlite_update_hook, statistics_info, table_info, tables, take_imp_data, type_info, type_info_all</span>
+<span class="synPreProc">        private methods (0)</span>
+<span class="synPreProc">        internals: {</span>
+<span class="synPreProc">        }</span>
+<span class="synPreProc">    }</span>
+
+Fear no more! If you use this filter, here's what you'll see:
+
+<span class="synPreProc">    SQLite Database Handle (connected) {</span>
+<span class="synPreProc">        dbname: file.db</span>
+<span class="synPreProc">        Auto Commit: 1</span>
+<span class="synPreProc">        Statement Handles: 0</span>
+<span class="synPreProc">        Last Statement: -</span>
+<span class="synPreProc">    }</span>
+
+Much better, huh? :)
+
+Statement handlers are even better. Imagine you continued your code with something like:
+
+<span class="synPreProc">  my $sth = $dbh-&gt;prepare('SELECT * FROM foo WHERE bar = ?');</span>
+<span class="synPreProc">  $sth-&gt;execute(42);</span>
+
+With this filter, instead of an empty dump or full method information, you'll get
+exactly what you came for:
+
+<span class="synPreProc"> SELECT * FROM foo WHERE bar = ?  (42)</span>
+
+Note that if your driver does not support holding of parameter values, you'll get a
+<span class="synIdentifier">C&lt;bindings unavailable&gt;</span> message instead of the bound values.
+
+
+<span class="synStatement">=head1</span><span class="synString"> SEE ALSO</span>
+
+<span class="synIdentifier">L&lt;Data::Printer&gt;</span>
+
+
+</pre>
+
+ </body>
+</html>

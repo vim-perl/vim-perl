@@ -1,0 +1,74 @@
+package Moose::Cookbook::Meta::WhyMeta;
+
+# ABSTRACT: Welcome to the meta world (Why Go Meta?)
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Moose::Cookbook::Meta::WhyMeta - Welcome to the meta world (Why Go Meta?)
+
+=head1 VERSION
+
+version 2.1005
+
+=head1 SUMMARY
+
+You might want to read L<Moose::Manual::MOP> if you haven't done so
+yet.
+
+If you've ever thought "Moose is great, but I wish it did X
+differently", then you've gone meta. The meta recipes demonstrate how
+to change and extend the way Moose works by extending and overriding
+how the meta classes (L<Moose::Meta::Class>,
+L<Moose::Meta::Attribute>, etc) work.
+
+The metaclass API is a set of classes that describe classes, roles,
+attributes, etc. The metaclass API lets you ask questions about a
+class, like "what attributes does it have?", or "what roles does the
+class do?"
+
+The metaclass system also lets you make changes to a class, for
+example by adding new methods or attributes.
+
+The interface presented by L<Moose.pm|Moose> (C<has>, C<with>,
+C<extends>) is just a thin layer of syntactic sugar over the
+underlying metaclass system.
+
+By extending and changing how this metaclass system works, you can
+create your own Moose variant.
+
+=head2 Examples
+
+Let's say that you want to add additional properties to
+attributes. Specifically, we want to add a "label" property to each
+attribute, so we can write C<<
+My::Class->meta()->get_attribute('size')->label() >>. The first
+recipe shows how to do this using an attribute trait.
+
+You might also want to add additional properties to your
+metaclass. For example, if you were writing an ORM based on Moose, you
+could associate a table name with each class via the class's metaclass
+object, letting you write C<< My::Class->meta()->table_name() >>.
+
+=head1 SEE ALSO
+
+Many of the MooseX modules on CPAN implement metaclass extensions. A
+couple good examples include L<MooseX::Aliases> and
+L<MooseX::UndefTolerant>. For a more complex example see
+L<Fey::ORM> or L<Bread::Board::Declare>.
+
+=head1 AUTHOR
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See L<Moose/CABAL> and L<Moose/CONTRIBUTORS> for details.
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut

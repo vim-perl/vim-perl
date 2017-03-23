@@ -1,0 +1,120 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Moose::Meta::Attribute::Native::Trait::Bool</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Attribute::Native::Trait::Bool::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Attribute::Native::Trait::Bool::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+<span class="synStatement">use </span>Moose::Role;
+
+with <span class="synString">'Moose::Meta::Attribute::Native::Trait'</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">_default_is  </span>{ <span class="synString">'rw'</span> }
+<span class="synKeyword">sub </span><span class="synFunction">_helper_type </span>{ <span class="synString">'Bool'</span> }
+
+<span class="synStatement">no </span>Moose::Role;
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: Helper trait for Bool attributes</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Moose::Meta::Attribute::Native::Trait::Bool - Helper trait for Bool attributes
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> SYNOPSIS</span>
+
+<span class="synPreProc">  package Room;</span>
+<span class="synPreProc">  use Moose;</span>
+
+<span class="synPreProc">  has 'is_lit' =&gt; (</span>
+<span class="synPreProc">      traits  =&gt; ['Bool'],</span>
+<span class="synPreProc">      is      =&gt; 'rw',</span>
+<span class="synPreProc">      isa     =&gt; 'Bool',</span>
+<span class="synPreProc">      default =&gt; 0,</span>
+<span class="synPreProc">      handles =&gt; {</span>
+<span class="synPreProc">          illuminate  =&gt; 'set',</span>
+<span class="synPreProc">          darken      =&gt; 'unset',</span>
+<span class="synPreProc">          flip_switch =&gt; 'toggle',</span>
+<span class="synPreProc">          is_dark     =&gt; 'not',</span>
+<span class="synPreProc">      },</span>
+<span class="synPreProc">  );</span>
+
+<span class="synPreProc">  my $room = Room-&gt;new();</span>
+<span class="synPreProc">  $room-&gt;illuminate;        # same as $room-&gt;is_lit(1);</span>
+<span class="synPreProc">  $room-&gt;darken;            # same as $room-&gt;is_lit(0);</span>
+<span class="synPreProc">  $room-&gt;flip_switch;       # same as $room-&gt;is_lit(not $room-&gt;is_lit);</span>
+<span class="synPreProc">  return $room-&gt;is_dark;    # same as !$room-&gt;is_lit</span>
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This trait provides native delegation methods for boolean values. A boolean is
+a scalar which can be <span class="synIdentifier">C&lt;1&gt;</span>, <span class="synIdentifier">C&lt;0&gt;</span>, <span class="synIdentifier">C&lt;&quot;&quot;&gt;</span>, or <span class="synIdentifier">C&lt;undef&gt;</span>.
+
+<span class="synStatement">=head1</span><span class="synString"> DEFAULT TYPE</span>
+
+If you don't provide an <span class="synIdentifier">C&lt;isa&gt;</span> value for your attribute, it will default to
+<span class="synIdentifier">C&lt;Bool&gt;</span>.
+
+<span class="synStatement">=head1</span><span class="synString"> PROVIDED METHODS</span>
+
+None of these methods accept arguments.
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;set&gt;</span>
+
+Sets the value to <span class="synIdentifier">C&lt;1&gt;</span> and returns <span class="synIdentifier">C&lt;1&gt;</span>.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;unset&gt;</span>
+
+Set the value to <span class="synIdentifier">C&lt;0&gt;</span> and returns <span class="synIdentifier">C&lt;0&gt;</span>.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;toggle&gt;</span>
+
+Toggles the value. If it's true, set to false, and vice versa.
+
+Returns the new value.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;not&gt;</span>
+
+Equivalent of 'not <span class="synIdentifier">C&lt;$value&gt;</span>'.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> BUGS</span>
+
+See <span class="synIdentifier">L&lt;Moose/BUGS&gt;</span> for details on reporting bugs.
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

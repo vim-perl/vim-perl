@@ -1,0 +1,133 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre>
+<span class="synStatement">package</span><span class="synType"> Moose::Meta::Attribute::Native::Trait::Counter</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Attribute::Native::Trait::Counter::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Attribute::Native::Trait::Counter::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+<span class="synStatement">use </span>Moose::Role;
+
+with <span class="synString">'Moose::Meta::Attribute::Native::Trait'</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">_default_default </span>{ <span class="synNumber">0</span> }
+<span class="synKeyword">sub </span><span class="synFunction">_default_is </span>{ <span class="synString">'ro'</span> }
+<span class="synKeyword">sub </span><span class="synFunction">_helper_type </span>{ <span class="synString">'Num'</span> }
+<span class="synKeyword">sub </span><span class="synFunction">_root_types </span>{ <span class="synString">'Num'</span>, <span class="synString">'Int'</span> }
+
+<span class="synStatement">no </span>Moose::Role;
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: Helper trait for Int attributes which represent counters</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Moose::Meta::Attribute::Native::Trait::Counter - Helper trait for Int attributes which represent counters
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> SYNOPSIS</span>
+
+<span class="synPreProc">  package MyHomePage;</span>
+<span class="synPreProc">  use Moose;</span>
+
+<span class="synPreProc">  has 'counter' =&gt; (</span>
+<span class="synPreProc">      traits  =&gt; ['Counter'],</span>
+<span class="synPreProc">      is      =&gt; 'ro',</span>
+<span class="synPreProc">      isa     =&gt; 'Num',</span>
+<span class="synPreProc">      default =&gt; 0,</span>
+<span class="synPreProc">      handles =&gt; {</span>
+<span class="synPreProc">          inc_counter   =&gt; 'inc',</span>
+<span class="synPreProc">          dec_counter   =&gt; 'dec',</span>
+<span class="synPreProc">          reset_counter =&gt; 'reset',</span>
+<span class="synPreProc">      },</span>
+<span class="synPreProc">  );</span>
+
+<span class="synPreProc">  my $page = MyHomePage-&gt;new();</span>
+<span class="synPreProc">  $page-&gt;inc_counter;    # same as $page-&gt;counter( $page-&gt;counter + 1 );</span>
+<span class="synPreProc">  $page-&gt;dec_counter;    # same as $page-&gt;counter( $page-&gt;counter - 1 );</span>
+
+<span class="synPreProc">  my $count_by_twos = 2;</span>
+<span class="synPreProc">  $page-&gt;inc_counter($count_by_twos);</span>
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This trait provides native delegation methods for counters. A counter can be
+any sort of number (integer or not). The delegation methods allow you to
+increment, decrement, or reset the value.
+
+<span class="synStatement">=head1</span><span class="synString"> DEFAULT TYPE</span>
+
+If you don't provide an <span class="synIdentifier">C&lt;isa&gt;</span> value for your attribute, it will default to
+<span class="synIdentifier">C&lt;Num&gt;</span>.
+
+<span class="synStatement">=head1</span><span class="synString"> PROVIDED METHODS</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;set($value)&gt;</span>
+
+Sets the counter to the specified value and returns the new value.
+
+This method requires a single argument.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;inc&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;inc($arg)&gt;</span>
+
+Increases the attribute value by the amount of the argument, or by 1 if no
+argument is given. This method returns the new value.
+
+This method accepts a single argument.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;dec&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;dec($arg)&gt;</span>
+
+Decreases the attribute value by the amount of the argument, or by 1 if no
+argument is given. This method returns the new value.
+
+This method accepts a single argument.
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">B&lt;reset&gt;</span>
+
+Resets the value stored in this slot to its default value, and returns the new
+value.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> BUGS</span>
+
+See <span class="synIdentifier">L&lt;Moose/BUGS&gt;</span> for details on reporting bugs.
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

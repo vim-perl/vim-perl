@@ -1,0 +1,154 @@
+package Moose::Cookbook::Basics::Document_AugmentAndInner
+
+# ABSTRACT: The augment modifier, which turns normal method overriding "inside-out"
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Moose::Cookbook::Basics::Document_AugmentAndInner - The augment modifier, which turns normal method overriding "inside-out"
+
+=head1 VERSION
+
+version 2.1005
+
+=head1 SYNOPSIS
+
+  package Document::Page;
+  use Moose;
+
+  has 'body' => ( is => 'rw', isa => 'Str', default => sub {''} );
+
+  sub create {
+      my $self = shift;
+      $self->open_page;
+      inner();
+      $self->close_page;
+  }
+
+  sub append_body {
+      my ( $self, $appendage ) = @_;
+      $self->body( $self->body . $appendage );
+  }
+
+  sub open_page  { (shift)->append_body('<page>') }
+  sub close_page { (shift)->append_body('</page>') }
+
+  package Document::PageWithHeadersAndFooters;
+  use Moose;
+
+  extends 'Document::Page';
+
+  augment 'create' => sub {
+      my $self = shift;
+      $self->create_header;
+      inner();
+      $self->create_footer;
+  };
+
+  sub create_header { (shift)->append_body('<header/>') }
+  sub create_footer { (shift)->append_body('<footer/>') }
+
+  package TPSReport;
+  use Moose;
+
+  extends 'Document::PageWithHeadersAndFooters';
+
+  augment 'create' => sub {
+      my $self = shift;
+      $self->create_tps_report;
+      inner();
+  };
+
+  sub create_tps_report {
+      (shift)->append_body('<report type="tps"/>');
+  }
+
+  # <page><header/><report type="tps"/><footer/></page>
+  my $report_xml = TPSReport->new->create;
+
+=head1 DESCRIPTION
+
+This recipe shows how the C<augment> method modifier works. This
+modifier reverses the normal subclass to parent method resolution
+order. With an C<augment> modifier the I<least> specific method is
+called first. Each successive call to C<inner> descends the
+inheritance tree, ending at the most specific subclass.
+
+The C<augment> modifier lets you design a parent class that can be
+extended in a specific way. The parent provides generic wrapper
+functionality, and the subclasses fill in the details.
+
+In the example above, we've created a set of document classes, with
+the most specific being the C<TPSReport> class.
+
+We start with the least specific class, C<Document::Page>. Its create
+method contains a call to C<inner()>:
+
+  sub create {
+      my $self = shift;
+      $self->open_page;
+      inner();
+      $self->close_page;
+  }
+
+The C<inner> function is exported by C<Moose>, and is like C<super>
+for augmented methods. When C<inner> is called, Moose finds the next
+method in the chain, which is the C<augment> modifier in
+C<Document::PageWithHeadersAndFooters>. You'll note that we can call
+C<inner> in our modifier:
+
+  augment 'create' => sub {
+      my $self = shift;
+      $self->create_header;
+      inner();
+      $self->create_footer;
+  };
+
+This finds the next most specific modifier, in the C<TPSReport> class.
+
+Finally, in the C<TPSReport> class, the chain comes to an end:
+
+  augment 'create' => sub {
+      my $self = shift;
+      $self->create_tps_report;
+      inner();
+  };
+
+We do call the C<inner> function one more time, but since there is no
+more specific subclass, this is a no-op. Making this call means we can
+easily subclass C<TPSReport> in the future.
+
+=head1 CONCLUSION
+
+The C<augment> modifier is a powerful tool for creating a set of
+nested wrappers. It's not something you will need often, but when you
+do, it is very handy.
+
+=begin testing
+
+my $tps_report = TPSReport->new;
+isa_ok( $tps_report, 'TPSReport' );
+
+is(
+    $tps_report->create,
+    q{<page><header/><report type="tps"/><footer/></page>},
+    '... got the right TPS report'
+);
+
+=end testing
+
+=head1 AUTHOR
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See L<Moose/CABAL> and L<Moose/CONTRIBUTORS> for details.
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut

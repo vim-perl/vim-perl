@@ -1,0 +1,165 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synPreProc">#!/usr/bin/env perl</span>
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+<span class="synStatement">use </span>Time::HiRes <span class="synString">'time'</span>;
+<span class="synStatement">use </span>List::Util <span class="synString">'sum'</span>;
+<span class="synStatement">use </span>IPC::System::Simple <span class="synString">'system'</span>;
+<span class="synStatement">use autodie</span>;
+<span class="synStatement">use </span>Parse::BACKPAN::Packages;
+<span class="synStatement">use </span>LWP::Simple;
+<span class="synStatement">use </span>Archive::Tar;
+<span class="synStatement">use </span>File::Slurp <span class="synString">'slurp'</span>;
+
+<span class="synStatement">my</span> <span class="synIdentifier">$backpan</span> = Parse::BACKPAN::Packages-&gt;new;
+<span class="synStatement">my</span> <span class="synIdentifier">@cmops</span>   = <span class="synIdentifier">$backpan-&gt;distributions</span>(<span class="synString">'Class-MOP'</span>);
+<span class="synStatement">my</span> <span class="synIdentifier">@mooses</span>  = <span class="synIdentifier">$backpan-&gt;distributions</span>(<span class="synString">'Moose'</span>);
+
+<span class="synStatement">my</span> <span class="synIdentifier">$cmop_version</span> = <span class="synNumber">0</span>;
+<span class="synStatement">my</span> <span class="synIdentifier">$cmop_dir</span>;
+
+<span class="synStatement">my</span> <span class="synIdentifier">$base</span> = <span class="synString">&quot;http://backpan.cpan.org/&quot;</span>;
+
+<span class="synStatement">my</span> <span class="synIdentifier">%time</span>;
+<span class="synStatement">my</span> <span class="synIdentifier">%mem</span>;
+
+<span class="synStatement">open</span> <span class="synStatement">my</span> <span class="synIdentifier">$output</span>, <span class="synString">&quot;&gt;&quot;</span>, <span class="synString">&quot;moose_bench.txt&quot;</span>;
+
+<span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$moose</span> (<span class="synIdentifier">@mooses</span>) {
+    <span class="synStatement">my</span> <span class="synIdentifier">$moose_dir</span> = build(<span class="synIdentifier">$moose</span>);
+
+    <span class="synComment"># Find the CMOP dependency</span>
+    <span class="synStatement">my</span> <span class="synIdentifier">$makefile</span> = slurp(<span class="synString">&quot;</span><span class="synIdentifier">$moose_dir</span><span class="synString">/Makefile.PL&quot;</span>);
+    <span class="synStatement">my</span> (<span class="synIdentifier">$cmop_dep</span>) = <span class="synIdentifier">$makefile</span> =~ <span class="synStatement">/</span><span class="synString">Class::MOP</span><span class="synSpecial">.*?([0-9._]+)</span><span class="synStatement">/</span>
+        <span class="synOperator">or</span> <span class="synStatement">die</span> <span class="synString">&quot;Unable to find Class::MOP version dependency in </span><span class="synIdentifier">$moose_dir</span><span class="synString">/Makefile.PL&quot;</span>;
+
+    <span class="synComment"># typo?</span>
+    <span class="synIdentifier">$cmop_dep</span> = <span class="synString">'0.64_07'</span> <span class="synConditional">if</span> <span class="synIdentifier">$cmop_dep</span> <span class="synOperator">eq</span> <span class="synString">'0.6407'</span>;
+
+    <span class="synComment"># nonexistent dev releases?</span>
+    <span class="synIdentifier">$cmop_dep</span> = <span class="synString">'0.79'</span> <span class="synConditional">if</span> <span class="synIdentifier">$cmop_dep</span> <span class="synOperator">eq</span> <span class="synString">'0.78_02'</span>;
+    <span class="synIdentifier">$cmop_dep</span> = <span class="synString">'0.83'</span> <span class="synConditional">if</span> <span class="synIdentifier">$cmop_dep</span> <span class="synOperator">eq</span> <span class="synString">'0.82_01'</span>;
+
+    bump_cmop(<span class="synIdentifier">$cmop_dep</span>, <span class="synIdentifier">$moose</span>);
+
+    <span class="synStatement">warn</span> <span class="synString">&quot;Building </span><span class="synIdentifier">$moose_dir</span><span class="synString">&quot;</span>;
+    <span class="synStatement">eval</span> {
+        <span class="synStatement">system</span>(<span class="synString">&quot;(cd '</span><span class="synIdentifier">$moose_dir</span><span class="synString">' &amp;&amp; '</span><span class="synIdentifier">$^X</span><span class="synString">' '-I</span><span class="synIdentifier">$cmop_dir</span><span class="synString">/lib' Makefile.PL &amp;&amp; make &amp;&amp; sudo make install) &gt;/dev/null&quot;</span>);
+
+        <span class="synStatement">my</span> <span class="synIdentifier">@times</span>;
+        <span class="synRepeat">for</span> (<span class="synNumber">1</span> .. <span class="synNumber">5</span>) {
+            <span class="synStatement">my</span> <span class="synIdentifier">$start</span> = <span class="synStatement">time</span>;
+            <span class="synStatement">system</span>(
+                <span class="synIdentifier">$^X</span>,
+                <span class="synString">&quot;-I</span><span class="synIdentifier">$moose_dir</span><span class="synString">/lib&quot;</span>,
+                <span class="synString">&quot;-I</span><span class="synIdentifier">$cmop_dir</span><span class="synString">/lib&quot;</span>,
+                <span class="synString">'-e'</span>, <span class="synString">'package Class; use Moose;'</span>,
+            );
+            <span class="synStatement">push</span> <span class="synIdentifier">@times</span>, <span class="synStatement">time</span> - <span class="synIdentifier">$start</span>;
+        }
+
+        <span class="synIdentifier">$time{$moose-&gt;version}</span> = sum(<span class="synIdentifier">@times</span>) / <span class="synIdentifier">@times</span>;
+        <span class="synIdentifier">$mem{$moose-&gt;version}</span> = <span class="synString">qx[</span><span class="synIdentifier">$^X</span><span class="synString"> -I</span><span class="synIdentifier">$moose_dir</span><span class="synString">/lib -I</span><span class="synIdentifier">$cmop_dir</span><span class="synString">/lib -MGTop -e 'my (</span><span class="synSpecial">\$</span><span class="synString">gtop, </span><span class="synSpecial">\$</span><span class="synString">before); BEGIN { </span><span class="synSpecial">\$</span><span class="synString">gtop = GTop-&gt;new; </span><span class="synSpecial">\$</span><span class="synString">before = </span><span class="synSpecial">\$</span><span class="synString">gtop-&gt;proc_mem(</span><span class="synSpecial">\$\$</span><span class="synString">)-&gt;size; } package Class; use Moose; print </span><span class="synSpecial">\$</span><span class="synString">gtop-&gt;proc_mem(</span><span class="synSpecial">\$\$</span><span class="synString">)-&gt;size - </span><span class="synSpecial">\$</span><span class="synString">before']</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$line</span> = <span class="synStatement">sprintf</span> <span class="synString">&quot;%7s: %0.4f (%s), %d bytes</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>,
+            <span class="synIdentifier">$moose-&gt;version</span>,
+            <span class="synIdentifier">$time{$moose-&gt;version}</span>,
+            <span class="synStatement">join</span>(<span class="synString">', '</span>, <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synStatement">sprintf</span> <span class="synString">&quot;%0.4f&quot;</span>, <span class="synIdentifier">$_</span> <span class="synStatement">}</span> <span class="synIdentifier">@times</span>),
+            <span class="synIdentifier">$mem{$moose-&gt;version}</span>;
+        <span class="synStatement">print</span> <span class="synIdentifier">$output</span> <span class="synIdentifier">$line</span>;
+    };
+    <span class="synStatement">warn</span> <span class="synIdentifier">$@</span> <span class="synConditional">if</span> <span class="synIdentifier">$@</span>;
+}
+
+<span class="synStatement">require</span> Chart::Clicker;
+<span class="synStatement">require</span> Chart::Clicker::Data::Series;
+<span class="synStatement">require</span> Chart::Clicker::Data::DataSet;
+<span class="synStatement">my</span> <span class="synIdentifier">@versions</span> = <span class="synStatement">sort</span> <span class="synStatement">keys</span> <span class="synIdentifier">%time</span>;
+<span class="synStatement">my</span> <span class="synIdentifier">@startups</span> = <span class="synStatement">map</span> <span class="synStatement">{</span>     <span class="synIdentifier">$time{$_}</span>        <span class="synStatement">}</span> <span class="synIdentifier">@versions</span>;
+<span class="synStatement">my</span> <span class="synIdentifier">@memories</span> = <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synStatement">int</span>(<span class="synIdentifier">$mem{$_}</span> / <span class="synNumber">1024</span>) <span class="synStatement">}</span> <span class="synIdentifier">@versions</span>;
+<span class="synStatement">my</span> <span class="synIdentifier">@keys</span>     = (<span class="synFloat">0.</span>.<span class="synIdentifier">$#versions</span>);
+<span class="synStatement">my</span> <span class="synIdentifier">$cc</span> = Chart::Clicker-&gt;new(<span class="synString">width</span> =&gt; <span class="synNumber">900</span>, <span class="synString">height</span> =&gt; <span class="synNumber">400</span>);
+<span class="synStatement">my</span> <span class="synIdentifier">$sutime</span> = Chart::Clicker::Data::Series-&gt;new(
+    <span class="synString">values</span> =&gt; \<span class="synIdentifier">@startups</span>,
+    <span class="synString">keys</span>   =&gt; \<span class="synIdentifier">@keys</span>,
+    <span class="synString">name</span>   =&gt; <span class="synString">'Startup Time'</span>,
+);
+<span class="synStatement">my</span> <span class="synIdentifier">$def</span> = <span class="synIdentifier">$cc-&gt;get_context</span>(<span class="synString">'default'</span>);
+<span class="synIdentifier">$def-&gt;domain_axis-&gt;tick_values</span>(\<span class="synIdentifier">@keys</span>);
+<span class="synIdentifier">$def-&gt;domain_axis-&gt;tick_labels</span>(\<span class="synIdentifier">@versions</span>);
+<span class="synIdentifier">$def-&gt;domain_axis-&gt;tick_label_angle</span>(<span class="synFloat">1.57</span>);
+<span class="synIdentifier">$def-&gt;domain_axis-&gt;tick_font-&gt;size</span>(<span class="synNumber">8</span>);
+<span class="synIdentifier">$def-&gt;range_axis-&gt;fudge_amount</span>(<span class="synString">'0.05'</span>);
+
+<span class="synStatement">my</span> <span class="synIdentifier">$context</span> = Chart::Clicker::Context-&gt;new(<span class="synString">name</span> =&gt; <span class="synString">'memory'</span>);
+<span class="synIdentifier">$context-&gt;range_axis-&gt;tick_values</span>([<span class="synString">qw(1024 2048 3072 4096 5120)</span>]);
+<span class="synIdentifier">$context-&gt;range_axis-&gt;format</span>(<span class="synString">'%d'</span>);
+<span class="synIdentifier">$context-&gt;domain_axis-&gt;hidden</span>(<span class="synNumber">1</span>);
+<span class="synIdentifier">$context-&gt;range_axis-&gt;fudge_amount</span>(<span class="synString">'0.05'</span>);
+<span class="synIdentifier">$cc-&gt;add_to_contexts</span>(<span class="synIdentifier">$context</span>);
+
+<span class="synStatement">my</span> <span class="synIdentifier">$musage</span> = Chart::Clicker::Data::Series-&gt;new(
+    <span class="synString">values</span> =&gt; \<span class="synIdentifier">@memories</span>,
+    <span class="synString">keys</span> =&gt; \<span class="synIdentifier">@keys</span>,
+    <span class="synString">name</span> =&gt; <span class="synString">'Memory Usage (kb)'</span>
+);
+
+<span class="synStatement">my</span> <span class="synIdentifier">$ds1</span> = Chart::Clicker::Data::DataSet-&gt;new(<span class="synString">series</span> =&gt; [ <span class="synIdentifier">$sutime</span> ]);
+<span class="synStatement">my</span> <span class="synIdentifier">$ds2</span> = Chart::Clicker::Data::DataSet-&gt;new(<span class="synString">series</span> =&gt; [ <span class="synIdentifier">$musage</span> ]);
+<span class="synIdentifier">$ds2-&gt;context</span>(<span class="synString">'memory'</span>);
+
+<span class="synIdentifier">$cc-&gt;add_to_datasets</span>(<span class="synIdentifier">$ds1</span>);
+<span class="synIdentifier">$cc-&gt;add_to_datasets</span>(<span class="synIdentifier">$ds2</span>);
+<span class="synIdentifier">$cc-&gt;write_output</span>(<span class="synString">'moose_bench.png'</span>);
+
+<span class="synKeyword">sub </span><span class="synFunction">bump_cmop </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$expected</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$moose</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$cmop_dir</span> <span class="synConditional">if</span> <span class="synIdentifier">$cmop_version</span> <span class="synOperator">eq</span> <span class="synIdentifier">$expected</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">@orig_cmops</span> = <span class="synIdentifier">@cmops</span>;
+    <span class="synStatement">shift</span> <span class="synIdentifier">@cmops</span> <span class="synRepeat">until</span> !<span class="synIdentifier">@cmops</span> || <span class="synIdentifier">$cmops[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;version</span> <span class="synOperator">eq</span> <span class="synIdentifier">$expected</span>;
+
+    <span class="synStatement">die</span> <span class="synString">&quot;Ran out of cmops, wanted </span><span class="synIdentifier">$expected</span><span class="synString"> for &quot;</span>
+        . <span class="synIdentifier">$moose-&gt;distvname</span>
+        . <span class="synString">&quot; (had &quot;</span> . <span class="synStatement">join</span>(<span class="synString">', '</span>, <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;version</span> <span class="synStatement">}</span> <span class="synIdentifier">@orig_cmops</span>) . <span class="synString">&quot;)&quot;</span>
+            <span class="synConditional">if</span> !<span class="synIdentifier">@cmops</span>;
+
+    <span class="synIdentifier">$cmop_version</span> = <span class="synIdentifier">$cmops[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;version</span>;
+    <span class="synIdentifier">$cmop_dir</span> = build(<span class="synIdentifier">$cmops[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>);
+
+    <span class="synStatement">warn</span> <span class="synString">&quot;Building </span><span class="synIdentifier">$cmop_dir</span><span class="synString">&quot;</span>;
+    <span class="synStatement">system</span>(<span class="synString">&quot;(cd '</span><span class="synIdentifier">$cmop_dir</span><span class="synString">' &amp;&amp; '</span><span class="synIdentifier">$^X</span><span class="synString">' Makefile.PL &amp;&amp; make &amp;&amp; sudo make install) &gt;/dev/null&quot;</span>);
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$cmop_dir</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">build </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$dist</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$distvname</span> = <span class="synIdentifier">$dist-&gt;distvname</span>;
+    <span class="synStatement">return</span> <span class="synIdentifier">$distvname</span> <span class="synConditional">if</span> <span class="synStatement">-d</span> <span class="synIdentifier">$distvname</span>;
+
+    <span class="synStatement">warn</span> <span class="synString">&quot;Downloading </span><span class="synIdentifier">$distvname</span><span class="synString">&quot;</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$tarball</span> = get(<span class="synIdentifier">$base</span> . <span class="synIdentifier">$dist-&gt;prefix</span>);
+    <span class="synStatement">open</span> <span class="synStatement">my</span> <span class="synIdentifier">$handle</span>, <span class="synString">'&lt;'</span>, \<span class="synIdentifier">$tarball</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$tar</span> = Archive::Tar-&gt;new;
+    <span class="synIdentifier">$tar-&gt;read</span>(<span class="synIdentifier">$handle</span>);
+    <span class="synIdentifier">$tar-&gt;extract</span>;
+
+    <span class="synStatement">my</span> (<span class="synIdentifier">$arbitrary_file</span>) = <span class="synIdentifier">$tar-&gt;list_files</span>;
+    (<span class="synStatement">my</span> <span class="synIdentifier">$directory</span> = <span class="synIdentifier">$arbitrary_file</span>) =~ <span class="synStatement">s{</span><span class="synString">/</span><span class="synSpecial">.*</span><span class="synStatement">}{}</span>;
+    <span class="synStatement">return</span> <span class="synIdentifier">$directory</span>;
+}
+
+</pre>
+
+ </body>
+</html>

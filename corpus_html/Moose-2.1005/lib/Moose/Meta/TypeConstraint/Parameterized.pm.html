@@ -1,0 +1,162 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Moose::Meta::TypeConstraint::Parameterized</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::TypeConstraint::Parameterized::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::TypeConstraint::Parameterized::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+<span class="synStatement">use </span>metaclass;
+
+<span class="synStatement">use </span>Scalar::Util <span class="synString">'blessed'</span>;
+<span class="synStatement">use </span>Moose::Util::TypeConstraints;
+<span class="synStatement">use </span>Moose::Meta::TypeConstraint::Parameterizable;
+
+<span class="synStatement">use base</span> <span class="synString">'Moose::Meta::TypeConstraint'</span>;
+
+__PACKAGE__<span class="synIdentifier">-&gt;meta-&gt;add_attribute</span>(<span class="synString">'type_parameter'</span> =&gt; (
+    <span class="synString">accessor</span>  =&gt; <span class="synString">'type_parameter'</span>,
+    <span class="synString">predicate</span> =&gt; <span class="synString">'has_type_parameter'</span>,
+    Class::MOP::_definition_context(),
+));
+
+__PACKAGE__<span class="synIdentifier">-&gt;meta-&gt;add_attribute</span>(<span class="synString">'parameterized_from'</span> =&gt; (
+    <span class="synString">accessor</span>   =&gt; <span class="synString">'parameterized_from'</span>,
+    <span class="synString">predicate</span>  =&gt; <span class="synString">'has_parameterized_from'</span>,
+    Class::MOP::_definition_context(),
+));
+
+<span class="synKeyword">sub </span><span class="synFunction">equals </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$self</span>, <span class="synIdentifier">$type_or_name</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$other</span> = Moose::Util::TypeConstraints::find_type_constraint(<span class="synIdentifier">$type_or_name</span>);
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$other-&gt;isa</span>(__PACKAGE__);
+
+    <span class="synStatement">return</span> (
+        <span class="synIdentifier">$self-&gt;type_parameter-&gt;equals</span>( <span class="synIdentifier">$other-&gt;type_parameter</span> )
+            <span class="synOperator">and</span>
+        <span class="synIdentifier">$self-&gt;parent-&gt;equals</span>( <span class="synIdentifier">$other-&gt;parent</span> )
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">compile_type_constraint </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synConditional">unless</span> ( <span class="synIdentifier">$self-&gt;has_type_parameter</span> ) {
+        <span class="synStatement">require</span> Moose;
+        Moose-&gt;throw_error(<span class="synString">&quot;You cannot create a Higher Order type without a type parameter&quot;</span>);
+    }
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$type_parameter</span> = <span class="synIdentifier">$self-&gt;type_parameter</span>;
+
+    <span class="synConditional">unless</span> ( blessed <span class="synIdentifier">$type_parameter</span> &amp;&amp; <span class="synIdentifier">$type_parameter-&gt;isa</span>(<span class="synString">'Moose::Meta::TypeConstraint'</span>) ) {
+        <span class="synStatement">require</span> Moose;
+        Moose-&gt;throw_error(<span class="synString">&quot;The type parameter must be a Moose meta type&quot;</span>);
+    }
+
+    <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$type</span> (Moose::Util::TypeConstraints::get_all_parameterizable_types()) {
+        <span class="synConditional">if</span> (<span class="synStatement">my</span> <span class="synIdentifier">$constraint</span> = <span class="synIdentifier">$type-&gt;generate_constraint_for</span>(<span class="synIdentifier">$self</span>)) {
+            <span class="synIdentifier">$self-&gt;_set_constraint</span>(<span class="synIdentifier">$constraint</span>);
+            <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;SUPER</span>::compile_type_constraint;
+        }
+    }
+
+    <span class="synComment"># if we get here, then we couldn't</span>
+    <span class="synComment"># find a way to parameterize this type</span>
+    <span class="synStatement">require</span> Moose;
+    Moose-&gt;throw_error(<span class="synString">&quot;The &quot;</span> . <span class="synIdentifier">$self-&gt;name</span> . <span class="synString">&quot; constraint cannot be used, because &quot;</span>
+          . <span class="synIdentifier">$self-&gt;parent-&gt;name</span> . <span class="synString">&quot; doesn't subtype or coerce from a parameterizable type.&quot;</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">can_be_inlined </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">return</span>
+           <span class="synIdentifier">$self-&gt;has_parameterized_from</span>
+        &amp;&amp; <span class="synIdentifier">$self-&gt;parameterized_from-&gt;has_inline_generator</span>
+        &amp;&amp; <span class="synIdentifier">$self-&gt;type_parameter-&gt;can_be_inlined</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">inline_environment </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">return</span> {
+        (<span class="synIdentifier">$self-&gt;has_parameterized_from</span>
+            ? (<span class="synIdentifier">%{</span> <span class="synIdentifier">$self-&gt;parameterized_from-&gt;inline_environment</span> <span class="synIdentifier">}</span>)
+            : ()),
+        (<span class="synIdentifier">$self-&gt;has_type_parameter</span>
+            ? (<span class="synIdentifier">%{</span> <span class="synIdentifier">$self-&gt;type_parameter-&gt;inline_environment</span> <span class="synIdentifier">}</span>)
+            : ()),
+    };
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_check </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$self-&gt;can_be_inlined</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;parameterized_from-&gt;generate_inline_for</span>( <span class="synIdentifier">$self-&gt;type_parameter</span>, <span class="synIdentifier">@_</span> );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">create_child_type </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">%opts</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">return</span> Moose::Meta::TypeConstraint::Parameterizable-&gt;new(<span class="synIdentifier">%opts</span>, <span class="synString">parent</span>=&gt;<span class="synIdentifier">$self</span>);
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: Type constraints with a bound parameter (ArrayRef[Int])</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Moose::Meta::TypeConstraint::Parameterized - Type constraints with a bound parameter (ArrayRef[Int])
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> METHODS</span>
+
+This class is intentionally not documented because the API is
+confusing and needs some work.
+
+<span class="synStatement">=head1</span><span class="synString"> INHERITANCE</span>
+
+<span class="synIdentifier">C&lt;Moose::Meta::TypeConstraint::Parameterized&gt;</span> is a subclass of
+<span class="synIdentifier">L&lt;Moose::Meta::TypeConstraint&gt;</span>.
+
+<span class="synStatement">=head1</span><span class="synString"> BUGS</span>
+
+See <span class="synIdentifier">L&lt;Moose/BUGS&gt;</span> for details on reporting bugs.
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

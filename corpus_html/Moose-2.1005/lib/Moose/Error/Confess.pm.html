@@ -1,0 +1,83 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Moose::Error::Confess</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Error::Confess::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Error::Confess::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use base</span> <span class="synString">qw(Moose::Error::Default)</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">new </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$self</span>, <span class="synIdentifier">@args</span> ) = <span class="synIdentifier">@_</span>;
+    <span class="synIdentifier">$self-&gt;create_error_confess</span>(<span class="synIdentifier">@args</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_new </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$self</span>, <span class="synIdentifier">%args</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$depth</span> = (<span class="synIdentifier">$args{</span><span class="synString">depth</span><span class="synIdentifier">}</span> || <span class="synNumber">0</span>) - <span class="synNumber">1</span>;
+    <span class="synStatement">return</span> <span class="synString">'Moose::Error::Util::create_error_confess('</span>
+      . <span class="synString">'message =&gt; '</span> . <span class="synIdentifier">$args{</span><span class="synString">message</span><span class="synIdentifier">}</span> . <span class="synString">', '</span>
+      . <span class="synString">'depth   =&gt; '</span> . <span class="synIdentifier">$depth</span>         . <span class="synString">', '</span>
+  . <span class="synString">')'</span>;
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: Prefer C&lt;confess&gt;</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Moose::Error::Confess - Prefer <span class="synIdentifier">C&lt;confess&gt;</span>
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> SYNOPSIS</span>
+
+<span class="synPreProc">    # Metaclass definition must come before Moose is used.</span>
+<span class="synPreProc">    use metaclass (</span>
+<span class="synPreProc">        metaclass =&gt; 'Moose::Meta::Class',</span>
+<span class="synPreProc">        error_class =&gt; 'Moose::Error::Confess',</span>
+<span class="synPreProc">    );</span>
+<span class="synPreProc">    use Moose;</span>
+<span class="synPreProc">    # ...</span>
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This error class uses <span class="synIdentifier">L&lt;Carp/confess&gt;</span> to raise errors generated in your
+metaclass.
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

@@ -1,0 +1,190 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Moose::Meta::Method::Accessor::Native::Writer</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Method::Accessor::Native::Writer::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Method::Accessor::Native::Writer::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>List::MoreUtils <span class="synString">qw( any )</span>;
+<span class="synStatement">use </span>Moose::Util;
+
+<span class="synStatement">use </span>Moose::Role;
+
+with <span class="synString">'Moose::Meta::Method::Accessor::Native'</span>;
+
+requires <span class="synString">'_potential_value'</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">_generate_method </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$inv</span>         = <span class="synString">'$self'</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$slot_access</span> = <span class="synIdentifier">$self-&gt;_get_value</span>(<span class="synIdentifier">$inv</span>);
+
+    <span class="synStatement">return</span> (
+        <span class="synString">'sub {'</span>,
+            <span class="synString">'my '</span> . <span class="synIdentifier">$inv</span> . <span class="synString">' = shift;'</span>,
+            <span class="synIdentifier">$self-&gt;_inline_curried_arguments</span>,
+            <span class="synIdentifier">$self-&gt;_inline_writer_core</span>(<span class="synIdentifier">$inv</span>, <span class="synIdentifier">$slot_access</span>),
+        <span class="synString">'}'</span>,
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_writer_core </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$inv</span>, <span class="synIdentifier">$slot_access</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$potential</span> = <span class="synIdentifier">$self-&gt;_potential_value</span>(<span class="synIdentifier">$slot_access</span>);
+    <span class="synStatement">my</span> <span class="synIdentifier">$old</span>       = <span class="synString">'@old'</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">@code</span>;
+    <span class="synStatement">push</span> <span class="synIdentifier">@code</span>, (
+        <span class="synIdentifier">$self-&gt;_inline_check_argument_count</span>,
+        <span class="synIdentifier">$self-&gt;_inline_process_arguments</span>(<span class="synIdentifier">$inv</span>, <span class="synIdentifier">$slot_access</span>),
+        <span class="synIdentifier">$self-&gt;_inline_check_arguments</span>(<span class="synString">'for writer'</span>),
+        <span class="synIdentifier">$self-&gt;_inline_check_lazy</span>(<span class="synIdentifier">$inv</span>, <span class="synString">'$type_constraint'</span>, <span class="synString">'$type_coercion'</span>, <span class="synString">'$type_message'</span>),
+    );
+
+    <span class="synConditional">if</span> (<span class="synIdentifier">$self-&gt;_return_value</span>(<span class="synIdentifier">$slot_access</span>)) {
+        <span class="synComment"># some writers will save the return value in this variable when they</span>
+        <span class="synComment"># generate the potential value.</span>
+        <span class="synStatement">push</span> <span class="synIdentifier">@code</span>, <span class="synString">'my @return;'</span>
+    }
+
+    <span class="synStatement">push</span> <span class="synIdentifier">@code</span>, (
+        <span class="synIdentifier">$self-&gt;_inline_coerce_new_values</span>,
+        <span class="synIdentifier">$self-&gt;_inline_copy_native_value</span>(\<span class="synIdentifier">$potential</span>),
+        <span class="synIdentifier">$self-&gt;_inline_tc_code</span>(<span class="synIdentifier">$potential</span>, <span class="synString">'$type_constraint'</span>, <span class="synString">'$type_coercion'</span>, <span class="synString">'$type_message'</span>),
+        <span class="synIdentifier">$self-&gt;_inline_get_old_value_for_trigger</span>(<span class="synIdentifier">$inv</span>, <span class="synIdentifier">$old</span>),
+        <span class="synIdentifier">$self-&gt;_inline_capture_return_value</span>(<span class="synIdentifier">$slot_access</span>),
+        <span class="synIdentifier">$self-&gt;_inline_set_new_value</span>(<span class="synIdentifier">$inv</span>, <span class="synIdentifier">$potential</span>, <span class="synIdentifier">$slot_access</span>),
+        <span class="synIdentifier">$self-&gt;_inline_trigger</span>(<span class="synIdentifier">$inv</span>, <span class="synIdentifier">$slot_access</span>, <span class="synIdentifier">$old</span>),
+        <span class="synIdentifier">$self-&gt;_inline_return_value</span>(<span class="synIdentifier">$slot_access</span>, <span class="synString">'for writer'</span>),
+    );
+
+    <span class="synStatement">return</span> <span class="synIdentifier">@code</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_process_arguments </span>{ <span class="synStatement">return</span> }
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_check_arguments </span>{ <span class="synStatement">return</span> }
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_coerce_new_values </span>{ <span class="synStatement">return</span> }
+
+<span class="synKeyword">sub </span><span class="synFunction">_writer_value_needs_copy </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;_constraint_must_be_checked</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_constraint_must_be_checked </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$attr</span> = <span class="synIdentifier">$self-&gt;associated_attribute</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$attr-&gt;has_type_constraint</span>
+        &amp;&amp; ( !<span class="synIdentifier">$self-&gt;_is_root_type</span>( <span class="synIdentifier">$attr-&gt;type_constraint</span> )
+        || ( <span class="synIdentifier">$attr-&gt;should_coerce</span> &amp;&amp; <span class="synIdentifier">$attr-&gt;type_constraint-&gt;has_coercion</span> ) );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_is_root_type </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$type</span> = <span class="synStatement">shift</span>;
+
+    <span class="synConditional">if</span> (
+        Moose::Util::does_role( <span class="synIdentifier">$type</span>, <span class="synString">'Specio::Constraint::Role::Interface'</span> ) )
+    {
+        <span class="synStatement">require</span> Specio::Library::Builtins;
+        <span class="synStatement">return</span>
+            any { <span class="synIdentifier">$type-&gt;is_same_type_as</span>( Specio::Library::Builtins::t(<span class="synIdentifier">$_</span>) ) }
+        <span class="synIdentifier">@{</span> <span class="synIdentifier">$self-&gt;root_types</span> <span class="synIdentifier">}</span>;
+    }
+    <span class="synConditional">else</span> {
+        <span class="synStatement">my</span> <span class="synIdentifier">$name</span> = <span class="synIdentifier">$type-&gt;name</span>;
+        <span class="synStatement">return</span> any { <span class="synIdentifier">$name</span> <span class="synOperator">eq</span> <span class="synIdentifier">$_</span> } <span class="synIdentifier">@{</span> <span class="synIdentifier">$self-&gt;root_types</span> <span class="synIdentifier">}</span>;
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_copy_native_value </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$potential_ref</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$self-&gt;_writer_value_needs_copy</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$code</span> = <span class="synString">'my $potential = '</span> . <span class="synIdentifier">${$potential_ref}</span> . <span class="synString">';'</span>;
+
+    <span class="synIdentifier">${$potential_ref}</span> = <span class="synString">'$potential'</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$code</span>;
+}
+
+around <span class="synString">_inline_tc_code</span> =&gt; <span class="synKeyword">sub </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$orig</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$value</span>, <span class="synIdentifier">$tc</span>, <span class="synIdentifier">$coercion</span>, <span class="synIdentifier">$message</span>, <span class="synIdentifier">$for_lazy</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$for_lazy</span> || <span class="synIdentifier">$self-&gt;_constraint_must_be_checked</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;$orig</span>(<span class="synIdentifier">@_</span>);
+};
+
+around <span class="synString">_inline_check_constraint</span> =&gt; <span class="synKeyword">sub </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$orig</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$value</span>, <span class="synIdentifier">$tc</span>, <span class="synIdentifier">$message</span>, <span class="synIdentifier">$for_lazy</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$for_lazy</span> || <span class="synIdentifier">$self-&gt;_constraint_must_be_checked</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;$orig</span>(<span class="synIdentifier">@_</span>);
+};
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_capture_return_value </span>{ <span class="synStatement">return</span> }
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_set_new_value </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;_inline_store_value</span>(<span class="synIdentifier">@_</span>)
+        <span class="synConditional">if</span> <span class="synIdentifier">$self-&gt;_writer_value_needs_copy</span>
+        || !<span class="synIdentifier">$self-&gt;_slot_access_can_be_inlined</span>
+        || !<span class="synIdentifier">$self-&gt;_get_is_lvalue</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;_inline_optimized_set_new_value</span>(<span class="synIdentifier">@_</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_get_is_lvalue </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;associated_attribute-&gt;associated_class-&gt;instance_metaclass-&gt;inline_get_is_lvalue</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_optimized_set_new_value </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;_inline_store_value</span>(<span class="synIdentifier">@_</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_return_value </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$slot_access</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$slot_access</span>;
+}
+
+<span class="synStatement">no </span>Moose::Role;
+
+<span class="synNumber">1</span>;
+</pre>
+
+ </body>
+</html>

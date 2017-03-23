@@ -1,0 +1,281 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre>
+<span class="synStatement">package</span><span class="synType"> Moose::Meta::Attribute::Native::Trait</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Attribute::Native::Trait::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Attribute::Native::Trait::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+<span class="synStatement">use </span>Moose::Role;
+
+<span class="synStatement">use </span>Class::Load <span class="synString">qw(load_class)</span>;
+<span class="synStatement">use </span>List::MoreUtils <span class="synString">qw( any uniq )</span>;
+<span class="synStatement">use </span>Moose::Deprecated;
+<span class="synStatement">use </span>Moose::Util;
+<span class="synStatement">use </span>Moose::Util::TypeConstraints;
+
+requires <span class="synString">'_helper_type'</span>;
+
+has <span class="synString">_used_default_is</span> =&gt; (
+    <span class="synString">is</span>      =&gt; <span class="synString">'rw'</span>,
+    <span class="synString">isa</span>     =&gt; <span class="synString">'Bool'</span>,
+    <span class="synString">default</span> =&gt; <span class="synNumber">0</span>,
+);
+
+before <span class="synString">'_process_options'</span> =&gt; <span class="synKeyword">sub </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$self</span>, <span class="synIdentifier">$name</span>, <span class="synIdentifier">$options</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synIdentifier">$self-&gt;_check_helper_type</span>( <span class="synIdentifier">$options</span>, <span class="synIdentifier">$name</span> );
+
+    <span class="synConditional">if</span> ( !( any { <span class="synStatement">exists</span> <span class="synIdentifier">$options-&gt;{$_}</span> } <span class="synString">qw( is reader writer accessor )</span> )
+        &amp;&amp; <span class="synIdentifier">$self-&gt;can</span>(<span class="synString">'_default_is'</span>) ) {
+
+        <span class="synIdentifier">$options-&gt;{</span><span class="synString">is</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$self-&gt;_default_is</span>;
+
+        <span class="synIdentifier">$options-&gt;{</span><span class="synString">_used_default_is</span><span class="synIdentifier">}</span> = <span class="synNumber">1</span>;
+    }
+
+    <span class="synConditional">if</span> (
+        !(
+            <span class="synIdentifier">$options-&gt;{</span><span class="synString">required</span><span class="synIdentifier">}</span>
+            || any { <span class="synStatement">exists</span> <span class="synIdentifier">$options-&gt;{$_}</span> } <span class="synString">qw( default builder lazy_build )</span>
+        )
+        &amp;&amp; <span class="synIdentifier">$self-&gt;can</span>(<span class="synString">'_default_default'</span>)
+        ) {
+
+        <span class="synIdentifier">$options-&gt;{</span><span class="synString">default</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$self-&gt;_default_default</span>;
+
+        Moose::Deprecated::deprecated(
+            <span class="synString">feature</span> =&gt; <span class="synString">'default default for Native Trait'</span>,
+            <span class="synString">message</span> =&gt;
+                <span class="synString">'Allowing a native trait to automatically supply a default is deprecated.'</span>
+                . <span class="synString">' You can avoid this warning by supplying a default, builder, or making the attribute required'</span>
+        );
+    }
+};
+
+after <span class="synString">'install_accessors'</span> =&gt; <span class="synKeyword">sub </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$self-&gt;_used_default_is</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">@methods</span>
+        = <span class="synIdentifier">$self-&gt;_default_is</span> <span class="synOperator">eq</span> <span class="synString">'rw'</span>
+        ? <span class="synString">qw( reader writer accessor )</span>
+        : <span class="synString">'reader'</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$name</span> = <span class="synIdentifier">$self-&gt;name</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$class</span> = <span class="synIdentifier">$self-&gt;associated_class-&gt;name</span>;
+
+    <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$meth</span> ( uniq <span class="synStatement">grep</span> <span class="synStatement">{</span><span class="synOperator">defined</span><span class="synStatement">}</span> <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$self-&gt;$_</span> <span class="synStatement">}</span> <span class="synIdentifier">@methods</span> ) {
+
+        <span class="synStatement">my</span> <span class="synIdentifier">$message</span>
+            = <span class="synString">&quot;The </span><span class="synIdentifier">$meth</span><span class="synString"> method in the </span><span class="synIdentifier">$class</span><span class="synString"> class was automatically created&quot;</span>
+            . <span class="synString">&quot; by the native delegation trait for the </span><span class="synIdentifier">$name</span><span class="synString"> attribute.&quot;</span>
+            . <span class="synString">q{ This &quot;default is&quot; feature is deprecated.}</span>
+            . <span class="synString">q{ Explicitly set &quot;is&quot; or define accessor names to avoid this}</span>;
+
+        <span class="synIdentifier">$self-&gt;associated_class-&gt;add_before_method_modifier</span>(
+            <span class="synIdentifier">$meth</span> =&gt; <span class="synKeyword">sub </span>{
+                Moose::Deprecated::deprecated(
+                    <span class="synString">feature</span> =&gt; <span class="synString">'default is for Native Trait'</span>,
+                    <span class="synString">message</span> =&gt;<span class="synIdentifier">$message</span>,
+                );
+            }
+        );
+    }
+    };
+
+<span class="synKeyword">sub </span><span class="synFunction">_check_helper_type </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$self</span>, <span class="synIdentifier">$options</span>, <span class="synIdentifier">$name</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$type</span> = <span class="synIdentifier">$self-&gt;_helper_type</span>;
+
+    <span class="synIdentifier">$options-&gt;{</span><span class="synString">isa</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$type</span>
+        <span class="synConditional">unless</span> <span class="synStatement">exists</span> <span class="synIdentifier">$options-&gt;{</span><span class="synString">isa</span><span class="synIdentifier">}</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$isa</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$isa_name</span>;
+
+    <span class="synConditional">if</span> (
+        Moose::Util::does_role(
+            <span class="synIdentifier">$options-&gt;{</span><span class="synString">isa</span><span class="synIdentifier">}</span>, <span class="synString">'Specio::Constraint::Role::Interface'</span>
+        )
+        ) {
+
+        <span class="synIdentifier">$isa</span> = <span class="synIdentifier">$options-&gt;{</span><span class="synString">isa</span><span class="synIdentifier">}</span>;
+        <span class="synStatement">require</span> Specio::Library::Builtins;
+        <span class="synStatement">return</span> <span class="synConditional">if</span> <span class="synIdentifier">$isa-&gt;is_a_type_of</span>( Specio::Library::Builtins::t(<span class="synIdentifier">$type</span>) );
+        <span class="synIdentifier">$isa_name</span> = <span class="synIdentifier">$isa-&gt;name</span>() || <span class="synIdentifier">$isa-&gt;description</span>();
+    }
+    <span class="synConditional">else</span> {
+        <span class="synIdentifier">$isa</span> = Moose::Util::TypeConstraints::find_or_create_type_constraint(
+            <span class="synIdentifier">$options-&gt;{</span><span class="synString">isa</span><span class="synIdentifier">}</span> );
+        <span class="synStatement">return</span> <span class="synConditional">if</span> <span class="synIdentifier">$isa-&gt;is_a_type_of</span>(<span class="synIdentifier">$type</span>);
+        <span class="synIdentifier">$isa_name</span> = <span class="synIdentifier">$isa-&gt;name</span>();
+    }
+
+    confess
+        <span class="synString">&quot;The type constraint for </span><span class="synIdentifier">$name</span><span class="synString"> must be a subtype of </span><span class="synIdentifier">$type</span><span class="synString"> but it's a </span><span class="synIdentifier">$isa_name</span><span class="synString">&quot;</span>;
+}
+
+before <span class="synString">'install_accessors'</span> =&gt; <span class="synKeyword">sub </span>{ (<span class="synStatement">shift</span>)-&gt;_check_handles_values };
+
+<span class="synKeyword">sub </span><span class="synFunction">_check_handles_values </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">%handles</span> = <span class="synIdentifier">$self-&gt;_canonicalize_handles</span>;
+
+    <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$original_method</span> ( <span class="synStatement">values</span> <span class="synIdentifier">%handles</span> ) {
+        <span class="synStatement">my</span> <span class="synIdentifier">$name</span> = <span class="synIdentifier">$original_method-&gt;[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>;
+
+        <span class="synStatement">my</span> <span class="synIdentifier">$accessor_class</span> = <span class="synIdentifier">$self-&gt;_native_accessor_class_for</span>(<span class="synIdentifier">$name</span>);
+
+        ( <span class="synIdentifier">$accessor_class</span> &amp;&amp; <span class="synIdentifier">$accessor_class-&gt;can</span>(<span class="synString">'new'</span>) )
+            || confess
+            <span class="synString">&quot;</span><span class="synIdentifier">$name</span><span class="synString"> is an unsupported method type - </span><span class="synIdentifier">$accessor_class</span><span class="synString">&quot;</span>;
+    }
+}
+
+around <span class="synString">'_canonicalize_handles'</span> =&gt; <span class="synKeyword">sub </span>{
+    <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span>    = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$handles</span> = <span class="synIdentifier">$self-&gt;handles</span>;
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$handles</span>;
+
+    <span class="synConditional">unless</span> ( <span class="synString">'HASH'</span> <span class="synOperator">eq</span> <span class="synOperator">ref</span> <span class="synIdentifier">$handles</span> ) {
+        <span class="synIdentifier">$self-&gt;throw_error</span>(
+            <span class="synString">&quot;The 'handles' option must be a HASH reference, not </span><span class="synIdentifier">$handles</span><span class="synString">&quot;</span>);
+    }
+
+    <span class="synStatement">return</span>
+        <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_</span> =&gt; <span class="synIdentifier">$self-&gt;_canonicalize_handles_value</span>( <span class="synIdentifier">$handles-&gt;{$_}</span> ) <span class="synStatement">}</span>
+        <span class="synStatement">keys</span> <span class="synIdentifier">%$handles</span>;
+};
+
+<span class="synKeyword">sub </span><span class="synFunction">_canonicalize_handles_value </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span>  = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$value</span> = <span class="synStatement">shift</span>;
+
+    <span class="synConditional">if</span> ( <span class="synOperator">ref</span> <span class="synIdentifier">$value</span> &amp;&amp; <span class="synString">'ARRAY'</span> <span class="synOperator">ne</span> <span class="synOperator">ref</span> <span class="synIdentifier">$value</span> ) {
+        <span class="synIdentifier">$self-&gt;throw_error</span>(
+            <span class="synString">&quot;All values passed to handles must be strings or ARRAY references, not </span><span class="synIdentifier">$value</span><span class="synString">&quot;</span>
+        );
+    }
+
+    <span class="synStatement">return</span> <span class="synOperator">ref</span> <span class="synIdentifier">$value</span> ? <span class="synIdentifier">$value</span> : [<span class="synIdentifier">$value</span>];
+}
+
+around <span class="synString">'_make_delegation_method'</span> =&gt; <span class="synKeyword">sub </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$next</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$self</span>, <span class="synIdentifier">$handle_name</span>, <span class="synIdentifier">$method_to_call</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$name</span>, <span class="synIdentifier">@curried_args</span> ) = <span class="synIdentifier">@$method_to_call</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$accessor_class</span> = <span class="synIdentifier">$self-&gt;_native_accessor_class_for</span>(<span class="synIdentifier">$name</span>);
+
+    <span class="synStatement">die</span> <span class="synString">&quot;Cannot find an accessor class for </span><span class="synIdentifier">$name</span><span class="synString">&quot;</span>
+        <span class="synConditional">unless</span> <span class="synIdentifier">$accessor_class</span> &amp;&amp; <span class="synIdentifier">$accessor_class-&gt;can</span>(<span class="synString">'new'</span>);
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$accessor_class-&gt;new</span>(
+        <span class="synString">name</span>               =&gt; <span class="synIdentifier">$handle_name</span>,
+        <span class="synString">package_name</span>       =&gt; <span class="synIdentifier">$self-&gt;associated_class-&gt;name</span>,
+        <span class="synString">delegate_to_method</span> =&gt; <span class="synIdentifier">$name</span>,
+        <span class="synString">attribute</span>          =&gt; <span class="synIdentifier">$self</span>,
+        <span class="synString">is_inline</span>          =&gt; <span class="synNumber">1</span>,
+        <span class="synString">curried_arguments</span>  =&gt; \<span class="synIdentifier">@curried_args</span>,
+        <span class="synString">root_types</span>         =&gt; [ <span class="synIdentifier">$self-&gt;_root_types</span> ],
+    );
+};
+
+<span class="synKeyword">sub </span><span class="synFunction">_root_types </span>{
+    <span class="synStatement">return</span> <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;_helper_type</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_native_accessor_class_for </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$self</span>, <span class="synIdentifier">$suffix</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$role</span>
+        = <span class="synString">'Moose::Meta::Method::Accessor::Native::'</span>
+        . <span class="synIdentifier">$self-&gt;_native_type</span> . <span class="synString">'::'</span>
+        . <span class="synIdentifier">$suffix</span>;
+
+    load_class(<span class="synIdentifier">$role</span>);
+    <span class="synStatement">return</span> Moose::Meta::Class-&gt;create_anon_class(
+        <span class="synString">superclasses</span> =&gt;
+            [ <span class="synIdentifier">$self-&gt;accessor_metaclass</span>, <span class="synIdentifier">$self-&gt;delegation_metaclass</span> ],
+        <span class="synString">roles</span> =&gt; [<span class="synIdentifier">$role</span>],
+        <span class="synString">cache</span> =&gt; <span class="synNumber">1</span>,
+    )-&gt;name;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_build_native_type </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$role_name</span> ( <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;name</span> <span class="synStatement">}</span> <span class="synIdentifier">$self-&gt;meta-&gt;calculate_all_roles</span> ) {
+        <span class="synStatement">return</span> <span class="synIdentifier">$1</span> <span class="synConditional">if</span> <span class="synIdentifier">$role_name</span> =~ <span class="synStatement">/</span><span class="synString">::Native::Trait::</span><span class="synSpecial">(\w+)</span><span class="synString">$</span><span class="synStatement">/</span>;
+    }
+
+    <span class="synStatement">die</span> <span class="synString">&quot;Cannot calculate native type for &quot;</span> . <span class="synOperator">ref</span> <span class="synIdentifier">$self</span>;
+}
+
+has <span class="synString">'_native_type'</span> =&gt; (
+    <span class="synString">is</span>      =&gt; <span class="synString">'ro'</span>,
+    <span class="synString">isa</span>     =&gt; <span class="synString">'Str'</span>,
+    <span class="synString">lazy</span>    =&gt; <span class="synNumber">1</span>,
+    <span class="synString">builder</span> =&gt; <span class="synString">'_build_native_type'</span>,
+);
+
+<span class="synStatement">no </span>Moose::Role;
+<span class="synStatement">no </span>Moose::Util::TypeConstraints;
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: Shared role for native delegation traits</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Moose::Meta::Attribute::Native::Trait - Shared role for native delegation traits
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> BUGS</span>
+
+See <span class="synIdentifier">L&lt;Moose/BUGS&gt;</span> for details on reporting bugs.
+
+<span class="synStatement">=head1</span><span class="synString"> SEE ALSO</span>
+
+Documentation for Moose native traits can be found in
+<span class="synIdentifier">L&lt;Moose::Meta::Attribute::Native&gt;</span>.
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

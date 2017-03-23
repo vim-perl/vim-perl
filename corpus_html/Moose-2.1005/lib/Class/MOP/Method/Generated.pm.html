@@ -1,0 +1,117 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre>
+<span class="synStatement">package</span><span class="synType"> Class::MOP::Method::Generated</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Class::MOP::Method::Generated::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Class::MOP::Method::Generated::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Carp <span class="synString">'confess'</span>;
+<span class="synStatement">use </span>Eval::Closure;
+
+<span class="synStatement">use base</span> <span class="synString">'Class::MOP::Method'</span>;
+
+<span class="synComment">## accessors</span>
+
+<span class="synKeyword">sub </span><span class="synFunction">new </span>{
+    confess __PACKAGE__ . <span class="synString">&quot; is an abstract base class, you must provide a constructor.&quot;</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_initialize_body </span>{
+    confess <span class="synString">&quot;No body to initialize, &quot;</span> . __PACKAGE__ . <span class="synString">&quot; is an abstract base class&quot;</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_generate_description </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$self</span>, <span class="synIdentifier">$context</span> ) = <span class="synIdentifier">@_</span>;
+    <span class="synIdentifier">$context</span> ||= <span class="synIdentifier">$self-&gt;definition_context</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$desc</span> = <span class="synString">&quot;generated method&quot;</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$origin</span> = <span class="synString">&quot;unknown origin&quot;</span>;
+
+    <span class="synConditional">if</span> (<span class="synOperator">defined</span> <span class="synIdentifier">$context</span>) {
+        <span class="synConditional">if</span> (<span class="synOperator">defined</span> <span class="synIdentifier">$context-&gt;{</span><span class="synString">description</span><span class="synIdentifier">}</span>) {
+            <span class="synIdentifier">$desc</span> = <span class="synIdentifier">$context-&gt;{</span><span class="synString">description</span><span class="synIdentifier">}</span>;
+        }
+
+        <span class="synConditional">if</span> (<span class="synOperator">defined</span> <span class="synIdentifier">$context-&gt;{</span><span class="synString">file</span><span class="synIdentifier">}</span> || <span class="synOperator">defined</span> <span class="synIdentifier">$context-&gt;{</span><span class="synString">line</span><span class="synIdentifier">}</span>) {
+            <span class="synIdentifier">$origin</span> = <span class="synString">&quot;defined at &quot;</span>
+                    . (<span class="synOperator">defined</span> <span class="synIdentifier">$context-&gt;{</span><span class="synString">file</span><span class="synIdentifier">}</span>
+                        ? <span class="synIdentifier">$context-&gt;{</span><span class="synString">file</span><span class="synIdentifier">}</span> : <span class="synString">&quot;&lt;unknown file&gt;&quot;</span>)
+                    . <span class="synString">&quot; line &quot;</span>
+                    . (<span class="synOperator">defined</span> <span class="synIdentifier">$context-&gt;{</span><span class="synString">line</span><span class="synIdentifier">}</span>
+                        ? <span class="synIdentifier">$context-&gt;{</span><span class="synString">line</span><span class="synIdentifier">}</span> : <span class="synString">&quot;&lt;unknown line&gt;&quot;</span>);
+        }
+    }
+
+    <span class="synStatement">return</span> <span class="synString">&quot;</span><span class="synIdentifier">$desc</span><span class="synString"> (</span><span class="synIdentifier">$origin</span><span class="synString">)&quot;</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_compile_code </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$self</span>, <span class="synIdentifier">@args</span> ) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">unshift</span> <span class="synIdentifier">@args</span>, <span class="synString">'source'</span> <span class="synConditional">if</span> <span class="synIdentifier">@args</span> % <span class="synNumber">2</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">%args</span> = <span class="synIdentifier">@args</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$context</span> = <span class="synStatement">delete</span> <span class="synIdentifier">$args{</span><span class="synString">context</span><span class="synIdentifier">}</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$environment</span> = <span class="synIdentifier">$self-&gt;can</span>(<span class="synString">'_eval_environment'</span>)
+        ? <span class="synIdentifier">$self-&gt;_eval_environment</span>
+        : {};
+
+    <span class="synStatement">return</span> eval_closure(
+        <span class="synString">environment</span> =&gt; <span class="synIdentifier">$environment</span>,
+        <span class="synString">description</span> =&gt; <span class="synIdentifier">$self-&gt;_generate_description</span>(<span class="synIdentifier">$context</span>),
+        <span class="synIdentifier">%args</span>,
+    );
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: Abstract base class for generated methods</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Class::MOP::Method::Generated - Abstract base class for generated methods
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This is a <span class="synIdentifier">C&lt;Class::MOP::Method&gt;</span> subclass which is subclassed by
+<span class="synIdentifier">C&lt;Class::MOP::Method::Accessor&gt;</span> and
+<span class="synIdentifier">C&lt;Class::MOP::Method::Constructor&gt;</span>.
+
+It is not intended to be used directly.
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

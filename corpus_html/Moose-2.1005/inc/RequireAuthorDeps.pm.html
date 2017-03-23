@@ -1,0 +1,39 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> inc::RequireAuthorDeps</span>;
+
+<span class="synStatement">use </span>Class::Load <span class="synString">qw(load_class)</span>;
+<span class="synStatement">use </span>Moose;
+
+<span class="synStatement">use </span>CPAN::Meta::Requirements;
+<span class="synStatement">use </span>Try::Tiny;
+
+with <span class="synString">'Dist::Zilla::Role::BeforeRelease'</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">before_release </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synIdentifier">$self-&gt;log</span>(<span class="synString">&quot;Ensuring all author dependencies are installed&quot;</span>);
+    <span class="synStatement">my</span> <span class="synIdentifier">$req</span> = CPAN::Meta::Requirements-&gt;new;
+    <span class="synStatement">my</span> <span class="synIdentifier">$prereqs</span> = <span class="synIdentifier">$self-&gt;zilla-&gt;prereqs</span>;
+
+    <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$phase</span> (<span class="synString">qw(build test configure runtime develop)</span>) {
+        <span class="synIdentifier">$req-&gt;add_requirements</span>(<span class="synIdentifier">$prereqs-&gt;requirements_for</span>(<span class="synIdentifier">$phase</span>, <span class="synString">'requires'</span>));
+    }
+
+    <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$mod</span> (<span class="synStatement">grep</span> <span class="synStatement">{</span> <span class="synIdentifier">$_</span> <span class="synOperator">ne</span> <span class="synString">'perl'</span> <span class="synStatement">}</span> <span class="synIdentifier">$req-&gt;required_modules</span>) {
+        load_class(<span class="synIdentifier">$mod</span>);
+    }
+}
+
+<span class="synNumber">1</span>;
+</pre>
+
+ </body>
+</html>

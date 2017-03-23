@@ -1,0 +1,73 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> inc::ExtractInlineTests</span>;
+
+<span class="synStatement">use </span>Moose;
+
+with <span class="synString">'Dist::Zilla::Role::FileGatherer'</span>;
+
+<span class="synStatement">use </span>File::Basename <span class="synString">qw( basename )</span>;
+<span class="synStatement">use </span>File::Find::Rule;
+<span class="synStatement">use </span>File::Spec;
+<span class="synStatement">use </span>File::Temp <span class="synString">qw( tempdir )</span>;
+<span class="synStatement">use </span>inc::MyInline;
+<span class="synStatement">use </span>Test::Inline;
+
+<span class="synKeyword">sub </span><span class="synFunction">gather_files </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$arg</span>  = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$inline</span> = Test::Inline-&gt;new(
+        <span class="synString">verbose</span>        =&gt; <span class="synNumber">0</span>,
+        <span class="synString">ExtractHandler</span> =&gt; <span class="synString">'My::Extract'</span>,
+        <span class="synString">ContentHandler</span> =&gt; <span class="synString">'My::Content'</span>,
+        <span class="synString">OutputHandler</span>  =&gt; My::Output-&gt;new(<span class="synIdentifier">$self</span>),
+    );
+
+    <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$pod</span> (
+        File::Find::Rule-&gt;file-&gt;name(<span class="synString">qr/</span><span class="synSpecial">\.</span><span class="synString">pod$/</span>)-&gt;in(<span class="synString">'lib/Moose/Cookbook'</span>) ) {
+        <span class="synIdentifier">$inline-&gt;add</span>(<span class="synIdentifier">$pod</span>);
+    }
+
+    <span class="synIdentifier">$inline-&gt;save</span>;
+}
+
+{
+    <span class="synStatement">package</span><span class="synType"> My::Output</span>;
+
+    <span class="synKeyword">sub </span><span class="synFunction">new </span>{
+        <span class="synStatement">my</span> <span class="synIdentifier">$class</span> = <span class="synStatement">shift</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$dzil</span>  = <span class="synStatement">shift</span>;
+
+        <span class="synStatement">return</span> <span class="synOperator">bless</span> { <span class="synString">dzil</span> =&gt; <span class="synIdentifier">$dzil</span> }, <span class="synIdentifier">$class</span>;
+    }
+
+    <span class="synKeyword">sub </span><span class="synFunction">write </span>{
+        <span class="synStatement">my</span> <span class="synIdentifier">$self</span>    = <span class="synStatement">shift</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$name</span>    = <span class="synStatement">shift</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$content</span> = <span class="synStatement">shift</span>;
+
+        <span class="synIdentifier">$name</span> =~ <span class="synStatement">s/</span><span class="synString">^moose_cookbook_</span><span class="synStatement">//</span>;
+
+        <span class="synIdentifier">$self-&gt;{</span><span class="synString">dzil</span><span class="synIdentifier">}-&gt;add_file</span>(
+            Dist::Zilla::File::InMemory-&gt;new(
+                <span class="synString">name</span>    =&gt; <span class="synString">&quot;t/recipes/</span><span class="synIdentifier">$name</span><span class="synString">&quot;</span>,
+                <span class="synString">content</span> =&gt; <span class="synIdentifier">$content</span>,
+            )
+        );
+
+        <span class="synStatement">return</span> <span class="synNumber">1</span>;
+    }
+}
+
+<span class="synNumber">1</span>;
+</pre>
+
+ </body>
+</html>

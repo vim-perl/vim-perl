@@ -1,0 +1,99 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synPreProc">#!perl</span>
+
+<span class="synComment">### MODULES</span>
+
+{
+    <span class="synStatement">package</span><span class="synType"> PlainMoose</span>;
+    <span class="synStatement">use </span>Moose;
+    has <span class="synString">foo</span> =&gt; (<span class="synString">is</span> =&gt; <span class="synString">'rw'</span>);
+}
+{
+    <span class="synStatement">package</span><span class="synType"> MooseImmutable</span>;
+    <span class="synStatement">use </span>Moose;
+    has <span class="synString">foo</span> =&gt; (<span class="synString">is</span> =&gt; <span class="synString">'rw'</span>);
+    __PACKAGE__<span class="synIdentifier">-&gt;meta-&gt;make_immutable</span>();
+}
+{
+    <span class="synStatement">package</span><span class="synType"> MooseImmutable::NoConstructor</span>;
+    <span class="synStatement">use </span>Moose;
+    has <span class="synString">foo</span> =&gt; (<span class="synString">is</span> =&gt; <span class="synString">'rw'</span>);
+    __PACKAGE__<span class="synIdentifier">-&gt;meta-&gt;make_immutable</span>(<span class="synString">inline_constructor</span> =&gt; <span class="synNumber">0</span>);
+}
+{
+    <span class="synStatement">package</span><span class="synType"> ClassAccessorFast</span>;
+    <span class="synStatement">use warnings</span>;
+    <span class="synStatement">use strict</span>;
+    <span class="synStatement">use base</span> <span class="synString">'Class::Accessor::Fast'</span>;
+    __PACKAGE__<span class="synIdentifier">-&gt;mk_accessors</span>(<span class="synString">qw(foo)</span>);
+}
+
+<span class="synStatement">use </span>Benchmark <span class="synString">qw(cmpthese)</span>;
+<span class="synStatement">use </span>Benchmark <span class="synString">':hireswallclock'</span>;
+
+<span class="synStatement">my</span> <span class="synIdentifier">$moose</span>                = PlainMoose-&gt;new;
+<span class="synStatement">my</span> <span class="synIdentifier">$moose_immut</span>          = MooseImmutable-&gt;new;
+<span class="synStatement">my</span> <span class="synIdentifier">$moose_immut_no_const</span> = MooseImmutable::NoConstructor-&gt;new;
+<span class="synStatement">my</span> <span class="synIdentifier">$caf</span>                  = ClassAccessorFast-&gt;new;
+
+<span class="synStatement">my</span> <span class="synIdentifier">$acc_rounds</span> = <span class="synNumber">100_000</span>;
+<span class="synStatement">my</span> <span class="synIdentifier">$ins_rounds</span> = <span class="synNumber">100_000</span>;
+
+<span class="synStatement">print</span> <span class="synString">&quot;</span><span class="synSpecial">\n</span><span class="synString">SETTING</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+cmpthese(<span class="synIdentifier">$acc_rounds</span>, {
+    <span class="synString">Moose</span>                       =&gt; <span class="synKeyword">sub </span>{ <span class="synIdentifier">$moose-&gt;foo</span>(<span class="synNumber">23</span>) },
+    <span class="synString">MooseImmutable</span>              =&gt; <span class="synKeyword">sub </span>{ <span class="synIdentifier">$moose_immut-&gt;foo</span>(<span class="synNumber">23</span>) },
+    <span class="synString">MooseImmutableNoConstructor</span> =&gt; <span class="synKeyword">sub </span>{ <span class="synIdentifier">$moose_immut_no_const-&gt;foo</span>(<span class="synNumber">23</span>) },
+    <span class="synString">ClassAccessorFast</span>           =&gt; <span class="synKeyword">sub </span>{ <span class="synIdentifier">$caf-&gt;foo</span>(<span class="synNumber">23</span>) },
+}, <span class="synString">'noc'</span>);
+
+<span class="synStatement">print</span> <span class="synString">&quot;</span><span class="synSpecial">\n</span><span class="synString">GETTING</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+cmpthese(<span class="synIdentifier">$acc_rounds</span>, {
+    <span class="synString">Moose</span>                       =&gt; <span class="synKeyword">sub </span>{ <span class="synIdentifier">$moose-&gt;foo</span> },
+    <span class="synString">MooseImmutable</span>              =&gt; <span class="synKeyword">sub </span>{ <span class="synIdentifier">$moose_immut-&gt;foo</span> },
+    <span class="synString">MooseImmutableNoConstructor</span> =&gt; <span class="synKeyword">sub </span>{ <span class="synIdentifier">$moose_immut_no_const-&gt;foo</span> },
+    <span class="synString">ClassAccessorFast</span>           =&gt; <span class="synKeyword">sub </span>{ <span class="synIdentifier">$caf-&gt;foo</span> },
+}, <span class="synString">'noc'</span>);
+
+<span class="synStatement">my</span> (<span class="synIdentifier">@moose</span>, <span class="synIdentifier">@moose_immut</span>, <span class="synIdentifier">@moose_immut_no_const</span>, <span class="synIdentifier">@caf_stall</span>);
+<span class="synStatement">print</span> <span class="synString">&quot;</span><span class="synSpecial">\n</span><span class="synString">CREATION</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+cmpthese(<span class="synIdentifier">$ins_rounds</span>, {
+    <span class="synString">Moose</span>                       =&gt; <span class="synKeyword">sub </span>{ <span class="synStatement">push</span> <span class="synIdentifier">@moose</span>, PlainMoose-&gt;new(<span class="synString">foo</span> =&gt; <span class="synNumber">23</span>) },
+    <span class="synString">MooseImmutable</span>              =&gt; <span class="synKeyword">sub </span>{ <span class="synStatement">push</span> <span class="synIdentifier">@moose_immut</span>, MooseImmutable-&gt;new(<span class="synString">foo</span> =&gt; <span class="synNumber">23</span>) },
+    <span class="synString">MooseImmutableNoConstructor</span> =&gt; <span class="synKeyword">sub </span>{ <span class="synStatement">push</span> <span class="synIdentifier">@moose_immut_no_const</span>, MooseImmutable::NoConstructor-&gt;new(<span class="synString">foo</span> =&gt; <span class="synNumber">23</span>) },
+    <span class="synString">ClassAccessorFast</span>           =&gt; <span class="synKeyword">sub </span>{ <span class="synStatement">push</span> <span class="synIdentifier">@caf_stall</span>, ClassAccessorFast-&gt;new({<span class="synString">foo</span> =&gt; <span class="synNumber">23</span>}) },
+}, <span class="synString">'noc'</span>);
+
+<span class="synStatement">my</span> ( <span class="synIdentifier">$moose_idx</span>, <span class="synIdentifier">$moose_immut_idx</span>, <span class="synIdentifier">$moose_immut_no_const_idx</span>, <span class="synIdentifier">$caf_idx</span> ) = ( <span class="synNumber">0</span>, <span class="synNumber">0</span>, <span class="synNumber">0</span>, <span class="synNumber">0</span> );
+<span class="synStatement">print</span> <span class="synString">&quot;</span><span class="synSpecial">\n</span><span class="synString">DESTRUCTION</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+cmpthese(<span class="synIdentifier">$ins_rounds</span>, {
+    <span class="synString">Moose</span> =&gt; <span class="synKeyword">sub </span>{
+        <span class="synIdentifier">$moose[$moose_idx]</span> = <span class="synOperator">undef</span>;
+        <span class="synIdentifier">$moose_idx</span>++;
+    },
+    <span class="synString">MooseImmutable</span> =&gt; <span class="synKeyword">sub </span>{
+        <span class="synIdentifier">$moose_immut[$moose_immut_idx]</span> = <span class="synOperator">undef</span>;
+        <span class="synIdentifier">$moose_immut_idx</span>++;
+    },
+    <span class="synString">MooseImmutableNoConstructor</span> =&gt; <span class="synKeyword">sub </span>{
+        <span class="synIdentifier">$moose_immut_no_const[$moose_immut_no_const_idx]</span> = <span class="synOperator">undef</span>;
+        <span class="synIdentifier">$moose_immut_no_const_idx</span>++;
+    },
+    <span class="synString">ClassAccessorFast</span>   =&gt; <span class="synKeyword">sub </span>{
+        <span class="synIdentifier">$caf_stall[$caf_idx]</span> = <span class="synOperator">undef</span>;
+        <span class="synIdentifier">$caf_idx</span>++;
+    },
+}, <span class="synString">'noc'</span>);
+
+
+</pre>
+
+ </body>
+</html>

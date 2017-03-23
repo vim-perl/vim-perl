@@ -1,0 +1,55 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Moose::Meta::Method::Accessor::Native::Array::map</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Method::Accessor::Native::Array::map::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Method::Accessor::Native::Array::map::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Params::Util ();
+
+<span class="synStatement">use </span>Moose::Role;
+
+with <span class="synString">'Moose::Meta::Method::Accessor::Native::Reader'</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">_minimum_arguments </span>{ <span class="synNumber">1</span> }
+
+<span class="synKeyword">sub </span><span class="synFunction">_maximum_arguments </span>{ <span class="synNumber">1</span> }
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_check_arguments </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">return</span> (
+        <span class="synString">'if (!Params::Util::_CODELIKE($_[0])) {'</span>,
+            <span class="synIdentifier">$self-&gt;_inline_throw_error</span>(
+                <span class="synString">'&quot;The argument passed to map must be a code reference&quot;'</span>,
+            ) . <span class="synString">';'</span>,
+        <span class="synString">'}'</span>,
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_return_value </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$slot_access</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> <span class="synString">'map { $_[0]-&gt;() } @{ ('</span> . <span class="synIdentifier">$slot_access</span> . <span class="synString">') }'</span>;
+}
+
+<span class="synStatement">no </span>Moose::Role;
+
+<span class="synNumber">1</span>;
+</pre>
+
+ </body>
+</html>

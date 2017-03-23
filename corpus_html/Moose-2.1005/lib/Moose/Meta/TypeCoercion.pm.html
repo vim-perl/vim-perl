@@ -1,0 +1,213 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre>
+<span class="synStatement">package</span><span class="synType"> Moose::Meta::TypeCoercion</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::TypeCoercion::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::TypeCoercion::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+<span class="synStatement">use </span>metaclass;
+
+<span class="synStatement">use </span>Moose::Meta::Attribute;
+<span class="synStatement">use </span>Moose::Util::TypeConstraints ();
+
+__PACKAGE__<span class="synIdentifier">-&gt;meta-&gt;add_attribute</span>(<span class="synString">'type_coercion_map'</span> =&gt; (
+    <span class="synString">reader</span>  =&gt; <span class="synString">'type_coercion_map'</span>,
+    <span class="synString">default</span> =&gt; <span class="synKeyword">sub </span>{ [] },
+    Class::MOP::_definition_context(),
+));
+
+__PACKAGE__<span class="synIdentifier">-&gt;meta-&gt;add_attribute</span>(
+    Moose::Meta::Attribute-&gt;new(<span class="synString">'type_constraint'</span> =&gt; (
+        <span class="synString">reader</span>   =&gt; <span class="synString">'type_constraint'</span>,
+        <span class="synString">weak_ref</span> =&gt; <span class="synNumber">1</span>,
+        Class::MOP::_definition_context(),
+    ))
+);
+
+<span class="synComment"># private accessor</span>
+__PACKAGE__<span class="synIdentifier">-&gt;meta-&gt;add_attribute</span>(<span class="synString">'compiled_type_coercion'</span> =&gt; (
+    <span class="synString">accessor</span> =&gt; <span class="synString">'_compiled_type_coercion'</span>,
+    Class::MOP::_definition_context(),
+));
+
+<span class="synKeyword">sub </span><span class="synFunction">new </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$class</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span>  = Class::MOP::class_of(<span class="synIdentifier">$class</span>)-&gt;new_object(<span class="synIdentifier">@_</span>);
+    <span class="synIdentifier">$self-&gt;compile_type_coercion</span>;
+    <span class="synStatement">return</span> <span class="synIdentifier">$self</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">compile_type_coercion </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">@coercion_map</span> = <span class="synIdentifier">@{$self-&gt;type_coercion_map}</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">@coercions</span>;
+    <span class="synRepeat">while</span> (<span class="synIdentifier">@coercion_map</span>) {
+        <span class="synStatement">my</span> (<span class="synIdentifier">$constraint_name</span>, <span class="synIdentifier">$action</span>) = <span class="synStatement">splice</span>(<span class="synIdentifier">@coercion_map</span>, <span class="synNumber">0</span>, <span class="synNumber">2</span>);
+        <span class="synStatement">my</span> <span class="synIdentifier">$type_constraint</span> = <span class="synOperator">ref</span> <span class="synIdentifier">$constraint_name</span> ? <span class="synIdentifier">$constraint_name</span> : Moose::Util::TypeConstraints::find_or_parse_type_constraint(<span class="synIdentifier">$constraint_name</span>);
+
+        <span class="synConditional">unless</span> ( <span class="synOperator">defined</span> <span class="synIdentifier">$type_constraint</span> ) {
+            <span class="synStatement">require</span> Moose;
+            Moose-&gt;throw_error(<span class="synString">&quot;Could not find the type constraint (</span><span class="synIdentifier">$constraint_name</span><span class="synString">) to coerce from&quot;</span>);
+        }
+
+        <span class="synStatement">push</span> <span class="synIdentifier">@coercions</span> =&gt; [
+            <span class="synIdentifier">$type_constraint-&gt;_compiled_type_constraint</span>,
+            <span class="synIdentifier">$action</span>
+        ];
+    }
+    <span class="synIdentifier">$self-&gt;_compiled_type_coercion</span>(<span class="synKeyword">sub </span>{
+        <span class="synStatement">my</span> <span class="synIdentifier">$thing</span> = <span class="synStatement">shift</span>;
+        <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$coercion</span> (<span class="synIdentifier">@coercions</span>) {
+            <span class="synStatement">my</span> (<span class="synIdentifier">$constraint</span>, <span class="synIdentifier">$converter</span>) = <span class="synIdentifier">@$coercion</span>;
+            <span class="synConditional">if</span> (<span class="synIdentifier">$constraint</span>-&gt;(<span class="synIdentifier">$thing</span>)) {
+                <span class="synStatement">local</span> <span class="synIdentifier">$_</span> = <span class="synIdentifier">$thing</span>;
+                <span class="synStatement">return</span> <span class="synIdentifier">$converter</span>-&gt;(<span class="synIdentifier">$thing</span>);
+            }
+        }
+        <span class="synStatement">return</span> <span class="synIdentifier">$thing</span>;
+    });
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">has_coercion_for_type </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">$type_name</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">%coercion_map</span> = <span class="synIdentifier">@{$self-&gt;type_coercion_map}</span>;
+    <span class="synStatement">exists</span> <span class="synIdentifier">$coercion_map{$type_name}</span> ? <span class="synNumber">1</span> : <span class="synNumber">0</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">add_type_coercions </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">@new_coercion_map</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$coercion_map</span> = <span class="synIdentifier">$self-&gt;type_coercion_map</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">%has_coercion</span> = <span class="synIdentifier">@$coercion_map</span>;
+
+    <span class="synRepeat">while</span> (<span class="synIdentifier">@new_coercion_map</span>) {
+        <span class="synStatement">my</span> (<span class="synIdentifier">$constraint_name</span>, <span class="synIdentifier">$action</span>) = <span class="synStatement">splice</span>(<span class="synIdentifier">@new_coercion_map</span>, <span class="synNumber">0</span>, <span class="synNumber">2</span>);
+
+        <span class="synConditional">if</span> ( <span class="synStatement">exists</span> <span class="synIdentifier">$has_coercion{$constraint_name}</span> ) {
+            <span class="synStatement">require</span> Moose;
+            Moose-&gt;throw_error(<span class="synString">&quot;A coercion action already exists for '</span><span class="synIdentifier">$constraint_name</span><span class="synString">'&quot;</span>)
+        }
+
+        <span class="synStatement">push</span> <span class="synIdentifier">@{$coercion_map}</span> =&gt; (<span class="synIdentifier">$constraint_name</span>, <span class="synIdentifier">$action</span>);
+    }
+
+    <span class="synComment"># and re-compile ...</span>
+    <span class="synIdentifier">$self-&gt;compile_type_coercion</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">coerce </span>{ <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;_compiled_type_coercion</span>-&gt;(<span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span>) }
+
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: The Moose Type Coercion metaclass</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Moose::Meta::TypeCoercion - The Moose Type Coercion metaclass
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+A type coercion object is basically a mapping of one or more type
+constraints and the associated coercions subroutines.
+
+It's unlikely that you will need to instantiate an object of this
+class directly, as it's part of the deep internals of Moose.
+
+<span class="synStatement">=head1</span><span class="synString"> METHODS</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; Moose::Meta::TypeCoercion-&gt;new(%options) &gt;&gt;</span>
+
+Creates a new type coercion object, based on the options provided.
+
+<span class="synStatement">=over</span> <span class="synNumber">8</span>
+
+<span class="synStatement">=item</span><span class="synString"> * type_constraint</span>
+
+This is the <span class="synIdentifier">L&lt;Moose::Meta::TypeConstraint&gt;</span> object for the type that is
+being coerced <span class="synIdentifier">I&lt;to&gt;</span>.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $coercion-&gt;type_coercion_map &gt;&gt;</span>
+
+This returns the map of type constraints to coercions as an array
+reference. The values of the array alternate between type names and
+subroutine references which implement the coercion.
+
+The value is an array reference because coercions are tried in the
+order they are added.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $coercion-&gt;type_constraint &gt;&gt;</span>
+
+This returns the <span class="synIdentifier">L&lt;Moose::Meta::TypeConstraint&gt;</span> that was passed to the
+constructor.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $coercion-&gt;has_coercion_for_type($type_name) &gt;&gt;</span>
+
+Returns true if the coercion can coerce the named type.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $coercion-&gt;add_type_coercions( $type_name =&gt; $sub, ... ) &gt;&gt;</span>
+
+This method takes a list of type names and subroutine references. If
+the coercion already has a mapping for a given type, it throws an
+exception.
+
+Coercions are actually
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $coercion-&gt;coerce($value) &gt;&gt;</span>
+
+This method takes a value and applies the first valid coercion it
+finds.
+
+This means that if the value could belong to more than type in the
+coercion object, the first coercion added is used.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; Moose::Meta::TypeCoercion-&gt;meta &gt;&gt;</span>
+
+This will return a <span class="synIdentifier">L&lt;Class::MOP::Class&gt;</span> instance for this class.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> BUGS</span>
+
+See <span class="synIdentifier">L&lt;Moose/BUGS&gt;</span> for details on reporting bugs.
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

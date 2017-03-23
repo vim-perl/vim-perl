@@ -1,0 +1,208 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Test::Moose</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Test::Moose::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Test::Moose::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Sub::Exporter;
+<span class="synStatement">use </span>Test::Builder;
+
+<span class="synStatement">use </span>List::MoreUtils <span class="synString">'all'</span>;
+<span class="synStatement">use </span>Moose::Util <span class="synString">'does_role'</span>, <span class="synString">'find_meta'</span>;
+
+<span class="synStatement">my</span> <span class="synIdentifier">@exports</span> = <span class="synString">qw[</span>
+<span class="synString">    meta_ok</span>
+<span class="synString">    does_ok</span>
+<span class="synString">    has_attribute_ok</span>
+<span class="synString">    with_immutable</span>
+<span class="synString">]</span>;
+
+Sub::Exporter::setup_exporter({
+    <span class="synString">exports</span> =&gt; \<span class="synIdentifier">@exports</span>,
+    <span class="synString">groups</span>  =&gt; { <span class="synString">default</span> =&gt; \<span class="synIdentifier">@exports</span> }
+});
+
+<span class="synComment">## the test builder instance ...</span>
+
+<span class="synStatement">my</span> <span class="synIdentifier">$Test</span> = Test::Builder-&gt;new;
+
+<span class="synComment">## exported functions</span>
+
+<span class="synKeyword">sub </span><span class="synFunction">meta_ok </span><span class="synType">($;$) </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$class_or_obj</span>, <span class="synIdentifier">$message</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synIdentifier">$message</span> ||= <span class="synString">&quot;The object has a meta&quot;</span>;
+
+    <span class="synConditional">if</span> (find_meta(<span class="synIdentifier">$class_or_obj</span>)) {
+        <span class="synStatement">return</span> <span class="synIdentifier">$Test-&gt;ok</span>(<span class="synNumber">1</span>, <span class="synIdentifier">$message</span>)
+    }
+    <span class="synConditional">else</span> {
+        <span class="synStatement">return</span> <span class="synIdentifier">$Test-&gt;ok</span>(<span class="synNumber">0</span>, <span class="synIdentifier">$message</span>);
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">does_ok </span><span class="synType">($$;$) </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$class_or_obj</span>, <span class="synIdentifier">$does</span>, <span class="synIdentifier">$message</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synIdentifier">$message</span> ||= <span class="synString">&quot;The object does </span><span class="synIdentifier">$does</span><span class="synString">&quot;</span>;
+
+    <span class="synConditional">if</span> (does_role(<span class="synIdentifier">$class_or_obj</span>, <span class="synIdentifier">$does</span>)) {
+        <span class="synStatement">return</span> <span class="synIdentifier">$Test-&gt;ok</span>(<span class="synNumber">1</span>, <span class="synIdentifier">$message</span>)
+    }
+    <span class="synConditional">else</span> {
+        <span class="synStatement">return</span> <span class="synIdentifier">$Test-&gt;ok</span>(<span class="synNumber">0</span>, <span class="synIdentifier">$message</span>);
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">has_attribute_ok </span><span class="synType">($$;$) </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$class_or_obj</span>, <span class="synIdentifier">$attr_name</span>, <span class="synIdentifier">$message</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synIdentifier">$message</span> ||= <span class="synString">&quot;The object does has an attribute named </span><span class="synIdentifier">$attr_name</span><span class="synString">&quot;</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$meta</span> = find_meta(<span class="synIdentifier">$class_or_obj</span>);
+
+    <span class="synConditional">if</span> (<span class="synIdentifier">$meta-&gt;find_attribute_by_name</span>(<span class="synIdentifier">$attr_name</span>)) {
+        <span class="synStatement">return</span> <span class="synIdentifier">$Test-&gt;ok</span>(<span class="synNumber">1</span>, <span class="synIdentifier">$message</span>)
+    }
+    <span class="synConditional">else</span> {
+        <span class="synStatement">return</span> <span class="synIdentifier">$Test-&gt;ok</span>(<span class="synNumber">0</span>, <span class="synIdentifier">$message</span>);
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">with_immutable </span><span class="synType">(&amp;@) </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$block</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$before</span> = <span class="synIdentifier">$Test-&gt;current_test</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$passing_before</span> = (Test::Builder-&gt;VERSION &lt; <span class="synFloat">1.005</span> ? <span class="synNumber">0</span> : <span class="synIdentifier">$Test-&gt;history-&gt;pass_count</span>) || <span class="synNumber">0</span>;
+
+    <span class="synIdentifier">$block</span>-&gt;(<span class="synNumber">0</span>);
+    Class::MOP::class_of(<span class="synIdentifier">$_</span>)-&gt;make_immutable <span class="synRepeat">for</span> <span class="synIdentifier">@_</span>;
+    <span class="synIdentifier">$block</span>-&gt;(<span class="synNumber">1</span>);
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$num_tests</span> = <span class="synIdentifier">$Test-&gt;current_test</span> - <span class="synIdentifier">$before</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$all_passed</span> = Test::Builder-&gt;VERSION &lt; <span class="synFloat">1.005</span>
+        ? all { <span class="synIdentifier">$_</span> } (<span class="synIdentifier">$Test-&gt;summary</span>)[-<span class="synIdentifier">$num_tests</span>..-<span class="synNumber">1</span>]
+        : <span class="synIdentifier">$num_tests</span> == <span class="synIdentifier">$Test-&gt;history-&gt;pass_count</span> - <span class="synIdentifier">$passing_before</span>;
+    <span class="synStatement">return</span> <span class="synIdentifier">$all_passed</span>;
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: Test functions for Moose specific features</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Test::Moose - Test functions for Moose specific features
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> SYNOPSIS</span>
+
+<span class="synPreProc">  use Test::More plan =&gt; 1;</span>
+<span class="synPreProc">  use Test::Moose;</span>
+
+<span class="synPreProc">  meta_ok($class_or_obj, &quot;... Foo has a -&gt;meta&quot;);</span>
+<span class="synPreProc">  does_ok($class_or_obj, $role, &quot;... Foo does the Baz role&quot;);</span>
+<span class="synPreProc">  has_attribute_ok($class_or_obj, $attr_name, &quot;... Foo has the 'bar' attribute&quot;);</span>
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This module provides some useful test functions for Moose based classes. It
+is an experimental first release, so comments and suggestions are very welcome.
+
+<span class="synStatement">=head1</span><span class="synString"> EXPORTED FUNCTIONS</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;meta_ok ($class_or_object)&gt;</span>
+
+Tests if a class or object has a metaclass.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;does_ok ($class_or_object, $role, ?$message)&gt;</span>
+
+Tests if a class or object does a certain role, similar to what <span class="synIdentifier">C&lt;isa_ok&gt;</span>
+does for the <span class="synIdentifier">C&lt;isa&gt;</span> method.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;has_attribute_ok($class_or_object, $attr_name, ?$message)&gt;</span>
+
+Tests if a class or object has a certain attribute, similar to what <span class="synIdentifier">C&lt;can_ok&gt;</span>
+does for the methods.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;with_immutable { CODE } @class_names&gt;</span>
+
+Runs <span class="synIdentifier">B&lt;CODE&gt;</span> (which should contain normal tests) twice, and make each
+class in <span class="synIdentifier">C&lt;@class_names&gt;</span> immutable in between the two runs.
+
+The <span class="synIdentifier">B&lt;CODE&gt;</span> block is called with a single boolean argument indicating whether
+or not the classes have been made immutable yet.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> TODO</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> Convert the Moose test suite to use this module.</span>
+
+<span class="synStatement">=item</span><span class="synString"> Here is a list of possible functions to write</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> immutability predicates</span>
+
+<span class="synStatement">=item</span><span class="synString"> anon-class predicates</span>
+
+<span class="synStatement">=item</span><span class="synString"> discovering original method from modified method</span>
+
+<span class="synStatement">=item</span><span class="synString"> attribute metaclass predicates (attribute_isa?)</span>
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> SEE ALSO</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">L&lt;Test::More&gt;</span>
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> BUGS</span>
+
+See <span class="synIdentifier">L&lt;Moose/BUGS&gt;</span> for details on reporting bugs.
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

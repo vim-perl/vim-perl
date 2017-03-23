@@ -1,0 +1,348 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Class::MOP::Mixin::HasMethods</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Class::MOP::Mixin::HasMethods::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Class::MOP::Mixin::HasMethods::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Class::MOP::Method::Meta;
+<span class="synStatement">use </span>Class::MOP::Method::Overload;
+
+<span class="synStatement">use </span>Scalar::Util <span class="synString">'blessed'</span>, <span class="synString">'reftype'</span>;
+<span class="synStatement">use </span>Carp         <span class="synString">'confess'</span>;
+<span class="synStatement">use </span>Sub::Name    <span class="synString">'subname'</span>;
+
+<span class="synStatement">use overload</span> ();
+
+<span class="synStatement">use base</span> <span class="synString">'Class::MOP::Mixin'</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">_meta_method_class </span>{ <span class="synString">'Class::MOP::Method::Meta'</span> }
+
+<span class="synKeyword">sub </span><span class="synFunction">_add_meta_method </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$name</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$existing_method</span> = <span class="synIdentifier">$self-&gt;can</span>(<span class="synString">'find_method_by_name'</span>)
+                              ? <span class="synIdentifier">$self-&gt;find_method_by_name</span>(<span class="synIdentifier">$name</span>)
+                              : <span class="synIdentifier">$self-&gt;get_method</span>(<span class="synIdentifier">$name</span>);
+    <span class="synStatement">return</span> <span class="synConditional">if</span> <span class="synIdentifier">$existing_method</span>
+           &amp;&amp; <span class="synIdentifier">$existing_method-&gt;isa</span>(<span class="synIdentifier">$self-&gt;_meta_method_class</span>);
+    <span class="synIdentifier">$self-&gt;add_method</span>(
+        <span class="synIdentifier">$name</span> =&gt; <span class="synIdentifier">$self-&gt;_meta_method_class-&gt;wrap</span>(
+            <span class="synString">name</span>                 =&gt; <span class="synIdentifier">$name</span>,
+            <span class="synString">package_name</span>         =&gt; <span class="synIdentifier">$self-&gt;name</span>,
+            <span class="synString">associated_metaclass</span> =&gt; <span class="synIdentifier">$self</span>,
+        )
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">wrap_method_body </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$self</span>, <span class="synIdentifier">%args</span> ) = <span class="synIdentifier">@_</span>;
+
+    ( <span class="synString">'CODE'</span> <span class="synOperator">eq</span> reftype <span class="synIdentifier">$args{</span><span class="synString">body</span><span class="synIdentifier">}</span> )
+        || confess <span class="synString">&quot;Your code block must be a CODE reference&quot;</span>;
+
+    <span class="synIdentifier">$self-&gt;method_metaclass-&gt;wrap</span>(
+        <span class="synString">package_name</span> =&gt; <span class="synIdentifier">$self-&gt;name</span>,
+        <span class="synIdentifier">%args</span>,
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">add_method </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$self</span>, <span class="synIdentifier">$method_name</span>, <span class="synIdentifier">$method</span> ) = <span class="synIdentifier">@_</span>;
+    ( <span class="synOperator">defined</span> <span class="synIdentifier">$method_name</span> &amp;&amp; <span class="synStatement">length</span> <span class="synIdentifier">$method_name</span> )
+        || confess <span class="synString">&quot;You must define a method name&quot;</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$package_name</span> = <span class="synIdentifier">$self-&gt;name</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$body</span>;
+    <span class="synConditional">if</span> ( blessed(<span class="synIdentifier">$method</span>) &amp;&amp; <span class="synIdentifier">$method-&gt;isa</span>(<span class="synString">'Class::MOP::Method'</span>) ) {
+        <span class="synIdentifier">$body</span> = <span class="synIdentifier">$method-&gt;body</span>;
+        <span class="synConditional">if</span> ( <span class="synIdentifier">$method-&gt;package_name</span> <span class="synOperator">ne</span> <span class="synIdentifier">$package_name</span> ) {
+            <span class="synIdentifier">$method</span> = <span class="synIdentifier">$method-&gt;clone</span>(
+                <span class="synString">package_name</span> =&gt; <span class="synIdentifier">$package_name</span>,
+                <span class="synString">name</span>         =&gt; <span class="synIdentifier">$method_name</span>,
+            );
+        }
+
+        <span class="synIdentifier">$method-&gt;attach_to_class</span>(<span class="synIdentifier">$self</span>);
+    }
+    <span class="synConditional">else</span> {
+        <span class="synComment"># If a raw code reference is supplied, its method object is not created.</span>
+        <span class="synComment"># The method object won't be created until required.</span>
+        <span class="synIdentifier">$body</span> = <span class="synIdentifier">$method</span>;
+    }
+
+    <span class="synIdentifier">$self-&gt;_method_map-&gt;{$method_name}</span> = <span class="synIdentifier">$method</span>;
+
+    <span class="synStatement">my</span> (<span class="synIdentifier">$current_package</span>, <span class="synIdentifier">$current_name</span>) = Class::MOP::get_code_info(<span class="synIdentifier">$body</span>);
+
+    subname(<span class="synIdentifier">$package_name</span> . <span class="synString">'::'</span> . <span class="synIdentifier">$method_name</span>, <span class="synIdentifier">$body</span>)
+        <span class="synConditional">unless</span> <span class="synOperator">defined</span> <span class="synIdentifier">$current_name</span> &amp;&amp; <span class="synIdentifier">$current_name</span> !~ <span class="synStatement">/</span><span class="synString">^__ANON__</span><span class="synStatement">/</span>;
+
+    <span class="synIdentifier">$self-&gt;add_package_symbol</span>(<span class="synString">&quot;&amp;</span><span class="synIdentifier">$method_name</span><span class="synString">&quot;</span>, <span class="synIdentifier">$body</span>);
+
+    <span class="synComment"># we added the method to the method map too, so it's still valid</span>
+    <span class="synIdentifier">$self-&gt;update_package_cache_flag</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_code_is_mine </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$self</span>, <span class="synIdentifier">$code</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$code_package</span>, <span class="synIdentifier">$code_name</span> ) = Class::MOP::get_code_info(<span class="synIdentifier">$code</span>);
+
+    <span class="synStatement">return</span> ( <span class="synIdentifier">$code_package</span> &amp;&amp; <span class="synIdentifier">$code_package</span> <span class="synOperator">eq</span> <span class="synIdentifier">$self-&gt;name</span> )
+        || ( <span class="synIdentifier">$code_package</span> <span class="synOperator">eq</span> <span class="synString">'constant'</span> &amp;&amp; <span class="synIdentifier">$code_name</span> <span class="synOperator">eq</span> <span class="synString">'__ANON__'</span> );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">has_method </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$self</span>, <span class="synIdentifier">$method_name</span> ) = <span class="synIdentifier">@_</span>;
+
+    ( <span class="synOperator">defined</span> <span class="synIdentifier">$method_name</span> &amp;&amp; <span class="synStatement">length</span> <span class="synIdentifier">$method_name</span> )
+        || confess <span class="synString">&quot;You must define a method name&quot;</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$method</span> = <span class="synIdentifier">$self-&gt;_get_maybe_raw_method</span>(<span class="synIdentifier">$method_name</span>)
+        <span class="synOperator">or</span> <span class="synStatement">return</span>;
+
+    <span class="synStatement">return</span> <span class="synOperator">defined</span>(<span class="synIdentifier">$self-&gt;_method_map-&gt;{$method_name}</span> = <span class="synIdentifier">$method</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">get_method </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$self</span>, <span class="synIdentifier">$method_name</span> ) = <span class="synIdentifier">@_</span>;
+
+    ( <span class="synOperator">defined</span> <span class="synIdentifier">$method_name</span> &amp;&amp; <span class="synStatement">length</span> <span class="synIdentifier">$method_name</span> )
+        || confess <span class="synString">&quot;You must define a method name&quot;</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$method</span> = <span class="synIdentifier">$self-&gt;_get_maybe_raw_method</span>(<span class="synIdentifier">$method_name</span>)
+        <span class="synOperator">or</span> <span class="synStatement">return</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$method</span> <span class="synConditional">if</span> blessed(<span class="synIdentifier">$method</span>) &amp;&amp; <span class="synIdentifier">$method-&gt;isa</span>(<span class="synString">'Class::MOP::Method'</span>);
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;_method_map-&gt;{$method_name}</span> = <span class="synIdentifier">$self-&gt;wrap_method_body</span>(
+        <span class="synString">body</span>                 =&gt; <span class="synIdentifier">$method</span>,
+        <span class="synString">name</span>                 =&gt; <span class="synIdentifier">$method_name</span>,
+        <span class="synString">associated_metaclass</span> =&gt; <span class="synIdentifier">$self</span>,
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_get_maybe_raw_method </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$self</span>, <span class="synIdentifier">$method_name</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$map_entry</span> = <span class="synIdentifier">$self-&gt;_method_map-&gt;{$method_name}</span>;
+    <span class="synStatement">return</span> <span class="synIdentifier">$map_entry</span> <span class="synConditional">if</span> <span class="synOperator">defined</span> <span class="synIdentifier">$map_entry</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$code</span> = <span class="synIdentifier">$self-&gt;get_package_symbol</span>(<span class="synString">&quot;&amp;</span><span class="synIdentifier">$method_name</span><span class="synString">&quot;</span>);
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$code</span> &amp;&amp; <span class="synIdentifier">$self-&gt;_code_is_mine</span>(<span class="synIdentifier">$code</span>);
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$code</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">remove_method </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$self</span>, <span class="synIdentifier">$method_name</span> ) = <span class="synIdentifier">@_</span>;
+
+    ( <span class="synOperator">defined</span> <span class="synIdentifier">$method_name</span> &amp;&amp; <span class="synStatement">length</span> <span class="synIdentifier">$method_name</span> )
+        || confess <span class="synString">&quot;You must define a method name&quot;</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$removed_method</span> = <span class="synStatement">delete</span> <span class="synIdentifier">$self-&gt;_method_map-&gt;{$method_name}</span>;
+
+    <span class="synIdentifier">$self-&gt;remove_package_symbol</span>(<span class="synString">&quot;&amp;</span><span class="synIdentifier">$method_name</span><span class="synString">&quot;</span>);
+
+    <span class="synIdentifier">$removed_method-&gt;detach_from_class</span>
+        <span class="synConditional">if</span> blessed(<span class="synIdentifier">$removed_method</span>) &amp;&amp; <span class="synIdentifier">$removed_method-&gt;isa</span>(<span class="synString">'Class::MOP::Method'</span>);
+
+    <span class="synComment"># still valid, since we just removed the method from the map</span>
+    <span class="synIdentifier">$self-&gt;update_package_cache_flag</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$removed_method</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">get_method_list </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">return</span> <span class="synStatement">keys</span> <span class="synIdentifier">%{</span> <span class="synIdentifier">$self-&gt;_full_method_map</span> <span class="synIdentifier">}</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_get_local_methods </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">return</span> <span class="synStatement">values</span> <span class="synIdentifier">%{</span> <span class="synIdentifier">$self-&gt;_full_method_map</span> <span class="synIdentifier">}</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_restore_metamethods_from </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$old_meta</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$method</span> (<span class="synIdentifier">$old_meta-&gt;_get_local_methods</span>) {
+        <span class="synIdentifier">$method-&gt;_make_compatible_with</span>(<span class="synIdentifier">$self-&gt;method_metaclass</span>);
+        <span class="synIdentifier">$self-&gt;add_method</span>(<span class="synIdentifier">$method-&gt;name</span> =&gt; <span class="synIdentifier">$method</span>);
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">reset_package_cache_flag  </span>{ (<span class="synStatement">shift</span>)-&gt;{<span class="synString">'_package_cache_flag'</span>} = <span class="synOperator">undef</span> }
+<span class="synKeyword">sub </span><span class="synFunction">update_package_cache_flag </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synComment"># </span><span class="synTodo">NOTE:</span>
+    <span class="synComment"># we can manually update the cache number</span>
+    <span class="synComment"># since we are actually adding the method</span>
+    <span class="synComment"># to our cache as well. This avoids us</span>
+    <span class="synComment"># having to regenerate the method_map.</span>
+    <span class="synComment"># - SL</span>
+    <span class="synIdentifier">$self-&gt;{</span><span class="synString">'_package_cache_flag'</span><span class="synIdentifier">}</span> = Class::MOP::check_package_cache_flag(<span class="synIdentifier">$self-&gt;name</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_full_method_map </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$pkg_gen</span> = Class::MOP::check_package_cache_flag(<span class="synIdentifier">$self-&gt;name</span>);
+
+    <span class="synConditional">if</span> ((<span class="synIdentifier">$self-&gt;{</span><span class="synString">_package_cache_flag_full</span><span class="synIdentifier">}</span> || -<span class="synNumber">1</span>) != <span class="synIdentifier">$pkg_gen</span>) {
+        <span class="synComment"># forcibly reify all method map entries</span>
+        <span class="synIdentifier">$self-&gt;get_method</span>(<span class="synIdentifier">$_</span>)
+            <span class="synRepeat">for</span> <span class="synIdentifier">$self-&gt;list_all_package_symbols</span>(<span class="synString">'CODE'</span>);
+        <span class="synIdentifier">$self-&gt;{</span><span class="synString">_package_cache_flag_full</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$pkg_gen</span>;
+    }
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;_method_map</span>;
+}
+
+<span class="synComment"># overloading</span>
+
+<span class="synStatement">my</span> <span class="synIdentifier">$overload_operators</span>;
+<span class="synKeyword">sub </span><span class="synFunction">overload_operators </span>{
+    <span class="synIdentifier">$overload_operators</span> ||= [<span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synStatement">split</span> <span class="synStatement">/</span><span class="synSpecial">\s+</span><span class="synStatement">/</span> <span class="synStatement">}</span> <span class="synStatement">values</span> <span class="synIdentifier">%</span><span class="synType">overload::</span><span class="synIdentifier">ops</span>];
+    <span class="synStatement">return</span> <span class="synIdentifier">@$overload_operators</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">is_overloaded </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">return</span> overload::Overloaded(<span class="synIdentifier">$self-&gt;name</span>);
+}
+
+<span class="synComment"># </span><span class="synTodo">XXX</span><span class="synComment"> this could probably stand to be cached, but i figure it should be</span>
+<span class="synComment"># uncommon enough to not particularly matter</span>
+<span class="synKeyword">sub </span><span class="synFunction">_overload_map </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">return</span> {} <span class="synConditional">unless</span> <span class="synIdentifier">$self-&gt;is_overloaded</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">%map</span>;
+    <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$op</span> (<span class="synIdentifier">$self-&gt;overload_operators</span>) {
+        <span class="synStatement">my</span> <span class="synIdentifier">$body</span> = <span class="synIdentifier">$self-&gt;_get_overloaded_operator_body</span>(<span class="synIdentifier">$op</span>);
+        <span class="synStatement">next</span> <span class="synConditional">unless</span> <span class="synOperator">defined</span> <span class="synIdentifier">$body</span>;
+        <span class="synIdentifier">$map{$op}</span> = <span class="synIdentifier">$body</span>;
+    }
+
+    <span class="synStatement">return</span> \<span class="synIdentifier">%map</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">get_overload_list </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">return</span> <span class="synStatement">keys</span> <span class="synIdentifier">%{</span> <span class="synIdentifier">$self-&gt;_overload_map</span> <span class="synIdentifier">}</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">get_all_overloaded_operators </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$map</span> = <span class="synIdentifier">$self-&gt;_overload_map</span>;
+    <span class="synStatement">return</span> <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$self-&gt;_wrap_overload</span>(<span class="synIdentifier">$_</span>, <span class="synIdentifier">$map-&gt;{$_}</span>) <span class="synStatement">}</span> <span class="synStatement">keys</span> <span class="synIdentifier">%$map</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">has_overloaded_operator </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$op</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">return</span> <span class="synOperator">defined</span> <span class="synIdentifier">$self-&gt;_get_overloaded_operator_body</span>(<span class="synIdentifier">$op</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">get_overloaded_operator </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$op</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$body</span> = <span class="synIdentifier">$self-&gt;_get_overloaded_operator_body</span>(<span class="synIdentifier">$op</span>);
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synOperator">defined</span> <span class="synIdentifier">$body</span>;
+    <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;_wrap_overload</span>(<span class="synIdentifier">$op</span>, <span class="synIdentifier">$body</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">add_overloaded_operator </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$op</span>, <span class="synIdentifier">$body</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synIdentifier">$self-&gt;name-&gt;overload</span>::OVERLOAD(<span class="synIdentifier">$op</span> =&gt; <span class="synIdentifier">$body</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">remove_overloaded_operator </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$op</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synConditional">if</span> ( <span class="synIdentifier">$]</span> &lt; <span class="synFloat">5.018</span> ) {
+        <span class="synComment"># ugh, overload.pm provides no api for this - but the problem that</span>
+        <span class="synComment"># makes this necessary has been fixed in 5.18</span>
+        <span class="synIdentifier">$self-&gt;get_or_add_package_symbol</span>(<span class="synString">'%OVERLOAD'</span>)-&gt;{dummy}++;
+    }
+
+    <span class="synIdentifier">$self-&gt;remove_package_symbol</span>(<span class="synString">'&amp;('</span> . <span class="synIdentifier">$op</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_get_overloaded_operator_body </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$op</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">return</span> overload::Method(<span class="synIdentifier">$self-&gt;name</span>, <span class="synIdentifier">$op</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_wrap_overload </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$op</span>, <span class="synIdentifier">$body</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">return</span> Class::MOP::Method::Overload-&gt;wrap(
+        <span class="synString">operator</span>             =&gt; <span class="synIdentifier">$op</span>,
+        <span class="synString">package_name</span>         =&gt; <span class="synIdentifier">$self-&gt;name</span>,
+        <span class="synString">associated_metaclass</span> =&gt; <span class="synIdentifier">$self</span>,
+        <span class="synString">body</span>                 =&gt; <span class="synIdentifier">$body</span>,
+    );
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: Methods for metaclasses which have methods</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Class::MOP::Mixin::HasMethods - Methods for metaclasses which have methods
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This class implements methods for metaclasses which have methods
+(<span class="synIdentifier">L&lt;Class::MOP::Package&gt;</span> and <span class="synIdentifier">L&lt;Moose::Meta::Role&gt;</span>). See <span class="synIdentifier">L&lt;Class::MOP::Package&gt;</span>
+for API details.
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

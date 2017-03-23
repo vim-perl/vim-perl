@@ -1,0 +1,1711 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre>
+<span class="synStatement">package</span><span class="synType"> Moose::Meta::Attribute</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Attribute::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Attribute::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>B ();
+<span class="synStatement">use </span>Class::Load <span class="synString">qw(is_class_loaded load_class)</span>;
+<span class="synStatement">use </span>Scalar::Util <span class="synString">'blessed'</span>, <span class="synString">'weaken'</span>;
+<span class="synStatement">use </span>List::MoreUtils <span class="synString">'any'</span>;
+<span class="synStatement">use </span>Try::Tiny;
+<span class="synStatement">use overload</span>     ();
+
+<span class="synStatement">use </span>Moose::Deprecated;
+<span class="synStatement">use </span>Moose::Meta::Method::Accessor;
+<span class="synStatement">use </span>Moose::Meta::Method::Delegation;
+<span class="synStatement">use </span>Moose::Util ();
+<span class="synStatement">use </span>Moose::Util::TypeConstraints ();
+<span class="synStatement">use </span>Class::MOP::MiniTrait;
+
+<span class="synStatement">use base</span> <span class="synString">'Class::MOP::Attribute'</span>, <span class="synString">'Moose::Meta::Mixin::AttributeCore'</span>;
+
+Class::MOP::MiniTrait::apply(__PACKAGE__, <span class="synString">'Moose::Meta::Object::Trait'</span>);
+
+__PACKAGE__<span class="synIdentifier">-&gt;meta-&gt;add_attribute</span>(<span class="synString">'traits'</span> =&gt; (
+    <span class="synString">reader</span>    =&gt; <span class="synString">'applied_traits'</span>,
+    <span class="synString">predicate</span> =&gt; <span class="synString">'has_applied_traits'</span>,
+    Class::MOP::_definition_context(),
+));
+
+<span class="synComment"># we need to have a -&gt;does method in here to</span>
+<span class="synComment"># more easily support traits, and the introspection</span>
+<span class="synComment"># of those traits. We extend the does check to look</span>
+<span class="synComment"># for metatrait aliases.</span>
+<span class="synKeyword">sub </span><span class="synFunction">does </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">$role_name</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$name</span> = try {
+        Moose::Util::resolve_metatrait_alias(<span class="synString">Attribute</span> =&gt; <span class="synIdentifier">$role_name</span>)
+    };
+    <span class="synStatement">return</span> <span class="synNumber">0</span> <span class="synConditional">if</span> !<span class="synOperator">defined</span>(<span class="synIdentifier">$name</span>); <span class="synComment"># failed to load class</span>
+    <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;Moose</span>::Object::does(<span class="synIdentifier">$name</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_error_thrower </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">require</span> Moose::Meta::Class;
+    ( <span class="synOperator">ref</span> <span class="synIdentifier">$self</span> &amp;&amp; <span class="synIdentifier">$self-&gt;associated_class</span> ) || <span class="synString">&quot;Moose::Meta::Class&quot;</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">throw_error </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$inv</span> = <span class="synIdentifier">$self-&gt;_error_thrower</span>;
+    <span class="synStatement">unshift</span> <span class="synIdentifier">@_</span>, <span class="synString">&quot;message&quot;</span> <span class="synConditional">if</span> <span class="synIdentifier">@_</span> % <span class="synNumber">2</span> == <span class="synNumber">1</span>;
+    <span class="synStatement">unshift</span> <span class="synIdentifier">@_</span>, <span class="synString">attr</span> =&gt; <span class="synIdentifier">$self</span> <span class="synConditional">if</span> <span class="synOperator">ref</span> <span class="synIdentifier">$self</span>;
+    <span class="synStatement">unshift</span> <span class="synIdentifier">@_</span>, <span class="synIdentifier">$inv</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$handler</span> = <span class="synIdentifier">$inv-&gt;can</span>(<span class="synString">&quot;throw_error&quot;</span>); <span class="synComment"># to avoid incrementing depth by 1</span>
+    <span class="synStatement">goto</span> <span class="synIdentifier">$handler</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_throw_error </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$self</span>, <span class="synIdentifier">$msg</span>, <span class="synIdentifier">$args</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$inv</span> = <span class="synIdentifier">$self-&gt;_error_thrower</span>;
+    <span class="synComment"># </span><span class="synTodo">XXX</span><span class="synComment"> ugh</span>
+    <span class="synIdentifier">$inv</span> = <span class="synString">'Moose::Meta::Class'</span> <span class="synConditional">unless</span> <span class="synIdentifier">$inv-&gt;can</span>(<span class="synString">'_inline_throw_error'</span>);
+
+    <span class="synComment"># </span><span class="synTodo">XXX</span><span class="synComment"> ugh ugh UGH</span>
+    <span class="synStatement">my</span> <span class="synIdentifier">$class</span> = <span class="synIdentifier">$self-&gt;associated_class</span>;
+    <span class="synConditional">if</span> (<span class="synIdentifier">$class</span>) {
+        <span class="synStatement">my</span> <span class="synIdentifier">$class_name</span> = B::perlstring(<span class="synIdentifier">$class-&gt;name</span>);
+        <span class="synStatement">my</span> <span class="synIdentifier">$attr_name</span> = B::perlstring(<span class="synIdentifier">$self-&gt;name</span>);
+        <span class="synIdentifier">$args</span> = <span class="synString">'attr =&gt; Class::MOP::class_of('</span> . <span class="synIdentifier">$class_name</span> . <span class="synString">')'</span>
+              . <span class="synString">'-&gt;find_attribute_by_name('</span> . <span class="synIdentifier">$attr_name</span> . <span class="synString">'), '</span>
+              . (<span class="synOperator">defined</span> <span class="synIdentifier">$args</span> ? <span class="synIdentifier">$args</span> : <span class="synString">''</span>);
+    }
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$inv-&gt;_inline_throw_error</span>(<span class="synIdentifier">$msg</span>, <span class="synIdentifier">$args</span>)
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">new </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$class</span>, <span class="synIdentifier">$name</span>, <span class="synIdentifier">%options</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synIdentifier">$class-&gt;_process_options</span>(<span class="synIdentifier">$name</span>, \<span class="synIdentifier">%options</span>) <span class="synConditional">unless</span> <span class="synIdentifier">$options{</span><span class="synString">__hack_no_process_options</span><span class="synIdentifier">}</span>; <span class="synComment"># used from clone()... YECHKKK </span><span class="synTodo">FIXME</span><span class="synComment"> ICKY YUCK GROSS</span>
+
+    <span class="synStatement">delete</span> <span class="synIdentifier">$options{</span><span class="synString">__hack_no_process_options</span><span class="synIdentifier">}</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">%attrs</span> =
+        ( <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_</span> =&gt; <span class="synNumber">1</span> <span class="synStatement">}</span>
+          <span class="synStatement">grep</span> <span class="synStatement">{</span> <span class="synOperator">defined</span> <span class="synStatement">}</span>
+          <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;init_arg</span>() <span class="synStatement">}</span>
+          <span class="synIdentifier">$class-&gt;meta</span>()-&gt;get_all_attributes()
+        );
+
+    <span class="synStatement">my</span> <span class="synIdentifier">@bad</span> = <span class="synStatement">sort</span> <span class="synStatement">grep</span> <span class="synStatement">{</span> ! <span class="synIdentifier">$attrs{$_}</span> <span class="synStatement">}</span>  <span class="synStatement">keys</span> <span class="synIdentifier">%options</span>;
+
+    <span class="synConditional">if</span> (<span class="synIdentifier">@bad</span>)
+    {
+        <span class="synStatement">my</span> <span class="synIdentifier">$s</span> = <span class="synIdentifier">@bad</span> &gt; <span class="synNumber">1</span> ? <span class="synString">'s'</span> : <span class="synString">''</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$list</span> = <span class="synStatement">join</span> <span class="synString">&quot;', '&quot;</span>, <span class="synIdentifier">@bad</span>;
+
+        <span class="synStatement">my</span> <span class="synIdentifier">$package</span> = <span class="synIdentifier">$options{</span><span class="synString">definition_context</span><span class="synIdentifier">}{</span><span class="synString">package</span><span class="synIdentifier">}</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$context</span> = <span class="synIdentifier">$options{</span><span class="synString">definition_context</span><span class="synIdentifier">}{</span><span class="synString">context</span><span class="synIdentifier">}</span>
+                   || <span class="synString">'attribute constructor'</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$type</span> = <span class="synIdentifier">$options{</span><span class="synString">definition_context</span><span class="synIdentifier">}{</span><span class="synString">type</span><span class="synIdentifier">}</span> || <span class="synString">'class'</span>;
+
+        <span class="synStatement">my</span> <span class="synIdentifier">$location</span> = <span class="synString">''</span>;
+        <span class="synConditional">if</span> (<span class="synOperator">defined</span>(<span class="synIdentifier">$package</span>)) {
+            <span class="synIdentifier">$location</span> = <span class="synString">&quot; in &quot;</span>;
+            <span class="synIdentifier">$location</span> .= <span class="synString">&quot;</span><span class="synIdentifier">$type</span><span class="synString"> &quot;</span> <span class="synConditional">if</span> <span class="synIdentifier">$type</span>;
+            <span class="synIdentifier">$location</span> .= <span class="synIdentifier">$package</span>;
+        }
+
+        Carp::cluck <span class="synString">&quot;Found unknown argument</span><span class="synIdentifier">$s</span><span class="synString"> '</span><span class="synIdentifier">$list</span><span class="synString">' in the </span><span class="synIdentifier">$context</span><span class="synString"> for '</span><span class="synIdentifier">$name</span><span class="synString">'</span><span class="synIdentifier">$location</span><span class="synString">&quot;</span>;
+    }
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$class-&gt;SUPER</span>::new(<span class="synIdentifier">$name</span>, <span class="synIdentifier">%options</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">interpolate_class_and_new </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$class</span>, <span class="synIdentifier">$name</span>, <span class="synIdentifier">%args</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$new_class</span>, <span class="synIdentifier">@traits</span> ) = <span class="synIdentifier">$class-&gt;interpolate_class</span>(\<span class="synIdentifier">%args</span>);
+
+    <span class="synIdentifier">$new_class-&gt;new</span>(<span class="synIdentifier">$name</span>, <span class="synIdentifier">%args</span>, ( <span class="synStatement">scalar</span>(<span class="synIdentifier">@traits</span>) ? ( <span class="synString">traits</span> =&gt; \<span class="synIdentifier">@traits</span> ) : () ) );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">interpolate_class </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$class</span>, <span class="synIdentifier">$options</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synIdentifier">$class</span> = <span class="synOperator">ref</span>(<span class="synIdentifier">$class</span>) || <span class="synIdentifier">$class</span>;
+
+    <span class="synConditional">if</span> ( <span class="synStatement">my</span> <span class="synIdentifier">$metaclass_name</span> = <span class="synStatement">delete</span> <span class="synIdentifier">$options-&gt;{</span><span class="synString">metaclass</span><span class="synIdentifier">}</span> ) {
+        <span class="synStatement">my</span> <span class="synIdentifier">$new_class</span> = Moose::Util::resolve_metaclass_alias( <span class="synString">Attribute</span> =&gt; <span class="synIdentifier">$metaclass_name</span> );
+
+        <span class="synConditional">if</span> ( <span class="synIdentifier">$class</span> <span class="synOperator">ne</span> <span class="synIdentifier">$new_class</span> ) {
+            <span class="synConditional">if</span> ( <span class="synIdentifier">$new_class-&gt;can</span>(<span class="synString">&quot;interpolate_class&quot;</span>) ) {
+                <span class="synStatement">return</span> <span class="synIdentifier">$new_class-&gt;interpolate_class</span>(<span class="synIdentifier">$options</span>);
+            } <span class="synConditional">else</span> {
+                <span class="synIdentifier">$class</span> = <span class="synIdentifier">$new_class</span>;
+            }
+        }
+    }
+
+    <span class="synStatement">my</span> <span class="synIdentifier">@traits</span>;
+
+    <span class="synConditional">if</span> (<span class="synStatement">my</span> <span class="synIdentifier">$traits</span> = <span class="synIdentifier">$options-&gt;{</span><span class="synString">traits</span><span class="synIdentifier">}</span>) {
+        <span class="synStatement">my</span> <span class="synIdentifier">$i</span> = <span class="synNumber">0</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$has_foreign_options</span> = <span class="synNumber">0</span>;
+
+        <span class="synRepeat">while</span> (<span class="synIdentifier">$i</span> &lt; <span class="synIdentifier">@$traits</span>) {
+            <span class="synStatement">my</span> <span class="synIdentifier">$trait</span> = <span class="synIdentifier">$traits-&gt;[$i</span>++<span class="synIdentifier">]</span>;
+            <span class="synStatement">next</span> <span class="synConditional">if</span> <span class="synOperator">ref</span>(<span class="synIdentifier">$trait</span>); <span class="synComment"># options to a trait we discarded</span>
+
+            <span class="synIdentifier">$trait</span> = Moose::Util::resolve_metatrait_alias(<span class="synString">Attribute</span> =&gt; <span class="synIdentifier">$trait</span>)
+                  || <span class="synIdentifier">$trait</span>;
+
+            <span class="synStatement">next</span> <span class="synConditional">if</span> <span class="synIdentifier">$class-&gt;does</span>(<span class="synIdentifier">$trait</span>);
+
+            <span class="synStatement">push</span> <span class="synIdentifier">@traits</span>, <span class="synIdentifier">$trait</span>;
+
+            <span class="synComment"># are there options?</span>
+            <span class="synConditional">if</span> (<span class="synIdentifier">$traits-&gt;[$i]</span> &amp;&amp; <span class="synOperator">ref</span>(<span class="synIdentifier">$traits-&gt;[$i]</span>)) {
+                <span class="synIdentifier">$has_foreign_options</span> = <span class="synNumber">1</span>
+                    <span class="synConditional">if</span> any { <span class="synIdentifier">$_</span> <span class="synOperator">ne</span> <span class="synString">'-alias'</span> &amp;&amp; <span class="synIdentifier">$_</span> <span class="synOperator">ne</span> <span class="synString">'-excludes'</span> } <span class="synStatement">keys</span> <span class="synIdentifier">%{</span> <span class="synIdentifier">$traits-&gt;[$i]</span> <span class="synIdentifier">}</span>;
+
+                <span class="synStatement">push</span> <span class="synIdentifier">@traits</span>, <span class="synIdentifier">$traits-&gt;[$i</span>++<span class="synIdentifier">]</span>;
+            }
+        }
+
+        <span class="synConditional">if</span> (<span class="synIdentifier">@traits</span>) {
+            <span class="synStatement">my</span> <span class="synIdentifier">%options</span> = (
+                <span class="synString">superclasses</span> =&gt; [ <span class="synIdentifier">$class</span> ],
+                <span class="synString">roles</span>        =&gt; [ <span class="synIdentifier">@traits</span> ],
+            );
+
+            <span class="synConditional">if</span> (<span class="synIdentifier">$has_foreign_options</span>) {
+                <span class="synIdentifier">$options{</span><span class="synString">weaken</span><span class="synIdentifier">}</span> = <span class="synNumber">0</span>;
+            }
+            <span class="synConditional">else</span> {
+                <span class="synIdentifier">$options{</span><span class="synString">cache</span><span class="synIdentifier">}</span> = <span class="synNumber">1</span>;
+            }
+
+            <span class="synStatement">my</span> <span class="synIdentifier">$anon_class</span> = Moose::Meta::Class-&gt;create_anon_class(<span class="synIdentifier">%options</span>);
+            <span class="synIdentifier">$class</span> = <span class="synIdentifier">$anon_class-&gt;name</span>;
+        }
+    }
+
+    <span class="synStatement">return</span> ( <span class="synStatement">wantarray</span> ? ( <span class="synIdentifier">$class</span>, <span class="synIdentifier">@traits</span> ) : <span class="synIdentifier">$class</span> );
+}
+
+<span class="synComment"># ...</span>
+
+<span class="synComment"># method-generating options shouldn't be overridden</span>
+<span class="synKeyword">sub </span><span class="synFunction">illegal_options_for_inheritance </span>{
+    <span class="synString">qw(reader writer accessor clearer predicate)</span>
+}
+
+<span class="synComment"># </span><span class="synTodo">NOTE</span><span class="synComment">/</span><span class="synTodo">TODO</span>
+<span class="synComment"># This method *must* be able to handle</span>
+<span class="synComment"># Class::MOP::Attribute instances as</span>
+<span class="synComment"># well. Yes, I know that is wrong, but</span>
+<span class="synComment"># apparently we didn't realize it was</span>
+<span class="synComment"># doing that and now we have some code</span>
+<span class="synComment"># which is dependent on it. The real</span>
+<span class="synComment"># solution of course is to push this</span>
+<span class="synComment"># feature back up into Class::MOP::Attribute</span>
+<span class="synComment"># but I not right now, I am too lazy.</span>
+<span class="synComment"># However if you are reading this and</span>
+<span class="synComment"># looking for something to do,.. please</span>
+<span class="synComment"># be my guest.</span>
+<span class="synComment"># - stevan</span>
+<span class="synKeyword">sub </span><span class="synFunction">clone_and_inherit_options </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">%options</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synComment"># </span><span class="synTodo">NOTE:</span>
+    <span class="synComment"># we may want to extends a Class::MOP::Attribute</span>
+    <span class="synComment"># in which case we need to be able to use the</span>
+    <span class="synComment"># core set of legal options that have always</span>
+    <span class="synComment"># been here. But we allows Moose::Meta::Attribute</span>
+    <span class="synComment"># instances to changes them.</span>
+    <span class="synComment"># - SL</span>
+    <span class="synStatement">my</span> <span class="synIdentifier">@illegal_options</span> = <span class="synIdentifier">$self-&gt;can</span>(<span class="synString">'illegal_options_for_inheritance'</span>)
+        ? <span class="synIdentifier">$self-&gt;illegal_options_for_inheritance</span>
+        : ();
+
+    <span class="synStatement">my</span> <span class="synIdentifier">@found_illegal_options</span> = <span class="synStatement">grep</span> <span class="synStatement">{</span> <span class="synStatement">exists</span> <span class="synIdentifier">$options{$_}</span> &amp;&amp; <span class="synStatement">exists</span> <span class="synIdentifier">$self-&gt;{$_}</span> ? <span class="synIdentifier">$_</span> : <span class="synOperator">undef</span> <span class="synStatement">}</span> <span class="synIdentifier">@illegal_options</span>;
+    (<span class="synStatement">scalar</span> <span class="synIdentifier">@found_illegal_options</span> == <span class="synNumber">0</span>)
+        || <span class="synIdentifier">$self-&gt;throw_error</span>(<span class="synString">&quot;Illegal inherited options =&gt; (&quot;</span> . (<span class="synStatement">join</span> <span class="synString">', '</span> =&gt; <span class="synIdentifier">@found_illegal_options</span>) . <span class="synString">&quot;)&quot;</span>, <span class="synString">data</span> =&gt; \<span class="synIdentifier">%options</span>);
+
+    <span class="synIdentifier">$self-&gt;_process_isa_option</span>( <span class="synIdentifier">$self-&gt;name</span>, \<span class="synIdentifier">%options</span> );
+    <span class="synIdentifier">$self-&gt;_process_does_option</span>( <span class="synIdentifier">$self-&gt;name</span>, \<span class="synIdentifier">%options</span> );
+
+    <span class="synComment"># </span><span class="synTodo">NOTE:</span>
+    <span class="synComment"># this doesn't apply to Class::MOP::Attributes,</span>
+    <span class="synComment"># so we can ignore it for them.</span>
+    <span class="synComment"># - SL</span>
+    <span class="synConditional">if</span> (<span class="synIdentifier">$self-&gt;can</span>(<span class="synString">'interpolate_class'</span>)) {
+        ( <span class="synIdentifier">$options{</span><span class="synString">metaclass</span><span class="synIdentifier">}</span>, <span class="synStatement">my</span> <span class="synIdentifier">@traits</span> ) = <span class="synIdentifier">$self-&gt;interpolate_class</span>(\<span class="synIdentifier">%options</span>);
+
+        <span class="synStatement">my</span> <span class="synIdentifier">%seen</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">@all_traits</span> = <span class="synStatement">grep</span> <span class="synStatement">{</span> <span class="synIdentifier">$seen{$_}</span>++ <span class="synStatement">}</span> <span class="synIdentifier">@{</span> <span class="synIdentifier">$self-&gt;applied_traits</span> || [] <span class="synIdentifier">}</span>, <span class="synIdentifier">@traits</span>;
+        <span class="synIdentifier">$options{</span><span class="synString">traits</span><span class="synIdentifier">}</span> = \<span class="synIdentifier">@all_traits</span> <span class="synConditional">if</span> <span class="synIdentifier">@all_traits</span>;
+    }
+
+    <span class="synComment"># This method can be called on a CMOP::Attribute object, so we need to</span>
+    <span class="synComment"># make sure we can call this method.</span>
+    <span class="synIdentifier">$self-&gt;_process_lazy_build_option</span>( <span class="synIdentifier">$self-&gt;name</span>, \<span class="synIdentifier">%options</span> )
+        <span class="synConditional">if</span> <span class="synIdentifier">$self-&gt;can</span>(<span class="synString">'_process_lazy_build_option'</span>);
+
+    <span class="synIdentifier">$self-&gt;clone</span>(<span class="synIdentifier">%options</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">clone </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$self</span>, <span class="synIdentifier">%params</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$class</span> = <span class="synStatement">delete</span> <span class="synIdentifier">$params{</span><span class="synString">metaclass</span><span class="synIdentifier">}</span> || <span class="synOperator">ref</span> <span class="synIdentifier">$self</span>;
+
+    <span class="synStatement">my</span> ( <span class="synIdentifier">@init</span>, <span class="synIdentifier">@non_init</span> );
+
+    <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$attr</span> ( <span class="synStatement">grep</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;has_value</span>(<span class="synIdentifier">$self</span>) <span class="synStatement">}</span> Class::MOP::class_of(<span class="synIdentifier">$self</span>)-&gt;get_all_attributes ) {
+        <span class="synStatement">push</span> <span class="synIdentifier">@{</span> <span class="synIdentifier">$attr-&gt;has_init_arg</span> ? \<span class="synIdentifier">@init</span> : \<span class="synIdentifier">@non_init</span> <span class="synIdentifier">}</span>, <span class="synIdentifier">$attr</span>;
+    }
+
+    <span class="synStatement">my</span> <span class="synIdentifier">%new_params</span> = ( ( <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;init_arg</span> =&gt; <span class="synIdentifier">$_-&gt;get_value</span>(<span class="synIdentifier">$self</span>) <span class="synStatement">}</span> <span class="synIdentifier">@init</span> ), <span class="synIdentifier">%params</span> );
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$name</span> = <span class="synStatement">delete</span> <span class="synIdentifier">$new_params{</span><span class="synString">name</span><span class="synIdentifier">}</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$clone</span> = <span class="synIdentifier">$class-&gt;new</span>(<span class="synIdentifier">$name</span>, <span class="synIdentifier">%new_params</span>, <span class="synString">__hack_no_process_options</span> =&gt; <span class="synNumber">1</span> );
+
+    <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$attr</span> ( <span class="synIdentifier">@non_init</span> ) {
+        <span class="synIdentifier">$attr-&gt;set_value</span>(<span class="synIdentifier">$clone</span>, <span class="synIdentifier">$attr-&gt;get_value</span>(<span class="synIdentifier">$self</span>));
+    }
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$clone</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_process_options </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$class</span>, <span class="synIdentifier">$name</span>, <span class="synIdentifier">$options</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synIdentifier">$class-&gt;_process_is_option</span>( <span class="synIdentifier">$name</span>, <span class="synIdentifier">$options</span> );
+    <span class="synIdentifier">$class-&gt;_process_isa_option</span>( <span class="synIdentifier">$name</span>, <span class="synIdentifier">$options</span> );
+    <span class="synIdentifier">$class-&gt;_process_does_option</span>( <span class="synIdentifier">$name</span>, <span class="synIdentifier">$options</span> );
+    <span class="synIdentifier">$class-&gt;_process_coerce_option</span>( <span class="synIdentifier">$name</span>, <span class="synIdentifier">$options</span> );
+    <span class="synIdentifier">$class-&gt;_process_trigger_option</span>( <span class="synIdentifier">$name</span>, <span class="synIdentifier">$options</span> );
+    <span class="synIdentifier">$class-&gt;_process_auto_deref_option</span>( <span class="synIdentifier">$name</span>, <span class="synIdentifier">$options</span> );
+    <span class="synIdentifier">$class-&gt;_process_lazy_build_option</span>( <span class="synIdentifier">$name</span>, <span class="synIdentifier">$options</span> );
+    <span class="synIdentifier">$class-&gt;_process_lazy_option</span>( <span class="synIdentifier">$name</span>, <span class="synIdentifier">$options</span> );
+    <span class="synIdentifier">$class-&gt;_process_required_option</span>( <span class="synIdentifier">$name</span>, <span class="synIdentifier">$options</span> );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_process_is_option </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$class</span>, <span class="synIdentifier">$name</span>, <span class="synIdentifier">$options</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$options-&gt;{</span><span class="synString">is</span><span class="synIdentifier">}</span>;
+
+    <span class="synComment">### -------------------------</span>
+    <span class="synComment">## is =&gt; ro, writer =&gt; _foo    # turns into (reader =&gt; foo, writer =&gt; _foo) as before</span>
+    <span class="synComment">## is =&gt; rw, writer =&gt; _foo    # turns into (reader =&gt; foo, writer =&gt; _foo)</span>
+    <span class="synComment">## is =&gt; rw, accessor =&gt; _foo  # turns into (accessor =&gt; _foo)</span>
+    <span class="synComment">## is =&gt; ro, accessor =&gt; _foo  # error, accesor is rw</span>
+    <span class="synComment">### -------------------------</span>
+
+    <span class="synConditional">if</span> ( <span class="synIdentifier">$options-&gt;{</span><span class="synString">is</span><span class="synIdentifier">}</span> <span class="synOperator">eq</span> <span class="synString">'ro'</span> ) {
+        <span class="synIdentifier">$class-&gt;throw_error</span>(
+            <span class="synString">&quot;Cannot define an accessor name on a read-only attribute, accessors are read/write&quot;</span>,
+            <span class="synString">data</span> =&gt; <span class="synIdentifier">$options</span> )
+            <span class="synConditional">if</span> <span class="synStatement">exists</span> <span class="synIdentifier">$options-&gt;{</span><span class="synString">accessor</span><span class="synIdentifier">}</span>;
+        <span class="synIdentifier">$options-&gt;{</span><span class="synString">reader</span><span class="synIdentifier">}</span> ||= <span class="synIdentifier">$name</span>;
+    }
+    <span class="synConditional">elsif</span> ( <span class="synIdentifier">$options-&gt;{</span><span class="synString">is</span><span class="synIdentifier">}</span> <span class="synOperator">eq</span> <span class="synString">'rw'</span> ) {
+        <span class="synConditional">if</span> ( <span class="synIdentifier">$options-&gt;{</span><span class="synString">writer</span><span class="synIdentifier">}</span> ) {
+            <span class="synIdentifier">$options-&gt;{</span><span class="synString">reader</span><span class="synIdentifier">}</span> ||= <span class="synIdentifier">$name</span>;
+        }
+        <span class="synConditional">else</span> {
+            <span class="synIdentifier">$options-&gt;{</span><span class="synString">accessor</span><span class="synIdentifier">}</span> ||= <span class="synIdentifier">$name</span>;
+        }
+    }
+    <span class="synConditional">elsif</span> ( <span class="synIdentifier">$options-&gt;{</span><span class="synString">is</span><span class="synIdentifier">}</span> <span class="synOperator">eq</span> <span class="synString">'bare'</span> ) {
+        <span class="synStatement">return</span>;
+        <span class="synComment"># do nothing, but don't complain (later) about missing methods</span>
+    }
+    <span class="synConditional">else</span> {
+        <span class="synIdentifier">$class-&gt;throw_error</span>( <span class="synString">&quot;I do not understand this option (is =&gt; &quot;</span>
+                . <span class="synIdentifier">$options-&gt;{</span><span class="synString">is</span><span class="synIdentifier">}</span>
+                . <span class="synString">&quot;) on attribute (</span><span class="synIdentifier">$name</span><span class="synString">)&quot;</span>, <span class="synString">data</span> =&gt; <span class="synIdentifier">$options-&gt;{</span><span class="synString">is</span><span class="synIdentifier">}</span> );
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_process_isa_option </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$class</span>, <span class="synIdentifier">$name</span>, <span class="synIdentifier">$options</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synStatement">exists</span> <span class="synIdentifier">$options-&gt;{</span><span class="synString">isa</span><span class="synIdentifier">}</span>;
+
+    <span class="synConditional">if</span> ( <span class="synStatement">exists</span> <span class="synIdentifier">$options-&gt;{</span><span class="synString">does</span><span class="synIdentifier">}</span> ) {
+        <span class="synConditional">if</span> ( try { <span class="synIdentifier">$options-&gt;{</span><span class="synString">isa</span><span class="synIdentifier">}-&gt;can</span>(<span class="synString">'does'</span>) } ) {
+            ( <span class="synIdentifier">$options-&gt;{</span><span class="synString">isa</span><span class="synIdentifier">}-&gt;does</span>( <span class="synIdentifier">$options-&gt;{</span><span class="synString">does</span><span class="synIdentifier">}</span> ) )
+                || <span class="synIdentifier">$class-&gt;throw_error</span>(
+                <span class="synString">&quot;Cannot have an isa option and a does option if the isa does not do the does on attribute (</span><span class="synIdentifier">$name</span><span class="synString">)&quot;</span>,
+                <span class="synString">data</span> =&gt; <span class="synIdentifier">$options</span> );
+        }
+        <span class="synConditional">else</span> {
+            <span class="synIdentifier">$class-&gt;throw_error</span>(
+                <span class="synString">&quot;Cannot have an isa option which cannot -&gt;does() on attribute (</span><span class="synIdentifier">$name</span><span class="synString">)&quot;</span>,
+                <span class="synString">data</span> =&gt; <span class="synIdentifier">$options</span> );
+        }
+    }
+
+    <span class="synComment"># allow for anon-subtypes here ...</span>
+    <span class="synComment">#</span>
+    <span class="synComment"># Checking for Specio explicitly is completely revolting. At some point</span>
+    <span class="synComment"># this needs to be refactored so that Moose core defines a standard type</span>
+    <span class="synComment"># API that all types must implement. Unfortunately, the current core API</span>
+    <span class="synComment"># is _not_ the right API, so we probably need to A) come up with the new</span>
+    <span class="synComment"># API (Specio is a good start); B) refactor the core types to implement</span>
+    <span class="synComment"># that API; C) do duck type checking on type objects.</span>
+    <span class="synConditional">if</span> ( blessed( <span class="synIdentifier">$options-&gt;{</span><span class="synString">isa</span><span class="synIdentifier">}</span> )
+        &amp;&amp; <span class="synIdentifier">$options-&gt;{</span><span class="synString">isa</span><span class="synIdentifier">}-&gt;isa</span>(<span class="synString">'Moose::Meta::TypeConstraint'</span>) ) {
+        <span class="synIdentifier">$options-&gt;{</span><span class="synString">type_constraint</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$options-&gt;{</span><span class="synString">isa</span><span class="synIdentifier">}</span>;
+    }
+    <span class="synConditional">elsif</span> (
+        blessed( <span class="synIdentifier">$options-&gt;{</span><span class="synString">isa</span><span class="synIdentifier">}</span> )
+        &amp;&amp; Moose::Util::does_role(
+            <span class="synIdentifier">$options-&gt;{</span><span class="synString">isa</span><span class="synIdentifier">}</span>, <span class="synString">'Specio::Constraint::Role::Interface'</span>
+        )
+        ) {
+        <span class="synIdentifier">$options-&gt;{</span><span class="synString">type_constraint</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$options-&gt;{</span><span class="synString">isa</span><span class="synIdentifier">}</span>;
+    }
+    <span class="synConditional">else</span> {
+        <span class="synIdentifier">$options-&gt;{</span><span class="synString">type_constraint</span><span class="synIdentifier">}</span>
+            = Moose::Util::TypeConstraints::find_or_create_isa_type_constraint(
+            <span class="synIdentifier">$options-&gt;{</span><span class="synString">isa</span><span class="synIdentifier">}</span>,
+            { <span class="synString">package_defined_in</span> =&gt; <span class="synIdentifier">$options-&gt;{</span><span class="synString">definition_context</span><span class="synIdentifier">}-&gt;{</span><span class="synString">package</span><span class="synIdentifier">}</span> }
+        );
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_process_does_option </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$class</span>, <span class="synIdentifier">$name</span>, <span class="synIdentifier">$options</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synStatement">exists</span> <span class="synIdentifier">$options-&gt;{</span><span class="synString">does</span><span class="synIdentifier">}</span> &amp;&amp; ! <span class="synStatement">exists</span> <span class="synIdentifier">$options-&gt;{</span><span class="synString">isa</span><span class="synIdentifier">}</span>;
+
+    <span class="synComment"># allow for anon-subtypes here ...</span>
+    <span class="synConditional">if</span> ( blessed( <span class="synIdentifier">$options-&gt;{</span><span class="synString">does</span><span class="synIdentifier">}</span> )
+        &amp;&amp; <span class="synIdentifier">$options-&gt;{</span><span class="synString">does</span><span class="synIdentifier">}-&gt;isa</span>(<span class="synString">'Moose::Meta::TypeConstraint'</span>) ) {
+        <span class="synIdentifier">$options-&gt;{</span><span class="synString">type_constraint</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$options-&gt;{</span><span class="synString">does</span><span class="synIdentifier">}</span>;
+    }
+    <span class="synConditional">else</span> {
+        <span class="synIdentifier">$options-&gt;{</span><span class="synString">type_constraint</span><span class="synIdentifier">}</span>
+            = Moose::Util::TypeConstraints::find_or_create_does_type_constraint(
+            <span class="synIdentifier">$options-&gt;{</span><span class="synString">does</span><span class="synIdentifier">}</span>,
+            { <span class="synString">package_defined_in</span> =&gt; <span class="synIdentifier">$options-&gt;{</span><span class="synString">definition_context</span><span class="synIdentifier">}-&gt;{</span><span class="synString">package</span><span class="synIdentifier">}</span> }
+        );
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_process_coerce_option </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$class</span>, <span class="synIdentifier">$name</span>, <span class="synIdentifier">$options</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$options-&gt;{</span><span class="synString">coerce</span><span class="synIdentifier">}</span>;
+
+    ( <span class="synStatement">exists</span> <span class="synIdentifier">$options-&gt;{</span><span class="synString">type_constraint</span><span class="synIdentifier">}</span> )
+        || <span class="synIdentifier">$class-&gt;throw_error</span>(
+        <span class="synString">&quot;You cannot have coercion without specifying a type constraint on attribute (</span><span class="synIdentifier">$name</span><span class="synString">)&quot;</span>,
+        <span class="synString">data</span> =&gt; <span class="synIdentifier">$options</span> );
+
+    <span class="synIdentifier">$class-&gt;throw_error</span>(
+        <span class="synString">&quot;You cannot have a weak reference to a coerced value on attribute (</span><span class="synIdentifier">$name</span><span class="synString">)&quot;</span>,
+        <span class="synString">data</span> =&gt; <span class="synIdentifier">$options</span> )
+        <span class="synConditional">if</span> <span class="synIdentifier">$options-&gt;{</span><span class="synString">weak_ref</span><span class="synIdentifier">}</span>;
+
+    <span class="synConditional">unless</span> ( <span class="synIdentifier">$options-&gt;{</span><span class="synString">type_constraint</span><span class="synIdentifier">}-&gt;has_coercion</span> ) {
+        <span class="synStatement">my</span> <span class="synIdentifier">$type</span> = <span class="synIdentifier">$options-&gt;{</span><span class="synString">type_constraint</span><span class="synIdentifier">}-&gt;name</span>;
+
+        Moose::Deprecated::deprecated(
+            <span class="synString">feature</span> =&gt; <span class="synString">'coerce without coercion'</span>,
+            <span class="synString">message</span> =&gt;
+                <span class="synString">&quot;You cannot coerce an attribute (</span><span class="synIdentifier">$name</span><span class="synString">) unless its type (</span><span class="synIdentifier">$type</span><span class="synString">) has a coercion&quot;</span>
+        );
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_process_trigger_option </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$class</span>, <span class="synIdentifier">$name</span>, <span class="synIdentifier">$options</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synStatement">exists</span> <span class="synIdentifier">$options-&gt;{</span><span class="synString">trigger</span><span class="synIdentifier">}</span>;
+
+    ( <span class="synString">'CODE'</span> <span class="synOperator">eq</span> <span class="synOperator">ref</span> <span class="synIdentifier">$options-&gt;{</span><span class="synString">trigger</span><span class="synIdentifier">}</span> )
+        || <span class="synIdentifier">$class-&gt;throw_error</span>(<span class="synString">&quot;Trigger must be a CODE ref on attribute (</span><span class="synIdentifier">$name</span><span class="synString">)&quot;</span>, <span class="synString">data</span> =&gt; <span class="synIdentifier">$options-&gt;{</span><span class="synString">trigger</span><span class="synIdentifier">}</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_process_auto_deref_option </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$class</span>, <span class="synIdentifier">$name</span>, <span class="synIdentifier">$options</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$options-&gt;{</span><span class="synString">auto_deref</span><span class="synIdentifier">}</span>;
+
+    ( <span class="synStatement">exists</span> <span class="synIdentifier">$options-&gt;{</span><span class="synString">type_constraint</span><span class="synIdentifier">}</span> )
+        || <span class="synIdentifier">$class-&gt;throw_error</span>(
+        <span class="synString">&quot;You cannot auto-dereference without specifying a type constraint on attribute (</span><span class="synIdentifier">$name</span><span class="synString">)&quot;</span>,
+        <span class="synString">data</span> =&gt; <span class="synIdentifier">$options</span> );
+
+    ( <span class="synIdentifier">$options-&gt;{</span><span class="synString">type_constraint</span><span class="synIdentifier">}-&gt;is_a_type_of</span>(<span class="synString">'ArrayRef'</span>)
+      || <span class="synIdentifier">$options-&gt;{</span><span class="synString">type_constraint</span><span class="synIdentifier">}-&gt;is_a_type_of</span>(<span class="synString">'HashRef'</span>) )
+        || <span class="synIdentifier">$class-&gt;throw_error</span>(
+        <span class="synString">&quot;You cannot auto-dereference anything other than a ArrayRef or HashRef on attribute (</span><span class="synIdentifier">$name</span><span class="synString">)&quot;</span>,
+        <span class="synString">data</span> =&gt; <span class="synIdentifier">$options</span> );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_process_lazy_build_option </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$class</span>, <span class="synIdentifier">$name</span>, <span class="synIdentifier">$options</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$options-&gt;{</span><span class="synString">lazy_build</span><span class="synIdentifier">}</span>;
+
+    <span class="synIdentifier">$class-&gt;throw_error</span>(
+        <span class="synString">&quot;You can not use lazy_build and default for the same attribute (</span><span class="synIdentifier">$name</span><span class="synString">)&quot;</span>,
+        <span class="synString">data</span> =&gt; <span class="synIdentifier">$options</span> )
+        <span class="synConditional">if</span> <span class="synStatement">exists</span> <span class="synIdentifier">$options-&gt;{</span><span class="synString">default</span><span class="synIdentifier">}</span>;
+
+    <span class="synIdentifier">$options-&gt;{</span><span class="synString">lazy</span><span class="synIdentifier">}</span> = <span class="synNumber">1</span>;
+    <span class="synIdentifier">$options-&gt;{</span><span class="synString">builder</span><span class="synIdentifier">}</span> ||= <span class="synString">&quot;_build_</span><span class="synIdentifier">${name}</span><span class="synString">&quot;</span>;
+
+    <span class="synConditional">if</span> ( <span class="synIdentifier">$name</span> =~ <span class="synStatement">/</span><span class="synString">^_</span><span class="synStatement">/</span> ) {
+        <span class="synIdentifier">$options-&gt;{</span><span class="synString">clearer</span><span class="synIdentifier">}</span>   ||= <span class="synString">&quot;_clear</span><span class="synIdentifier">${name}</span><span class="synString">&quot;</span>;
+        <span class="synIdentifier">$options-&gt;{</span><span class="synString">predicate</span><span class="synIdentifier">}</span> ||= <span class="synString">&quot;_has</span><span class="synIdentifier">${name}</span><span class="synString">&quot;</span>;
+    }
+    <span class="synConditional">else</span> {
+        <span class="synIdentifier">$options-&gt;{</span><span class="synString">clearer</span><span class="synIdentifier">}</span>   ||= <span class="synString">&quot;clear_</span><span class="synIdentifier">${name}</span><span class="synString">&quot;</span>;
+        <span class="synIdentifier">$options-&gt;{</span><span class="synString">predicate</span><span class="synIdentifier">}</span> ||= <span class="synString">&quot;has_</span><span class="synIdentifier">${name}</span><span class="synString">&quot;</span>;
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_process_lazy_option </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$class</span>, <span class="synIdentifier">$name</span>, <span class="synIdentifier">$options</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$options-&gt;{</span><span class="synString">lazy</span><span class="synIdentifier">}</span>;
+
+    ( <span class="synStatement">exists</span> <span class="synIdentifier">$options-&gt;{</span><span class="synString">default</span><span class="synIdentifier">}</span> || <span class="synOperator">defined</span> <span class="synIdentifier">$options-&gt;{</span><span class="synString">builder</span><span class="synIdentifier">}</span> )
+        || <span class="synIdentifier">$class-&gt;throw_error</span>(
+        <span class="synString">&quot;You cannot have a lazy attribute (</span><span class="synIdentifier">$name</span><span class="synString">) without specifying a default value for it&quot;</span>,
+        <span class="synString">data</span> =&gt; <span class="synIdentifier">$options</span> );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_process_required_option </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$class</span>, <span class="synIdentifier">$name</span>, <span class="synIdentifier">$options</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synConditional">if</span> (
+        <span class="synIdentifier">$options-&gt;{</span><span class="synString">required</span><span class="synIdentifier">}</span>
+        &amp;&amp; !(
+            ( !<span class="synStatement">exists</span> <span class="synIdentifier">$options-&gt;{</span><span class="synString">init_arg</span><span class="synIdentifier">}</span> || <span class="synOperator">defined</span> <span class="synIdentifier">$options-&gt;{</span><span class="synString">init_arg</span><span class="synIdentifier">}</span> )
+            || <span class="synStatement">exists</span> <span class="synIdentifier">$options-&gt;{</span><span class="synString">default</span><span class="synIdentifier">}</span>
+            || <span class="synOperator">defined</span> <span class="synIdentifier">$options-&gt;{</span><span class="synString">builder</span><span class="synIdentifier">}</span>
+        )
+        ) {
+        <span class="synIdentifier">$class-&gt;throw_error</span>(
+            <span class="synString">&quot;You cannot have a required attribute (</span><span class="synIdentifier">$name</span><span class="synString">) without a default, builder, or an init_arg&quot;</span>,
+            <span class="synString">data</span> =&gt; <span class="synIdentifier">$options</span> );
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">initialize_instance_slot </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">$meta_instance</span>, <span class="synIdentifier">$instance</span>, <span class="synIdentifier">$params</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$init_arg</span> = <span class="synIdentifier">$self-&gt;init_arg</span>();
+    <span class="synComment"># try to fetch the init arg from the %params ...</span>
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$val</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$value_is_set</span>;
+    <span class="synConditional">if</span> ( <span class="synOperator">defined</span>(<span class="synIdentifier">$init_arg</span>) <span class="synOperator">and</span> <span class="synStatement">exists</span> <span class="synIdentifier">$params-&gt;{$init_arg}</span>) {
+        <span class="synIdentifier">$val</span> = <span class="synIdentifier">$params-&gt;{$init_arg}</span>;
+        <span class="synIdentifier">$value_is_set</span> = <span class="synNumber">1</span>;
+    }
+    <span class="synConditional">else</span> {
+        <span class="synComment"># skip it if it's lazy</span>
+        <span class="synStatement">return</span> <span class="synConditional">if</span> <span class="synIdentifier">$self-&gt;is_lazy</span>;
+        <span class="synComment"># and die if it's required and doesn't have a default value</span>
+        <span class="synIdentifier">$self-&gt;throw_error</span>(<span class="synString">&quot;Attribute (&quot;</span> . <span class="synIdentifier">$self-&gt;name</span> . <span class="synString">&quot;) is required&quot;</span>, <span class="synString">object</span> =&gt; <span class="synIdentifier">$instance</span>, <span class="synString">data</span> =&gt; <span class="synIdentifier">$params</span>)
+            <span class="synConditional">if</span> <span class="synIdentifier">$self-&gt;is_required</span> &amp;&amp; !<span class="synIdentifier">$self-&gt;has_default</span> &amp;&amp; !<span class="synIdentifier">$self-&gt;has_builder</span>;
+
+        <span class="synComment"># if nothing was in the %params, we can use the</span>
+        <span class="synComment"># attribute's default value (if it has one)</span>
+        <span class="synConditional">if</span> (<span class="synIdentifier">$self-&gt;has_default</span>) {
+            <span class="synIdentifier">$val</span> = <span class="synIdentifier">$self-&gt;default</span>(<span class="synIdentifier">$instance</span>);
+            <span class="synIdentifier">$value_is_set</span> = <span class="synNumber">1</span>;
+        }
+        <span class="synConditional">elsif</span> (<span class="synIdentifier">$self-&gt;has_builder</span>) {
+            <span class="synIdentifier">$val</span> = <span class="synIdentifier">$self-&gt;_call_builder</span>(<span class="synIdentifier">$instance</span>);
+            <span class="synIdentifier">$value_is_set</span> = <span class="synNumber">1</span>;
+        }
+    }
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$value_is_set</span>;
+
+    <span class="synIdentifier">$val</span> = <span class="synIdentifier">$self-&gt;_coerce_and_verify</span>( <span class="synIdentifier">$val</span>, <span class="synIdentifier">$instance</span> );
+
+    <span class="synIdentifier">$self-&gt;set_initial_value</span>(<span class="synIdentifier">$instance</span>, <span class="synIdentifier">$val</span>);
+
+    <span class="synConditional">if</span> ( <span class="synOperator">ref</span> <span class="synIdentifier">$val</span> &amp;&amp; <span class="synIdentifier">$self-&gt;is_weak_ref</span> ) {
+        <span class="synIdentifier">$self-&gt;_weaken_value</span>(<span class="synIdentifier">$instance</span>);
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_call_builder </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$self</span>, <span class="synIdentifier">$instance</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$builder</span> = <span class="synIdentifier">$self-&gt;builder</span>();
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$instance-&gt;$builder</span>()
+        <span class="synConditional">if</span> <span class="synIdentifier">$instance-&gt;can</span>( <span class="synIdentifier">$self-&gt;builder</span> );
+
+    <span class="synIdentifier">$self-&gt;throw_error</span>(  blessed(<span class="synIdentifier">$instance</span>)
+            . <span class="synString">&quot; does not support builder method '&quot;</span>
+            . <span class="synIdentifier">$self-&gt;builder</span>
+            . <span class="synString">&quot;' for attribute '&quot;</span>
+            . <span class="synIdentifier">$self-&gt;name</span>
+            . <span class="synString">&quot;'&quot;</span>,
+            <span class="synString">object</span> =&gt; <span class="synIdentifier">$instance</span>,
+     );
+}
+
+<span class="synComment">## Slot management</span>
+
+<span class="synKeyword">sub </span><span class="synFunction">_make_initializer_writer_callback </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$meta_instance</span>, <span class="synIdentifier">$instance</span>, <span class="synIdentifier">$slot_name</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$old_callback</span> = <span class="synIdentifier">$self-&gt;SUPER</span>::_make_initializer_writer_callback(<span class="synIdentifier">@_</span>);
+    <span class="synStatement">return</span> <span class="synKeyword">sub </span>{
+        <span class="synIdentifier">$old_callback</span>-&gt;(<span class="synIdentifier">$self-&gt;_coerce_and_verify</span>(<span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>, <span class="synIdentifier">$instance</span>));
+    };
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">set_value </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">$instance</span>, <span class="synIdentifier">@args</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$value</span> = <span class="synIdentifier">$args[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$attr_name</span> = <span class="synStatement">quotemeta</span>(<span class="synIdentifier">$self-&gt;name</span>);
+
+    <span class="synConditional">if</span> (<span class="synIdentifier">$self-&gt;is_required</span> <span class="synOperator">and</span> <span class="synOperator">not</span> <span class="synIdentifier">@args</span>) {
+        <span class="synIdentifier">$self-&gt;throw_error</span>(<span class="synString">&quot;Attribute (</span><span class="synIdentifier">$attr_name</span><span class="synString">) is required&quot;</span>, <span class="synString">object</span> =&gt; <span class="synIdentifier">$instance</span>);
+    }
+
+    <span class="synIdentifier">$value</span> = <span class="synIdentifier">$self-&gt;_coerce_and_verify</span>( <span class="synIdentifier">$value</span>, <span class="synIdentifier">$instance</span> );
+
+    <span class="synStatement">my</span> <span class="synIdentifier">@old</span>;
+    <span class="synConditional">if</span> ( <span class="synIdentifier">$self-&gt;has_trigger</span> &amp;&amp; <span class="synIdentifier">$self-&gt;has_value</span>(<span class="synIdentifier">$instance</span>) ) {
+        <span class="synIdentifier">@old</span> = <span class="synIdentifier">$self-&gt;get_value</span>(<span class="synIdentifier">$instance</span>, <span class="synString">'for trigger'</span>);
+    }
+
+    <span class="synIdentifier">$self-&gt;SUPER</span>::set_value(<span class="synIdentifier">$instance</span>, <span class="synIdentifier">$value</span>);
+
+    <span class="synConditional">if</span> ( <span class="synOperator">ref</span> <span class="synIdentifier">$value</span> &amp;&amp; <span class="synIdentifier">$self-&gt;is_weak_ref</span> ) {
+        <span class="synIdentifier">$self-&gt;_weaken_value</span>(<span class="synIdentifier">$instance</span>);
+    }
+
+    <span class="synConditional">if</span> (<span class="synIdentifier">$self-&gt;has_trigger</span>) {
+        <span class="synIdentifier">$self-&gt;trigger</span>-&gt;(<span class="synIdentifier">$instance</span>, <span class="synIdentifier">$value</span>, <span class="synIdentifier">@old</span>);
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_set_value </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$instance</span>, <span class="synIdentifier">$value</span>, <span class="synIdentifier">$tc</span>, <span class="synIdentifier">$coercion</span>, <span class="synIdentifier">$message</span>, <span class="synIdentifier">$for_constructor</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$old</span>     = <span class="synString">'@old'</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$copy</span>    = <span class="synString">'$val'</span>;
+    <span class="synIdentifier">$tc</span>       ||= <span class="synString">'$type_constraint'</span>;
+    <span class="synIdentifier">$coercion</span> ||= <span class="synString">'$type_coercion'</span>;
+    <span class="synIdentifier">$message</span>  ||= <span class="synString">'$type_message'</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">@code</span>;
+    <span class="synConditional">if</span> (<span class="synIdentifier">$self-&gt;_writer_value_needs_copy</span>) {
+        <span class="synStatement">push</span> <span class="synIdentifier">@code</span>, <span class="synIdentifier">$self-&gt;_inline_copy_value</span>(<span class="synIdentifier">$value</span>, <span class="synIdentifier">$copy</span>);
+        <span class="synIdentifier">$value</span> = <span class="synIdentifier">$copy</span>;
+    }
+
+    <span class="synComment"># constructors already handle required checks</span>
+    <span class="synStatement">push</span> <span class="synIdentifier">@code</span>, <span class="synIdentifier">$self-&gt;_inline_check_required</span>
+        <span class="synConditional">unless</span> <span class="synIdentifier">$for_constructor</span>;
+
+    <span class="synStatement">push</span> <span class="synIdentifier">@code</span>, <span class="synIdentifier">$self-&gt;_inline_tc_code</span>(<span class="synIdentifier">$value</span>, <span class="synIdentifier">$tc</span>, <span class="synIdentifier">$coercion</span>, <span class="synIdentifier">$message</span>);
+
+    <span class="synComment"># constructors do triggers all at once at the end</span>
+    <span class="synStatement">push</span> <span class="synIdentifier">@code</span>, <span class="synIdentifier">$self-&gt;_inline_get_old_value_for_trigger</span>(<span class="synIdentifier">$instance</span>, <span class="synIdentifier">$old</span>)
+        <span class="synConditional">unless</span> <span class="synIdentifier">$for_constructor</span>;
+
+    <span class="synStatement">push</span> <span class="synIdentifier">@code</span>, (
+        <span class="synIdentifier">$self-&gt;SUPER</span>::_inline_set_value(<span class="synIdentifier">$instance</span>, <span class="synIdentifier">$value</span>),
+        <span class="synIdentifier">$self-&gt;_inline_weaken_value</span>(<span class="synIdentifier">$instance</span>, <span class="synIdentifier">$value</span>),
+    );
+
+    <span class="synComment"># constructors do triggers all at once at the end</span>
+    <span class="synStatement">push</span> <span class="synIdentifier">@code</span>, <span class="synIdentifier">$self-&gt;_inline_trigger</span>(<span class="synIdentifier">$instance</span>, <span class="synIdentifier">$value</span>, <span class="synIdentifier">$old</span>)
+        <span class="synConditional">unless</span> <span class="synIdentifier">$for_constructor</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">@code</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_writer_value_needs_copy </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;should_coerce</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_copy_value </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$value</span>, <span class="synIdentifier">$copy</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> <span class="synString">'my '</span> . <span class="synIdentifier">$copy</span> . <span class="synString">' = '</span> . <span class="synIdentifier">$value</span> . <span class="synString">';'</span>
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_check_required </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$self-&gt;is_required</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$attr_name</span> = <span class="synStatement">quotemeta</span>(<span class="synIdentifier">$self-&gt;name</span>);
+
+    <span class="synStatement">return</span> (
+        <span class="synString">'if (@_ &lt; 2) {'</span>,
+            <span class="synIdentifier">$self-&gt;_inline_throw_error</span>(
+                <span class="synString">'&quot;Attribute ('</span> . <span class="synIdentifier">$attr_name</span> . <span class="synString">') is required&quot;'</span>
+            ) . <span class="synString">';'</span>,
+        <span class="synString">'}'</span>,
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_tc_code </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$value</span>, <span class="synIdentifier">$tc</span>, <span class="synIdentifier">$coercion</span>, <span class="synIdentifier">$message</span>, <span class="synIdentifier">$is_lazy</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">return</span> (
+        <span class="synIdentifier">$self-&gt;_inline_check_coercion</span>(
+            <span class="synIdentifier">$value</span>, <span class="synIdentifier">$tc</span>, <span class="synIdentifier">$coercion</span>, <span class="synIdentifier">$is_lazy</span>,
+        ),
+        <span class="synIdentifier">$self-&gt;_inline_check_constraint</span>(
+            <span class="synIdentifier">$value</span>, <span class="synIdentifier">$tc</span>, <span class="synIdentifier">$message</span>, <span class="synIdentifier">$is_lazy</span>,
+        ),
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_check_coercion </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$value</span>, <span class="synIdentifier">$tc</span>, <span class="synIdentifier">$coercion</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$self-&gt;should_coerce</span> &amp;&amp; <span class="synIdentifier">$self-&gt;type_constraint-&gt;has_coercion</span>;
+
+    <span class="synConditional">if</span> ( <span class="synIdentifier">$self-&gt;type_constraint-&gt;can_be_inlined</span> ) {
+        <span class="synStatement">return</span> (
+            <span class="synString">'if (! ('</span> . <span class="synIdentifier">$self-&gt;type_constraint-&gt;_inline_check</span>(<span class="synIdentifier">$value</span>) . <span class="synString">')) {'</span>,
+                <span class="synIdentifier">$value</span> . <span class="synString">' = '</span> . <span class="synIdentifier">$coercion</span> . <span class="synString">'-&gt;('</span> . <span class="synIdentifier">$value</span> . <span class="synString">');'</span>,
+            <span class="synString">'}'</span>,
+        );
+    }
+    <span class="synConditional">else</span> {
+        <span class="synStatement">return</span> (
+            <span class="synString">'if (!'</span> . <span class="synIdentifier">$tc</span> . <span class="synString">'-&gt;('</span> . <span class="synIdentifier">$value</span> . <span class="synString">')) {'</span>,
+                <span class="synIdentifier">$value</span> . <span class="synString">' = '</span> . <span class="synIdentifier">$coercion</span> . <span class="synString">'-&gt;('</span> . <span class="synIdentifier">$value</span> . <span class="synString">');'</span>,
+            <span class="synString">'}'</span>,
+        );
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_check_constraint </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$value</span>, <span class="synIdentifier">$tc</span>, <span class="synIdentifier">$message</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$self-&gt;has_type_constraint</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$attr_name</span> = <span class="synStatement">quotemeta</span>(<span class="synIdentifier">$self-&gt;name</span>);
+
+    <span class="synConditional">if</span> ( <span class="synIdentifier">$self-&gt;type_constraint-&gt;can_be_inlined</span> ) {
+        <span class="synStatement">return</span> (
+            <span class="synString">'if (! ('</span> . <span class="synIdentifier">$self-&gt;type_constraint-&gt;_inline_check</span>(<span class="synIdentifier">$value</span>) . <span class="synString">')) {'</span>,
+                <span class="synIdentifier">$self-&gt;_inline_throw_error</span>(
+                    <span class="synString">'&quot;Attribute ('</span> . <span class="synIdentifier">$attr_name</span> . <span class="synString">') does not pass the type '</span>
+                  . <span class="synString">'constraint because: &quot; . '</span>
+                  . <span class="synString">'do { local $_ = '</span> . <span class="synIdentifier">$value</span> . <span class="synString">'; '</span>
+                      . <span class="synIdentifier">$message</span> . <span class="synString">'-&gt;('</span> . <span class="synIdentifier">$value</span> . <span class="synString">')'</span>
+                  . <span class="synString">'}'</span>,
+                    <span class="synString">'data =&gt; '</span> . <span class="synIdentifier">$value</span>
+                ) . <span class="synString">';'</span>,
+            <span class="synString">'}'</span>,
+        );
+    }
+    <span class="synConditional">else</span> {
+        <span class="synStatement">return</span> (
+            <span class="synString">'if (!'</span> . <span class="synIdentifier">$tc</span> . <span class="synString">'-&gt;('</span> . <span class="synIdentifier">$value</span> . <span class="synString">')) {'</span>,
+                <span class="synIdentifier">$self-&gt;_inline_throw_error</span>(
+                    <span class="synString">'&quot;Attribute ('</span> . <span class="synIdentifier">$attr_name</span> . <span class="synString">') does not pass the type '</span>
+                  . <span class="synString">'constraint because: &quot; . '</span>
+                  . <span class="synString">'do { local $_ = '</span> . <span class="synIdentifier">$value</span> . <span class="synString">'; '</span>
+                      . <span class="synIdentifier">$message</span> . <span class="synString">'-&gt;('</span> . <span class="synIdentifier">$value</span> . <span class="synString">')'</span>
+                  . <span class="synString">'}'</span>,
+                    <span class="synString">'data =&gt; '</span> . <span class="synIdentifier">$value</span>
+                ) . <span class="synString">';'</span>,
+            <span class="synString">'}'</span>,
+        );
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_get_old_value_for_trigger </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$instance</span>, <span class="synIdentifier">$old</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$self-&gt;has_trigger</span>;
+
+    <span class="synStatement">return</span> (
+        <span class="synString">'my '</span> . <span class="synIdentifier">$old</span> . <span class="synString">' = '</span> . <span class="synIdentifier">$self-&gt;_inline_instance_has</span>(<span class="synIdentifier">$instance</span>),
+            <span class="synString">'? '</span> . <span class="synIdentifier">$self-&gt;_inline_instance_get</span>(<span class="synIdentifier">$instance</span>),
+            <span class="synString">': ();'</span>,
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_weaken_value </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$instance</span>, <span class="synIdentifier">$value</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$self-&gt;is_weak_ref</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$mi</span> = <span class="synIdentifier">$self-&gt;associated_class-&gt;get_meta_instance</span>;
+    <span class="synStatement">return</span> (
+        <span class="synIdentifier">$mi-&gt;inline_weaken_slot_value</span>(<span class="synIdentifier">$instance</span>, <span class="synIdentifier">$self-&gt;name</span>),
+            <span class="synString">'if ref '</span> . <span class="synIdentifier">$value</span> . <span class="synString">';'</span>,
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_trigger </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$instance</span>, <span class="synIdentifier">$value</span>, <span class="synIdentifier">$old</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$self-&gt;has_trigger</span>;
+
+    <span class="synStatement">return</span> <span class="synString">'$trigger-&gt;('</span> . <span class="synIdentifier">$instance</span> . <span class="synString">', '</span> . <span class="synIdentifier">$value</span> . <span class="synString">', '</span> . <span class="synIdentifier">$old</span> . <span class="synString">');'</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_eval_environment </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$env</span> = { };
+
+    <span class="synIdentifier">$env-&gt;{</span><span class="synString">'$trigger'</span><span class="synIdentifier">}</span> = \(<span class="synIdentifier">$self-&gt;trigger</span>)
+        <span class="synConditional">if</span> <span class="synIdentifier">$self-&gt;has_trigger</span>;
+    <span class="synIdentifier">$env-&gt;{</span><span class="synString">'$attr_default'</span><span class="synIdentifier">}</span> = \(<span class="synIdentifier">$self-&gt;default</span>)
+        <span class="synConditional">if</span> <span class="synIdentifier">$self-&gt;has_default</span>;
+
+    <span class="synConditional">if</span> (<span class="synIdentifier">$self-&gt;has_type_constraint</span>) {
+        <span class="synStatement">my</span> <span class="synIdentifier">$tc_obj</span> = <span class="synIdentifier">$self-&gt;type_constraint</span>;
+
+        <span class="synIdentifier">$env-&gt;{</span><span class="synString">'$type_constraint'</span><span class="synIdentifier">}</span> = \(
+            <span class="synIdentifier">$tc_obj-&gt;_compiled_type_constraint</span>
+        ) <span class="synConditional">unless</span> <span class="synIdentifier">$tc_obj-&gt;can_be_inlined</span>;
+        <span class="synComment"># these two could probably get inlined versions too</span>
+        <span class="synIdentifier">$env-&gt;{</span><span class="synString">'$type_coercion'</span><span class="synIdentifier">}</span> = \(
+            <span class="synIdentifier">$tc_obj-&gt;coercion-&gt;_compiled_type_coercion</span>
+        ) <span class="synConditional">if</span> <span class="synIdentifier">$tc_obj-&gt;has_coercion</span>;
+        <span class="synIdentifier">$env-&gt;{</span><span class="synString">'$type_message'</span><span class="synIdentifier">}</span> = \(
+            <span class="synIdentifier">$tc_obj-&gt;has_message</span> ? <span class="synIdentifier">$tc_obj-&gt;message</span> : <span class="synIdentifier">$tc_obj-&gt;_default_message</span>
+        );
+
+        <span class="synIdentifier">$env</span> = { <span class="synIdentifier">%$env</span>, <span class="synIdentifier">%{</span> <span class="synIdentifier">$tc_obj-&gt;inline_environment</span> <span class="synIdentifier">}</span> };
+    }
+
+    <span class="synComment"># </span><span class="synTodo">XXX</span><span class="synComment"> ugh, fix these</span>
+    <span class="synIdentifier">$env-&gt;{</span><span class="synString">'$attr'</span><span class="synIdentifier">}</span> = \<span class="synIdentifier">$self</span>
+        <span class="synConditional">if</span> <span class="synIdentifier">$self-&gt;has_initializer</span> &amp;&amp; <span class="synIdentifier">$self-&gt;is_lazy</span>;
+    <span class="synComment"># pretty sure this is only going to be closed over if you use a custom</span>
+    <span class="synComment"># error class at this point, but we should still get rid of this</span>
+    <span class="synComment"># at some point</span>
+    <span class="synIdentifier">$env-&gt;{</span><span class="synString">'$meta'</span><span class="synIdentifier">}</span> = \(<span class="synIdentifier">$self-&gt;associated_class</span>);
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$env</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_weaken_value </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$self</span>, <span class="synIdentifier">$instance</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$meta_instance</span> = Class::MOP::Class-&gt;initialize( blessed(<span class="synIdentifier">$instance</span>) )
+        -&gt;get_meta_instance;
+
+    <span class="synIdentifier">$meta_instance-&gt;weaken_slot_value</span>( <span class="synIdentifier">$instance</span>, <span class="synIdentifier">$self-&gt;name</span> );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">get_value </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$self</span>, <span class="synIdentifier">$instance</span>, <span class="synIdentifier">$for_trigger</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synConditional">if</span> (<span class="synIdentifier">$self-&gt;is_lazy</span>) {
+        <span class="synConditional">unless</span> (<span class="synIdentifier">$self-&gt;has_value</span>(<span class="synIdentifier">$instance</span>)) {
+            <span class="synStatement">my</span> <span class="synIdentifier">$value</span>;
+            <span class="synConditional">if</span> (<span class="synIdentifier">$self-&gt;has_default</span>) {
+                <span class="synIdentifier">$value</span> = <span class="synIdentifier">$self-&gt;default</span>(<span class="synIdentifier">$instance</span>);
+            } <span class="synConditional">elsif</span> ( <span class="synIdentifier">$self-&gt;has_builder</span> ) {
+                <span class="synIdentifier">$value</span> = <span class="synIdentifier">$self-&gt;_call_builder</span>(<span class="synIdentifier">$instance</span>);
+            }
+
+            <span class="synIdentifier">$value</span> = <span class="synIdentifier">$self-&gt;_coerce_and_verify</span>( <span class="synIdentifier">$value</span>, <span class="synIdentifier">$instance</span> );
+
+            <span class="synIdentifier">$self-&gt;set_initial_value</span>(<span class="synIdentifier">$instance</span>, <span class="synIdentifier">$value</span>);
+
+            <span class="synConditional">if</span> ( <span class="synOperator">ref</span> <span class="synIdentifier">$value</span> &amp;&amp; <span class="synIdentifier">$self-&gt;is_weak_ref</span> ) {
+                <span class="synIdentifier">$self-&gt;_weaken_value</span>(<span class="synIdentifier">$instance</span>);
+            }
+        }
+    }
+
+    <span class="synConditional">if</span> ( <span class="synIdentifier">$self-&gt;should_auto_deref</span> &amp;&amp; ! <span class="synIdentifier">$for_trigger</span> ) {
+
+        <span class="synStatement">my</span> <span class="synIdentifier">$type_constraint</span> = <span class="synIdentifier">$self-&gt;type_constraint</span>;
+
+        <span class="synConditional">if</span> (<span class="synIdentifier">$type_constraint-&gt;is_a_type_of</span>(<span class="synString">'ArrayRef'</span>)) {
+            <span class="synStatement">my</span> <span class="synIdentifier">$rv</span> = <span class="synIdentifier">$self-&gt;SUPER</span>::get_value(<span class="synIdentifier">$instance</span>);
+            <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synOperator">defined</span> <span class="synIdentifier">$rv</span>;
+            <span class="synStatement">return</span> <span class="synStatement">wantarray</span> ? <span class="synIdentifier">@{</span> <span class="synIdentifier">$rv</span> <span class="synIdentifier">}</span> : <span class="synIdentifier">$rv</span>;
+        }
+        <span class="synConditional">elsif</span> (<span class="synIdentifier">$type_constraint-&gt;is_a_type_of</span>(<span class="synString">'HashRef'</span>)) {
+            <span class="synStatement">my</span> <span class="synIdentifier">$rv</span> = <span class="synIdentifier">$self-&gt;SUPER</span>::get_value(<span class="synIdentifier">$instance</span>);
+            <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synOperator">defined</span> <span class="synIdentifier">$rv</span>;
+            <span class="synStatement">return</span> <span class="synStatement">wantarray</span> ? <span class="synIdentifier">%{</span> <span class="synIdentifier">$rv</span> <span class="synIdentifier">}</span> : <span class="synIdentifier">$rv</span>;
+        }
+        <span class="synConditional">else</span> {
+            <span class="synIdentifier">$self-&gt;throw_error</span>(<span class="synString">&quot;Can not auto de-reference the type constraint '&quot;</span> . <span class="synIdentifier">$type_constraint-&gt;name</span> . <span class="synString">&quot;'&quot;</span>, <span class="synString">object</span> =&gt; <span class="synIdentifier">$instance</span>, <span class="synString">type_constraint</span> =&gt; <span class="synIdentifier">$type_constraint</span>);
+        }
+
+    }
+    <span class="synConditional">else</span> {
+
+        <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;SUPER</span>::get_value(<span class="synIdentifier">$instance</span>);
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_get_value </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$instance</span>, <span class="synIdentifier">$tc</span>, <span class="synIdentifier">$coercion</span>, <span class="synIdentifier">$message</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$slot_access</span> = <span class="synIdentifier">$self-&gt;_inline_instance_get</span>(<span class="synIdentifier">$instance</span>);
+    <span class="synIdentifier">$tc</span>           ||= <span class="synString">'$type_constraint'</span>;
+    <span class="synIdentifier">$coercion</span>     ||= <span class="synString">'$type_coercion'</span>;
+    <span class="synIdentifier">$message</span>      ||= <span class="synString">'$type_message'</span>;
+
+    <span class="synStatement">return</span> (
+        <span class="synIdentifier">$self-&gt;_inline_check_lazy</span>(<span class="synIdentifier">$instance</span>, <span class="synIdentifier">$tc</span>, <span class="synIdentifier">$coercion</span>, <span class="synIdentifier">$message</span>),
+        <span class="synIdentifier">$self-&gt;_inline_return_auto_deref</span>(<span class="synIdentifier">$slot_access</span>),
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_check_lazy </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$instance</span>, <span class="synIdentifier">$tc</span>, <span class="synIdentifier">$coercion</span>, <span class="synIdentifier">$message</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$self-&gt;is_lazy</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$slot_exists</span> = <span class="synIdentifier">$self-&gt;_inline_instance_has</span>(<span class="synIdentifier">$instance</span>);
+
+    <span class="synStatement">return</span> (
+        <span class="synString">'if (!'</span> . <span class="synIdentifier">$slot_exists</span> . <span class="synString">') {'</span>,
+            <span class="synIdentifier">$self-&gt;_inline_init_from_default</span>(<span class="synIdentifier">$instance</span>, <span class="synString">'$default'</span>, <span class="synIdentifier">$tc</span>, <span class="synIdentifier">$coercion</span>, <span class="synIdentifier">$message</span>, <span class="synString">'lazy'</span>),
+        <span class="synString">'}'</span>,
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_init_from_default </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$instance</span>, <span class="synIdentifier">$default</span>, <span class="synIdentifier">$tc</span>, <span class="synIdentifier">$coercion</span>, <span class="synIdentifier">$message</span>, <span class="synIdentifier">$for_lazy</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synConditional">if</span> (!(<span class="synIdentifier">$self-&gt;has_default</span> || <span class="synIdentifier">$self-&gt;has_builder</span>)) {
+        <span class="synIdentifier">$self-&gt;throw_error</span>(
+            <span class="synString">'You cannot have a lazy attribute '</span>
+          . <span class="synString">'('</span> . <span class="synIdentifier">$self-&gt;name</span> . <span class="synString">') '</span>
+          . <span class="synString">'without specifying a default value for it'</span>,
+            <span class="synString">attr</span> =&gt; <span class="synIdentifier">$self</span>,
+        );
+    }
+
+    <span class="synStatement">return</span> (
+        <span class="synIdentifier">$self-&gt;_inline_generate_default</span>(<span class="synIdentifier">$instance</span>, <span class="synIdentifier">$default</span>),
+        <span class="synComment"># intentionally not using _inline_tc_code, since that can be overridden</span>
+        <span class="synComment"># to do things like possibly only do member tc checks, which isn't</span>
+        <span class="synComment"># appropriate for checking the result of a default</span>
+        <span class="synIdentifier">$self-&gt;has_type_constraint</span>
+            ? (<span class="synIdentifier">$self-&gt;_inline_check_coercion</span>(<span class="synIdentifier">$default</span>, <span class="synIdentifier">$tc</span>, <span class="synIdentifier">$coercion</span>, <span class="synIdentifier">$for_lazy</span>),
+               <span class="synIdentifier">$self-&gt;_inline_check_constraint</span>(<span class="synIdentifier">$default</span>, <span class="synIdentifier">$tc</span>, <span class="synIdentifier">$message</span>, <span class="synIdentifier">$for_lazy</span>))
+            : (),
+        <span class="synIdentifier">$self-&gt;_inline_init_slot</span>(<span class="synIdentifier">$instance</span>, <span class="synIdentifier">$default</span>),
+        <span class="synIdentifier">$self-&gt;_inline_weaken_value</span>(<span class="synIdentifier">$instance</span>, <span class="synIdentifier">$default</span>),
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_generate_default </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$instance</span>, <span class="synIdentifier">$default</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synConditional">if</span> (<span class="synIdentifier">$self-&gt;has_default</span>) {
+        <span class="synStatement">my</span> <span class="synIdentifier">$source</span> = <span class="synString">'my '</span> . <span class="synIdentifier">$default</span> . <span class="synString">' = $attr_default'</span>;
+        <span class="synIdentifier">$source</span> .= <span class="synString">'-&gt;('</span> . <span class="synIdentifier">$instance</span> . <span class="synString">')'</span>
+            <span class="synConditional">if</span> <span class="synIdentifier">$self-&gt;is_default_a_coderef</span>;
+        <span class="synStatement">return</span> <span class="synIdentifier">$source</span> . <span class="synString">';'</span>;
+    }
+    <span class="synConditional">elsif</span> (<span class="synIdentifier">$self-&gt;has_builder</span>) {
+        <span class="synStatement">my</span> <span class="synIdentifier">$builder</span> = B::perlstring(<span class="synIdentifier">$self-&gt;builder</span>);
+        <span class="synStatement">my</span> <span class="synIdentifier">$builder_str</span> = <span class="synStatement">quotemeta</span>(<span class="synIdentifier">$self-&gt;builder</span>);
+        <span class="synStatement">my</span> <span class="synIdentifier">$attr_name_str</span> = <span class="synStatement">quotemeta</span>(<span class="synIdentifier">$self-&gt;name</span>);
+        <span class="synStatement">return</span> (
+            <span class="synString">'my '</span> . <span class="synIdentifier">$default</span> . <span class="synString">';'</span>,
+            <span class="synString">'if (my $builder = '</span> . <span class="synIdentifier">$instance</span> . <span class="synString">'-&gt;can('</span> . <span class="synIdentifier">$builder</span> . <span class="synString">')) {'</span>,
+                <span class="synIdentifier">$default</span> . <span class="synString">' = '</span> . <span class="synIdentifier">$instance</span> . <span class="synString">'-&gt;$builder;'</span>,
+            <span class="synString">'}'</span>,
+            <span class="synString">'else {'</span>,
+                <span class="synString">'my $class = ref('</span> . <span class="synIdentifier">$instance</span> . <span class="synString">') || '</span> . <span class="synIdentifier">$instance</span> . <span class="synString">';'</span>,
+                <span class="synIdentifier">$self-&gt;_inline_throw_error</span>(
+                    <span class="synString">'&quot;$class does not support builder method '</span>
+                  . <span class="synString">'\''</span> . <span class="synIdentifier">$builder_str</span> . <span class="synString">'\' for attribute '</span>
+                  . <span class="synString">'\''</span> . <span class="synIdentifier">$attr_name_str</span> . <span class="synString">'\'&quot;'</span>
+                ) . <span class="synString">';'</span>,
+            <span class="synString">'}'</span>,
+        );
+    }
+    <span class="synConditional">else</span> {
+        <span class="synIdentifier">$self-&gt;throw_error</span>(
+            <span class="synString">&quot;Can't generate a default for &quot;</span> . <span class="synIdentifier">$self-&gt;name</span>
+          . <span class="synString">&quot; since no default or builder was specified&quot;</span>
+        );
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_init_slot </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$inv</span>, <span class="synIdentifier">$value</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synConditional">if</span> (<span class="synIdentifier">$self-&gt;has_initializer</span>) {
+        <span class="synStatement">return</span> <span class="synString">'$attr-&gt;set_initial_value('</span> . <span class="synIdentifier">$inv</span> . <span class="synString">', '</span> . <span class="synIdentifier">$value</span> . <span class="synString">');'</span>;
+    }
+    <span class="synConditional">else</span> {
+        <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;_inline_instance_set</span>(<span class="synIdentifier">$inv</span>, <span class="synIdentifier">$value</span>) . <span class="synString">';'</span>;
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_return_auto_deref </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">return</span> <span class="synString">'return '</span> . <span class="synIdentifier">$self-&gt;_auto_deref</span>(<span class="synIdentifier">@_</span>) . <span class="synString">';'</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_auto_deref </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$ref_value</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$ref_value</span> <span class="synConditional">unless</span> <span class="synIdentifier">$self-&gt;should_auto_deref</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$type_constraint</span> = <span class="synIdentifier">$self-&gt;type_constraint</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$sigil</span>;
+    <span class="synConditional">if</span> (<span class="synIdentifier">$type_constraint-&gt;is_a_type_of</span>(<span class="synString">'ArrayRef'</span>)) {
+        <span class="synIdentifier">$sigil</span> = <span class="synString">'@'</span>;
+    }
+    <span class="synConditional">elsif</span> (<span class="synIdentifier">$type_constraint-&gt;is_a_type_of</span>(<span class="synString">'HashRef'</span>)) {
+        <span class="synIdentifier">$sigil</span> = <span class="synString">'%'</span>;
+    }
+    <span class="synConditional">else</span> {
+        <span class="synIdentifier">$self-&gt;throw_error</span>(
+            <span class="synString">'Can not auto de-reference the type constraint \''</span>
+          . <span class="synIdentifier">$type_constraint-&gt;name</span>
+          . <span class="synString">'\''</span>,
+            <span class="synString">type_constraint</span> =&gt; <span class="synIdentifier">$type_constraint</span>,
+        );
+    }
+
+    <span class="synStatement">return</span> <span class="synString">'wantarray '</span>
+             . <span class="synString">'? '</span> . <span class="synIdentifier">$sigil</span> . <span class="synString">'{ ('</span> . <span class="synIdentifier">$ref_value</span> . <span class="synString">') || return } '</span>
+             . <span class="synString">': ('</span> . <span class="synIdentifier">$ref_value</span> . <span class="synString">')'</span>;
+}
+
+<span class="synComment">## installing accessors</span>
+
+<span class="synKeyword">sub </span><span class="synFunction">accessor_metaclass </span>{ <span class="synString">'Moose::Meta::Method::Accessor'</span> }
+
+<span class="synKeyword">sub </span><span class="synFunction">install_accessors </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synIdentifier">$self-&gt;SUPER</span>::install_accessors(<span class="synIdentifier">@_</span>);
+    <span class="synIdentifier">$self-&gt;install_delegation</span> <span class="synConditional">if</span> <span class="synIdentifier">$self-&gt;has_handles</span>;
+    <span class="synStatement">return</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_check_associated_methods </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synConditional">unless</span> (
+        <span class="synIdentifier">@{</span> <span class="synIdentifier">$self-&gt;associated_methods</span> <span class="synIdentifier">}</span>
+        || (<span class="synIdentifier">$self-&gt;_is_metadata</span> || <span class="synString">''</span>) <span class="synOperator">eq</span> <span class="synString">'bare'</span>
+    ) {
+        Carp::cluck(
+            <span class="synString">'Attribute ('</span> . <span class="synIdentifier">$self-&gt;name</span> . <span class="synString">') of class '</span>
+            . <span class="synIdentifier">$self-&gt;associated_class-&gt;name</span>
+            . <span class="synString">' has no associated methods'</span>
+            . <span class="synString">' (did you mean to provide an &quot;is&quot; argument?)'</span>
+            . <span class="synString">&quot;</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>
+        )
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_process_accessors </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$type</span>, <span class="synIdentifier">$accessor</span>, <span class="synIdentifier">$generate_as_inline_methods</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synIdentifier">$accessor</span> = ( <span class="synStatement">keys</span> <span class="synIdentifier">%$accessor</span> )[<span class="synNumber">0</span>] <span class="synConditional">if</span> ( <span class="synOperator">ref</span>(<span class="synIdentifier">$accessor</span>) || <span class="synString">''</span> ) <span class="synOperator">eq</span> <span class="synString">'HASH'</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$method</span> = <span class="synIdentifier">$self-&gt;associated_class-&gt;get_method</span>(<span class="synIdentifier">$accessor</span>);
+
+    <span class="synConditional">if</span> (   <span class="synIdentifier">$method</span>
+        &amp;&amp; <span class="synIdentifier">$method-&gt;isa</span>(<span class="synString">'Class::MOP::Method::Accessor'</span>)
+        &amp;&amp; <span class="synIdentifier">$method-&gt;associated_attribute-&gt;name</span> <span class="synOperator">ne</span> <span class="synIdentifier">$self-&gt;name</span> ) {
+
+        <span class="synStatement">my</span> <span class="synIdentifier">$other_attr_name</span> = <span class="synIdentifier">$method-&gt;associated_attribute-&gt;name</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$name</span>            = <span class="synIdentifier">$self-&gt;name</span>;
+
+        Carp::cluck(
+            <span class="synString">&quot;You are overwriting an accessor (</span><span class="synIdentifier">$accessor</span><span class="synString">) for the </span><span class="synIdentifier">$other_attr_name</span><span class="synString"> attribute&quot;</span>
+                . <span class="synString">&quot; with a new accessor method for the </span><span class="synIdentifier">$name</span><span class="synString"> attribute&quot;</span> );
+    }
+
+    <span class="synConditional">if</span> (
+           <span class="synIdentifier">$method</span>
+        &amp;&amp; !<span class="synIdentifier">$method-&gt;is_stub</span>
+        &amp;&amp; !<span class="synIdentifier">$method-&gt;isa</span>(<span class="synString">'Class::MOP::Method::Accessor'</span>)
+        &amp;&amp; (  !<span class="synIdentifier">$self-&gt;definition_context</span>
+            || <span class="synIdentifier">$method-&gt;package_name</span> <span class="synOperator">eq</span> <span class="synIdentifier">$self-&gt;definition_context-&gt;{</span><span class="synString">package</span><span class="synIdentifier">}</span> )
+        ) {
+
+        Carp::cluck(
+            <span class="synString">&quot;You are overwriting a locally defined method (</span><span class="synIdentifier">$accessor</span><span class="synString">) with &quot;</span>
+                . <span class="synString">&quot;an accessor&quot;</span> );
+    }
+
+    <span class="synConditional">if</span> (  !<span class="synIdentifier">$self-&gt;associated_class-&gt;has_method</span>(<span class="synIdentifier">$accessor</span>)
+        &amp;&amp; <span class="synIdentifier">$self-&gt;associated_class-&gt;has_package_symbol</span>( <span class="synString">'&amp;'</span> . <span class="synIdentifier">$accessor</span> ) ) {
+
+        Carp::cluck(
+            <span class="synString">&quot;You are overwriting a locally defined function (</span><span class="synIdentifier">$accessor</span><span class="synString">) with &quot;</span>
+                . <span class="synString">&quot;an accessor&quot;</span> );
+    }
+
+    <span class="synIdentifier">$self-&gt;SUPER</span>::_process_accessors(<span class="synIdentifier">@_</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">remove_accessors </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synIdentifier">$self-&gt;SUPER</span>::remove_accessors(<span class="synIdentifier">@_</span>);
+    <span class="synIdentifier">$self-&gt;remove_delegation</span> <span class="synConditional">if</span> <span class="synIdentifier">$self-&gt;has_handles</span>;
+    <span class="synStatement">return</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">install_delegation </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synComment"># </span><span class="synTodo">NOTE:</span>
+    <span class="synComment"># Here we canonicalize the 'handles' option</span>
+    <span class="synComment"># this will sort out any details and always</span>
+    <span class="synComment"># return an hash of methods which we want</span>
+    <span class="synComment"># to delagate to, see that method for details</span>
+    <span class="synStatement">my</span> <span class="synIdentifier">%handles</span> = <span class="synIdentifier">$self-&gt;_canonicalize_handles</span>;
+
+
+    <span class="synComment"># install the delegation ...</span>
+    <span class="synStatement">my</span> <span class="synIdentifier">$associated_class</span> = <span class="synIdentifier">$self-&gt;associated_class</span>;
+    <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$handle</span> (<span class="synStatement">sort</span> <span class="synStatement">keys</span> <span class="synIdentifier">%handles</span>) {
+        <span class="synStatement">my</span> <span class="synIdentifier">$method_to_call</span> = <span class="synIdentifier">$handles{$handle}</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$class_name</span> = <span class="synIdentifier">$associated_class-&gt;name</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$name</span> = <span class="synString">&quot;</span><span class="synIdentifier">${class_name}</span><span class="synString">::</span><span class="synIdentifier">${handle}</span><span class="synString">&quot;</span>;
+
+        <span class="synConditional">if</span> ( <span class="synStatement">my</span> <span class="synIdentifier">$method</span> = <span class="synIdentifier">$associated_class-&gt;get_method</span>(<span class="synIdentifier">$handle</span>) ) {
+            <span class="synIdentifier">$self-&gt;throw_error</span>(
+                <span class="synString">&quot;You cannot overwrite a locally defined method (</span><span class="synIdentifier">$handle</span><span class="synString">) with a delegation&quot;</span>,
+                <span class="synString">method_name</span> =&gt; <span class="synIdentifier">$handle</span>
+            ) <span class="synConditional">unless</span> <span class="synIdentifier">$method-&gt;is_stub</span>;
+        }
+
+        <span class="synComment"># </span><span class="synTodo">NOTE:</span>
+        <span class="synComment"># handles is not allowed to delegate</span>
+        <span class="synComment"># any of these methods, as they will</span>
+        <span class="synComment"># override the ones in your class, which</span>
+        <span class="synComment"># is almost certainly not what you want.</span>
+
+        <span class="synComment"># </span><span class="synTodo">FIXME</span><span class="synComment"> warn when $handle was explicitly specified, but not if the source is a regex or something</span>
+        <span class="synComment">#cluck(&quot;Not delegating method '$handle' because it is a core method&quot;) and</span>
+        <span class="synStatement">next</span> <span class="synConditional">if</span> <span class="synIdentifier">$class_name-&gt;isa</span>(<span class="synString">&quot;Moose::Object&quot;</span>) <span class="synOperator">and</span> <span class="synIdentifier">$handle</span> =~ <span class="synStatement">/</span><span class="synString">^BUILD|DEMOLISH$</span><span class="synStatement">/</span> || Moose::Object-&gt;can(<span class="synIdentifier">$handle</span>);
+
+        <span class="synStatement">my</span> <span class="synIdentifier">$method</span> = <span class="synIdentifier">$self-&gt;_make_delegation_method</span>(<span class="synIdentifier">$handle</span>, <span class="synIdentifier">$method_to_call</span>);
+
+        <span class="synIdentifier">$self-&gt;associated_class-&gt;add_method</span>(<span class="synIdentifier">$method-&gt;name</span>, <span class="synIdentifier">$method</span>);
+        <span class="synIdentifier">$self-&gt;associate_method</span>(<span class="synIdentifier">$method</span>);
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">remove_delegation </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">%handles</span> = <span class="synIdentifier">$self-&gt;_canonicalize_handles</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$associated_class</span> = <span class="synIdentifier">$self-&gt;associated_class</span>;
+    <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$handle</span> (<span class="synStatement">keys</span> <span class="synIdentifier">%handles</span>) {
+        <span class="synStatement">next</span> <span class="synConditional">unless</span> any { <span class="synIdentifier">$handle</span> <span class="synOperator">eq</span> <span class="synIdentifier">$_</span> }
+                    <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;name</span> <span class="synStatement">}</span>
+                    <span class="synIdentifier">@{</span> <span class="synIdentifier">$self-&gt;associated_methods</span> <span class="synIdentifier">}</span>;
+        <span class="synIdentifier">$self-&gt;associated_class-&gt;remove_method</span>(<span class="synIdentifier">$handle</span>);
+    }
+}
+
+<span class="synComment"># private methods to help delegation ...</span>
+
+<span class="synKeyword">sub </span><span class="synFunction">_canonicalize_handles </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span>    = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$handles</span> = <span class="synIdentifier">$self-&gt;handles</span>;
+    <span class="synConditional">if</span> (<span class="synStatement">my</span> <span class="synIdentifier">$handle_type</span> = <span class="synOperator">ref</span>(<span class="synIdentifier">$handles</span>)) {
+        <span class="synConditional">if</span> (<span class="synIdentifier">$handle_type</span> <span class="synOperator">eq</span> <span class="synString">'HASH'</span>) {
+            <span class="synStatement">return</span> <span class="synIdentifier">%{$handles}</span>;
+        }
+        <span class="synConditional">elsif</span> (<span class="synIdentifier">$handle_type</span> <span class="synOperator">eq</span> <span class="synString">'ARRAY'</span>) {
+            <span class="synStatement">return</span> <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_</span> =&gt; <span class="synIdentifier">$_</span> <span class="synStatement">}</span> <span class="synIdentifier">@{$handles}</span>;
+        }
+        <span class="synConditional">elsif</span> (<span class="synIdentifier">$handle_type</span> <span class="synOperator">eq</span> <span class="synString">'Regexp'</span>) {
+            (<span class="synIdentifier">$self-&gt;has_type_constraint</span>)
+                || <span class="synIdentifier">$self-&gt;throw_error</span>(<span class="synString">&quot;Cannot delegate methods based on a Regexp without a type constraint (isa)&quot;</span>, <span class="synString">data</span> =&gt; <span class="synIdentifier">$handles</span>);
+            <span class="synStatement">return</span> <span class="synStatement">map</span>  <span class="synStatement">{</span> (<span class="synIdentifier">$_</span> =&gt; <span class="synIdentifier">$_</span>) <span class="synStatement">}</span>
+                   <span class="synStatement">grep</span> <span class="synStatement">{</span> <span class="synStatement">/</span><span class="synIdentifier">$handles</span><span class="synStatement">/</span> <span class="synStatement">}</span> <span class="synIdentifier">$self-&gt;_get_delegate_method_list</span>;
+        }
+        <span class="synConditional">elsif</span> (<span class="synIdentifier">$handle_type</span> <span class="synOperator">eq</span> <span class="synString">'CODE'</span>) {
+            <span class="synStatement">return</span> <span class="synIdentifier">$handles</span>-&gt;(<span class="synIdentifier">$self</span>, <span class="synIdentifier">$self-&gt;_find_delegate_metaclass</span>);
+        }
+        <span class="synConditional">elsif</span> (blessed(<span class="synIdentifier">$handles</span>) &amp;&amp; <span class="synIdentifier">$handles-&gt;isa</span>(<span class="synString">'Moose::Meta::TypeConstraint::DuckType'</span>)) {
+            <span class="synStatement">return</span> <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_</span> =&gt; <span class="synIdentifier">$_</span> <span class="synStatement">}</span> <span class="synIdentifier">@{</span> <span class="synIdentifier">$handles-&gt;methods</span> <span class="synIdentifier">}</span>;
+        }
+        <span class="synConditional">elsif</span> (blessed(<span class="synIdentifier">$handles</span>) &amp;&amp; <span class="synIdentifier">$handles-&gt;isa</span>(<span class="synString">'Moose::Meta::TypeConstraint::Role'</span>)) {
+            <span class="synIdentifier">$handles</span> = <span class="synIdentifier">$handles-&gt;role</span>;
+        }
+        <span class="synConditional">else</span> {
+            <span class="synIdentifier">$self-&gt;throw_error</span>(<span class="synString">&quot;Unable to canonicalize the 'handles' option with </span><span class="synIdentifier">$handles</span><span class="synString">&quot;</span>, <span class="synString">data</span> =&gt; <span class="synIdentifier">$handles</span>);
+        }
+    }
+
+    load_class(<span class="synIdentifier">$handles</span>);
+    <span class="synStatement">my</span> <span class="synIdentifier">$role_meta</span> = Class::MOP::class_of(<span class="synIdentifier">$handles</span>);
+
+    (blessed <span class="synIdentifier">$role_meta</span> &amp;&amp; <span class="synIdentifier">$role_meta-&gt;isa</span>(<span class="synString">'Moose::Meta::Role'</span>))
+        || <span class="synIdentifier">$self-&gt;throw_error</span>(<span class="synString">&quot;Unable to canonicalize the 'handles' option with </span><span class="synIdentifier">$handles</span><span class="synString"> because its metaclass is not a Moose::Meta::Role&quot;</span>, <span class="synString">data</span> =&gt; <span class="synIdentifier">$handles</span>);
+
+    <span class="synStatement">return</span> <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_</span> =&gt; <span class="synIdentifier">$_</span> <span class="synStatement">}</span>
+        <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;name</span> <span class="synStatement">}</span>
+        <span class="synStatement">grep</span> <span class="synStatement">{</span> !<span class="synIdentifier">$_-&gt;isa</span>(<span class="synString">'Class::MOP::Method::Meta'</span>) <span class="synStatement">}</span> (
+        <span class="synIdentifier">$role_meta-&gt;_get_local_methods</span>,
+        <span class="synIdentifier">$role_meta-&gt;get_required_method_list</span>,
+        );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_get_delegate_method_list </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$meta</span> = <span class="synIdentifier">$self-&gt;_find_delegate_metaclass</span>;
+    <span class="synConditional">if</span> (<span class="synIdentifier">$meta-&gt;isa</span>(<span class="synString">'Class::MOP::Class'</span>)) {
+        <span class="synStatement">return</span> <span class="synStatement">map</span>  <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;name</span> <span class="synStatement">}</span>  <span class="synComment"># </span><span class="synTodo">NOTE:</span><span class="synComment"> !never! delegate &amp;meta</span>
+               <span class="synStatement">grep</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;package_name</span> <span class="synOperator">ne</span> <span class="synString">'Moose::Object'</span> &amp;&amp; !<span class="synIdentifier">$_-&gt;isa</span>(<span class="synString">'Class::MOP::Method::Meta'</span>) <span class="synStatement">}</span>
+                    <span class="synIdentifier">$meta-&gt;get_all_methods</span>;
+    }
+    <span class="synConditional">elsif</span> (<span class="synIdentifier">$meta-&gt;isa</span>(<span class="synString">'Moose::Meta::Role'</span>)) {
+        <span class="synStatement">return</span> <span class="synIdentifier">$meta-&gt;get_method_list</span>;
+    }
+    <span class="synConditional">else</span> {
+        <span class="synIdentifier">$self-&gt;throw_error</span>(<span class="synString">&quot;Unable to recognize the delegate metaclass '</span><span class="synIdentifier">$meta</span><span class="synString">'&quot;</span>, <span class="synString">data</span> =&gt; <span class="synIdentifier">$meta</span>);
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_find_delegate_metaclass </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synConditional">if</span> (<span class="synStatement">my</span> <span class="synIdentifier">$class</span> = <span class="synIdentifier">$self-&gt;_isa_metadata</span>) {
+        <span class="synConditional">unless</span> ( is_class_loaded(<span class="synIdentifier">$class</span>) ) {
+            <span class="synIdentifier">$self-&gt;throw_error</span>(
+                <span class="synStatement">sprintf</span>(
+                    <span class="synString">'The %s attribute is trying to delegate to a class which has not been loaded - %s'</span>,
+                    <span class="synIdentifier">$self-&gt;name</span>, <span class="synIdentifier">$class</span>
+                )
+            );
+        }
+        <span class="synComment"># we might be dealing with a non-Moose class,</span>
+        <span class="synComment"># and need to make our own metaclass. if there's</span>
+        <span class="synComment"># already a metaclass, it will be returned</span>
+        <span class="synStatement">return</span> Class::MOP::Class-&gt;initialize(<span class="synIdentifier">$class</span>);
+    }
+    <span class="synConditional">elsif</span> (<span class="synStatement">my</span> <span class="synIdentifier">$role</span> = <span class="synIdentifier">$self-&gt;_does_metadata</span>) {
+        <span class="synConditional">unless</span> ( is_class_loaded(<span class="synIdentifier">$class</span>) ) {
+            <span class="synIdentifier">$self-&gt;throw_error</span>(
+                <span class="synStatement">sprintf</span>(
+                    <span class="synString">'The %s attribute is trying to delegate to a role which has not been loaded - %s'</span>,
+                    <span class="synIdentifier">$self-&gt;name</span>, <span class="synIdentifier">$role</span>
+                )
+            );
+        }
+
+        <span class="synStatement">return</span> Class::MOP::class_of(<span class="synIdentifier">$role</span>);
+    }
+    <span class="synConditional">else</span> {
+        <span class="synIdentifier">$self-&gt;throw_error</span>(<span class="synString">&quot;Cannot find delegate metaclass for attribute &quot;</span> . <span class="synIdentifier">$self-&gt;name</span>);
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">delegation_metaclass </span>{ <span class="synString">'Moose::Meta::Method::Delegation'</span> }
+
+<span class="synKeyword">sub </span><span class="synFunction">_make_delegation_method </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$self</span>, <span class="synIdentifier">$handle_name</span>, <span class="synIdentifier">$method_to_call</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">@curried_arguments</span>;
+
+    (<span class="synIdentifier">$method_to_call</span>, <span class="synIdentifier">@curried_arguments</span>) = <span class="synIdentifier">@$method_to_call</span>
+        <span class="synConditional">if</span> <span class="synString">'ARRAY'</span> <span class="synOperator">eq</span> <span class="synOperator">ref</span>(<span class="synIdentifier">$method_to_call</span>);
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;delegation_metaclass-&gt;new</span>(
+        <span class="synString">name</span>               =&gt; <span class="synIdentifier">$handle_name</span>,
+        <span class="synString">package_name</span>       =&gt; <span class="synIdentifier">$self-&gt;associated_class-&gt;name</span>,
+        <span class="synString">attribute</span>          =&gt; <span class="synIdentifier">$self</span>,
+        <span class="synString">delegate_to_method</span> =&gt; <span class="synIdentifier">$method_to_call</span>,
+        <span class="synString">curried_arguments</span>  =&gt; \<span class="synIdentifier">@curried_arguments</span>,
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_coerce_and_verify </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span>     = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$val</span>      = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$instance</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$val</span> <span class="synConditional">unless</span> <span class="synIdentifier">$self-&gt;has_type_constraint</span>;
+
+    <span class="synIdentifier">$val</span> = <span class="synIdentifier">$self-&gt;type_constraint-&gt;coerce</span>(<span class="synIdentifier">$val</span>)
+        <span class="synConditional">if</span> <span class="synIdentifier">$self-&gt;should_coerce</span> &amp;&amp; <span class="synIdentifier">$self-&gt;type_constraint-&gt;has_coercion</span>;
+
+    <span class="synIdentifier">$self-&gt;verify_against_type_constraint</span>(<span class="synIdentifier">$val</span>, <span class="synString">instance</span> =&gt; <span class="synIdentifier">$instance</span>);
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$val</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">verify_against_type_constraint </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$val</span>  = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">return</span> <span class="synNumber">1</span> <span class="synConditional">if</span> !<span class="synIdentifier">$self-&gt;has_type_constraint</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$type_constraint</span> = <span class="synIdentifier">$self-&gt;type_constraint</span>;
+
+    <span class="synIdentifier">$type_constraint-&gt;check</span>(<span class="synIdentifier">$val</span>)
+        || <span class="synIdentifier">$self-&gt;throw_error</span>(<span class="synString">&quot;Attribute (&quot;</span>
+                 . <span class="synIdentifier">$self-&gt;name</span>
+                 . <span class="synString">&quot;) does not pass the type constraint because: &quot;</span>
+                 . <span class="synIdentifier">$type_constraint-&gt;get_message</span>(<span class="synIdentifier">$val</span>), <span class="synString">data</span> =&gt; <span class="synIdentifier">$val</span>, <span class="synIdentifier">@_</span>);
+}
+
+<span class="synStatement">package</span><span class="synType"> Moose::Meta::Attribute::Custom::Moose</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Attribute::Custom::Moose::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Attribute::Custom::Moose::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+<span class="synKeyword">sub </span><span class="synFunction">register_implementation </span>{ <span class="synString">'Moose::Meta::Attribute'</span> }
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: The Moose attribute metaclass</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Moose::Meta::Attribute - The Moose attribute metaclass
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This class is a subclass of <span class="synIdentifier">L&lt;Class::MOP::Attribute&gt;</span> that provides
+additional Moose-specific functionality.
+
+To really understand this class, you will need to start with the
+<span class="synIdentifier">L&lt;Class::MOP::Attribute&gt;</span> documentation. This class can be understood
+as a set of additional features on top of the basic feature provided
+by that parent class.
+
+<span class="synStatement">=head1</span><span class="synString"> INHERITANCE</span>
+
+<span class="synIdentifier">C&lt;Moose::Meta::Attribute&gt;</span> is a subclass of <span class="synIdentifier">L&lt;Class::MOP::Attribute&gt;</span>.
+
+<span class="synStatement">=head1</span><span class="synString"> METHODS</span>
+
+Many of the documented below override methods in
+<span class="synIdentifier">L&lt;Class::MOP::Attribute&gt;</span> and add Moose specific features.
+
+<span class="synStatement">=head2</span><span class="synString"> Creation</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; Moose::Meta::Attribute-&gt;new($name, %options) &gt;&gt;</span>
+
+This method overrides the <span class="synIdentifier">L&lt;Class::MOP::Attribute&gt;</span> constructor.
+
+Many of the options below are described in more detail in the
+<span class="synIdentifier">L&lt;Moose::Manual::Attributes&gt;</span> document.
+
+It adds the following options to the constructor:
+
+<span class="synStatement">=over</span> <span class="synNumber">8</span>
+
+<span class="synStatement">=item</span><span class="synString"> * is =&gt; 'ro', 'rw', 'bare'</span>
+
+This provides a shorthand for specifying the <span class="synIdentifier">C&lt;reader&gt;</span>, <span class="synIdentifier">C&lt;writer&gt;</span>, or
+<span class="synIdentifier">C&lt;accessor&gt;</span> names. If the attribute is read-only ('ro') then it will
+have a <span class="synIdentifier">C&lt;reader&gt;</span> method with the same attribute as the name.
+
+If it is read-write ('rw') then it will have an <span class="synIdentifier">C&lt;accessor&gt;</span> method
+with the same name. If you provide an explicit <span class="synIdentifier">C&lt;writer&gt;</span> for a
+read-write attribute, then you will have a <span class="synIdentifier">C&lt;reader&gt;</span> with the same
+name as the attribute, and a <span class="synIdentifier">C&lt;writer&gt;</span> with the name you provided.
+
+Use 'bare' when you are deliberately not installing any methods
+(accessor, reader, etc.) associated with this attribute; otherwise,
+Moose will issue a deprecation warning when this attribute is added to a
+metaclass.
+
+<span class="synStatement">=item</span><span class="synString"> * isa =&gt; $type</span>
+
+This option accepts a type. The type can be a string, which should be
+a type name. If the type name is unknown, it is assumed to be a class
+name.
+
+This option can also accept a <span class="synIdentifier">L&lt;Moose::Meta::TypeConstraint&gt;</span> object.
+
+If you <span class="synIdentifier">I&lt;also&gt;</span> provide a <span class="synIdentifier">C&lt;does&gt;</span> option, then your <span class="synIdentifier">C&lt;isa&gt;</span> option must
+be a class name, and that class must do the role specified with
+<span class="synIdentifier">C&lt;does&gt;</span>.
+
+<span class="synStatement">=item</span><span class="synString"> * does =&gt; $role</span>
+
+This is short-hand for saying that the attribute's type must be an
+object which does the named role.
+
+<span class="synStatement">=item</span><span class="synString"> * coerce =&gt; $bool</span>
+
+This option is only valid for objects with a type constraint
+(<span class="synIdentifier">C&lt;isa&gt;</span>) that defined a coercion. If this is true, then coercions will be applied whenever
+this attribute is set.
+
+You can make both this and the <span class="synIdentifier">C&lt;weak_ref&gt;</span> option true.
+
+<span class="synStatement">=item</span><span class="synString"> * trigger =&gt; $sub</span>
+
+This option accepts a subroutine reference, which will be called after
+the attribute is set.
+
+<span class="synStatement">=item</span><span class="synString"> * required =&gt; $bool</span>
+
+An attribute which is required must be provided to the constructor. An
+attribute which is required can also have a <span class="synIdentifier">C&lt;default&gt;</span> or <span class="synIdentifier">C&lt;builder&gt;</span>,
+which will satisfy its required-ness.
+
+A required attribute must have a <span class="synIdentifier">C&lt;default&gt;</span>, <span class="synIdentifier">C&lt;builder&gt;</span> or a
+non-<span class="synIdentifier">C&lt;undef&gt;</span> <span class="synIdentifier">C&lt;init_arg&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> * lazy =&gt; $bool</span>
+
+A lazy attribute must have a <span class="synIdentifier">C&lt;default&gt;</span> or <span class="synIdentifier">C&lt;builder&gt;</span>. When an
+attribute is lazy, the default value will not be calculated until the
+attribute is read.
+
+<span class="synStatement">=item</span><span class="synString"> * weak_ref =&gt; $bool</span>
+
+If this is true, the attribute's value will be stored as a weak
+reference.
+
+<span class="synStatement">=item</span><span class="synString"> * auto_deref =&gt; $bool</span>
+
+If this is true, then the reader will dereference the value when it is
+called. The attribute must have a type constraint which defines the
+attribute as an array or hash reference.
+
+<span class="synStatement">=item</span><span class="synString"> * lazy_build =&gt; $bool</span>
+
+Setting this to true makes the attribute lazy and provides a number of
+default methods.
+
+<span class="synPreProc">  has 'size' =&gt; (</span>
+<span class="synPreProc">      is         =&gt; 'ro',</span>
+<span class="synPreProc">      lazy_build =&gt; 1,</span>
+<span class="synPreProc">  );</span>
+
+is equivalent to this:
+
+<span class="synPreProc">  has 'size' =&gt; (</span>
+<span class="synPreProc">      is        =&gt; 'ro',</span>
+<span class="synPreProc">      lazy      =&gt; 1,</span>
+<span class="synPreProc">      builder   =&gt; '_build_size',</span>
+<span class="synPreProc">      clearer   =&gt; 'clear_size',</span>
+<span class="synPreProc">      predicate =&gt; 'has_size',</span>
+<span class="synPreProc">  );</span>
+
+If your attribute name starts with an underscore (<span class="synIdentifier">C&lt;_&gt;</span>), then the clearer
+and predicate will as well:
+
+<span class="synPreProc">  has '_size' =&gt; (</span>
+<span class="synPreProc">      is         =&gt; 'ro',</span>
+<span class="synPreProc">      lazy_build =&gt; 1,</span>
+<span class="synPreProc">  );</span>
+
+becomes:
+
+<span class="synPreProc">  has '_size' =&gt; (</span>
+<span class="synPreProc">      is        =&gt; 'ro',</span>
+<span class="synPreProc">      lazy      =&gt; 1,</span>
+<span class="synPreProc">      builder   =&gt; '_build__size',</span>
+<span class="synPreProc">      clearer   =&gt; '_clear_size',</span>
+<span class="synPreProc">      predicate =&gt; '_has_size',</span>
+<span class="synPreProc">  );</span>
+
+Note the doubled underscore in the builder name. Internally, Moose
+simply prepends the attribute name with &quot;_build_&quot; to come up with the
+builder name.
+
+<span class="synStatement">=item</span><span class="synString"> * documentation</span>
+
+An arbitrary string that can be retrieved later by calling C&lt;&lt;
+<span class="synIdentifier">$attr</span>-&gt;documentation &gt;&gt;.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;clone(%options) &gt;&gt;</span>
+
+This creates a new attribute based on attribute being cloned. You must
+supply a <span class="synIdentifier">C&lt;name&gt;</span> option to provide a new name for the attribute.
+
+The <span class="synIdentifier">C&lt;%options&gt;</span> can only specify options handled by
+<span class="synIdentifier">L&lt;Class::MOP::Attribute&gt;</span>.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head2</span><span class="synString"> Value management</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;initialize_instance_slot($meta_instance, $instance, $params) &gt;&gt;</span>
+
+This method is used internally to initialize the attribute's slot in
+the object <span class="synIdentifier">C&lt;$instance&gt;</span>.
+
+This overrides the <span class="synIdentifier">L&lt;Class::MOP::Attribute&gt;</span> method to handle lazy
+attributes, weak references, and type constraints.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;get_value&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;set_value&gt;</span>
+
+<span class="synPreProc">  eval { $point-&gt;meta-&gt;get_attribute('x')-&gt;set_value($point, 'forty-two') };</span>
+<span class="synPreProc">  if($@) {</span>
+<span class="synPreProc">    print &quot;Oops: $@\n&quot;;</span>
+<span class="synPreProc">  }</span>
+
+<span class="synIdentifier">I&lt;Attribute (x) does not pass the type constraint (Int) with 'forty-two'&gt;</span>
+
+Before setting the value, a check is made on the type constraint of
+the attribute, if it has one, to see if the value passes it. If the
+value fails to pass, the set operation dies.
+
+Any coercion to convert values is done before checking the type constraint.
+
+To check a value against a type constraint before setting it, fetch the
+attribute instance using <span class="synIdentifier">L&lt;Class::MOP::Class/find_attribute_by_name&gt;</span>,
+fetch the type_constraint from the attribute using <span class="synIdentifier">L&lt;Moose::Meta::Attribute/type_constraint&gt;</span>
+and call <span class="synIdentifier">L&lt;Moose::Meta::TypeConstraint/check&gt;</span>. See <span class="synIdentifier">L&lt;Moose::Cookbook::Basics::Company_Subtypes&gt;</span>
+for an example.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head2</span><span class="synString"> Attribute Accessor generation</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;install_accessors &gt;&gt;</span>
+
+This method overrides the parent to also install delegation methods.
+
+If, after installing all methods, the attribute object has no associated
+methods, it throws an error unless <span class="synIdentifier">C&lt;&lt; is =&gt; 'bare' &gt;&gt;</span> was passed to the
+attribute constructor.  (Trying to add an attribute that has no associated
+methods is almost always an error.)
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;remove_accessors &gt;&gt;</span>
+
+This method overrides the parent to also remove delegation methods.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;inline_set($instance_var, $value_var) &gt;&gt;</span>
+
+This method return a code snippet suitable for inlining the relevant
+operation. It expect strings containing variable names to be used in the
+inlining, like <span class="synIdentifier">C&lt;'$self'&gt;</span> or <span class="synIdentifier">C&lt;'$_[1]'&gt;</span>.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;install_delegation &gt;&gt;</span>
+
+This method adds its delegation methods to the attribute's associated
+class, if it has any to add.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;remove_delegation &gt;&gt;</span>
+
+This method remove its delegation methods from the attribute's
+associated class.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;accessor_metaclass &gt;&gt;</span>
+
+Returns the accessor metaclass name, which defaults to
+<span class="synIdentifier">L&lt;Moose::Meta::Method::Accessor&gt;</span>.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;delegation_metaclass &gt;&gt;</span>
+
+Returns the delegation metaclass name, which defaults to
+<span class="synIdentifier">L&lt;Moose::Meta::Method::Delegation&gt;</span>.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head2</span><span class="synString"> Additional Moose features</span>
+
+These methods are not found in the superclass. They support features
+provided by Moose.
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;does($role) &gt;&gt;</span>
+
+This indicates whether the <span class="synIdentifier">I&lt;attribute itself&gt;</span> does the given
+role. The role can be given as a full class name, or as a resolvable
+trait name.
+
+Note that this checks the attribute itself, not its type constraint,
+so it is checking the attribute's metaclass and any traits applied to
+the attribute.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; Moose::Meta::Class-&gt;interpolate_class_and_new($name, %options) &gt;&gt;</span>
+
+This is an alternate constructor that handles the <span class="synIdentifier">C&lt;metaclass&gt;</span> and
+<span class="synIdentifier">C&lt;traits&gt;</span> options.
+
+Effectively, this method is a factory that finds or creates the
+appropriate class for the given <span class="synIdentifier">C&lt;metaclass&gt;</span> and/or <span class="synIdentifier">C&lt;traits&gt;</span>.
+
+Once it has the appropriate class, it will call C&lt;&lt; <span class="synIdentifier">$class</span>-&gt;new(<span class="synIdentifier">$name</span>,
+<span class="synIdentifier">%options</span>) &gt;&gt; on that class.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;clone_and_inherit_options(%options) &gt;&gt;</span>
+
+This method supports the <span class="synIdentifier">C&lt;has '+foo'&gt;</span> feature. It does various bits
+of processing on the supplied <span class="synIdentifier">C&lt;%options&gt;</span> before ultimately calling
+the <span class="synIdentifier">C&lt;clone&gt;</span> method.
+
+One of its main tasks is to make sure that the <span class="synIdentifier">C&lt;%options&gt;</span> provided
+does not include the options returned by the
+<span class="synIdentifier">C&lt;illegal_options_for_inheritance&gt;</span> method.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;illegal_options_for_inheritance &gt;&gt;</span>
+
+This returns a blacklist of options that can not be overridden in a
+subclass's attribute definition.
+
+This exists to allow a custom metaclass to change or add to the list
+of options which can not be changed.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;type_constraint &gt;&gt;</span>
+
+Returns the <span class="synIdentifier">L&lt;Moose::Meta::TypeConstraint&gt;</span> object for this attribute,
+if it has one.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;has_type_constraint &gt;&gt;</span>
+
+Returns true if this attribute has a type constraint.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;verify_against_type_constraint($value) &gt;&gt;</span>
+
+Given a value, this method returns true if the value is valid for the
+attribute's type constraint. If the value is not valid, it throws an
+error.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;handles &gt;&gt;</span>
+
+This returns the value of the <span class="synIdentifier">C&lt;handles&gt;</span> option passed to the
+constructor.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;has_handles &gt;&gt;</span>
+
+Returns true if this attribute performs delegation.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;is_weak_ref &gt;&gt;</span>
+
+Returns true if this attribute stores its value as a weak reference.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;is_required &gt;&gt;</span>
+
+Returns true if this attribute is required to have a value.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;is_lazy &gt;&gt;</span>
+
+Returns true if this attribute is lazy.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;is_lazy_build &gt;&gt;</span>
+
+Returns true if the <span class="synIdentifier">C&lt;lazy_build&gt;</span> option was true when passed to the
+constructor.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;should_coerce &gt;&gt;</span>
+
+Returns true if the <span class="synIdentifier">C&lt;coerce&gt;</span> option passed to the constructor was
+true.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;should_auto_deref &gt;&gt;</span>
+
+Returns true if the <span class="synIdentifier">C&lt;auto_deref&gt;</span> option passed to the constructor was
+true.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;trigger &gt;&gt;</span>
+
+This is the subroutine reference that was in the <span class="synIdentifier">C&lt;trigger&gt;</span> option
+passed to the constructor, if any.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;has_trigger &gt;&gt;</span>
+
+Returns true if this attribute has a trigger set.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;documentation &gt;&gt;</span>
+
+Returns the value that was in the <span class="synIdentifier">C&lt;documentation&gt;</span> option passed to
+the constructor, if any.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;has_documentation &gt;&gt;</span>
+
+Returns true if this attribute has any documentation.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;applied_traits &gt;&gt;</span>
+
+This returns an array reference of all the traits which were applied
+to this attribute. If none were applied, this returns <span class="synIdentifier">C&lt;undef&gt;</span>.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $attr-&gt;has_applied_traits &gt;&gt;</span>
+
+Returns true if this attribute has any traits applied.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> BUGS</span>
+
+See <span class="synIdentifier">L&lt;Moose/BUGS&gt;</span> for details on reporting bugs.
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

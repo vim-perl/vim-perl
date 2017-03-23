@@ -1,0 +1,2121 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Data::Printer</span>;
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+<span class="synStatement">use </span>Term::ANSIColor <span class="synString">qw(color colored)</span>;
+<span class="synStatement">use </span>Scalar::Util;
+<span class="synStatement">use </span>Sort::Naturally;
+<span class="synStatement">use </span>Carp <span class="synString">qw(croak)</span>;
+<span class="synStatement">use </span>Clone::PP <span class="synString">qw(clone)</span>;
+<span class="synStatement">use if</span> <span class="synIdentifier">$]</span> &gt;= <span class="synFloat">5.010</span>, <span class="synString">'Hash::Util::FieldHash'</span> =&gt; <span class="synString">qw(fieldhash)</span>;
+<span class="synStatement">use if</span> <span class="synIdentifier">$]</span> &lt; <span class="synFloat">5.010</span>, <span class="synString">'Hash::Util::FieldHash::Compat'</span> =&gt; <span class="synString">qw(fieldhash)</span>;
+<span class="synStatement">use </span>File::Spec;
+<span class="synStatement">use </span>File::HomeDir ();
+<span class="synStatement">use </span>Fcntl;
+<span class="synStatement">use version</span> <span class="synFloat">0.77</span> ();
+
+<span class="synStatement">our</span> <span class="synIdentifier">$VERSION</span> = <span class="synString">'0.35'</span>;
+
+<span class="synPreProc">BEGIN </span>{
+    <span class="synConditional">if</span> (<span class="synIdentifier">$^O</span> =~ <span class="synStatement">/</span><span class="synString">Win32</span><span class="synStatement">/i</span>) {
+        <span class="synStatement">require</span> Win32::Console::ANSI;
+        Win32::Console::ANSI-&gt;<span class="synStatement">import</span>;
+    }
+}
+
+
+<span class="synComment"># defaults</span>
+<span class="synStatement">my</span> <span class="synIdentifier">$BREAK</span> = <span class="synString">&quot;</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+<span class="synStatement">my</span> <span class="synIdentifier">$properties</span> = {
+    <span class="synString">'name'</span>           =&gt; <span class="synString">'var'</span>,
+    <span class="synString">'indent'</span>         =&gt; <span class="synNumber">4</span>,
+    <span class="synString">'index'</span>          =&gt; <span class="synNumber">1</span>,
+    <span class="synString">'max_depth'</span>      =&gt; <span class="synNumber">0</span>,
+    <span class="synString">'multiline'</span>      =&gt; <span class="synNumber">1</span>,
+    <span class="synString">'sort_keys'</span>      =&gt; <span class="synNumber">1</span>,
+    <span class="synString">'deparse'</span>        =&gt; <span class="synNumber">0</span>,
+    <span class="synString">'hash_separator'</span> =&gt; <span class="synString">'   '</span>,
+    <span class="synString">'separator'</span>      =&gt; <span class="synString">','</span>,
+    <span class="synString">'end_separator'</span>  =&gt; <span class="synNumber">0</span>,
+    <span class="synString">'show_tied'</span>      =&gt; <span class="synNumber">1</span>,
+    <span class="synString">'show_tainted'</span>   =&gt; <span class="synNumber">1</span>,
+    <span class="synString">'show_weak'</span>      =&gt; <span class="synNumber">1</span>,
+    <span class="synString">'show_readonly'</span>  =&gt; <span class="synNumber">0</span>,
+    <span class="synString">'show_lvalue'</span>    =&gt; <span class="synNumber">1</span>,
+    <span class="synString">'print_escapes'</span>  =&gt; <span class="synNumber">0</span>,
+    <span class="synString">'quote_keys'</span>     =&gt; <span class="synString">'auto'</span>,
+    <span class="synString">'use_prototypes'</span> =&gt; <span class="synNumber">1</span>,
+    <span class="synString">'output'</span>         =&gt; <span class="synString">'stderr'</span>,
+    <span class="synString">'return_value'</span>   =&gt; <span class="synString">'dump'</span>,       <span class="synComment"># also 'void' or 'pass'</span>
+    <span class="synString">'colored'</span>        =&gt; <span class="synString">'auto'</span>,       <span class="synComment"># also 0 or 1</span>
+    <span class="synString">'caller_info'</span>    =&gt; <span class="synNumber">0</span>,
+    <span class="synString">'caller_message'</span> =&gt; <span class="synString">'Printing in line __LINE__ of __FILENAME__:'</span>,
+    <span class="synString">'class_method'</span>   =&gt; <span class="synString">'_data_printer'</span>, <span class="synComment"># use a specific dump method, if available</span>
+    <span class="synString">'color'</span>          =&gt; {
+        <span class="synString">'array'</span>       =&gt; <span class="synString">'bright_white'</span>,
+        <span class="synString">'number'</span>      =&gt; <span class="synString">'bright_blue'</span>,
+        <span class="synString">'string'</span>      =&gt; <span class="synString">'bright_yellow'</span>,
+        <span class="synString">'class'</span>       =&gt; <span class="synString">'bright_green'</span>,
+        <span class="synString">'method'</span>      =&gt; <span class="synString">'bright_green'</span>,
+        <span class="synString">'undef'</span>       =&gt; <span class="synString">'bright_red'</span>,
+        <span class="synString">'hash'</span>        =&gt; <span class="synString">'magenta'</span>,
+        <span class="synString">'regex'</span>       =&gt; <span class="synString">'yellow'</span>,
+        <span class="synString">'code'</span>        =&gt; <span class="synString">'green'</span>,
+        <span class="synString">'glob'</span>        =&gt; <span class="synString">'bright_cyan'</span>,
+        <span class="synString">'vstring'</span>     =&gt; <span class="synString">'bright_blue'</span>,
+        <span class="synString">'lvalue'</span>      =&gt; <span class="synString">'bright_white'</span>,
+        <span class="synString">'format'</span>      =&gt; <span class="synString">'bright_cyan'</span>,
+        <span class="synString">'repeated'</span>    =&gt; <span class="synString">'white on_red'</span>,
+        <span class="synString">'caller_info'</span> =&gt; <span class="synString">'bright_cyan'</span>,
+        <span class="synString">'weak'</span>        =&gt; <span class="synString">'cyan'</span>,
+        <span class="synString">'tainted'</span>     =&gt; <span class="synString">'red'</span>,
+        <span class="synString">'escaped'</span>     =&gt; <span class="synString">'bright_red'</span>,
+        <span class="synString">'unknown'</span>     =&gt; <span class="synString">'bright_yellow on_blue'</span>,
+    },
+    <span class="synString">'class'</span> =&gt; {
+        <span class="synString">inherited</span>    =&gt; <span class="synString">'none'</span>,   <span class="synComment"># also 'all', 'public' or 'private'</span>
+        <span class="synString">universal</span>    =&gt; <span class="synNumber">1</span>,
+        <span class="synString">parents</span>      =&gt; <span class="synNumber">1</span>,
+        <span class="synString">linear_isa</span>   =&gt; <span class="synString">'auto'</span>,
+        <span class="synString">expand</span>       =&gt; <span class="synNumber">1</span>,        <span class="synComment"># how many levels to expand. 0 for none, 'all' for all</span>
+        <span class="synString">internals</span>    =&gt; <span class="synNumber">1</span>,
+        <span class="synString">export</span>       =&gt; <span class="synNumber">1</span>,
+        <span class="synString">sort_methods</span> =&gt; <span class="synNumber">1</span>,
+        <span class="synString">show_methods</span> =&gt; <span class="synString">'all'</span>,    <span class="synComment"># also 'none', 'public', 'private'</span>
+        <span class="synString">show_reftype</span> =&gt; <span class="synNumber">0</span>,
+        <span class="synString">_depth</span>       =&gt; <span class="synNumber">0</span>,        <span class="synComment"># used internally</span>
+    },
+    <span class="synString">'filters'</span> =&gt; {
+        <span class="synComment"># The IO ref type isn't supported as you can't actually create one,</span>
+        <span class="synComment"># any handle you make is automatically blessed into an IO::* object,</span>
+        <span class="synComment"># and those are separately handled.</span>
+        <span class="synString">SCALAR</span>  =&gt; [ \<span class="synIdentifier">&amp;SCALAR</span>   ],
+        <span class="synString">ARRAY</span>   =&gt; [ \<span class="synIdentifier">&amp;ARRAY</span>    ],
+        <span class="synString">HASH</span>    =&gt; [ \<span class="synIdentifier">&amp;HASH</span>     ],
+        <span class="synString">REF</span>     =&gt; [ \<span class="synIdentifier">&amp;REF</span>      ],
+        <span class="synString">CODE</span>    =&gt; [ \<span class="synIdentifier">&amp;CODE</span>     ],
+        <span class="synString">GLOB</span>    =&gt; [ \<span class="synIdentifier">&amp;GLOB</span>     ],
+        <span class="synString">VSTRING</span> =&gt; [ \<span class="synIdentifier">&amp;VSTRING</span>  ],
+        <span class="synString">LVALUE</span>  =&gt; [ \<span class="synIdentifier">&amp;LVALUE</span> ],
+        <span class="synString">FORMAT</span>  =&gt; [ \<span class="synIdentifier">&amp;FORMAT</span> ],
+        <span class="synString">Regexp</span>  =&gt; [ \<span class="synIdentifier">&amp;Regexp</span>   ],
+        <span class="synString">-unknown</span>=&gt; [ \<span class="synIdentifier">&amp;_unknown</span> ],
+        <span class="synString">-class</span>  =&gt; [ \<span class="synIdentifier">&amp;_class</span>   ],
+    },
+
+    <span class="synString">_output</span>          =&gt; *STDERR,     <span class="synComment"># used internally</span>
+    <span class="synString">_current_indent</span>  =&gt; <span class="synNumber">0</span>,           <span class="synComment"># used internally</span>
+    <span class="synString">_linebreak</span>       =&gt; \<span class="synIdentifier">$BREAK</span>,     <span class="synComment"># used internally</span>
+    <span class="synString">_seen</span>            =&gt; {},          <span class="synComment"># used internally</span>
+    <span class="synString">_seen_override</span>   =&gt; {},          <span class="synComment"># used internally</span>
+    <span class="synString">_depth</span>           =&gt; <span class="synNumber">0</span>,           <span class="synComment"># used internally</span>
+    <span class="synString">_tie</span>             =&gt; <span class="synNumber">0</span>,           <span class="synComment"># used internally</span>
+};
+
+
+<span class="synKeyword">sub </span><span class="synFunction">import </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$class</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$args</span>;
+    <span class="synConditional">if</span> (<span class="synStatement">scalar</span> <span class="synIdentifier">@_</span>) {
+        <span class="synIdentifier">$args</span> = <span class="synIdentifier">@_</span> == <span class="synNumber">1</span> ? <span class="synStatement">shift</span> : {<span class="synIdentifier">@_</span>};
+        croak <span class="synString">'Data::Printer can receive either a hash or a hash reference.'</span>
+            <span class="synConditional">unless</span> <span class="synOperator">ref</span> <span class="synIdentifier">$args</span> <span class="synOperator">and</span> <span class="synOperator">ref</span> <span class="synIdentifier">$args</span> <span class="synOperator">eq</span> <span class="synString">'HASH'</span>;
+    }
+
+    <span class="synComment"># the RC file overrides the defaults,</span>
+    <span class="synComment"># (and we load it only once)</span>
+    <span class="synConditional">unless</span>( <span class="synStatement">exists</span> <span class="synIdentifier">$properties-&gt;{</span><span class="synString">_initialized</span><span class="synIdentifier">}</span> ) {
+        _load_rc_file(<span class="synIdentifier">$args</span>);
+        <span class="synIdentifier">$properties-&gt;{</span><span class="synString">_initialized</span><span class="synIdentifier">}</span> = <span class="synNumber">1</span>;
+    }
+
+    <span class="synComment"># and 'use' arguments override the RC file</span>
+    <span class="synConditional">if</span> (<span class="synIdentifier">$args</span>) {
+        <span class="synIdentifier">$properties</span> = _merge( <span class="synIdentifier">$args</span> );
+    }
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$exported</span> = (<span class="synIdentifier">$properties-&gt;{</span><span class="synString">use_prototypes</span><span class="synIdentifier">}</span> ? \<span class="synIdentifier">&amp;p</span> : \<span class="synIdentifier">&amp;np</span> );
+    <span class="synStatement">my</span> <span class="synIdentifier">$imported</span> = <span class="synIdentifier">$properties-&gt;{</span><span class="synString">alias</span><span class="synIdentifier">}</span> || <span class="synString">'p'</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$caller</span> = <span class="synStatement">caller</span>;
+    <span class="synStatement">no strict</span> <span class="synString">'refs'</span>;
+    <span class="synIdentifier">*{</span><span class="synString">&quot;</span><span class="synIdentifier">$caller</span><span class="synSpecial">\:</span><span class="synString">:</span><span class="synIdentifier">$imported</span><span class="synString">&quot;</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$exported</span>;
+}
+
+
+<span class="synKeyword">sub </span><span class="synFunction">p </span><span class="synType">(\[@$%&amp;];%) </span>{
+    <span class="synStatement">return</span> _print_and_return( <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>, _data_printer(!!<span class="synOperator">defined</span> <span class="synStatement">wantarray</span>, <span class="synIdentifier">@_</span>) );
+}
+
+<span class="synComment"># np() is a p() clone without prototypes.</span>
+<span class="synComment"># Just like regular Data::Dumper, this version</span>
+<span class="synComment"># expects a reference as its first argument.</span>
+<span class="synComment"># We make a single exception for when we only</span>
+<span class="synComment"># get one argument, in which case we ref it</span>
+<span class="synComment"># for the user and keep going.</span>
+<span class="synKeyword">sub </span><span class="synFunction">np  </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$item</span> = <span class="synStatement">shift</span>;
+
+    <span class="synConditional">if</span> (!<span class="synOperator">ref</span> <span class="synIdentifier">$item</span> &amp;&amp; <span class="synIdentifier">@_</span> == <span class="synNumber">0</span>) {
+        <span class="synStatement">my</span> <span class="synIdentifier">$item_value</span> = <span class="synIdentifier">$item</span>;
+        <span class="synIdentifier">$item</span> = \<span class="synIdentifier">$item_value</span>;
+    }
+
+    <span class="synStatement">return</span> _print_and_return( <span class="synIdentifier">$item</span>, _data_printer(!!<span class="synOperator">defined</span> <span class="synStatement">wantarray</span>, <span class="synIdentifier">$item</span>, <span class="synIdentifier">@_</span>) );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_print_and_return </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$item</span>, <span class="synIdentifier">$dump</span>, <span class="synIdentifier">$p</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synConditional">if</span> ( <span class="synIdentifier">$p-&gt;{</span><span class="synString">return_value</span><span class="synIdentifier">}</span> <span class="synOperator">eq</span> <span class="synString">'pass'</span> ) {
+        <span class="synStatement">print</span> <span class="synStatement">{</span> <span class="synIdentifier">$p-&gt;{</span><span class="synString">_output</span><span class="synIdentifier">}</span> <span class="synStatement">}</span> <span class="synIdentifier">$dump</span> . <span class="synIdentifier">$/</span>;
+
+        <span class="synStatement">my</span> <span class="synIdentifier">$ref</span> = <span class="synOperator">ref</span> <span class="synIdentifier">$item</span>;
+        <span class="synConditional">if</span> (<span class="synIdentifier">$ref</span> <span class="synOperator">eq</span> <span class="synString">'ARRAY'</span>) {
+            <span class="synStatement">return</span> <span class="synIdentifier">@{</span> <span class="synIdentifier">$item</span> <span class="synIdentifier">}</span>;
+        }
+        <span class="synConditional">elsif</span> (<span class="synIdentifier">$ref</span> <span class="synOperator">eq</span> <span class="synString">'HASH'</span>) {
+            <span class="synStatement">return</span> <span class="synIdentifier">%{</span> <span class="synIdentifier">$item</span> <span class="synIdentifier">}</span>;
+        }
+        <span class="synConditional">elsif</span> ( <span class="synStatement">grep</span> <span class="synStatement">{</span> <span class="synIdentifier">$ref</span> <span class="synOperator">eq</span> <span class="synIdentifier">$_</span> <span class="synStatement">}</span> <span class="synString">qw(REF SCALAR CODE Regexp GLOB VSTRING)</span> ) {
+            <span class="synStatement">return</span> <span class="synIdentifier">$$item</span>;
+        }
+        <span class="synConditional">else</span> {
+            <span class="synStatement">return</span> <span class="synIdentifier">$item</span>;
+        }
+    }
+    <span class="synConditional">elsif</span> ( <span class="synIdentifier">$p-&gt;{</span><span class="synString">return_value</span><span class="synIdentifier">}</span> <span class="synOperator">eq</span> <span class="synString">'void'</span> ) {
+        <span class="synStatement">print</span> <span class="synStatement">{</span> <span class="synIdentifier">$p-&gt;{</span><span class="synString">_output</span><span class="synIdentifier">}</span> <span class="synStatement">}</span> <span class="synIdentifier">$dump</span> . <span class="synIdentifier">$/</span>;
+        <span class="synStatement">return</span>;
+    }
+    <span class="synConditional">else</span> {
+        <span class="synStatement">print</span> <span class="synStatement">{</span> <span class="synIdentifier">$p-&gt;{</span><span class="synString">_output</span><span class="synIdentifier">}</span> <span class="synStatement">}</span> <span class="synIdentifier">$dump</span> . <span class="synIdentifier">$/</span> <span class="synConditional">unless</span> <span class="synOperator">defined</span> <span class="synStatement">wantarray</span>;
+        <span class="synStatement">return</span> <span class="synIdentifier">$dump</span>;
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_data_printer </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$wantarray</span> = <span class="synStatement">shift</span>;
+
+    croak <span class="synString">'When calling p() without prototypes, please pass arguments as references'</span>
+        <span class="synConditional">unless</span> <span class="synOperator">ref</span> <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>;
+
+    <span class="synStatement">my</span> (<span class="synIdentifier">$item</span>, <span class="synIdentifier">%local_properties</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">local</span> <span class="synIdentifier">%ENV</span> = <span class="synIdentifier">%ENV</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$p</span> = _merge(\<span class="synIdentifier">%local_properties</span>);
+    <span class="synConditional">unless</span> (<span class="synIdentifier">$p-&gt;{</span><span class="synString">multiline</span><span class="synIdentifier">}</span>) {
+        <span class="synIdentifier">$BREAK</span> = <span class="synString">' '</span>;
+        <span class="synIdentifier">$p-&gt;{</span><span class="synString">'indent'</span><span class="synIdentifier">}</span> = <span class="synNumber">0</span>;
+        <span class="synIdentifier">$p-&gt;{</span><span class="synString">'index'</span><span class="synIdentifier">}</span>  = <span class="synNumber">0</span>;
+    }
+
+    <span class="synComment"># We disable colors if colored is set to false.</span>
+    <span class="synComment"># If set to &quot;auto&quot;, we disable colors if the user</span>
+    <span class="synComment"># set ANSI_COLORS_DISABLED or if we're either</span>
+    <span class="synComment"># returning the value (instead of printing) or</span>
+    <span class="synComment"># being piped to another command.</span>
+    <span class="synConditional">if</span> ( !<span class="synIdentifier">$p-&gt;{</span><span class="synString">colored</span><span class="synIdentifier">}</span>
+          <span class="synOperator">or</span> (<span class="synIdentifier">$p-&gt;{</span><span class="synString">colored</span><span class="synIdentifier">}</span> <span class="synOperator">eq</span> <span class="synString">'auto'</span>
+              <span class="synOperator">and</span> (<span class="synStatement">exists</span> <span class="synIdentifier">$ENV{</span><span class="synString">ANSI_COLORS_DISABLED</span><span class="synIdentifier">}</span>
+                   <span class="synOperator">or</span> <span class="synIdentifier">$wantarray</span>
+                   <span class="synOperator">or</span> <span class="synOperator">not</span> <span class="synStatement">-t</span> <span class="synIdentifier">$p-&gt;{</span><span class="synString">_output</span><span class="synIdentifier">}</span>
+                  )
+          )
+    ) {
+        <span class="synIdentifier">$ENV{</span><span class="synString">ANSI_COLORS_DISABLED</span><span class="synIdentifier">}</span> = <span class="synNumber">1</span>;
+    }
+    <span class="synConditional">else</span> {
+        <span class="synStatement">delete</span> <span class="synIdentifier">$ENV{</span><span class="synString">ANSI_COLORS_DISABLED</span><span class="synIdentifier">}</span>;
+    }
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$out</span> = color(<span class="synString">'reset'</span>);
+
+    <span class="synConditional">if</span> ( <span class="synIdentifier">$p-&gt;{</span><span class="synString">caller_info</span><span class="synIdentifier">}</span> <span class="synOperator">and</span> <span class="synIdentifier">$p-&gt;{</span><span class="synString">_depth</span><span class="synIdentifier">}</span> == <span class="synNumber">0</span> ) {
+        <span class="synIdentifier">$out</span> .= _get_info_message(<span class="synIdentifier">$p</span>);
+    }
+
+    <span class="synIdentifier">$out</span> .= _p( <span class="synIdentifier">$item</span>, <span class="synIdentifier">$p</span> );
+    <span class="synStatement">return</span> (<span class="synIdentifier">$out</span>, <span class="synIdentifier">$p</span>);
+}
+
+
+<span class="synKeyword">sub </span><span class="synFunction">_p </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$item</span>, <span class="synIdentifier">$p</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$ref</span> = (<span class="synOperator">defined</span> <span class="synIdentifier">$p-&gt;{</span><span class="synString">_reftype</span><span class="synIdentifier">}</span> ? <span class="synIdentifier">$p-&gt;{</span><span class="synString">_reftype</span><span class="synIdentifier">}</span> : <span class="synOperator">ref</span> <span class="synIdentifier">$item</span>);
+    <span class="synStatement">my</span> <span class="synIdentifier">$tie</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$string</span> = <span class="synString">''</span>;
+
+    <span class="synComment"># Object's unique ID, avoiding circular structures</span>
+    <span class="synStatement">my</span> <span class="synIdentifier">$id</span> = _object_id( <span class="synIdentifier">$item</span> );
+    <span class="synConditional">if</span> ( <span class="synStatement">exists</span> <span class="synIdentifier">$p-&gt;{</span><span class="synString">_seen</span><span class="synIdentifier">}-&gt;{$id}</span> ) {
+        <span class="synConditional">if</span> ( <span class="synOperator">not</span> <span class="synOperator">defined</span> <span class="synIdentifier">$p-&gt;{</span><span class="synString">_reftype</span><span class="synIdentifier">}</span> ) {
+            <span class="synStatement">return</span> colored(<span class="synIdentifier">$p-&gt;{</span><span class="synString">_seen</span><span class="synIdentifier">}-&gt;{$id}</span>, <span class="synIdentifier">$p-&gt;{</span><span class="synString">color</span><span class="synIdentifier">}-&gt;{</span><span class="synString">repeated</span><span class="synIdentifier">}</span>);
+        }
+    }
+    <span class="synComment"># some filters don't want us to show their repeated refs</span>
+    <span class="synConditional">elsif</span>( !<span class="synStatement">exists</span> <span class="synIdentifier">$p-&gt;{</span><span class="synString">_seen_override</span><span class="synIdentifier">}{$ref}</span> ) {
+        <span class="synIdentifier">$p-&gt;{</span><span class="synString">_seen</span><span class="synIdentifier">}-&gt;{$id}</span> = <span class="synIdentifier">$p-&gt;{</span><span class="synString">name</span><span class="synIdentifier">}</span>;
+    }
+
+    <span class="synStatement">delete</span> <span class="synIdentifier">$p-&gt;{</span><span class="synString">_reftype</span><span class="synIdentifier">}</span>; <span class="synComment"># abort override</span>
+
+    <span class="synComment"># globs don't play nice</span>
+    <span class="synIdentifier">$ref</span> = <span class="synString">'GLOB'</span> <span class="synConditional">if</span> <span class="synString">&quot;</span><span class="synIdentifier">$item</span><span class="synString">&quot;</span> =~ <span class="synStatement">/</span><span class="synString">GLOB</span><span class="synSpecial">\([^()]+\)</span><span class="synString">$</span><span class="synStatement">/</span>;
+
+
+    <span class="synComment"># filter item (if user set a filter for it)</span>
+    <span class="synStatement">my</span> <span class="synIdentifier">$found</span>;
+    <span class="synConditional">if</span> ( <span class="synStatement">exists</span> <span class="synIdentifier">$p-&gt;{</span><span class="synString">filters</span><span class="synIdentifier">}-&gt;{$ref}</span> ) {
+        <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$filter</span> ( <span class="synIdentifier">@{</span> <span class="synIdentifier">$p-&gt;{</span><span class="synString">filters</span><span class="synIdentifier">}-&gt;{$ref}</span> <span class="synIdentifier">}</span> ) {
+            <span class="synConditional">if</span> ( <span class="synOperator">defined</span> (<span class="synStatement">my</span> <span class="synIdentifier">$result</span> = <span class="synIdentifier">$filter</span>-&gt;(<span class="synIdentifier">$item</span>, <span class="synIdentifier">$p</span>)) ) {
+                <span class="synIdentifier">$string</span> .= <span class="synIdentifier">$result</span>;
+                <span class="synIdentifier">$found</span> = <span class="synNumber">1</span>;
+                <span class="synStatement">last</span>;
+            }
+        }
+    }
+
+    <span class="synConditional">if</span> (<span class="synOperator">not</span> <span class="synIdentifier">$found</span> <span class="synOperator">and</span> Scalar::Util::blessed(<span class="synIdentifier">$item</span>) ) {
+        <span class="synComment"># let '-class' filters have a go</span>
+        <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$filter</span> ( <span class="synIdentifier">@{</span> <span class="synIdentifier">$p-&gt;{</span><span class="synString">filters</span><span class="synIdentifier">}-&gt;{</span><span class="synString">'-class'</span><span class="synIdentifier">}</span> <span class="synIdentifier">}</span> ) {
+            <span class="synConditional">if</span> ( <span class="synOperator">defined</span> (<span class="synStatement">my</span> <span class="synIdentifier">$result</span> = <span class="synIdentifier">$filter</span>-&gt;(<span class="synIdentifier">$item</span>, <span class="synIdentifier">$p</span>)) ) {
+                <span class="synIdentifier">$string</span> .= <span class="synIdentifier">$result</span>;
+                <span class="synIdentifier">$found</span> = <span class="synNumber">1</span>;
+                <span class="synStatement">last</span>;
+            }
+        }
+    }
+    
+    <span class="synConditional">if</span> ( <span class="synOperator">not</span> <span class="synIdentifier">$found</span> ) {
+        <span class="synComment"># if it's not a class and not a known core type, we must be in</span>
+        <span class="synComment"># a future perl with some type we're unaware of</span>
+        <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$filter</span> ( <span class="synIdentifier">@{</span> <span class="synIdentifier">$p-&gt;{</span><span class="synString">filters</span><span class="synIdentifier">}-&gt;{</span><span class="synString">'-unknown'</span><span class="synIdentifier">}</span> <span class="synIdentifier">}</span> ) {
+            <span class="synConditional">if</span> ( <span class="synOperator">defined</span> (<span class="synStatement">my</span> <span class="synIdentifier">$result</span> = <span class="synIdentifier">$filter</span>-&gt;(<span class="synIdentifier">$item</span>, <span class="synIdentifier">$p</span>)) ) {
+                <span class="synIdentifier">$string</span> .= <span class="synIdentifier">$result</span>;
+                <span class="synStatement">last</span>;
+            }
+        }
+    }
+
+    <span class="synConditional">if</span> (<span class="synIdentifier">$p-&gt;{</span><span class="synString">show_tied</span><span class="synIdentifier">}</span> <span class="synOperator">and</span> <span class="synIdentifier">$p-&gt;{</span><span class="synString">_tie</span><span class="synIdentifier">}</span> ) {
+        <span class="synIdentifier">$string</span> .= <span class="synString">' (tied to '</span> . <span class="synIdentifier">$p-&gt;{</span><span class="synString">_tie</span><span class="synIdentifier">}</span> . <span class="synString">')'</span>;
+        <span class="synIdentifier">$p-&gt;{</span><span class="synString">_tie</span><span class="synIdentifier">}</span> = <span class="synString">''</span>;
+    }
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$string</span>;
+}
+
+
+
+<span class="synComment">######################################</span>
+<span class="synComment">## Default filters</span>
+<span class="synComment">######################################</span>
+
+<span class="synKeyword">sub </span><span class="synFunction">SCALAR </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$item</span>, <span class="synIdentifier">$p</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$string</span> = <span class="synString">''</span>;
+
+    <span class="synConditional">if</span> (<span class="synOperator">not</span> <span class="synOperator">defined</span> <span class="synIdentifier">$$item</span>) {
+        <span class="synIdentifier">$string</span> .= colored(<span class="synString">'undef'</span>, <span class="synIdentifier">$p-&gt;{</span><span class="synString">color</span><span class="synIdentifier">}-&gt;{</span><span class="synString">'undef'</span><span class="synIdentifier">}</span>);
+    }
+    <span class="synConditional">elsif</span> (Scalar::Util::looks_like_number(<span class="synIdentifier">$$item</span>)) {
+        <span class="synIdentifier">$string</span> .= colored(<span class="synIdentifier">$$item</span>, <span class="synIdentifier">$p-&gt;{</span><span class="synString">color</span><span class="synIdentifier">}-&gt;{</span><span class="synString">'number'</span><span class="synIdentifier">}</span>);
+    }
+    <span class="synConditional">else</span> {
+        <span class="synStatement">my</span> <span class="synIdentifier">$val</span> = _escape_chars(<span class="synIdentifier">$$item</span>, <span class="synIdentifier">$p-&gt;{</span><span class="synString">color</span><span class="synIdentifier">}{</span><span class="synString">string</span><span class="synIdentifier">}</span>, <span class="synIdentifier">$p</span>);
+
+        <span class="synIdentifier">$string</span> .= <span class="synString">q[&quot;]</span> . colored(<span class="synIdentifier">$val</span>, <span class="synIdentifier">$p-&gt;{</span><span class="synString">color</span><span class="synIdentifier">}-&gt;{</span><span class="synString">'string'</span><span class="synIdentifier">}</span>) . <span class="synString">q[&quot;]</span>;
+    }
+
+    <span class="synIdentifier">$string</span> .= <span class="synString">' '</span> . colored(<span class="synString">'(TAINTED)'</span>, <span class="synIdentifier">$p-&gt;{</span><span class="synString">color</span><span class="synIdentifier">}-&gt;{</span><span class="synString">'tainted'</span><span class="synIdentifier">}</span>)
+        <span class="synConditional">if</span> <span class="synIdentifier">$p-&gt;{</span><span class="synString">show_tainted</span><span class="synIdentifier">}</span> <span class="synOperator">and</span> Scalar::Util::tainted(<span class="synIdentifier">$$item</span>);
+
+    <span class="synIdentifier">$p-&gt;{</span><span class="synString">_tie</span><span class="synIdentifier">}</span> = <span class="synOperator">ref</span> <span class="synStatement">tied</span> <span class="synIdentifier">$$item</span>;
+
+    <span class="synConditional">if</span> (<span class="synIdentifier">$p-&gt;{</span><span class="synString">show_readonly</span><span class="synIdentifier">}</span> <span class="synOperator">and</span> <span class="synIdentifier">&amp;</span><span class="synType">Internals::</span><span class="synIdentifier">SvREADONLY</span>( <span class="synIdentifier">$item</span> )) {
+        <span class="synIdentifier">$string</span> .= <span class="synString">' (read-only)'</span>;
+    }
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$string</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_escape_chars </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$str</span>, <span class="synIdentifier">$orig_color</span>, <span class="synIdentifier">$p</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synIdentifier">$orig_color</span>   = color( <span class="synIdentifier">$orig_color</span> );
+    <span class="synStatement">my</span> <span class="synIdentifier">$esc_color</span> = color( <span class="synIdentifier">$p-&gt;{</span><span class="synString">color</span><span class="synIdentifier">}{</span><span class="synString">escaped</span><span class="synIdentifier">}</span> );
+
+    <span class="synConditional">if</span> (<span class="synIdentifier">$p-&gt;{</span><span class="synString">print_escapes</span><span class="synIdentifier">}</span>) {
+        <span class="synIdentifier">$str</span> =~ <span class="synStatement">s/</span><span class="synSpecial">\e</span><span class="synStatement">/</span><span class="synIdentifier">$esc_color</span><span class="synSpecial">\\</span><span class="synString">e</span><span class="synIdentifier">$orig_color</span><span class="synStatement">/g</span>;
+
+        <span class="synStatement">my</span> <span class="synIdentifier">%escaped</span> = (
+            <span class="synString">&quot;</span><span class="synSpecial">\n</span><span class="synString">&quot;</span> =&gt; <span class="synString">'\n'</span>,
+            <span class="synString">&quot;</span><span class="synSpecial">\r</span><span class="synString">&quot;</span> =&gt; <span class="synString">'\r'</span>,
+            <span class="synString">&quot;</span><span class="synSpecial">\t</span><span class="synString">&quot;</span> =&gt; <span class="synString">'\t'</span>,
+            <span class="synString">&quot;</span><span class="synSpecial">\f</span><span class="synString">&quot;</span> =&gt; <span class="synString">'\f'</span>,
+            <span class="synString">&quot;</span><span class="synSpecial">\b</span><span class="synString">&quot;</span> =&gt; <span class="synString">'\b'</span>,
+            <span class="synString">&quot;</span><span class="synSpecial">\a</span><span class="synString">&quot;</span> =&gt; <span class="synString">'\a'</span>,
+        );
+        <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$k</span> ( <span class="synStatement">keys</span> <span class="synIdentifier">%escaped</span> ) {
+            <span class="synIdentifier">$str</span> =~ <span class="synStatement">s/</span><span class="synIdentifier">$k</span><span class="synStatement">/</span><span class="synIdentifier">$esc_color$escaped{$k}$orig_color</span><span class="synStatement">/g</span>;
+        }
+    }
+    <span class="synComment"># always escape the null character</span>
+    <span class="synIdentifier">$str</span> =~ <span class="synStatement">s/</span><span class="synSpecial">\0</span><span class="synStatement">/</span><span class="synIdentifier">$esc_color</span><span class="synSpecial">\\</span><span class="synString">0</span><span class="synIdentifier">$orig_color</span><span class="synStatement">/g</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$str</span>;
+}
+
+
+<span class="synKeyword">sub </span><span class="synFunction">ARRAY </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$item</span>, <span class="synIdentifier">$p</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$string</span> = <span class="synString">''</span>;
+    <span class="synIdentifier">$p-&gt;{</span><span class="synString">_depth</span><span class="synIdentifier">}</span>++;
+
+    <span class="synConditional">if</span> ( <span class="synIdentifier">$p-&gt;{</span><span class="synString">max_depth</span><span class="synIdentifier">}</span> <span class="synOperator">and</span> <span class="synIdentifier">$p-&gt;{</span><span class="synString">_depth</span><span class="synIdentifier">}</span> &gt; <span class="synIdentifier">$p-&gt;{</span><span class="synString">max_depth</span><span class="synIdentifier">}</span> ) {
+        <span class="synIdentifier">$string</span> .= <span class="synString">'[ ... ]'</span>;
+    }
+    <span class="synConditional">elsif</span> (<span class="synOperator">not</span> <span class="synIdentifier">@$item</span>) {
+        <span class="synIdentifier">$string</span> .= <span class="synString">'[]'</span>;
+    }
+    <span class="synConditional">else</span> {
+        <span class="synIdentifier">$string</span> .= <span class="synString">&quot;[</span><span class="synIdentifier">$BREAK</span><span class="synString">&quot;</span>;
+        <span class="synIdentifier">$p-&gt;{</span><span class="synString">_current_indent</span><span class="synIdentifier">}</span> += <span class="synIdentifier">$p-&gt;{</span><span class="synString">indent</span><span class="synIdentifier">}</span>;
+
+        <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$i</span> (<span class="synNumber">0</span> .. <span class="synIdentifier">$#{$item}</span> ) {
+            <span class="synIdentifier">$p-&gt;{</span><span class="synString">name</span><span class="synIdentifier">}</span> .= <span class="synString">&quot;[</span><span class="synIdentifier">$i</span><span class="synString">]&quot;</span>;
+
+            <span class="synStatement">my</span> <span class="synIdentifier">$array_elem</span> = <span class="synIdentifier">$item-&gt;[$i]</span>;
+            <span class="synIdentifier">$string</span> .= (<span class="synString">' '</span> x <span class="synIdentifier">$p-&gt;{</span><span class="synString">_current_indent</span><span class="synIdentifier">}</span>);
+            <span class="synConditional">if</span> (<span class="synIdentifier">$p-&gt;{</span><span class="synString">'index'</span><span class="synIdentifier">}</span>) {
+                <span class="synIdentifier">$string</span> .= colored(
+                             <span class="synStatement">sprintf</span>(<span class="synString">&quot;%-*s&quot;</span>, <span class="synNumber">3</span> + <span class="synStatement">length</span>(<span class="synIdentifier">$#{$item}</span>), <span class="synString">&quot;[</span><span class="synIdentifier">$i</span><span class="synString">]&quot;</span>),
+                             <span class="synIdentifier">$p-&gt;{</span><span class="synString">color</span><span class="synIdentifier">}-&gt;{</span><span class="synString">'array'</span><span class="synIdentifier">}</span>
+                       );
+            }
+
+            <span class="synStatement">my</span> <span class="synIdentifier">$ref</span> = <span class="synOperator">ref</span> <span class="synIdentifier">$array_elem</span>;
+
+            <span class="synComment"># scalar references should be re-referenced</span>
+            <span class="synComment"># to gain a '\' sign in front of them</span>
+            <span class="synConditional">if</span> (!<span class="synIdentifier">$ref</span> <span class="synOperator">or</span> <span class="synIdentifier">$ref</span> <span class="synOperator">eq</span> <span class="synString">'SCALAR'</span>) {
+                <span class="synIdentifier">$string</span> .= _p( \<span class="synIdentifier">$array_elem</span>, <span class="synIdentifier">$p</span> );
+            }
+            <span class="synConditional">else</span> {
+                <span class="synIdentifier">$string</span> .= _p( <span class="synIdentifier">$array_elem</span>, <span class="synIdentifier">$p</span> );
+            }
+            <span class="synIdentifier">$string</span> .= <span class="synString">' '</span> . colored(<span class="synString">'(weak)'</span>, <span class="synIdentifier">$p-&gt;{</span><span class="synString">color</span><span class="synIdentifier">}-&gt;{</span><span class="synString">'weak'</span><span class="synIdentifier">}</span>)
+                <span class="synConditional">if</span> <span class="synIdentifier">$ref</span> <span class="synOperator">and</span> Scalar::Util::isweak(<span class="synIdentifier">$item-&gt;[$i]</span>) <span class="synOperator">and</span> <span class="synIdentifier">$p-&gt;{</span><span class="synString">show_weak</span><span class="synIdentifier">}</span>;
+
+            <span class="synIdentifier">$string</span> .= <span class="synIdentifier">$p-&gt;{</span><span class="synString">separator</span><span class="synIdentifier">}</span>
+              <span class="synConditional">if</span> <span class="synIdentifier">$i</span> &lt; <span class="synIdentifier">$#{$item}</span> || <span class="synIdentifier">$p-&gt;{</span><span class="synString">end_separator</span><span class="synIdentifier">}</span>;
+
+            <span class="synIdentifier">$string</span> .= <span class="synIdentifier">$BREAK</span>;
+
+            <span class="synStatement">my</span> <span class="synIdentifier">$size</span> = <span class="synNumber">2</span> + <span class="synStatement">length</span>(<span class="synIdentifier">$i</span>); <span class="synComment"># [10], [100], etc</span>
+            <span class="synStatement">substr</span> <span class="synIdentifier">$p-&gt;{</span><span class="synString">name</span><span class="synIdentifier">}</span>, -<span class="synIdentifier">$size</span>, <span class="synIdentifier">$size</span>, <span class="synString">''</span>;
+        }
+        <span class="synIdentifier">$p-&gt;{</span><span class="synString">_current_indent</span><span class="synIdentifier">}</span> -= <span class="synIdentifier">$p-&gt;{</span><span class="synString">indent</span><span class="synIdentifier">}</span>;
+        <span class="synIdentifier">$string</span> .= (<span class="synString">' '</span> x <span class="synIdentifier">$p-&gt;{</span><span class="synString">_current_indent</span><span class="synIdentifier">}</span>) . <span class="synString">&quot;]&quot;</span>;
+    }
+
+    <span class="synIdentifier">$p-&gt;{</span><span class="synString">_tie</span><span class="synIdentifier">}</span> = <span class="synOperator">ref</span> <span class="synStatement">tied</span> <span class="synIdentifier">@$item</span>;
+    <span class="synIdentifier">$p-&gt;{</span><span class="synString">_depth</span><span class="synIdentifier">}</span>--;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$string</span>;
+}
+
+
+<span class="synKeyword">sub </span><span class="synFunction">REF </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$item</span>, <span class="synIdentifier">$p</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$string</span> = <span class="synString">''</span>;
+
+    <span class="synComment"># look-ahead, add a '\' only if it's not an object</span>
+    <span class="synConditional">if</span> (<span class="synStatement">my</span> <span class="synIdentifier">$ref_ahead</span> = <span class="synOperator">ref</span> <span class="synIdentifier">$$item</span> ) {
+        <span class="synIdentifier">$string</span> .= <span class="synString">'</span><span class="synSpecial">\\</span><span class="synString"> '</span> <span class="synConditional">if</span> <span class="synStatement">grep</span> <span class="synStatement">{</span> <span class="synIdentifier">$_</span> <span class="synOperator">eq</span> <span class="synIdentifier">$ref_ahead</span> <span class="synStatement">}</span>
+            <span class="synString">qw(SCALAR CODE Regexp ARRAY HASH GLOB REF)</span>;
+    }
+    <span class="synIdentifier">$string</span> .= _p(<span class="synIdentifier">$$item</span>, <span class="synIdentifier">$p</span>);
+
+    <span class="synIdentifier">$string</span> .= <span class="synString">' '</span> . colored(<span class="synString">'(weak)'</span>, <span class="synIdentifier">$p-&gt;{</span><span class="synString">color</span><span class="synIdentifier">}-&gt;{</span><span class="synString">'weak'</span><span class="synIdentifier">}</span>)
+        <span class="synConditional">if</span> Scalar::Util::isweak(<span class="synIdentifier">$$item</span>) <span class="synOperator">and</span> <span class="synIdentifier">$p-&gt;{</span><span class="synString">show_weak</span><span class="synIdentifier">}</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$string</span>;
+}
+
+
+<span class="synKeyword">sub </span><span class="synFunction">CODE </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$item</span>, <span class="synIdentifier">$p</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$string</span> = <span class="synString">''</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$code</span> = <span class="synString">'sub { ... }'</span>;
+    <span class="synConditional">if</span> (<span class="synIdentifier">$p-&gt;{</span><span class="synString">deparse</span><span class="synIdentifier">}</span>) {
+        <span class="synIdentifier">$code</span> = _deparse( <span class="synIdentifier">$item</span>, <span class="synIdentifier">$p</span> );
+    }
+    <span class="synIdentifier">$string</span> .= colored(<span class="synIdentifier">$code</span>, <span class="synIdentifier">$p-&gt;{</span><span class="synString">color</span><span class="synIdentifier">}-&gt;{</span><span class="synString">'code'</span><span class="synIdentifier">}</span>);
+    <span class="synStatement">return</span> <span class="synIdentifier">$string</span>;
+}
+
+
+<span class="synKeyword">sub </span><span class="synFunction">HASH </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$item</span>, <span class="synIdentifier">$p</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$string</span> = <span class="synString">''</span>;
+
+    <span class="synIdentifier">$p-&gt;{</span><span class="synString">_depth</span><span class="synIdentifier">}</span>++;
+
+    <span class="synConditional">if</span> ( <span class="synIdentifier">$p-&gt;{</span><span class="synString">max_depth</span><span class="synIdentifier">}</span> <span class="synOperator">and</span> <span class="synIdentifier">$p-&gt;{</span><span class="synString">_depth</span><span class="synIdentifier">}</span> &gt; <span class="synIdentifier">$p-&gt;{</span><span class="synString">max_depth</span><span class="synIdentifier">}</span> ) {
+        <span class="synIdentifier">$string</span> .= <span class="synString">'{ ... }'</span>;
+    }
+    <span class="synConditional">elsif</span> (<span class="synOperator">not</span> <span class="synStatement">keys</span> <span class="synIdentifier">%$item</span>) {
+        <span class="synIdentifier">$string</span> .= <span class="synString">'{}'</span>;
+    }
+    <span class="synConditional">else</span> {
+        <span class="synIdentifier">$string</span> .= <span class="synString">&quot;{</span><span class="synIdentifier">$BREAK</span><span class="synString">&quot;</span>;
+        <span class="synIdentifier">$p-&gt;{</span><span class="synString">_current_indent</span><span class="synIdentifier">}</span> += <span class="synIdentifier">$p-&gt;{</span><span class="synString">indent</span><span class="synIdentifier">}</span>;
+
+        <span class="synStatement">my</span> <span class="synIdentifier">$total_keys</span>  = <span class="synStatement">scalar</span> <span class="synStatement">keys</span> <span class="synIdentifier">%$item</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$len</span>         = <span class="synNumber">0</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$multiline</span>   = <span class="synIdentifier">$p-&gt;{</span><span class="synString">multiline</span><span class="synIdentifier">}</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$hash_color</span>  = <span class="synIdentifier">$p-&gt;{</span><span class="synString">color</span><span class="synIdentifier">}{</span><span class="synString">hash</span><span class="synIdentifier">}</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$quote_keys</span>  = <span class="synIdentifier">$p-&gt;{</span><span class="synString">quote_keys</span><span class="synIdentifier">}</span>;
+
+        <span class="synStatement">my</span> <span class="synIdentifier">@keys</span> = ();
+
+        <span class="synComment"># first pass, preparing keys to display (and getting largest key size)</span>
+        <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$key</span> (<span class="synIdentifier">$p-&gt;{</span><span class="synString">sort_keys</span><span class="synIdentifier">}</span> ? nsort <span class="synStatement">keys</span> <span class="synIdentifier">%$item</span> : <span class="synStatement">keys</span> <span class="synIdentifier">%$item</span> ) {
+            <span class="synStatement">my</span> <span class="synIdentifier">$new_key</span> = _escape_chars(<span class="synIdentifier">$key</span>, <span class="synIdentifier">$hash_color</span>, <span class="synIdentifier">$p</span>);
+            <span class="synStatement">my</span> <span class="synIdentifier">$colored</span> = colored( <span class="synIdentifier">$new_key</span>, <span class="synIdentifier">$hash_color</span> );
+
+            <span class="synComment"># wrap in uncolored single quotes if there's</span>
+            <span class="synComment"># any space or escaped characters</span>
+            <span class="synConditional">if</span> ( <span class="synIdentifier">$quote_keys</span>
+                  <span class="synOperator">and</span> (
+                        <span class="synIdentifier">$quote_keys</span> <span class="synOperator">ne</span> <span class="synString">'auto'</span>
+                        <span class="synOperator">or</span> (
+                             <span class="synIdentifier">$key</span> <span class="synOperator">eq</span> <span class="synString">q()</span>
+                             <span class="synOperator">or</span> <span class="synIdentifier">$new_key</span> <span class="synOperator">ne</span> <span class="synIdentifier">$key</span>
+                             <span class="synOperator">or</span> <span class="synIdentifier">$new_key</span> =~ <span class="synStatement">/</span><span class="synSpecial">\s</span><span class="synString">|</span><span class="synSpecial">\n</span><span class="synString">|</span><span class="synSpecial">\t</span><span class="synString">|</span><span class="synSpecial">\r</span><span class="synStatement">/</span>
+                        )
+                  )
+            ) {
+                <span class="synIdentifier">$colored</span> = <span class="synString">qq['</span><span class="synIdentifier">$colored</span><span class="synString">']</span>;
+            }
+
+            <span class="synStatement">push</span> <span class="synIdentifier">@keys</span>, {
+                <span class="synString">raw</span>     =&gt; <span class="synIdentifier">$key</span>,
+                <span class="synString">colored</span> =&gt; <span class="synIdentifier">$colored</span>,
+            };
+
+            <span class="synComment"># length of the largest key is used for indenting</span>
+            <span class="synConditional">if</span> (<span class="synIdentifier">$multiline</span>) {
+                <span class="synStatement">my</span> <span class="synIdentifier">$l</span> = <span class="synStatement">length</span> <span class="synIdentifier">$colored</span>;
+                <span class="synIdentifier">$len</span> = <span class="synIdentifier">$l</span> <span class="synConditional">if</span> <span class="synIdentifier">$l</span> &gt; <span class="synIdentifier">$len</span>;
+            }
+        }
+
+        <span class="synComment"># second pass, traversing and rendering</span>
+        <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$key</span> (<span class="synIdentifier">@keys</span>) {
+            <span class="synStatement">my</span> <span class="synIdentifier">$raw_key</span>     = <span class="synIdentifier">$key-&gt;{</span><span class="synString">raw</span><span class="synIdentifier">}</span>;
+            <span class="synStatement">my</span> <span class="synIdentifier">$colored_key</span> = <span class="synIdentifier">$key-&gt;{</span><span class="synString">colored</span><span class="synIdentifier">}</span>;
+            <span class="synStatement">my</span> <span class="synIdentifier">$element</span>     = <span class="synIdentifier">$item-&gt;{$raw_key}</span>;
+            <span class="synIdentifier">$p-&gt;{</span><span class="synString">name</span><span class="synIdentifier">}</span>     .= <span class="synString">&quot;{</span><span class="synIdentifier">$raw_key</span><span class="synString">}&quot;</span>;
+
+            <span class="synIdentifier">$string</span> .= (<span class="synString">' '</span> x <span class="synIdentifier">$p-&gt;{</span><span class="synString">_current_indent</span><span class="synIdentifier">}</span>)
+                     . <span class="synStatement">sprintf</span>(<span class="synString">&quot;%-*s&quot;</span>, <span class="synIdentifier">$len</span>, <span class="synIdentifier">$colored_key</span>)
+                     . <span class="synIdentifier">$p-&gt;{</span><span class="synString">hash_separator</span><span class="synIdentifier">}</span>
+                     ;
+
+            <span class="synStatement">my</span> <span class="synIdentifier">$ref</span> = <span class="synOperator">ref</span> <span class="synIdentifier">$element</span>;
+            <span class="synComment"># scalar references should be re-referenced</span>
+            <span class="synComment"># to gain a '\' sign in front of them</span>
+            <span class="synConditional">if</span> (!<span class="synIdentifier">$ref</span> <span class="synOperator">or</span> <span class="synIdentifier">$ref</span> <span class="synOperator">eq</span> <span class="synString">'SCALAR'</span>) {
+                <span class="synIdentifier">$string</span> .= _p( \<span class="synIdentifier">$element</span>, <span class="synIdentifier">$p</span> );
+            }
+            <span class="synConditional">else</span> {
+                <span class="synIdentifier">$string</span> .= _p( <span class="synIdentifier">$element</span>, <span class="synIdentifier">$p</span> );
+            }
+
+            <span class="synIdentifier">$string</span> .= <span class="synString">' '</span> . colored(<span class="synString">'(weak)'</span>, <span class="synIdentifier">$p-&gt;{</span><span class="synString">color</span><span class="synIdentifier">}-&gt;{</span><span class="synString">'weak'</span><span class="synIdentifier">}</span>)
+                <span class="synConditional">if</span> <span class="synIdentifier">$ref</span>
+                  <span class="synOperator">and</span> <span class="synIdentifier">$p-&gt;{</span><span class="synString">show_weak</span><span class="synIdentifier">}</span>
+                  <span class="synOperator">and</span> Scalar::Util::isweak(<span class="synIdentifier">$item-&gt;{$raw_key}</span>);
+
+            <span class="synIdentifier">$string</span> .= <span class="synIdentifier">$p-&gt;{</span><span class="synString">separator</span><span class="synIdentifier">}</span>
+              <span class="synConditional">if</span> --<span class="synIdentifier">$total_keys</span> &gt; <span class="synNumber">0</span> || <span class="synIdentifier">$p-&gt;{</span><span class="synString">end_separator</span><span class="synIdentifier">}</span>;
+
+            <span class="synIdentifier">$string</span> .= <span class="synIdentifier">$BREAK</span>;
+
+            <span class="synStatement">my</span> <span class="synIdentifier">$size</span> = <span class="synNumber">2</span> + <span class="synStatement">length</span>(<span class="synIdentifier">$raw_key</span>); <span class="synComment"># {foo}, {z}, etc</span>
+            <span class="synStatement">substr</span> <span class="synIdentifier">$p-&gt;{</span><span class="synString">name</span><span class="synIdentifier">}</span>, -<span class="synIdentifier">$size</span>, <span class="synIdentifier">$size</span>, <span class="synString">''</span>;
+        }
+        <span class="synIdentifier">$p-&gt;{</span><span class="synString">_current_indent</span><span class="synIdentifier">}</span> -= <span class="synIdentifier">$p-&gt;{</span><span class="synString">indent</span><span class="synIdentifier">}</span>;
+        <span class="synIdentifier">$string</span> .= (<span class="synString">' '</span> x <span class="synIdentifier">$p-&gt;{</span><span class="synString">_current_indent</span><span class="synIdentifier">}</span>) . <span class="synString">&quot;}&quot;</span>;
+    }
+
+    <span class="synIdentifier">$p-&gt;{</span><span class="synString">_tie</span><span class="synIdentifier">}</span> = <span class="synOperator">ref</span> <span class="synStatement">tied</span> <span class="synIdentifier">%$item</span>;
+    <span class="synIdentifier">$p-&gt;{</span><span class="synString">_depth</span><span class="synIdentifier">}</span>--;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$string</span>;
+}
+
+
+<span class="synKeyword">sub </span><span class="synFunction">Regexp </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$item</span>, <span class="synIdentifier">$p</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$string</span> = <span class="synString">''</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$val</span> = <span class="synString">&quot;</span><span class="synIdentifier">$item</span><span class="synString">&quot;</span>;
+    <span class="synComment"># a regex to parse a regex. Talk about full circle :)</span>
+    <span class="synComment"># note: we are not validating anything, just grabbing modifiers</span>
+    <span class="synConditional">if</span> (<span class="synIdentifier">$val</span> =~ <span class="synStatement">m/</span><span class="synSpecial">\(\?\^?([uladxismpogce]*)(?:\-[uladxismpogce]+)?</span><span class="synString">:</span><span class="synSpecial">(.*)\)</span><span class="synStatement">/s</span>) {
+        <span class="synStatement">my</span> (<span class="synIdentifier">$modifiers</span>, <span class="synIdentifier">$val</span>) = (<span class="synIdentifier">$1</span>, <span class="synIdentifier">$2</span>);
+        <span class="synIdentifier">$string</span> .= colored(<span class="synIdentifier">$val</span>, <span class="synIdentifier">$p-&gt;{</span><span class="synString">color</span><span class="synIdentifier">}-&gt;{</span><span class="synString">'regex'</span><span class="synIdentifier">}</span>);
+        <span class="synConditional">if</span> (<span class="synIdentifier">$modifiers</span>) {
+            <span class="synIdentifier">$string</span> .= <span class="synString">&quot;  (modifiers: </span><span class="synIdentifier">$modifiers</span><span class="synString">)&quot;</span>;
+        }
+    }
+    <span class="synConditional">else</span> {
+        croak <span class="synString">&quot;Unrecognized regex </span><span class="synIdentifier">$val</span><span class="synString">. Please submit a bug report for Data::Printer.&quot;</span>;
+    }
+    <span class="synStatement">return</span> <span class="synIdentifier">$string</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">VSTRING </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$item</span>, <span class="synIdentifier">$p</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$string</span> = <span class="synString">''</span>;
+    <span class="synIdentifier">$string</span> .= colored(version-&gt;declare(<span class="synIdentifier">$$item</span>)-&gt;normal, <span class="synIdentifier">$p-&gt;{</span><span class="synString">color</span><span class="synIdentifier">}-&gt;{</span><span class="synString">'vstring'</span><span class="synIdentifier">}</span>);
+    <span class="synStatement">return</span> <span class="synIdentifier">$string</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">FORMAT </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$item</span>, <span class="synIdentifier">$p</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$string</span> = <span class="synString">''</span>;
+    <span class="synIdentifier">$string</span> .= colored(<span class="synString">&quot;FORMAT&quot;</span>, <span class="synIdentifier">$p-&gt;{</span><span class="synString">color</span><span class="synIdentifier">}-&gt;{</span><span class="synString">'format'</span><span class="synIdentifier">}</span>);
+    <span class="synStatement">return</span> <span class="synIdentifier">$string</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">LVALUE </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$item</span>, <span class="synIdentifier">$p</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$string</span> = SCALAR( <span class="synIdentifier">$item</span>, <span class="synIdentifier">$p</span> );
+    <span class="synIdentifier">$string</span> .= colored( <span class="synString">' (LVALUE)'</span>, <span class="synIdentifier">$p-&gt;{</span><span class="synString">color</span><span class="synIdentifier">}{</span><span class="synString">lvalue</span><span class="synIdentifier">}</span> )
+        <span class="synConditional">if</span> <span class="synIdentifier">$p-&gt;{</span><span class="synString">show_lvalue</span><span class="synIdentifier">}</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$string</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">GLOB </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$item</span>, <span class="synIdentifier">$p</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$string</span> = <span class="synString">''</span>;
+
+    <span class="synIdentifier">$string</span> .= colored(<span class="synString">&quot;</span><span class="synIdentifier">$$item</span><span class="synString">&quot;</span>, <span class="synIdentifier">$p-&gt;{</span><span class="synString">color</span><span class="synIdentifier">}-&gt;{</span><span class="synString">'glob'</span><span class="synIdentifier">}</span>);
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$extra</span> = <span class="synString">''</span>;
+
+    <span class="synComment"># unfortunately, some systems (like Win32) do not</span>
+    <span class="synComment"># implement some of these flags (maybe not even</span>
+    <span class="synComment"># fcntl() itself, so we must wrap it.</span>
+    <span class="synStatement">my</span> <span class="synIdentifier">$flags</span>;
+    <span class="synStatement">eval</span> { <span class="synStatement">no warnings</span> <span class="synString">qw( unopened closed )</span>; <span class="synIdentifier">$flags</span> = <span class="synStatement">fcntl</span>(<span class="synIdentifier">$$item</span>, F_GETFL, <span class="synNumber">0</span>) };
+    <span class="synConditional">if</span> (<span class="synIdentifier">$flags</span>) {
+        <span class="synIdentifier">$extra</span> .= (<span class="synIdentifier">$flags</span> &amp; O_WRONLY) ? <span class="synString">'write-only'</span>
+                : (<span class="synIdentifier">$flags</span> &amp; O_RDWR)   ? <span class="synString">'read/write'</span>
+                : <span class="synString">'read-only'</span>
+                ;
+
+        <span class="synComment"># How to avoid croaking when the system</span>
+        <span class="synComment"># doesn't implement one of those, without skipping</span>
+        <span class="synComment"># the whole thing? Maybe there's a better way.</span>
+        <span class="synComment"># Solaris, for example, doesn't have O_ASYNC :(</span>
+        <span class="synStatement">my</span> <span class="synIdentifier">%flags</span> = ();
+        <span class="synStatement">eval</span> { <span class="synIdentifier">$flags{</span><span class="synString">'append'</span><span class="synIdentifier">}</span>      = O_APPEND   };
+        <span class="synStatement">eval</span> { <span class="synIdentifier">$flags{</span><span class="synString">'async'</span><span class="synIdentifier">}</span>       = O_ASYNC    }; <span class="synComment"># leont says this is the only one I should care for.</span>
+        <span class="synStatement">eval</span> { <span class="synIdentifier">$flags{</span><span class="synString">'create'</span><span class="synIdentifier">}</span>      = O_CREAT    };
+        <span class="synStatement">eval</span> { <span class="synIdentifier">$flags{</span><span class="synString">'truncate'</span><span class="synIdentifier">}</span>    = O_TRUNC    };
+        <span class="synStatement">eval</span> { <span class="synIdentifier">$flags{</span><span class="synString">'nonblocking'</span><span class="synIdentifier">}</span> = O_NONBLOCK };
+
+        <span class="synConditional">if</span> (<span class="synStatement">my</span> <span class="synIdentifier">@flags</span> = <span class="synStatement">grep</span> <span class="synStatement">{</span> <span class="synIdentifier">$flags</span> &amp; <span class="synIdentifier">$flags{$_}</span> <span class="synStatement">}</span> <span class="synStatement">keys</span> <span class="synIdentifier">%flags</span>) {
+            <span class="synIdentifier">$extra</span> .= <span class="synString">&quot;, flags: </span><span class="synIdentifier">@flags</span><span class="synString">&quot;</span>;
+        }
+        <span class="synIdentifier">$extra</span> .= <span class="synString">', '</span>;
+    }
+    <span class="synStatement">my</span> <span class="synIdentifier">@layers</span> = ();
+    <span class="synStatement">eval</span> { <span class="synIdentifier">@layers</span> = PerlIO::get_layers <span class="synIdentifier">$$item</span> }; <span class="synComment"># </span><span class="synTodo">TODO:</span><span class="synComment"> try PerlIO::Layers::get_layers (leont)</span>
+    <span class="synConditional">unless</span> (<span class="synIdentifier">$@</span>) {
+        <span class="synIdentifier">$extra</span> .= <span class="synString">&quot;layers: </span><span class="synIdentifier">@layers</span><span class="synString">&quot;</span>;
+    }
+    <span class="synIdentifier">$string</span> .= <span class="synString">&quot;  (</span><span class="synIdentifier">$extra</span><span class="synString">)&quot;</span> <span class="synConditional">if</span> <span class="synIdentifier">$extra</span>;
+
+    <span class="synIdentifier">$p-&gt;{</span><span class="synString">_tie</span><span class="synIdentifier">}</span> = <span class="synOperator">ref</span> <span class="synStatement">tied</span> *<span class="synIdentifier">$$item</span>;
+    <span class="synStatement">return</span> <span class="synIdentifier">$string</span>;
+}
+
+
+<span class="synKeyword">sub </span><span class="synFunction">_unknown </span>{
+    <span class="synStatement">my</span>(<span class="synIdentifier">$item</span>, <span class="synIdentifier">$p</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$ref</span> = <span class="synOperator">ref</span> <span class="synIdentifier">$item</span>;
+    
+    <span class="synStatement">my</span> <span class="synIdentifier">$string</span> = <span class="synString">''</span>;
+    <span class="synIdentifier">$string</span> = colored(<span class="synIdentifier">$ref</span>, <span class="synIdentifier">$p-&gt;{</span><span class="synString">color</span><span class="synIdentifier">}-&gt;{</span><span class="synString">'unknown'</span><span class="synIdentifier">}</span>);
+    <span class="synStatement">return</span> <span class="synIdentifier">$string</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_class </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$item</span>, <span class="synIdentifier">$p</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$ref</span> = <span class="synOperator">ref</span> <span class="synIdentifier">$item</span>;
+
+    <span class="synComment"># if the user specified a method to use instead, we do that</span>
+    <span class="synConditional">if</span> ( <span class="synIdentifier">$p-&gt;{</span><span class="synString">class_method</span><span class="synIdentifier">}</span> <span class="synOperator">and</span> <span class="synStatement">my</span> <span class="synIdentifier">$method</span> = <span class="synIdentifier">$item-&gt;can</span>(<span class="synIdentifier">$p-&gt;{</span><span class="synString">class_method</span><span class="synIdentifier">}</span>) ) {
+        <span class="synStatement">return</span> <span class="synIdentifier">$method</span>-&gt;(<span class="synIdentifier">$item</span>, <span class="synIdentifier">$p</span>);
+    }
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$string</span> = <span class="synString">''</span>;
+    <span class="synIdentifier">$p-&gt;{</span><span class="synString">class</span><span class="synIdentifier">}{</span><span class="synString">_depth</span><span class="synIdentifier">}</span>++;
+
+    <span class="synIdentifier">$string</span> .= colored(<span class="synIdentifier">$ref</span>, <span class="synIdentifier">$p-&gt;{</span><span class="synString">color</span><span class="synIdentifier">}-&gt;{</span><span class="synString">'class'</span><span class="synIdentifier">}</span>);
+
+    <span class="synConditional">if</span> ( <span class="synIdentifier">$p-&gt;{</span><span class="synString">class</span><span class="synIdentifier">}{</span><span class="synString">show_reftype</span><span class="synIdentifier">}</span> ) {
+        <span class="synIdentifier">$string</span> .= <span class="synString">' ('</span> . colored(
+            Scalar::Util::reftype(<span class="synIdentifier">$item</span>),
+            <span class="synIdentifier">$p-&gt;{</span><span class="synString">color</span><span class="synIdentifier">}-&gt;{</span><span class="synString">'class'</span><span class="synIdentifier">}</span>
+        ) . <span class="synString">')'</span>;
+    }
+
+    <span class="synConditional">if</span> (<span class="synIdentifier">$p-&gt;{</span><span class="synString">class</span><span class="synIdentifier">}{</span><span class="synString">expand</span><span class="synIdentifier">}</span> <span class="synOperator">eq</span> <span class="synString">'all'</span>
+        <span class="synOperator">or</span> <span class="synIdentifier">$p-&gt;{</span><span class="synString">class</span><span class="synIdentifier">}{</span><span class="synString">expand</span><span class="synIdentifier">}</span> &gt;= <span class="synIdentifier">$p-&gt;{</span><span class="synString">class</span><span class="synIdentifier">}{</span><span class="synString">_depth</span><span class="synIdentifier">}</span>
+    ) {
+        <span class="synIdentifier">$string</span> .= <span class="synString">&quot;  {</span><span class="synIdentifier">$BREAK</span><span class="synString">&quot;</span>;
+
+        <span class="synIdentifier">$p-&gt;{</span><span class="synString">_current_indent</span><span class="synIdentifier">}</span> += <span class="synIdentifier">$p-&gt;{</span><span class="synString">indent</span><span class="synIdentifier">}</span>;
+
+        <span class="synConditional">if</span> (<span class="synIdentifier">$]</span> &gt;= <span class="synFloat">5.010</span>) {
+            <span class="synStatement">require</span> mro;
+        } <span class="synConditional">else</span> {
+            <span class="synStatement">require</span> MRO::Compat;
+        }
+        <span class="synStatement">require</span> Package::Stash;
+
+        <span class="synStatement">my</span> <span class="synIdentifier">$stash</span> = Package::Stash-&gt;new(<span class="synIdentifier">$ref</span>);
+
+        <span class="synConditional">if</span> ( <span class="synStatement">my</span> <span class="synIdentifier">@superclasses</span> = <span class="synIdentifier">@{$stash-&gt;get_symbol</span>(<span class="synString">'@ISA'</span>)||[]<span class="synIdentifier">}</span> ) {
+            <span class="synConditional">if</span> (<span class="synIdentifier">$p-&gt;{</span><span class="synString">class</span><span class="synIdentifier">}{</span><span class="synString">parents</span><span class="synIdentifier">}</span>) {
+                <span class="synIdentifier">$string</span> .= (<span class="synString">' '</span> x <span class="synIdentifier">$p-&gt;{</span><span class="synString">_current_indent</span><span class="synIdentifier">}</span>)
+                        . <span class="synString">'Parents       '</span>
+                        . <span class="synStatement">join</span>(<span class="synString">', '</span>, <span class="synStatement">map</span> <span class="synStatement">{</span> colored(<span class="synIdentifier">$_</span>, <span class="synIdentifier">$p-&gt;{</span><span class="synString">color</span><span class="synIdentifier">}-&gt;{</span><span class="synString">'class'</span><span class="synIdentifier">}</span>) <span class="synStatement">}</span>
+                                     <span class="synIdentifier">@superclasses</span>
+                        ) . <span class="synIdentifier">$BREAK</span>;
+            }
+
+            <span class="synConditional">if</span> ( <span class="synIdentifier">$p-&gt;{</span><span class="synString">class</span><span class="synIdentifier">}{</span><span class="synString">linear_isa</span><span class="synIdentifier">}</span> <span class="synOperator">and</span>
+                  (
+                    (<span class="synIdentifier">$p-&gt;{</span><span class="synString">class</span><span class="synIdentifier">}{</span><span class="synString">linear_isa</span><span class="synIdentifier">}</span> <span class="synOperator">eq</span> <span class="synString">'auto'</span> <span class="synOperator">and</span> <span class="synIdentifier">@superclasses</span> &gt; <span class="synNumber">1</span>)
+                    <span class="synOperator">or</span>
+                    (<span class="synIdentifier">$p-&gt;{</span><span class="synString">class</span><span class="synIdentifier">}{</span><span class="synString">linear_isa</span><span class="synIdentifier">}</span> <span class="synOperator">ne</span> <span class="synString">'auto'</span>)
+                  )
+            ) {
+                <span class="synIdentifier">$string</span> .= (<span class="synString">' '</span> x <span class="synIdentifier">$p-&gt;{</span><span class="synString">_current_indent</span><span class="synIdentifier">}</span>)
+                        . <span class="synString">'Linear @ISA   '</span>
+                        . <span class="synStatement">join</span>(<span class="synString">', '</span>, <span class="synStatement">map</span> <span class="synStatement">{</span> colored( <span class="synIdentifier">$_</span>, <span class="synIdentifier">$p-&gt;{</span><span class="synString">color</span><span class="synIdentifier">}-&gt;{</span><span class="synString">'class'</span><span class="synIdentifier">}</span>) <span class="synStatement">}</span>
+                                  <span class="synIdentifier">@{</span>mro::get_linear_isa(<span class="synIdentifier">$ref</span>)<span class="synIdentifier">}</span>
+                        ) . <span class="synIdentifier">$BREAK</span>;
+            }
+        }
+
+        <span class="synIdentifier">$string</span> .= _show_methods(<span class="synIdentifier">$ref</span>, <span class="synIdentifier">$p</span>)
+            <span class="synConditional">if</span> <span class="synIdentifier">$p-&gt;{</span><span class="synString">class</span><span class="synIdentifier">}{</span><span class="synString">show_methods</span><span class="synIdentifier">}</span> <span class="synOperator">and</span> <span class="synIdentifier">$p-&gt;{</span><span class="synString">class</span><span class="synIdentifier">}{</span><span class="synString">show_methods</span><span class="synIdentifier">}</span> <span class="synOperator">ne</span> <span class="synString">'none'</span>;
+
+        <span class="synConditional">if</span> ( <span class="synIdentifier">$p-&gt;{</span><span class="synString">'class'</span><span class="synIdentifier">}-&gt;{</span><span class="synString">'internals'</span><span class="synIdentifier">}</span> ) {
+            <span class="synIdentifier">$string</span> .= (<span class="synString">' '</span> x <span class="synIdentifier">$p-&gt;{</span><span class="synString">_current_indent</span><span class="synIdentifier">}</span>)
+                    . <span class="synString">'internals: '</span>;
+
+            <span class="synStatement">local</span> <span class="synIdentifier">$p-&gt;{</span><span class="synString">_reftype</span><span class="synIdentifier">}</span> = Scalar::Util::reftype <span class="synIdentifier">$item</span>;
+            <span class="synIdentifier">$string</span> .= _p(<span class="synIdentifier">$item</span>, <span class="synIdentifier">$p</span>);
+            <span class="synIdentifier">$string</span> .= <span class="synIdentifier">$BREAK</span>;
+        }
+
+        <span class="synIdentifier">$p-&gt;{</span><span class="synString">_current_indent</span><span class="synIdentifier">}</span> -= <span class="synIdentifier">$p-&gt;{</span><span class="synString">indent</span><span class="synIdentifier">}</span>;
+        <span class="synIdentifier">$string</span> .= (<span class="synString">' '</span> x <span class="synIdentifier">$p-&gt;{</span><span class="synString">_current_indent</span><span class="synIdentifier">}</span>) . <span class="synString">&quot;}&quot;</span>;
+    }
+    <span class="synIdentifier">$p-&gt;{</span><span class="synString">class</span><span class="synIdentifier">}{</span><span class="synString">_depth</span><span class="synIdentifier">}</span>--;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$string</span>;
+}
+
+
+
+<span class="synComment">######################################</span>
+<span class="synComment">## Auxiliary (internal) subs</span>
+<span class="synComment">######################################</span>
+
+<span class="synComment"># All glory to Vincent Pit for coming up with this implementation,</span>
+<span class="synComment"># to Goro Fuji for Hash::FieldHash, and of course to Michael Schwern</span>
+<span class="synComment"># and his &quot;Object::ID&quot;, whose code is copied almost verbatim below.</span>
+{
+    fieldhash <span class="synStatement">my</span> <span class="synIdentifier">%IDs</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$Last_ID</span> = <span class="synString">&quot;a&quot;</span>;
+    <span class="synKeyword">sub </span><span class="synFunction">_object_id </span>{
+        <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+        <span class="synComment"># This is 15% faster than ||=</span>
+        <span class="synStatement">return</span> <span class="synIdentifier">$IDs{$self}</span> <span class="synConditional">if</span> <span class="synStatement">exists</span> <span class="synIdentifier">$IDs{$self}</span>;
+        <span class="synStatement">return</span> <span class="synIdentifier">$IDs{$self}</span> = ++<span class="synIdentifier">$Last_ID</span>;
+    }
+}
+
+
+<span class="synKeyword">sub </span><span class="synFunction">_show_methods </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$ref</span>, <span class="synIdentifier">$p</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$string</span> = <span class="synString">''</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$methods</span> = {
+        <span class="synString">public</span> =&gt; [],
+        <span class="synString">private</span> =&gt; [],
+    };
+    <span class="synStatement">my</span> <span class="synIdentifier">$inherited</span> = <span class="synIdentifier">$p-&gt;{</span><span class="synString">class</span><span class="synIdentifier">}{</span><span class="synString">inherited</span><span class="synIdentifier">}</span> || <span class="synString">'none'</span>;
+
+    <span class="synStatement">require</span> B;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$methods_of</span> = <span class="synKeyword">sub </span>{
+        <span class="synStatement">my</span> (<span class="synIdentifier">$name</span>) = <span class="synIdentifier">@_</span>;
+        <span class="synStatement">map</span> <span class="synStatement">{</span>
+            <span class="synStatement">my</span> <span class="synIdentifier">$m</span>;
+            <span class="synConditional">if</span> (<span class="synIdentifier">$_</span>
+                <span class="synOperator">and</span> <span class="synIdentifier">$m</span> = B::svref_2object(<span class="synIdentifier">$_</span>)
+                <span class="synOperator">and</span> <span class="synIdentifier">$m-&gt;isa</span>(<span class="synString">'B::CV'</span>)
+                <span class="synOperator">and</span> <span class="synOperator">not</span> <span class="synIdentifier">$m-&gt;GV-&gt;isa</span>(<span class="synString">'B::Special'</span>)
+            ) {
+                [ <span class="synIdentifier">$m-&gt;GV-&gt;STASH-&gt;NAME</span>, <span class="synIdentifier">$m-&gt;GV-&gt;NAME</span> ]
+            } <span class="synConditional">else</span> {
+                ()
+            }
+        <span class="synStatement">}</span> <span class="synStatement">values</span> <span class="synIdentifier">%{</span>Package::Stash<span class="synIdentifier">-&gt;new($name)-&gt;get_all_symbols</span>(<span class="synString">'CODE'</span>)<span class="synIdentifier">}</span>
+    };
+
+    <span class="synStatement">my</span> <span class="synIdentifier">%seen_method_name</span>;
+
+<span class="synLabel">METHOD:</span>
+    <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$method</span> (
+        <span class="synStatement">map</span> <span class="synIdentifier">$methods_of</span>-&gt;(<span class="synIdentifier">$_</span>), <span class="synIdentifier">@{</span>mro::get_linear_isa(<span class="synIdentifier">$ref</span>)<span class="synIdentifier">}</span>,
+                               <span class="synIdentifier">$p-&gt;{</span><span class="synString">class</span><span class="synIdentifier">}{</span><span class="synString">universal</span><span class="synIdentifier">}</span> ? <span class="synString">'UNIVERSAL'</span> : ()
+    ) {
+        <span class="synStatement">my</span> (<span class="synIdentifier">$package_string</span>, <span class="synIdentifier">$method_string</span>) = <span class="synIdentifier">@$method</span>;
+
+        <span class="synStatement">next</span> METHOD <span class="synConditional">if</span> <span class="synIdentifier">$seen_method_name{$method_string}</span>++;
+
+        <span class="synStatement">my</span> <span class="synIdentifier">$type</span> = <span class="synStatement">substr</span>(<span class="synIdentifier">$method_string</span>, <span class="synNumber">0</span>, <span class="synNumber">1</span>) <span class="synOperator">eq</span> <span class="synString">'_'</span> ? <span class="synString">'private'</span> : <span class="synString">'public'</span>;
+
+        <span class="synConditional">if</span> (<span class="synIdentifier">$package_string</span> <span class="synOperator">ne</span> <span class="synIdentifier">$ref</span>) {
+            <span class="synStatement">next</span> METHOD <span class="synConditional">unless</span> <span class="synIdentifier">$inherited</span> <span class="synOperator">ne</span> <span class="synString">'none'</span>
+                           <span class="synOperator">and</span> (<span class="synIdentifier">$inherited</span> <span class="synOperator">eq</span> <span class="synString">'all'</span> <span class="synOperator">or</span> <span class="synIdentifier">$type</span> <span class="synOperator">eq</span> <span class="synIdentifier">$inherited</span>);
+            <span class="synIdentifier">$method_string</span> .= <span class="synString">' ('</span> . <span class="synIdentifier">$package_string</span> . <span class="synString">')'</span>;
+        }
+
+        <span class="synStatement">push</span> <span class="synIdentifier">@{</span> <span class="synIdentifier">$methods-&gt;{$type}</span> <span class="synIdentifier">}</span>, <span class="synIdentifier">$method_string</span>;
+    }
+
+    <span class="synComment"># render our string doing a natural sort by method name</span>
+    <span class="synStatement">my</span> <span class="synIdentifier">$show_methods</span> = <span class="synIdentifier">$p-&gt;{</span><span class="synString">class</span><span class="synIdentifier">}{</span><span class="synString">show_methods</span><span class="synIdentifier">}</span>;
+    <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$type</span> (<span class="synString">qw(public private)</span>) {
+        <span class="synStatement">next</span> <span class="synConditional">unless</span> <span class="synIdentifier">$show_methods</span> <span class="synOperator">eq</span> <span class="synString">'all'</span>
+                 <span class="synOperator">or</span> <span class="synIdentifier">$show_methods</span> <span class="synOperator">eq</span> <span class="synIdentifier">$type</span>;
+
+        <span class="synStatement">my</span> <span class="synIdentifier">@list</span> = (<span class="synIdentifier">$p-&gt;{</span><span class="synString">class</span><span class="synIdentifier">}{</span><span class="synString">sort_methods</span><span class="synIdentifier">}</span> ? nsort <span class="synIdentifier">@{$methods-&gt;{$type}}</span> : <span class="synIdentifier">@{$methods-&gt;{$type}}</span>);
+
+        <span class="synIdentifier">$string</span> .= (<span class="synString">' '</span> x <span class="synIdentifier">$p-&gt;{</span><span class="synString">_current_indent</span><span class="synIdentifier">}</span>)
+                 . <span class="synString">&quot;</span><span class="synIdentifier">$type</span><span class="synString"> methods (&quot;</span> . <span class="synStatement">scalar</span> <span class="synIdentifier">@list</span> . <span class="synString">')'</span>
+                 . (<span class="synIdentifier">@list</span> ? <span class="synString">' : '</span> : <span class="synString">''</span>)
+                 . <span class="synStatement">join</span>(<span class="synString">', '</span>, <span class="synStatement">map</span> <span class="synStatement">{</span> colored(<span class="synIdentifier">$_</span>, <span class="synIdentifier">$p-&gt;{</span><span class="synString">color</span><span class="synIdentifier">}-&gt;{</span><span class="synString">method</span><span class="synIdentifier">}</span>) <span class="synStatement">}</span>
+                              <span class="synIdentifier">@list</span>
+                   ) . <span class="synIdentifier">$BREAK</span>;
+    }
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$string</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_deparse </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$item</span>, <span class="synIdentifier">$p</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">require</span> B::Deparse;
+    <span class="synStatement">my</span> <span class="synIdentifier">$i</span> = <span class="synIdentifier">$p-&gt;{</span><span class="synString">indent</span><span class="synIdentifier">}</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$deparseopts</span> = [<span class="synString">&quot;-sCi</span><span class="synIdentifier">${i}</span><span class="synString">v'Useless const omitted'&quot;</span>];
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$sub</span> = <span class="synString">'sub '</span> . B::Deparse-&gt;new(<span class="synIdentifier">$deparseopts</span>)-&gt;coderef2text(<span class="synIdentifier">$item</span>);
+    <span class="synStatement">my</span> <span class="synIdentifier">$pad</span> = <span class="synString">&quot;</span><span class="synSpecial">\n</span><span class="synString">&quot;</span> . (<span class="synString">' '</span> x (<span class="synIdentifier">$p-&gt;{</span><span class="synString">_current_indent</span><span class="synIdentifier">}</span> + <span class="synIdentifier">$i</span>));
+    <span class="synIdentifier">$sub</span>    =~ <span class="synStatement">s/</span><span class="synSpecial">\n</span><span class="synStatement">/</span><span class="synIdentifier">$pad</span><span class="synStatement">/gse</span>;
+    <span class="synStatement">return</span> <span class="synIdentifier">$sub</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_get_info_message </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$p</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">@caller</span> = <span class="synStatement">caller</span> <span class="synNumber">2</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$message</span> = <span class="synIdentifier">$p-&gt;{</span><span class="synString">caller_message</span><span class="synIdentifier">}</span>;
+
+    <span class="synIdentifier">$message</span> =~ <span class="synStatement">s/</span><span class="synSpecial">\b</span><span class="synString">__PACKAGE__</span><span class="synSpecial">\b</span><span class="synStatement">/</span><span class="synIdentifier">$caller[</span><span class="synNumber">0</span><span class="synIdentifier">]</span><span class="synStatement">/g</span>;
+    <span class="synIdentifier">$message</span> =~ <span class="synStatement">s/</span><span class="synSpecial">\b</span><span class="synString">__FILENAME__</span><span class="synSpecial">\b</span><span class="synStatement">/</span><span class="synIdentifier">$caller[</span><span class="synNumber">1</span><span class="synIdentifier">]</span><span class="synStatement">/g</span>;
+    <span class="synIdentifier">$message</span> =~ <span class="synStatement">s/</span><span class="synSpecial">\b</span><span class="synString">__LINE__</span><span class="synSpecial">\b</span><span class="synStatement">/</span><span class="synIdentifier">$caller[</span><span class="synNumber">2</span><span class="synIdentifier">]</span><span class="synStatement">/g</span>;
+
+    <span class="synStatement">return</span> colored(<span class="synIdentifier">$message</span>, <span class="synIdentifier">$p-&gt;{</span><span class="synString">color</span><span class="synIdentifier">}{</span><span class="synString">caller_info</span><span class="synIdentifier">}</span>) . <span class="synIdentifier">$BREAK</span>;
+}
+
+
+<span class="synKeyword">sub </span><span class="synFunction">_merge </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$p</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$clone</span> = clone <span class="synIdentifier">$properties</span>;
+
+    <span class="synConditional">if</span> (<span class="synIdentifier">$p</span>) {
+        <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$key</span> (<span class="synStatement">keys</span> <span class="synIdentifier">%$p</span>) {
+            <span class="synConditional">if</span> (<span class="synIdentifier">$key</span> <span class="synOperator">eq</span> <span class="synString">'color'</span> <span class="synOperator">or</span> <span class="synIdentifier">$key</span> <span class="synOperator">eq</span> <span class="synString">'colour'</span>) {
+                <span class="synStatement">my</span> <span class="synIdentifier">$color</span> = <span class="synIdentifier">$p-&gt;{$key}</span>;
+                <span class="synConditional">if</span> ( <span class="synOperator">not</span> <span class="synOperator">ref</span> <span class="synIdentifier">$color</span> <span class="synOperator">or</span> <span class="synOperator">ref</span> <span class="synIdentifier">$color</span> <span class="synOperator">ne</span> <span class="synString">'HASH'</span> ) {
+                    Carp::carp <span class="synString">q['color' should be a HASH reference. Did you mean 'colored'?]</span>;
+                    <span class="synIdentifier">$clone-&gt;{</span><span class="synString">color</span><span class="synIdentifier">}</span> = {};
+                }
+                <span class="synConditional">else</span> {
+                    <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$target</span> ( <span class="synStatement">keys</span> <span class="synIdentifier">%$color</span> ) {
+                        <span class="synIdentifier">$clone-&gt;{</span><span class="synString">color</span><span class="synIdentifier">}-&gt;{$target}</span> = <span class="synIdentifier">$p-&gt;{$key}-&gt;{$target}</span>;
+                    }
+                }
+            }
+            <span class="synConditional">elsif</span> (<span class="synIdentifier">$key</span> <span class="synOperator">eq</span> <span class="synString">'class'</span>) {
+                <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$item</span> ( <span class="synStatement">keys</span> <span class="synIdentifier">%{$p-&gt;{</span><span class="synString">class</span><span class="synIdentifier">}}</span> ) {
+                    <span class="synIdentifier">$clone-&gt;{</span><span class="synString">class</span><span class="synIdentifier">}-&gt;{$item}</span> = <span class="synIdentifier">$p-&gt;{</span><span class="synString">class</span><span class="synIdentifier">}-&gt;{$item}</span>;
+                }
+            }
+            <span class="synConditional">elsif</span> (<span class="synIdentifier">$key</span> <span class="synOperator">eq</span> <span class="synString">'filters'</span>) {
+                <span class="synStatement">my</span> <span class="synIdentifier">$val</span> = <span class="synIdentifier">$p-&gt;{$key}</span>;
+
+                <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$item</span> (<span class="synStatement">keys</span> <span class="synIdentifier">%$val</span>) {
+                    <span class="synStatement">my</span> <span class="synIdentifier">$filters</span> = <span class="synIdentifier">$val-&gt;{$item}</span>;
+
+                    <span class="synComment"># EXPERIMENTAL: filters in modules</span>
+                    <span class="synConditional">if</span> (<span class="synIdentifier">$item</span> <span class="synOperator">eq</span> <span class="synString">'-external'</span>) {
+                        <span class="synStatement">my</span> <span class="synIdentifier">@external</span> = ( <span class="synOperator">ref</span>(<span class="synIdentifier">$filters</span>) ? <span class="synIdentifier">@$filters</span> : (<span class="synIdentifier">$filters</span>) );
+
+                        <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$class</span> ( <span class="synIdentifier">@external</span> ) {
+                            <span class="synStatement">my</span> <span class="synIdentifier">$module</span> = <span class="synString">&quot;Data::Printer::Filter::</span><span class="synIdentifier">$class</span><span class="synString">&quot;</span>;
+                            <span class="synStatement">eval</span> <span class="synString">&quot;use </span><span class="synIdentifier">$module</span><span class="synString">&quot;</span>;
+                            <span class="synConditional">if</span> (<span class="synIdentifier">$@</span>) {
+                                <span class="synStatement">warn</span> <span class="synString">&quot;Error loading filter '</span><span class="synIdentifier">$module</span><span class="synString">': </span><span class="synIdentifier">$@</span><span class="synString">&quot;</span>;
+                            }
+                            <span class="synConditional">else</span> {
+                                <span class="synStatement">my</span> <span class="synIdentifier">%from_module</span> = <span class="synIdentifier">%{$module-&gt;_filter_list}</span>;
+                                <span class="synStatement">my</span> <span class="synIdentifier">%extras</span>      = <span class="synIdentifier">%{$module-&gt;_extra_options}</span>;
+
+                                <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$k</span> (<span class="synStatement">keys</span> <span class="synIdentifier">%from_module</span>) {
+                                    <span class="synStatement">unshift</span> <span class="synIdentifier">@{</span> <span class="synIdentifier">$clone-&gt;{</span><span class="synString">filters</span><span class="synIdentifier">}-&gt;{$k}</span> <span class="synIdentifier">}</span>, <span class="synIdentifier">@{</span> <span class="synIdentifier">$from_module{$k}</span> <span class="synIdentifier">}</span>;
+                                    <span class="synIdentifier">$clone-&gt;{</span><span class="synString">_seen_override</span><span class="synIdentifier">}{$k}</span> = <span class="synNumber">1</span>
+                                        <span class="synConditional">if</span> <span class="synIdentifier">$extras{$k}{</span><span class="synString">show_repeated</span><span class="synIdentifier">}</span>;
+                                }
+                            }
+                        }
+                    }
+                    <span class="synConditional">else</span> {
+                        <span class="synStatement">my</span> <span class="synIdentifier">@filter_list</span> = ( <span class="synOperator">ref</span> <span class="synIdentifier">$filters</span> <span class="synOperator">eq</span> <span class="synString">'CODE'</span> ? ( <span class="synIdentifier">$filters</span> ) : <span class="synIdentifier">@$filters</span> );
+                        <span class="synStatement">unshift</span> <span class="synIdentifier">@{</span> <span class="synIdentifier">$clone-&gt;{</span><span class="synString">filters</span><span class="synIdentifier">}-&gt;{$item}</span> <span class="synIdentifier">}</span>, <span class="synIdentifier">@filter_list</span>;
+                    }
+                }
+            }
+            <span class="synConditional">elsif</span> (<span class="synIdentifier">$key</span> <span class="synOperator">eq</span> <span class="synString">'output'</span>) {
+                <span class="synStatement">my</span> <span class="synIdentifier">$out</span> = <span class="synIdentifier">$p-&gt;{</span><span class="synString">output</span><span class="synIdentifier">}</span>;
+                <span class="synStatement">my</span> <span class="synIdentifier">$ref</span> = <span class="synOperator">ref</span> <span class="synIdentifier">$out</span>;
+
+                <span class="synIdentifier">$clone-&gt;{</span><span class="synString">output</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$out</span>;
+
+                <span class="synStatement">my</span> <span class="synIdentifier">%output_target</span> = (
+                     <span class="synString">stdout</span> =&gt; *STDOUT,
+                     <span class="synString">stderr</span> =&gt; *STDERR,
+                );
+
+                <span class="synStatement">my</span> <span class="synIdentifier">$error</span>;
+                <span class="synConditional">if</span> (!<span class="synIdentifier">$ref</span> <span class="synOperator">and</span> <span class="synStatement">exists</span> <span class="synIdentifier">$output_target{</span> <span class="synStatement">lc</span> <span class="synIdentifier">$out</span> <span class="synIdentifier">}</span>) {
+                    <span class="synIdentifier">$clone-&gt;{</span><span class="synString">_output</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$output_target{</span> <span class="synStatement">lc</span> <span class="synIdentifier">$out</span> <span class="synIdentifier">}</span>;
+                }
+                <span class="synConditional">elsif</span> ( ( <span class="synIdentifier">$ref</span> <span class="synOperator">and</span> <span class="synIdentifier">$ref</span> <span class="synOperator">eq</span> <span class="synString">'GLOB'</span>)
+                     <span class="synOperator">or</span> (!<span class="synIdentifier">$ref</span> <span class="synOperator">and</span> \<span class="synIdentifier">$out</span> =~ <span class="synStatement">/</span><span class="synString">GLOB</span><span class="synSpecial">\([^()]+\)</span><span class="synString">$</span><span class="synStatement">/</span>)
+                ) {
+                    <span class="synIdentifier">$clone-&gt;{</span><span class="synString">_output</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$out</span>;
+                }
+                <span class="synConditional">elsif</span> ( !<span class="synIdentifier">$ref</span> <span class="synOperator">or</span> <span class="synIdentifier">$ref</span> <span class="synOperator">eq</span> <span class="synString">'SCALAR'</span> ) {
+                    <span class="synConditional">if</span>( <span class="synStatement">open</span> <span class="synStatement">my</span> <span class="synIdentifier">$fh</span>, <span class="synString">'&gt;&gt;'</span>, <span class="synIdentifier">$out</span> ) {
+                        <span class="synIdentifier">$clone-&gt;{</span><span class="synString">_output</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$fh</span>;
+                    }
+                    <span class="synConditional">else</span> {
+                        <span class="synIdentifier">$error</span> = <span class="synNumber">1</span>;
+                    }
+                }
+                <span class="synConditional">else</span> {
+                    <span class="synIdentifier">$error</span> = <span class="synNumber">1</span>;
+                }
+
+                <span class="synConditional">if</span> (<span class="synIdentifier">$error</span>) {
+                    Carp::carp <span class="synString">'Error opening custom output handle.'</span>;
+                    <span class="synIdentifier">$clone-&gt;{</span><span class="synString">_output</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$output_target{</span> <span class="synString">'stderr'</span> <span class="synIdentifier">}</span>;
+                }
+            }
+            <span class="synConditional">else</span> {
+                <span class="synIdentifier">$clone-&gt;{$key}</span> = <span class="synIdentifier">$p-&gt;{$key}</span>;
+            }
+        }
+    }
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$clone</span>;
+}
+
+
+<span class="synKeyword">sub </span><span class="synFunction">_load_rc_file </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$args</span> = <span class="synStatement">shift</span> || {};
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$file</span> = <span class="synStatement">exists</span> <span class="synIdentifier">$args-&gt;{</span><span class="synString">rc_file</span><span class="synIdentifier">}</span>    ? <span class="synIdentifier">$args-&gt;{</span><span class="synString">rc_file</span><span class="synIdentifier">}</span>
+             : <span class="synStatement">exists</span> <span class="synIdentifier">$ENV{</span><span class="synString">DATAPRINTERRC</span><span class="synIdentifier">}</span> ? <span class="synIdentifier">$ENV{</span><span class="synString">DATAPRINTERRC</span><span class="synIdentifier">}</span>
+             : File::Spec-&gt;catfile(File::HomeDir-&gt;my_home,<span class="synString">'.dataprinter'</span>);
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synStatement">-e</span> <span class="synIdentifier">$file</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$mode</span> = (<span class="synStatement">stat</span> <span class="synIdentifier">$file</span> )[<span class="synNumber">2</span>];
+    <span class="synConditional">if</span> (<span class="synIdentifier">$^O</span> !~ <span class="synStatement">/</span><span class="synString">Win32</span><span class="synStatement">/i</span> &amp;&amp; (<span class="synIdentifier">$mode</span> &amp; <span class="synNumber">0020</span> || <span class="synIdentifier">$mode</span> &amp; <span class="synNumber">0002</span>) ) {
+        <span class="synStatement">warn</span> <span class="synString">&quot;rc file '</span><span class="synIdentifier">$file</span><span class="synString">' must NOT be writeable to other users. Skipping.</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+        <span class="synStatement">return</span>;
+    }
+
+    <span class="synConditional">if</span> ( <span class="synStatement">-l</span> <span class="synIdentifier">$file</span> || (!<span class="synStatement">-f</span> _) || <span class="synStatement">-p</span> _ || <span class="synStatement">-S</span> _ || <span class="synStatement">-b</span> _ || <span class="synStatement">-c</span> _ ) {
+        <span class="synStatement">warn</span> <span class="synString">&quot;rc file '</span><span class="synIdentifier">$file</span><span class="synString">' doesn't look like a plain file. Skipping.</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+        <span class="synStatement">return</span>;
+    }
+
+    <span class="synConditional">unless</span> (<span class="synStatement">-o</span> <span class="synIdentifier">$file</span>) {
+        <span class="synStatement">warn</span> <span class="synString">&quot;rc file '</span><span class="synIdentifier">$file</span><span class="synString">' must be owned by your (effective) user. Skipping.</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+        <span class="synStatement">return</span>;
+    }
+
+    <span class="synConditional">if</span> ( <span class="synStatement">open</span> <span class="synStatement">my</span> <span class="synIdentifier">$fh</span>, <span class="synString">'&lt;'</span>, <span class="synIdentifier">$file</span> ) {
+        <span class="synStatement">my</span> <span class="synIdentifier">$rc_data</span>;
+        { <span class="synStatement">local</span> <span class="synIdentifier">$/</span>; <span class="synIdentifier">$rc_data</span> = &lt;<span class="synIdentifier">$fh</span>&gt; }
+        <span class="synStatement">close</span> <span class="synIdentifier">$fh</span>;
+
+        <span class="synConditional">if</span>( <span class="synIdentifier">${</span>^TAINT<span class="synIdentifier">}</span> != <span class="synNumber">0</span> ) {
+            <span class="synConditional">if</span> ( <span class="synIdentifier">$args-&gt;{</span><span class="synString">allow_tainted</span><span class="synIdentifier">}</span> ) {
+                <span class="synStatement">warn</span> <span class="synString">&quot;WARNING: Reading tainted file '</span><span class="synIdentifier">$file</span><span class="synString">' due to user override.</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+                <span class="synIdentifier">$rc_data</span> =~ <span class="synStatement">/</span><span class="synSpecial">(.+)</span><span class="synStatement">/s</span>; <span class="synComment"># very bad idea - god help you</span>
+                <span class="synIdentifier">$rc_data</span> = <span class="synIdentifier">$1</span>;
+            }
+            <span class="synConditional">else</span> {
+                <span class="synStatement">warn</span> <span class="synString">&quot;taint mode on: skipping rc file '</span><span class="synIdentifier">$file</span><span class="synString">'.</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+                <span class="synStatement">return</span>;
+            }
+        }
+
+        <span class="synStatement">my</span> <span class="synIdentifier">$config</span> = <span class="synStatement">eval</span> <span class="synIdentifier">$rc_data</span>;
+        <span class="synConditional">if</span> ( <span class="synIdentifier">$@</span> ) {
+            <span class="synStatement">warn</span> <span class="synString">&quot;Error loading </span><span class="synIdentifier">$file</span><span class="synString">: </span><span class="synIdentifier">$@</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+        }
+        <span class="synConditional">elsif</span> (!<span class="synOperator">ref</span> <span class="synIdentifier">$config</span> <span class="synOperator">or</span> <span class="synOperator">ref</span> <span class="synIdentifier">$config</span> <span class="synOperator">ne</span> <span class="synString">'HASH'</span>) {
+            <span class="synStatement">warn</span> <span class="synString">&quot;Error loading </span><span class="synIdentifier">$file</span><span class="synString">: config file must return a hash reference</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+        }
+        <span class="synConditional">else</span> {
+            <span class="synIdentifier">$properties</span> = _merge( <span class="synIdentifier">$config</span> );
+        }
+    }
+    <span class="synConditional">else</span> {
+        <span class="synStatement">warn</span> <span class="synString">&quot;error opening '</span><span class="synIdentifier">$file</span><span class="synString">': </span><span class="synIdentifier">$!</span><span class="synSpecial">\n</span><span class="synString">&quot;</span>;
+    }
+}
+
+
+<span class="synNumber">1</span>;
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=encoding</span><span class="synString"> utf8</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Data::Printer - colored pretty-print of Perl data structures and objects
+
+<span class="synStatement">=head1</span><span class="synString"> SYNOPSIS</span>
+
+Want to see what's inside a variable in a complete, colored
+and human-friendly way?
+
+<span class="synPreProc">  use Data::Printer;   # or just &quot;use DDP&quot; for short</span>
+<span class="synPreProc">  </span>
+<span class="synPreProc">  p @array;            # no need to pass references</span>
+
+Code above might output something like this (with colors!):
+
+<span class="synPreProc">   [</span>
+<span class="synPreProc">       [0] &quot;a&quot;,</span>
+<span class="synPreProc">       [1] &quot;b&quot;,</span>
+<span class="synPreProc">       [2] undef,</span>
+<span class="synPreProc">       [3] &quot;c&quot;,</span>
+<span class="synPreProc">   ]</span>
+
+You can also inspect objects:
+
+<span class="synPreProc">    my $obj = SomeClass-&gt;new;</span>
+
+<span class="synPreProc">    p($obj);</span>
+
+Which might give you something like:
+
+<span class="synPreProc">  \ SomeClass  {</span>
+<span class="synPreProc">      Parents       Moose::Object</span>
+<span class="synPreProc">      Linear @ISA   SomeClass, Moose::Object</span>
+<span class="synPreProc">      public methods (3) : bar, foo, meta</span>
+<span class="synPreProc">      private methods (0)</span>
+<span class="synPreProc">      internals: {</span>
+<span class="synPreProc">         _something =&gt; 42,</span>
+<span class="synPreProc">      }</span>
+<span class="synPreProc">  }</span>
+
+Data::Printer is fully customizable. If you want to change how things
+are displayed, or even its standard behavior. Take a look at the
+<span class="synIdentifier">L&lt;&lt; available customizations|/&quot;CUSTOMIZATION&quot; &gt;&gt;</span>. Once you figure out
+your own preferences, create a
+<span class="synIdentifier">L&lt;&lt; configuration file|/&quot;CONFIGURATION FILE (RUN CONTROL)&quot; &gt;&gt;</span> for
+yourself and Data::Printer will automatically use it!
+
+B&lt;&lt; That's about it! Feel free to stop reading now and start dumping
+your data structures! For more information, including feature set,
+how to create filters, and general tips, just keep reading :) &gt;&gt;
+
+Oh, if you are just experimenting and/or don't want to use a
+configuration file, you can set all options during initialization,
+including coloring, identation and filters!
+
+<span class="synPreProc">  use Data::Printer {</span>
+<span class="synPreProc">      color =&gt; {</span>
+<span class="synPreProc">         'regex' =&gt; 'blue',</span>
+<span class="synPreProc">         'hash'  =&gt; 'yellow',</span>
+<span class="synPreProc">      },</span>
+<span class="synPreProc">      filters =&gt; {</span>
+<span class="synPreProc">         'DateTime' =&gt; sub { $_[0]-&gt;ymd },</span>
+<span class="synPreProc">         'SCALAR'   =&gt; sub { &quot;oh noes, I found a scalar! $_[0]&quot; },</span>
+<span class="synPreProc">      },</span>
+<span class="synPreProc">  };</span>
+
+The first <span class="synIdentifier">C&lt;{}&gt;</span> block is just syntax sugar, you can safely ommit it
+if it makes things easier to read:
+
+<span class="synPreProc">  use DDP colored =&gt; 1;</span>
+
+<span class="synPreProc">  use Data::Printer  deparse =&gt; 1, sort_keys =&gt; 0;</span>
+
+
+<span class="synStatement">=head1</span><span class="synString"> FEATURES</span>
+
+Here's what Data::Printer has to offer to Perl developers, out of the box:
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Very sane defaults (I hope!)</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Highly customizable (in case you disagree with me :)</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Colored output by default</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Human-friendly output, with array index and custom separators</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Full object dumps including methods, inheritance and internals</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Exposes extra information such as tainted data and weak references</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Ability to easily create filters for objects and regular structures</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Ability to load settings from a </span><span class="synIdentifier">C&lt;.dataprinter&gt;</span><span class="synString"> file so you don't have to write anything other than &quot;use DDP;&quot; in your code!</span>
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> RATIONALE</span>
+
+Data::Dumper is a fantastic tool, meant to stringify data structures
+in a way they are suitable for being <span class="synIdentifier">C&lt;eval&gt;</span>'ed back in.
+
+The thing is, a lot of people keep using it (and similar ones,
+like Data::Dump) to print data structures and objects on screen
+for inspection and debugging, and while you <span class="synIdentifier">B&lt;can&gt;</span> use those
+modules for that, it doesn't mean mean you <span class="synIdentifier">B&lt;should&gt;</span>.
+
+This is where Data::Printer comes in. It is meant to do one thing
+and one thing only:
+
+I&lt;&lt; display Perl variables and objects on screen, properly
+formatted &gt;&gt; (to be inspected by a human)
+
+If you want to serialize/store/restore Perl data structures,
+this module will NOT help you. Try <span class="synIdentifier">L&lt;Storable&gt;</span>, <span class="synIdentifier">L&lt;Data::Dumper&gt;</span>,
+<span class="synIdentifier">L&lt;JSON&gt;</span>, or whatever. CPAN is full of such solutions!
+
+<span class="synStatement">=head1</span><span class="synString"> THE p() FUNCTION</span>
+
+Once you load Data::Printer, the <span class="synIdentifier">C&lt;p()&gt;</span> function will be imported
+into your namespace and available to you. It will pretty-print
+into STDERR (or any other output target) whatever variabe you pass to it.
+
+<span class="synStatement">=head2</span><span class="synString"> Changing output targets</span>
+
+By default, <span class="synIdentifier">C&lt;p()&gt;</span> will be set to use STDERR. As of version 0.27, you
+can set up the 'output' property so Data::Printer outputs to
+several different places:
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">C&lt;&lt; output =&gt; 'stderr' &gt;&gt;</span><span class="synString"> - Standard error. Same as *STDERR</span>
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">C&lt;&lt; output =&gt; 'stdout' &gt;&gt;</span><span class="synString"> - Standard output. Same as *STDOUT</span>
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">C&lt;&lt; output =&gt; $filename &gt;&gt;</span><span class="synString"> - Appends to filename.</span>
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">C&lt;&lt; output =&gt; $file_handle &gt;&gt;</span><span class="synString"> - Appends to opened handle</span>
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">C&lt;&lt; output =&gt; \$scalar &gt;&gt;</span><span class="synString"> - Appends to that variable's content</span>
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head2</span><span class="synString"> Return Value</span>
+
+If for whatever reason you want to mangle with the output string
+instead of printing it, you can simply ask for a return
+value:
+
+<span class="synPreProc">  # move to a string</span>
+<span class="synPreProc">  my $string = p @some_array;</span>
+
+<span class="synPreProc">  # output to STDOUT instead of STDERR;</span>
+<span class="synPreProc">  print p(%some_hash);</span>
+
+Note that, in this case, Data::Printer will not colorize the
+returned string unless you explicitly set the <span class="synIdentifier">C&lt;colored&gt;</span> option to 1:
+
+<span class="synPreProc">  print p(%some_hash, colored =&gt; 1); # now with colors!</span>
+
+You can - and should - of course, set this during you &quot;<span class="synIdentifier">C&lt;use&gt;</span>&quot; call:
+
+<span class="synPreProc">  use Data::Printer colored =&gt; 1;</span>
+<span class="synPreProc">  print p( %some_hash );  # will be colored</span>
+
+Or by adding the setting to your <span class="synIdentifier">C&lt;.dataprinter&gt;</span> file.
+
+As most of Data::Printer, the return value is also configurable. You
+do this by setting the <span class="synIdentifier">C&lt;return_value&gt;</span> option. There are three options
+available:
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">C&lt;'dump'&gt;</span><span class="synString"> (default):</span>
+
+<span class="synPreProc">    p %var;               # prints the dump to STDERR (void context)</span>
+<span class="synPreProc">    my $string = p %var;  # returns the dump *without* printing</span>
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">C&lt;'void'&gt;</span><span class="synString">:</span>
+
+<span class="synPreProc">    p %var;               # prints the dump to STDERR, never returns.</span>
+<span class="synPreProc">    my $string = p %var;  # $string is undef. Data still printed in STDERR</span>
+
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">C&lt;'pass'&gt;</span><span class="synString">:</span>
+
+<span class="synPreProc">    p %var;               # prints the dump to STDERR, returns %var</span>
+<span class="synPreProc">    my %copy = p %var;    # %copy = %var. Data still printed in STDERR</span>
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> COLORS AND COLORIZATION</span>
+
+Below are all the available colorizations and their default values.
+Note that both spellings ('color' and 'colour') will work.
+
+<span class="synPreProc">   use Data::Printer {</span>
+<span class="synPreProc">     color =&gt; {</span>
+<span class="synPreProc">        array       =&gt; 'bright_white',  # array index numbers</span>
+<span class="synPreProc">        number      =&gt; 'bright_blue',   # numbers</span>
+<span class="synPreProc">        string      =&gt; 'bright_yellow', # strings</span>
+<span class="synPreProc">        class       =&gt; 'bright_green',  # class names</span>
+<span class="synPreProc">        method      =&gt; 'bright_green',  # method names</span>
+<span class="synPreProc">        undef       =&gt; 'bright_red',    # the 'undef' value</span>
+<span class="synPreProc">        hash        =&gt; 'magenta',       # hash keys</span>
+<span class="synPreProc">        regex       =&gt; 'yellow',        # regular expressions</span>
+<span class="synPreProc">        code        =&gt; 'green',         # code references</span>
+<span class="synPreProc">        glob        =&gt; 'bright_cyan',   # globs (usually file handles)</span>
+<span class="synPreProc">        vstring     =&gt; 'bright_blue',   # version strings (v5.16.0, etc)</span>
+<span class="synPreProc">        repeated    =&gt; 'white on_red',  # references to seen values</span>
+<span class="synPreProc">        caller_info =&gt; 'bright_cyan',   # details on what's being printed</span>
+<span class="synPreProc">        weak        =&gt; 'cyan',          # weak references</span>
+<span class="synPreProc">        tainted     =&gt; 'red',           # tainted content</span>
+<span class="synPreProc">        escaped     =&gt; 'bright_red',    # escaped characters (\t, \n, etc)</span>
+
+<span class="synPreProc">        # potential new Perl datatypes, unknown to Data::Printer</span>
+<span class="synPreProc">        unknown     =&gt; 'bright_yellow on_blue',</span>
+<span class="synPreProc">     },</span>
+<span class="synPreProc">   };</span>
+
+Don't fancy colors? Disable them with:
+
+<span class="synPreProc">  use Data::Printer colored =&gt; 0;</span>
+
+By default, 'colored' is set to <span class="synIdentifier">C&lt;&quot;auto&quot;&gt;</span>, which means Data::Printer
+will colorize only when not being used to return the dump string,
+nor when the output (default: STDERR) is being piped. If you're not
+seeing colors, try forcing it with:
+
+<span class="synPreProc">  use Data::Printer colored =&gt; 1;</span>
+
+Also worth noticing that Data::Printer <span class="synIdentifier">I&lt;will&gt;</span> honor the
+<span class="synIdentifier">C&lt;ANSI_COLORS_DISABLED&gt;</span> environment variable unless you force a
+colored output by setting 'colored' to 1.
+
+Remember to put your preferred settings in the <span class="synIdentifier">C&lt;.dataprinter&gt;</span> file
+so you never have to type them at all!
+
+
+<span class="synStatement">=head1</span><span class="synString"> ALIASING</span>
+
+Data::Printer provides the nice, short, <span class="synIdentifier">C&lt;p()&gt;</span> function to dump your
+data structures and objects. In case you rather use a more explicit
+name, already have a <span class="synIdentifier">C&lt;p()&gt;</span> function (why?) in your code and want
+to avoid clashing, or are just used to other function names for that
+purpose, you can easily rename it:
+
+<span class="synPreProc">  use Data::Printer alias =&gt; 'Dumper';</span>
+
+<span class="synPreProc">  Dumper( %foo );</span>
+
+
+<span class="synStatement">=head1</span><span class="synString"> CUSTOMIZATION</span>
+
+I tried to provide sane defaults for Data::Printer, so you'll never have
+to worry about anything other than typing <span class="synIdentifier">C&lt;&lt; &quot;p( $var )&quot; &gt;&gt;</span> in your code.
+That said, and besides coloring and filtering, there are several other
+customization options available, as shown below (with default values):
+
+<span class="synPreProc">  use Data::Printer {</span>
+<span class="synPreProc">      name           =&gt; 'var',   # name to display on cyclic references</span>
+<span class="synPreProc">      indent         =&gt; 4,       # how many spaces in each indent</span>
+<span class="synPreProc">      hash_separator =&gt; '   ',   # what separates keys from values</span>
+<span class="synPreProc">      colored        =&gt; 'auto',  # colorize output (1 for always, 0 for never)</span>
+<span class="synPreProc">      index          =&gt; 1,       # display array indices</span>
+<span class="synPreProc">      multiline      =&gt; 1,       # display in multiple lines (see note below)</span>
+<span class="synPreProc">      max_depth      =&gt; 0,       # how deep to traverse the data (0 for all)</span>
+<span class="synPreProc">      sort_keys      =&gt; 1,       # sort hash keys</span>
+<span class="synPreProc">      deparse        =&gt; 0,       # use B::Deparse to expand (expose) subroutines</span>
+<span class="synPreProc">      show_tied      =&gt; 1,       # expose tied variables</span>
+<span class="synPreProc">      show_tainted   =&gt; 1,       # expose tainted variables</span>
+<span class="synPreProc">      show_weak      =&gt; 1,       # expose weak references</span>
+<span class="synPreProc">      show_readonly  =&gt; 0,       # expose scalar variables marked as read-only</span>
+<span class="synPreProc">      show_lvalue    =&gt; 1,       # expose lvalue types</span>
+<span class="synPreProc">      print_escapes  =&gt; 0,       # print non-printable chars as &quot;\n&quot;, &quot;\t&quot;, etc.</span>
+<span class="synPreProc">      quote_keys     =&gt; 'auto',  # quote hash keys (1 for always, 0 for never).</span>
+<span class="synPreProc">                                 # 'auto' will quote when key is empty/space-only.</span>
+<span class="synPreProc">      separator      =&gt; ',',     # uses ',' to separate array/hash elements</span>
+<span class="synPreProc">      end_separator  =&gt; 0,       # prints the separator after last element in array/hash.</span>
+<span class="synPreProc">                                 # the default is 0 that means not to print</span>
+
+<span class="synPreProc">      caller_info    =&gt; 0,       # include information on what's being printed</span>
+<span class="synPreProc">      use_prototypes =&gt; 1,       # allow p(%foo), but prevent anonymous data</span>
+<span class="synPreProc">      return_value   =&gt; 'dump',  # what should p() return? See 'Return Value' above.</span>
+<span class="synPreProc">      output         =&gt; 'stderr',# where to print the output. See</span>
+<span class="synPreProc">                                 # 'Changing output targets' above.</span>
+
+<span class="synPreProc">      class_method   =&gt; '_data_printer', # make classes aware of Data::Printer</span>
+<span class="synPreProc">                                         # and able to dump themselves.</span>
+
+<span class="synPreProc">      class =&gt; {</span>
+<span class="synPreProc">          internals  =&gt; 1,       # show internal data structures of classes</span>
+
+<span class="synPreProc">          inherited  =&gt; 'none',  # show inherited methods,</span>
+<span class="synPreProc">                                 # can also be 'all', 'private', or 'public'.</span>
+
+<span class="synPreProc">          universal  =&gt; 1,       # include UNIVERSAL methods in inheritance list</span>
+
+<span class="synPreProc">          parents    =&gt; 1,       # show parents, if there are any</span>
+<span class="synPreProc">          linear_isa =&gt; 'auto',  # show the entire @ISA, linearized, whenever</span>
+<span class="synPreProc">                                 # the object has more than one parent. Can</span>
+<span class="synPreProc">                                 # also be set to 1 (always show) or 0 (never).</span>
+
+<span class="synPreProc">          expand     =&gt; 1,       # how deep to traverse the object (in case</span>
+<span class="synPreProc">                                 # it contains other objects). Defaults to</span>
+<span class="synPreProc">                                 # 1, meaning expand only itself. Can be any</span>
+<span class="synPreProc">                                 # number, 0 for no class expansion, and 'all'</span>
+<span class="synPreProc">                                 # to expand everything.</span>
+
+<span class="synPreProc">          sort_methods =&gt; 1,     # sort public and private methods</span>
+
+<span class="synPreProc">          show_methods =&gt; 'all'  # method list. Also 'none', 'public', 'private'</span>
+<span class="synPreProc">      },</span>
+<span class="synPreProc">  };</span>
+
+Note: setting <span class="synIdentifier">C&lt;multiline&gt;</span> to <span class="synIdentifier">C&lt;0&gt;</span> will also set <span class="synIdentifier">C&lt;index&gt;</span> and <span class="synIdentifier">C&lt;indent&gt;</span> to <span class="synIdentifier">C&lt;0&gt;</span>.
+
+<span class="synStatement">=head1</span><span class="synString"> FILTERS</span>
+
+Data::Printer offers you the ability to use filters to override
+any kind of data display. The filters are placed on a hash,
+where keys are the types - or class names - and values
+are anonymous subs that receive two arguments: the item itself
+as first parameter, and the properties hashref (in case your
+filter wants to read from it). This lets you quickly override
+the way Data::Printer handles and displays data types and, in
+particular, objects.
+
+<span class="synPreProc">  use Data::Printer filters =&gt; {</span>
+<span class="synPreProc">            'DateTime'      =&gt; sub { $_[0]-&gt;ymd },</span>
+<span class="synPreProc">            'HTTP::Request' =&gt; sub { $_[0]-&gt;uri },</span>
+<span class="synPreProc">  };</span>
+
+Perl types are named as <span class="synIdentifier">C&lt;ref&gt;</span> calls them: <span class="synIdentifier">I&lt;SCALAR&gt;</span>, <span class="synIdentifier">I&lt;ARRAY&gt;</span>,
+<span class="synIdentifier">I&lt;HASH&gt;</span>, <span class="synIdentifier">I&lt;REF&gt;</span>, <span class="synIdentifier">I&lt;CODE&gt;</span>, <span class="synIdentifier">I&lt;Regexp&gt;</span> and <span class="synIdentifier">I&lt;GLOB&gt;</span>. As for objects,
+just use the class' name, as shown above.
+
+As of version 0.13, you may also use the '-class' filter, which
+will be called for all non-perl types (objects).
+
+Your filters are supposed to return a defined value (usually, the
+string you want to print). If you don't, Data::Printer will
+let the next filter of that same type have a go, or just fallback
+to the defaults. You can also use an array reference to pass more
+than one filter for the same type or class.
+
+<span class="synIdentifier">B&lt;Note&gt;</span>: If you plan on calling <span class="synIdentifier">C&lt;p()&gt;</span> from <span class="synIdentifier">I&lt;within&gt;</span> an inline
+filter, please make sure you are passing only REFERENCES as
+arguments. See <span class="synIdentifier">L&lt;/CAVEATS&gt;</span> below.
+
+You may also like to specify standalone filter modules. Please
+see <span class="synIdentifier">L&lt;Data::Printer::Filter&gt;</span> for further information on a more
+powerful filter interface for Data::Printer, including useful
+filters that are shipped as part of this distribution.
+
+<span class="synStatement">=head1</span><span class="synString"> MAKING YOUR CLASSES DDP-AWARE (WITHOUT ADDING ANY DEPS)</span>
+
+Whenever printing the contents of a class, Data::Printer first
+checks to see if that class implements a sub called '_data_printer'
+(or whatever you set the &quot;class_method&quot; option to in your settings,
+see <span class="synIdentifier">L&lt;/CUSTOMIZATION&gt;</span> below).
+
+If a sub with that exact name is available in the target object,
+Data::Printer will use it to get the string to print instead of
+making a regular class dump.
+
+This means you could have the following in one of your classes:
+
+<span class="synPreProc">  sub _data_printer {</span>
+<span class="synPreProc">      my ($self, $properties) = @_;</span>
+<span class="synPreProc">      return 'Hey, no peeking! But foo contains ' . $self-&gt;foo;</span>
+<span class="synPreProc">  }</span>
+
+Notice you don't have to depend on Data::Printer at all, just
+write your sub and it will use that to pretty-print your objects.
+
+If you want to use colors and filter helpers, and still not
+add Data::Printer to your dependencies, remember you can import
+them during runtime:
+
+<span class="synPreProc">  sub _data_printer {</span>
+<span class="synPreProc">      require Data::Printer::Filter;</span>
+<span class="synPreProc">      Data::Printer::Filter-&gt;import;</span>
+
+<span class="synPreProc">      # now we have 'indent', outdent', 'linebreak', 'p' and 'colored'</span>
+<span class="synPreProc">      my ($self, $properties) = @_;</span>
+<span class="synPreProc">      ...</span>
+<span class="synPreProc">  }</span>
+
+Having a filter for that particular class will of course override
+this setting.
+
+
+<span class="synStatement">=head1</span><span class="synString"> CONFIGURATION FILE (RUN CONTROL)</span>
+
+Data::Printer tries to let you easily customize as much as possible
+regarding the visualization of your data structures and objects.
+But we don't want you to keep repeating yourself every time you
+want to use it!
+
+To avoid this, you can simply create a file called <span class="synIdentifier">C&lt;.dataprinter&gt;</span> in
+your home directory (usually <span class="synIdentifier">C&lt;/home/username&gt;</span> in Linux), and put
+your configuration hash reference in there.
+
+This way, instead of doing something like:
+
+<span class="synPreProc">   use Data::Printer {</span>
+<span class="synPreProc">     colour =&gt; {</span>
+<span class="synPreProc">        array =&gt; 'bright_blue',</span>
+<span class="synPreProc">     },</span>
+<span class="synPreProc">     filters =&gt; {</span>
+<span class="synPreProc">         'Catalyst::Request' =&gt; sub {</span>
+<span class="synPreProc">             my $req = shift;</span>
+<span class="synPreProc">             return &quot;Cookies: &quot; . p($req-&gt;cookies)</span>
+<span class="synPreProc">         },</span>
+<span class="synPreProc">     },</span>
+<span class="synPreProc">   };</span>
+
+You can create a .dataprinter file that looks like this:
+
+<span class="synPreProc">   {</span>
+<span class="synPreProc">     colour =&gt; {</span>
+<span class="synPreProc">        array =&gt; 'bright_blue',</span>
+<span class="synPreProc">     },</span>
+<span class="synPreProc">     filters =&gt; {</span>
+<span class="synPreProc">         'Catalyst::Request' =&gt; sub {</span>
+<span class="synPreProc">             my $req = shift;</span>
+<span class="synPreProc">             return &quot;Cookies: &quot; . p($req-&gt;cookies)</span>
+<span class="synPreProc">         },</span>
+<span class="synPreProc">     },</span>
+<span class="synPreProc">   };</span>
+
+Note that all we did was remove the &quot;use Data::Printer&quot; bit when
+writing the <span class="synIdentifier">C&lt;.dataprinter&gt;</span> file. From then on all you have to do
+while debugging scripts is:
+
+<span class="synPreProc">  use Data::Printer;</span>
+
+and it will load your custom settings every time :)
+
+<span class="synStatement">=head2</span><span class="synString"> Loading RC files in custom locations</span>
+
+If your RC file is somewhere other than <span class="synIdentifier">C&lt;.dataprinter&gt;</span> in your home
+dir, you can load whichever file you want via the <span class="synIdentifier">C&lt;'rc_file'&gt;</span> parameter:
+
+<span class="synPreProc">  use Data::Printer rc_file =&gt; '/path/to/my/rcfile.conf';</span>
+
+You can even set this to undef or to a non-existing file to disable your
+RC file at will.
+
+The RC file location can also be specified with the <span class="synIdentifier">C&lt;DATAPRINTERRC&gt;</span>
+environment variable. Using <span class="synIdentifier">C&lt;rc_file&gt;</span> in code will override the environment
+variable.
+
+<span class="synStatement">=head2</span><span class="synString"> RC File Security</span>
+
+The <span class="synIdentifier">C&lt;.dataprinter&gt;</span> RC file is nothing but a Perl hash that
+gets <span class="synIdentifier">C&lt;eval&gt;</span>'d back into the code. This means that whatever
+is in your RC file <span class="synIdentifier">B&lt;WILL BE INTERPRETED BY PERL AT RUNTIME&gt;</span>.
+This can be quite worrying if you're not the one in control
+of the RC file.
+
+For this reason, Data::Printer takes extra precaution before
+loading the file:
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> * The file has to be in your home directory unless you</span>
+specifically point elsewhere via the '<span class="synIdentifier">C&lt;rc_file&gt;</span>' property or
+the DATAPRINTERRC environment variable;
+
+<span class="synStatement">=item</span><span class="synString"> * The file </span><span class="synIdentifier">B&lt;must&gt;</span><span class="synString"> be a plain file, never a symbolic</span>
+link, named pipe or socket;
+
+<span class="synStatement">=item</span><span class="synString"> * The file </span><span class="synIdentifier">B&lt;must&gt;</span><span class="synString"> be owned by you (i.e. the effective</span>
+user id that ran the script using Data::Printer);
+
+<span class="synStatement">=item</span><span class="synString"> * The file </span><span class="synIdentifier">B&lt;must&gt;</span><span class="synString"> be read-only for everyone but your user.</span>
+This usually means permissions <span class="synIdentifier">C&lt;0644&gt;</span>, <span class="synIdentifier">C&lt;0640&gt;</span> or <span class="synIdentifier">C&lt;0600&gt;</span> in
+Unix-like systems. <span class="synIdentifier">B&lt;THIS IS NOT CHECKED IN WIN32&gt;</span>;
+
+<span class="synStatement">=item</span><span class="synString"> * The file will </span><span class="synIdentifier">B&lt;NOT&gt;</span><span class="synString"> be loaded in Taint mode, unless</span>
+you specifically load Data::Printer with the 'allow_tainted'
+option set to true. And even if you do that, Data::Printer
+will still issue a warning before loading the file. But
+seriously, don't do that.
+
+<span class="synStatement">=back</span>
+
+Failure to comply with the security rules above will result in
+the RC file not being loaded (likely with a warning on what went
+wrong).
+
+
+<span class="synStatement">=head1</span><span class="synString"> THE &quot;DDP&quot; PACKAGE ALIAS</span>
+
+You're likely to add/remove Data::Printer from source code being
+developed and debugged all the time, and typing it might feel too
+long. Because of this, the 'DDP' package is provided as a shorter
+alias to Data::Printer:
+
+<span class="synPreProc">   use DDP;</span>
+<span class="synPreProc">   p %some_var;</span>
+
+<span class="synStatement">=head1</span><span class="synString"> CALLER INFORMATION</span>
+
+If you set caller_info to a true value, Data::Printer will prepend
+every call with an informational message. For example:
+
+<span class="synPreProc">  use Data::Printer caller_info =&gt; 1;</span>
+
+<span class="synPreProc">  my $var = 42;</span>
+<span class="synPreProc">  p $var;</span>
+
+will output something like:
+
+<span class="synPreProc">  Printing in line 4 of myapp.pl:</span>
+<span class="synPreProc">  42</span>
+
+The default message is <span class="synIdentifier">C&lt;&lt; 'Printing in line __LINE__ of __FILENAME__:' &gt;&gt;</span>.
+The special strings <span class="synIdentifier">C&lt;__LINE__&gt;</span>, <span class="synIdentifier">C&lt;__FILENAME__&gt;</span> and <span class="synIdentifier">C&lt;__PACKAGE__&gt;</span> will
+be interpolated into their according value so you can customize them at will:
+
+<span class="synPreProc">  use Data::Printer</span>
+<span class="synPreProc">    caller_info =&gt; 1,</span>
+<span class="synPreProc">    caller_message =&gt; &quot;Okay, __PACKAGE__, let's dance!&quot;</span>
+<span class="synPreProc">    color =&gt; {</span>
+<span class="synPreProc">        caller_info =&gt; 'bright_red',</span>
+<span class="synPreProc">    };</span>
+
+As shown above, you may also set a color for &quot;caller_info&quot; in your color
+hash. Default is cyan.
+
+
+<span class="synStatement">=head1</span><span class="synString"> EXPERIMENTAL FEATURES</span>
+
+The following are volatile parts of the API which are subject to
+change at any given version. Use them at your own risk.
+
+<span class="synStatement">=head2</span><span class="synString"> Local Configuration (experimental!)</span>
+
+You can override global configurations by writing them as the second
+parameter for <span class="synIdentifier">p()</span>. For example:
+
+<span class="synPreProc">  p( %var, color =&gt; { hash =&gt; 'green' } );</span>
+
+
+<span class="synStatement">=head2</span><span class="synString"> Filter classes</span>
+
+As of Data::Printer 0.11, you can create complex filters as a separate
+module. Those can even be uploaded to CPAN and used by other people!
+See <span class="synIdentifier">L&lt;Data::Printer::Filter&gt;</span> for further information.
+
+<span class="synStatement">=head1</span><span class="synString"> CAVEATS</span>
+
+You can't pass more than one variable at a time.
+
+<span class="synPreProc">   p($foo, $bar); # wrong</span>
+<span class="synPreProc">   p($foo);       # right</span>
+<span class="synPreProc">   p($bar);       # right</span>
+
+The default mode is to use prototypes, in which you are supposed to pass
+variables, not anonymous structures:
+
+<span class="synPreProc">   p( { foo =&gt; 'bar' } ); # wrong</span>
+
+<span class="synPreProc">   p %somehash;        # right</span>
+<span class="synPreProc">   p $hash_ref;        # also right</span>
+
+To pass anonymous structures, set &quot;use_prototypes&quot; option to 0. But
+remember you'll have to pass your variables as references:
+
+<span class="synPreProc">   use Data::Printer use_prototypes =&gt; 0;</span>
+
+<span class="synPreProc">   p( { foo =&gt; 'bar' } ); # was wrong, now is right.</span>
+
+<span class="synPreProc">   p( %foo  ); # was right, but fails without prototypes</span>
+<span class="synPreProc">   p( \%foo ); # do this instead</span>
+
+If you are using inline filters, and calling <span class="synIdentifier">p()</span> (or whatever name you
+aliased it to) from inside those filters, you <span class="synIdentifier">B&lt;must&gt;</span> pass the arguments
+to <span class="synIdentifier">C&lt;p()&gt;</span> as a reference:
+
+<span class="synPreProc">  use Data::Printer {</span>
+<span class="synPreProc">      filters =&gt; {</span>
+<span class="synPreProc">          ARRAY =&gt; sub {</span>
+<span class="synPreProc">              my $listref = shift;</span>
+<span class="synPreProc">              my $string = '';</span>
+<span class="synPreProc">              foreach my $item (@$listref) {</span>
+<span class="synPreProc">                  $string .= p( \$item );      # p( $item ) will not work!</span>
+<span class="synPreProc">              }</span>
+<span class="synPreProc">              return $string;</span>
+<span class="synPreProc">          },</span>
+<span class="synPreProc">      },</span>
+<span class="synPreProc">  };</span>
+
+This happens because your filter function is compiled <span class="synIdentifier">I&lt;before&gt;</span> Data::Printer
+itself loads, so the filter does not see the function prototype. As a way
+to avoid unpleasant surprises, if you forget to pass a reference, Data::Printer
+will generate an exception for you with the following message:
+
+<span class="synPreProc">    'When calling p() without prototypes, please pass arguments as references'</span>
+
+Another way to avoid this is to use the much more complete <span class="synIdentifier">L&lt;Data::Printer::Filter&gt;</span>
+interface for standalone filters.
+
+<span class="synStatement">=head1</span><span class="synString"> EXTRA TIPS</span>
+
+<span class="synStatement">=head2</span><span class="synString"> Circumventing prototypes</span>
+
+The <span class="synIdentifier">C&lt;p()&gt;</span> function uses prototypes by default, allowing you to say:
+
+<span class="synPreProc">  p %var;</span>
+
+instead of always having to pass references, like:
+
+<span class="synPreProc">  p \%var;</span>
+
+There are cases, however, where you may want to pass anonymous
+structures, like:
+
+<span class="synPreProc">  p { foo =&gt; $bar };   # this blows up, don't use</span>
+
+and because of prototypes, you can't. If this is your case, just
+set &quot;use_prototypes&quot; option to 0. Note, with this option,
+you <span class="synIdentifier">B&lt;will&gt;</span> have to pass your variables as references:
+
+<span class="synPreProc">  use Data::Printer use_prototypes =&gt; 0;</span>
+
+<span class="synPreProc">   p { foo =&gt; 'bar' }; # doesn't blow up anymore, works just fine.</span>
+
+<span class="synPreProc">   p %var;  # but now this blows up...</span>
+<span class="synPreProc">   p \%var; # ...so do this instead</span>
+
+<span class="synPreProc">   p [ $foo, $bar, \@baz ]; # this way you can even pass</span>
+<span class="synPreProc">                            # several variables at once</span>
+
+Versions prior to 0.17 don't have the &quot;use_prototypes&quot; option. If
+you're stuck in an older version you can write <span class="synIdentifier">C&lt;&amp;p()&gt;</span> instead of <span class="synIdentifier">C&lt;p()&gt;</span>
+to circumvent prototypes and pass elements (including anonymous variables)
+as <span class="synIdentifier">B&lt;REFERENCES&gt;</span>. This notation, however, requires enclosing parentheses:
+
+<span class="synPreProc">  &amp;p( { foo =&gt; $bar } );        # this is ok, use at will</span>
+<span class="synPreProc">  &amp;p( \&quot;DEBUGGING THIS BIT&quot; );  # this works too</span>
+
+Or you could just create a very simple wrapper function:
+
+<span class="synPreProc">  sub pp { p @_ };</span>
+
+And use it just as you use <span class="synIdentifier">C&lt;p()&gt;</span>.
+
+<span class="synStatement">=head2</span><span class="synString"> Minding the return value of p()</span>
+
+<span class="synIdentifier">I&lt;&lt; (contributed by Matt S. Trout (mst)) &gt;&gt;</span>
+
+There is a reason why explicit return statements are recommended unless
+you know what you're doing. By default, Data::Printer's return value
+depends on how it was called. When not in void context, it returns the
+serialized form of the dump.
+
+It's tempting to trust your own <span class="synIdentifier">p()</span> calls with that approach, but if
+this is your <span class="synIdentifier">I&lt;last&gt;</span> statement in a function, you should keep in mind
+your debugging code will behave differently depending on how your
+function was called!
+
+To prevent that, set the <span class="synIdentifier">C&lt;return_value&gt;</span> property to either 'void'
+or 'pass'. You won't be able to retrieve the dumped string but, hey,
+who does that anyway :)
+
+Assuming you have set the pass-through ('pass') property in your
+<span class="synIdentifier">C&lt;.dataprinter&gt;</span> file, another stunningly useful thing you can do with it
+is change code that says:
+
+<span class="synPreProc">   return $obj-&gt;foo;</span>
+
+with:
+
+<span class="synPreProc">   use DDP;</span>
+
+<span class="synPreProc">   return p $obj-&gt;foo;</span>
+
+You can even add it to chained calls if you wish to see the dump of
+a particular state, changing this:
+
+<span class="synPreProc">   $obj-&gt;foo-&gt;bar-&gt;baz;</span>
+
+to:
+
+<span class="synPreProc">   $obj-&gt;foo-&gt;DDP::p-&gt;bar-&gt;baz</span>
+
+And things will &quot;Just Work&quot;.
+
+
+<span class="synStatement">=head2</span><span class="synString"> Using p() in some/all of your loaded modules</span>
+
+<span class="synIdentifier">I&lt;&lt; (contributed by Matt S. Trout (mst)) &gt;&gt;</span>
+
+While debugging your software, you may want to use Data::Printer in
+some or all loaded modules and not bother having to load it in
+each and every one of them. To do this, in any module loaded by
+<span class="synIdentifier">C&lt;myapp.pl&gt;</span>, simply write:
+
+<span class="synPreProc">  ::p( @myvar );  # note the '::' in front of p()</span>
+
+Then call your program like:
+
+<span class="synPreProc">  perl -MDDP myapp.pl</span>
+
+This also has the great advantage that if you leave one <span class="synIdentifier">p()</span> call
+in by accident, it will fail without the -M, making it easier to spot :)
+
+If you really want to have <span class="synIdentifier">p()</span> imported into your loaded
+modules, use the next tip instead.
+
+<span class="synStatement">=head2</span><span class="synString"> Adding p() to all your loaded modules</span>
+
+<span class="synIdentifier">I&lt;&lt; (contributed by Árpád Szász) &gt;&gt;</span>
+
+If you wish to automatically add Data::Printer's <span class="synIdentifier">C&lt;p()&gt;</span> function to
+every loaded module in you app, you can do something like this to
+your main program:
+
+<span class="synPreProc">    BEGIN {</span>
+<span class="synPreProc">        {</span>
+<span class="synPreProc">            no strict 'refs';</span>
+<span class="synPreProc">            require Data::Printer;</span>
+<span class="synPreProc">            my $alias = 'p';</span>
+<span class="synPreProc">            foreach my $package ( keys %main:: ) {</span>
+<span class="synPreProc">                if ( $package =~ m/::$/ ) {</span>
+<span class="synPreProc">                    *{ $package . $alias } = \&amp;Data::Printer::p;</span>
+<span class="synPreProc">                }</span>
+<span class="synPreProc">            }</span>
+<span class="synPreProc">        }</span>
+<span class="synPreProc">    }</span>
+
+<span class="synIdentifier">B&lt;WARNING&gt;</span> This will override all locally defined subroutines/methods that
+are named <span class="synIdentifier">C&lt;p&gt;</span>, if they exist, in every loaded module. If you already
+have a subroutine named '<span class="synIdentifier">C&lt;p()&gt;</span>', be sure to change <span class="synIdentifier">C&lt;$alias&gt;</span> to
+something custom.
+
+If you rather avoid namespace manipulation altogether, use the previous
+tip instead.
+
+<span class="synStatement">=head2</span><span class="synString"> Using Data::Printer from the Perl debugger</span>
+
+<span class="synIdentifier">I&lt;&lt; (contributed by Árpád Szász and Marcel Grünauer (hanekomu)) &gt;&gt;</span>
+
+With <span class="synIdentifier">L&lt;DB::Pluggable&gt;</span>, you can easily set the perl debugger to use
+Data::Printer to print variable information, replacing the debugger's
+standard <span class="synIdentifier">C&lt;p()&gt;</span> function. All you have to do is add these lines to
+your <span class="synIdentifier">C&lt;.perldb&gt;</span> file:
+
+<span class="synPreProc">  use DB::Pluggable;</span>
+<span class="synPreProc">  DB::Pluggable-&gt;run_with_config( \'[DataPrinter]' );  # note the '\'</span>
+
+Then call the perl debugger as you normally would:
+
+<span class="synPreProc">  perl -d myapp.pl</span>
+
+Now Data::Printer's <span class="synIdentifier">C&lt;p()&gt;</span> command will be used instead of the debugger's!
+
+See <span class="synIdentifier">L&lt;perldebug&gt;</span> for more information on how to use the perl debugger, and
+<span class="synIdentifier">L&lt;DB::Pluggable&gt;</span> for extra functionality and other plugins.
+
+If you can't or don't wish to use DB::Pluggable, or simply want to keep
+the debugger's <span class="synIdentifier">C&lt;p()&gt;</span> function and add an extended version using
+Data::Printer (let's call it <span class="synIdentifier">C&lt;px()&gt;</span> for instance), you can add these
+lines to your <span class="synIdentifier">C&lt;.perldb&gt;</span> file instead:
+
+<span class="synPreProc">    $DB::alias{px} = 's/px/DB::px/';</span>
+<span class="synPreProc">    sub px {</span>
+<span class="synPreProc">        my $expr = shift;</span>
+<span class="synPreProc">        require Data::Printer;</span>
+<span class="synPreProc">        print Data::Printer::p($expr);</span>
+<span class="synPreProc">    }</span>
+
+Now, inside the Perl debugger, you can pass as reference to <span class="synIdentifier">C&lt;px&gt;</span> expressions
+to be dumped using Data::Printer.
+
+<span class="synStatement">=head2</span><span class="synString"> Using Data::Printer in a perl shell (REPL)</span>
+
+Some people really enjoy using a REPL shell to quickly try Perl code. One
+of the most famous ones out there is <span class="synIdentifier">L&lt;Devel::REPL&gt;</span>. If you use it, now
+you can also see its output with Data::Printer!
+
+Just install <span class="synIdentifier">L&lt;Devel::REPL::Plugin::DataPrinter&gt;</span> and add the following
+line to your re.pl configuration file (usually &quot;.re.pl/repl.rc&quot; in your
+home dir):
+
+<span class="synPreProc">  load_plugin('DataPrinter');</span>
+
+The next time you run <span class="synIdentifier">C&lt;re.pl&gt;</span>, it should dump all your REPL using
+Data::Printer!
+
+<span class="synStatement">=head2</span><span class="synString"> Easily rendering Data::Printer's output as HTML</span>
+
+To turn Data::Printer's output into HTML, you can do something like:
+
+<span class="synPreProc">  use HTML::FromANSI;</span>
+<span class="synPreProc">  use Data::Printer;</span>
+<span class="synPreProc">  </span>
+<span class="synPreProc">  my $html_output = ansi2html( p($object, colored =&gt; 1) );</span>
+
+In the example above, the <span class="synIdentifier">C&lt;$html_output&gt;</span> variable contains the
+HTML escaped output of <span class="synIdentifier">C&lt;p($object)&gt;</span>, so you can print it for
+later inspection or render it (if it's a web app).
+
+<span class="synStatement">=head2</span><span class="synString"> Using Data::Printer with Template Toolkit</span>
+
+<span class="synIdentifier">I&lt;&lt; (contributed by Stephen Thirlwall (sdt)) &gt;&gt;</span>
+
+If you use Template Toolkit and want to dump your variables using Data::Printer,
+install the <span class="synIdentifier">L&lt;Template::Plugin::DataPrinter&gt;</span> module and load it in your template:
+
+<span class="synPreProc">   [% USE DataPrinter %]</span>
+
+The provided methods match those of <span class="synIdentifier">C&lt;Template::Plugin::Dumper&gt;</span>:
+
+<span class="synPreProc">   ansi-colored dump of the data structure in &quot;myvar&quot;:</span>
+<span class="synPreProc">   [% DataPrinter.dump( myvar ) %]</span>
+
+<span class="synPreProc">   html-formatted, colored dump of the same data structure:</span>
+<span class="synPreProc">   [% DataPrinter.dump_html( myvar ) %]</span>
+
+The module allows several customization options, even letting you load it as a
+complete drop-in replacement for Template::Plugin::Dumper so you don't even have
+to change your previous templates!
+
+<span class="synStatement">=head2</span><span class="synString"> Unified interface for Data::Printer and other debug formatters</span>
+
+<span class="synIdentifier">I&lt;&lt; (contributed by Kevin McGrath (catlgrep)) &gt;&gt;</span>
+
+If you are porting your code to use Data::Printer instead of
+Data::Dumper or similar, you can just replace:
+
+<span class="synPreProc">  use Data::Dumper;</span>
+
+with:
+
+<span class="synPreProc">  use Data::Printer alias =&gt; 'Dumper';</span>
+<span class="synPreProc">  # use Data::Dumper;</span>
+
+making sure to provide Data::Printer with the proper alias for the
+previous dumping function.
+
+If, however, you want a really unified approach where you can easily
+flip between debugging outputs, use <span class="synIdentifier">L&lt;Any::Renderer&gt;</span> and its plugins,
+like <span class="synIdentifier">L&lt;Any::Renderer::Data::Printer&gt;</span>.
+
+<span class="synStatement">=head2</span><span class="synString"> Printing stack traces with arguments expanded using Data::Printer</span>
+
+<span class="synIdentifier">I&lt;&lt; (contributed by Sergey Aleynikov (randir)) &gt;&gt;</span>
+
+There are times where viewing the current state of a variable is not
+enough, and you want/need to see a full stack trace of a function call.
+
+The <span class="synIdentifier">L&lt;Devel::PrettyTrace&gt;</span> module uses Data::Printer to provide you just
+that. It exports a <span class="synIdentifier">C&lt;bt()&gt;</span> function that pretty-prints detailed information
+on each function in your stack, making it easier to spot any issues!
+
+<span class="synStatement">=head2</span><span class="synString"> Troubleshooting apps in real time without changing a single line of your code</span>
+
+<span class="synIdentifier">I&lt;&lt; (contributed by Marcel Grünauer (hanekomu)) &gt;&gt;</span>
+
+<span class="synIdentifier">L&lt;dip&gt;</span> is a dynamic instrumentation framework for troubleshooting Perl
+programs, similar to <span class="synIdentifier">L&lt;DTrace|http://opensolaris.org/os/community/dtrace/&gt;</span>.
+In a nutshell, <span class="synIdentifier">C&lt;dip&gt;</span> lets you create probes for certain conditions
+in your application that, once met, will perform a specific action. Since
+it uses Aspect-oriented programming, it's very lightweight and you only
+pay for what you use.
+
+<span class="synIdentifier">C&lt;dip&gt;</span> can be very useful since it allows you to debug your software
+without changing a single line of your original code. And Data::Printer
+comes bundled with it, so you can use the <span class="synIdentifier">C&lt;p()&gt;</span> function to view your
+data structures too!
+
+<span class="synPreProc">   # Print a stack trace every time the name is changed,</span>
+<span class="synPreProc">   # except when reading from the database.</span>
+<span class="synPreProc">   dip -e 'before { print longmess(p $_-&gt;{args}[1]) if $_-&gt;{args}[1] }</span>
+<span class="synPreProc">     call &quot;MyObj::name&quot; &amp; !cflow(&quot;MyObj::read&quot;)' myapp.pl</span>
+
+You can check you <span class="synIdentifier">L&lt;dip&gt;</span>'s own documentation for more information and options.
+
+<span class="synStatement">=head2</span><span class="synString"> Sample output for color fine-tuning</span>
+
+<span class="synIdentifier">I&lt;&lt; (contributed by Yanick Champoux (yanick)) &gt;&gt;</span>
+
+The &quot;examples/try_me.pl&quot; file included in this distribution has a sample
+dump with a complex data structure to let you quickly test color schemes.
+
+<span class="synStatement">=head2</span><span class="synString"> creating fiddling filters</span>
+
+<span class="synIdentifier">I&lt;&lt; (contributed by dirk) &gt;&gt;</span>
+
+Sometimes, you may want to take advantage of Data::Printer's original dump,
+but add/change some of the original data to enhance your debugging ability.
+Say, for example, you have an <span class="synIdentifier">C&lt;HTTP::Response&gt;</span> object you want to print
+but the content is encoded. The basic approach, of course, would be to
+just dump the decoded content:
+
+<span class="synPreProc">  use DDP filter {</span>
+<span class="synPreProc">    'HTTP::Response' =&gt; sub { p( \shift-&gt;decoded_content, %{shift} );</span>
+<span class="synPreProc">  };</span>
+
+But what if you want to see the rest of the original object? Dumping it
+would be a no-go, because you would just recurse forever in your own filter.
+
+Never fear! When you create a filter in Data::Printer, you're not replacing
+the original one, you're just stacking yours on top of it. To forward your data
+to the original filter, all you have to do is return an undefined value. This
+means you can rewrite your <span class="synIdentifier">C&lt;HTTP::Response&gt;</span> filter like so, if you want:
+
+<span class="synPreProc">  use DDP filters =&gt; {</span>
+<span class="synPreProc">    'HTTP::Response' =&gt; sub {</span>
+<span class="synPreProc">      my ($res, $p) = @_;</span>
+
+<span class="synPreProc">      # been here before? Switch to original handler</span>
+<span class="synPreProc">      return if exists $res-&gt;{decoded_content};</span>
+
+<span class="synPreProc">      # first timer? Come on in!</span>
+<span class="synPreProc">      my $clone = $res-&gt;clone;</span>
+<span class="synPreProc">      $clone-&gt;{decoded_content} = $clone-&gt;decoded_content;</span>
+<span class="synPreProc">      return p($clone, %$p);</span>
+<span class="synPreProc">    }</span>
+<span class="synPreProc">  };</span>
+
+And voilà! Your fiddling filter now works like a charm :)
+
+<span class="synStatement">=head1</span><span class="synString"> BUGS</span>
+
+If you find any, please file a bug report.
+
+
+<span class="synStatement">=head1</span><span class="synString"> SEE ALSO</span>
+
+<span class="synIdentifier">L&lt;Data::Dumper&gt;</span>
+
+<span class="synIdentifier">L&lt;Data::Dump&gt;</span>
+
+<span class="synIdentifier">L&lt;Data::Dumper::Concise&gt;</span>
+
+<span class="synIdentifier">L&lt;Data::Dump::Streamer&gt;</span>
+
+<span class="synIdentifier">L&lt;Data::PrettyPrintObjects&gt;</span>
+
+<span class="synIdentifier">L&lt;Data::TreeDumper&gt;</span>
+
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Breno G. de Oliveira <span class="synIdentifier">C&lt;&lt; &lt;garu at cpan.org&gt; &gt;&gt;</span>
+
+<span class="synStatement">=head1</span><span class="synString"> CONTRIBUTORS</span>
+
+Many thanks to everyone that helped design and develop this module
+with patches, bug reports, wishlists, comments and tests. They are
+(alphabetically):
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Allan Whiteford</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Andreas König</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Andy Bach</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Árpád Szász</span>
+
+<span class="synStatement">=item</span><span class="synString"> * brian d foy</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Chris Prather (perigrin)</span>
+
+<span class="synStatement">=item</span><span class="synString"> * David Golden (xdg)</span>
+
+<span class="synStatement">=item</span><span class="synString"> * David Raab</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Damien Krotkine (dams)</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Denis Howe</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Dotan Dimet</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Eden Cardim (edenc)</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Elliot Shank (elliotjs)</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Fernando Corrêa (SmokeMachine)</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Fitz Elliott</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Ivan Bessarabov (bessarabv)</span>
+
+<span class="synStatement">=item</span><span class="synString"> * J Mash</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Jesse Luehrs (doy)</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Joel Berger (jberger)</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Kartik Thakore (kthakore)</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Kevin Dawson (bowtie)</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Kevin McGrath (catlgrep)</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Kip Hampton (ubu)</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Marcel Grünauer (hanekomu)</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Matt S. Trout (mst)</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Maxim Vuets</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Mike Doherty (doherty)</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Paul Evans (LeoNerd)</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Przemysław Wesołek (jest)</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Rebecca Turner (iarna)</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Rob Hoelz (hoelzro)</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Sebastian Willing (Sewi)</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Sergey Aleynikov (randir)</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Stanislaw Pusep (syp)</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Stephen Thirlwall (sdt)</span>
+
+<span class="synStatement">=item</span><span class="synString"> * sugyan</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Tatsuhiko Miyagawa (miyagawa)</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Tim Heaney (oylenshpeegul)</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Torsten Raudssus (Getty)</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Wesley Dal`Col (blabos)</span>
+
+<span class="synStatement">=item</span><span class="synString"> * Yanick Champoux (yanick)</span>
+
+<span class="synStatement">=back</span>
+
+If I missed your name, please drop me a line!
+
+
+<span class="synStatement">=head1</span><span class="synString"> LICENSE AND COPYRIGHT</span>
+
+Copyright 2011 Breno G. de Oliveira <span class="synIdentifier">C&lt;&lt; &lt;garu at cpan.org&gt; &gt;&gt;</span>. All rights reserved.
+
+This module is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself. See <span class="synIdentifier">L&lt;perlartistic&gt;</span>.
+
+
+
+<span class="synStatement">=head1</span><span class="synString"> DISCLAIMER OF WARRANTY</span>
+
+BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN
+OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
+PROVIDE THE SOFTWARE &quot;AS IS&quot; WITHOUT WARRANTY OF ANY KIND, EITHER
+EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
+ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH
+YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
+NECESSARY SERVICING, REPAIR, OR CORRECTION.
+
+IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE
+LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL,
+OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
+THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
+FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGES.
+
+
+
+</pre>
+
+ </body>
+</html>

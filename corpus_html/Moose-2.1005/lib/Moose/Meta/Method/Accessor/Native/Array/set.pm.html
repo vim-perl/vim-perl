@@ -1,0 +1,81 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Moose::Meta::Method::Accessor::Native::Array::set</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Method::Accessor::Native::Array::set::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Method::Accessor::Native::Array::set::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Moose::Role;
+
+with <span class="synString">'Moose::Meta::Method::Accessor::Native::Array::Writer'</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">_minimum_arguments </span>{ <span class="synNumber">2</span> }
+
+<span class="synKeyword">sub </span><span class="synFunction">_maximum_arguments </span>{ <span class="synNumber">2</span> }
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_check_arguments </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;_inline_check_var_is_valid_index</span>(<span class="synString">'$_[0]'</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_adds_members </span>{ <span class="synNumber">1</span> }
+
+<span class="synKeyword">sub </span><span class="synFunction">_potential_value </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$slot_access</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> <span class="synString">'(do { '</span>
+             . <span class="synString">'my @potential = @{ ('</span> . <span class="synIdentifier">$slot_access</span> . <span class="synString">') }; '</span>
+             . <span class="synString">'$potential[$_[0]] = $_[1]; '</span>
+             . <span class="synString">'\@potential; '</span>
+         . <span class="synString">'})'</span>;
+}
+
+<span class="synComment"># We need to override this because while @_ can be written to, we cannot write</span>
+<span class="synComment"># directly to $_[1].</span>
+<span class="synKeyword">sub </span><span class="synFunction">_inline_coerce_new_values </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$self-&gt;associated_attribute-&gt;should_coerce</span>;
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$self-&gt;_tc_member_type_can_coerce</span>;
+
+    <span class="synStatement">return</span> <span class="synString">'@_ = ($_[0], $member_coercion-&gt;($_[1]));'</span>;
+};
+
+<span class="synKeyword">sub </span><span class="synFunction">_new_members </span>{ <span class="synString">'$_[1]'</span> }
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_optimized_set_new_value </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$inv</span>, <span class="synIdentifier">$new</span>, <span class="synIdentifier">$slot_access</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$slot_access</span> . <span class="synString">'-&gt;[$_[0]] = $_[1];'</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_return_value </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$slot_access</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$slot_access</span> . <span class="synString">'-&gt;[$_[0]]'</span>;
+}
+
+<span class="synStatement">no </span>Moose::Role;
+
+<span class="synNumber">1</span>;
+</pre>
+
+ </body>
+</html>

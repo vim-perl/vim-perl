@@ -1,0 +1,65 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synPreProc">#!/usr/bin/perl</span>
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Benchmark <span class="synString">qw[cmpthese]</span>;
+
+<span class="synStatement">=pod</span>
+
+This benchmark compares the overhead of a
+auto-created type constraint vs. none at
+all vs. a custom-created type.
+
+<span class="synStatement">=cut</span>
+
+{
+    <span class="synStatement">package</span><span class="synType"> Foo</span>;
+    <span class="synStatement">use </span>Moose;
+    <span class="synStatement">use </span>Moose::Util::TypeConstraints;
+
+    has <span class="synString">'baz'</span> =&gt; (<span class="synString">is</span> =&gt; <span class="synString">'rw'</span>);
+    has <span class="synString">'bar'</span> =&gt; (<span class="synString">is</span> =&gt; <span class="synString">'rw'</span>, <span class="synString">isa</span> =&gt; <span class="synString">'Foo'</span>);
+}
+
+{
+    <span class="synStatement">package</span><span class="synType"> Bar</span>;
+
+    <span class="synKeyword">sub </span><span class="synFunction">new </span>{ <span class="synOperator">bless</span> {} =&gt; __PACKAGE__ }
+    <span class="synKeyword">sub </span><span class="synFunction">bar </span>{
+        <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+        <span class="synIdentifier">$self-&gt;{</span><span class="synString">bar</span><span class="synIdentifier">}</span> = <span class="synStatement">shift</span> <span class="synConditional">if</span> <span class="synIdentifier">@_</span>;
+        <span class="synIdentifier">$self-&gt;{</span><span class="synString">bar</span><span class="synIdentifier">}</span>;
+    }
+}
+
+<span class="synStatement">my</span> <span class="synIdentifier">$foo</span> = Foo-&gt;new;
+<span class="synStatement">my</span> <span class="synIdentifier">$bar</span> = Bar-&gt;new;
+
+cmpthese(<span class="synNumber">200_000</span>,
+    {
+        <span class="synString">'hand coded'</span> =&gt; <span class="synKeyword">sub </span>{
+            <span class="synIdentifier">$bar-&gt;bar</span>(<span class="synIdentifier">$bar</span>);
+        },
+        <span class="synString">'w/out_constraint'</span> =&gt; <span class="synKeyword">sub </span>{
+            <span class="synIdentifier">$foo-&gt;baz</span>(<span class="synIdentifier">$foo</span>);
+        },
+        <span class="synString">'w_constraint'</span> =&gt; <span class="synKeyword">sub </span>{
+            <span class="synIdentifier">$foo-&gt;bar</span>(<span class="synIdentifier">$foo</span>);
+        },
+    }
+);
+
+<span class="synNumber">1</span>;
+</pre>
+
+ </body>
+</html>

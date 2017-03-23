@@ -1,0 +1,56 @@
+package Moose::Cookbook::Basics::Immutable;
+
+# ABSTRACT: Making Moose fast by making your class immutable
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Moose::Cookbook::Basics::Immutable - Making Moose fast by making your class immutable
+
+=head1 VERSION
+
+version 2.1005
+
+=head1 SYNOPSIS
+
+  package Point;
+  use Moose;
+
+  has 'x' => ( isa => 'Int', is => 'ro' );
+  has 'y' => ( isa => 'Int', is => 'rw' );
+
+  __PACKAGE__->meta->make_immutable;
+
+=head1 DESCRIPTION
+
+The Moose metaclass API provides a C<make_immutable()> method. Calling
+this method does two things to your class. First, it makes it
+faster. In particular, object construction and destruction are
+effectively "inlined" in your class, and no longer invoke the meta
+API.
+
+Second, you can no longer make changes via the metaclass API, such as
+adding attributes. In practice, this won't be a problem, as you rarely
+need to do this after first loading the class.
+
+=head1 CONCLUSION
+
+We strongly recommend you make your classes immutable. It makes your
+code much faster, with a small compile-time cost. This will be
+especially noticeable when creating many objects.
+
+=head1 AUTHOR
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See L<Moose/CABAL> and L<Moose/CONTRIBUTORS> for details.
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut

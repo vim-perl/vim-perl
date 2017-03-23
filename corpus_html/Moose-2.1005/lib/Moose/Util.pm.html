@@ -1,0 +1,648 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Moose::Util</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Util::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Util::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Class::Load <span class="synFloat">0.07</span> <span class="synString">qw(load_class load_first_existing_class)</span>;
+<span class="synStatement">use </span>Data::OptList;
+<span class="synStatement">use </span>Params::Util <span class="synString">qw( _STRING )</span>;
+<span class="synStatement">use </span>Sub::Exporter;
+<span class="synStatement">use </span>Scalar::Util <span class="synString">'blessed'</span>;
+<span class="synStatement">use </span>List::Util <span class="synString">qw(first)</span>;
+<span class="synStatement">use </span>List::MoreUtils <span class="synString">qw(any all)</span>;
+<span class="synStatement">use overload</span> ();
+<span class="synStatement">use </span>Try::Tiny;
+<span class="synStatement">use </span>Class::MOP;
+
+<span class="synStatement">my</span> <span class="synIdentifier">@exports</span> = <span class="synString">qw[</span>
+<span class="synString">    find_meta</span>
+<span class="synString">    does_role</span>
+<span class="synString">    search_class_by_role</span>
+<span class="synString">    ensure_all_roles</span>
+<span class="synString">    apply_all_roles</span>
+<span class="synString">    with_traits</span>
+<span class="synString">    get_all_init_args</span>
+<span class="synString">    get_all_attribute_values</span>
+<span class="synString">    resolve_metatrait_alias</span>
+<span class="synString">    resolve_metaclass_alias</span>
+<span class="synString">    add_method_modifier</span>
+<span class="synString">    english_list</span>
+<span class="synString">    meta_attribute_alias</span>
+<span class="synString">    meta_class_alias</span>
+<span class="synString">]</span>;
+
+Sub::Exporter::setup_exporter({
+    <span class="synString">exports</span> =&gt; \<span class="synIdentifier">@exports</span>,
+    <span class="synString">groups</span>  =&gt; { <span class="synString">all</span> =&gt; \<span class="synIdentifier">@exports</span> }
+});
+
+<span class="synComment">## some utils for the utils ...</span>
+
+<span class="synKeyword">sub </span><span class="synFunction">find_meta </span>{ Class::MOP::class_of(<span class="synIdentifier">@_</span>) }
+
+<span class="synComment">## the functions ...</span>
+
+<span class="synKeyword">sub </span><span class="synFunction">does_role </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$class_or_obj</span>, <span class="synIdentifier">$role</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synConditional">if</span> (try { <span class="synIdentifier">$class_or_obj-&gt;isa</span>(<span class="synString">'Moose::Object'</span>) }) {
+        <span class="synStatement">return</span> <span class="synIdentifier">$class_or_obj-&gt;does</span>(<span class="synIdentifier">$role</span>);
+    }
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$meta</span> = find_meta(<span class="synIdentifier">$class_or_obj</span>);
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synOperator">defined</span> <span class="synIdentifier">$meta</span>;
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$meta-&gt;can</span>(<span class="synString">'does_role'</span>);
+    <span class="synStatement">return</span> <span class="synNumber">1</span> <span class="synConditional">if</span> <span class="synIdentifier">$meta-&gt;does_role</span>(<span class="synIdentifier">$role</span>);
+    <span class="synStatement">return</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">search_class_by_role </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$class_or_obj</span>, <span class="synIdentifier">$role</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$meta</span> = find_meta(<span class="synIdentifier">$class_or_obj</span>);
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synOperator">defined</span> <span class="synIdentifier">$meta</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$role_name</span> = blessed <span class="synIdentifier">$role</span> ? <span class="synIdentifier">$role-&gt;name</span> : <span class="synIdentifier">$role</span>;
+
+    <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$class</span> (<span class="synIdentifier">$meta-&gt;class_precedence_list</span>) {
+
+        <span class="synStatement">my</span> <span class="synIdentifier">$_meta</span> = find_meta(<span class="synIdentifier">$class</span>);
+
+        <span class="synStatement">next</span> <span class="synConditional">unless</span> <span class="synOperator">defined</span> <span class="synIdentifier">$_meta</span>;
+
+        <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$role</span> (<span class="synIdentifier">@{</span> <span class="synIdentifier">$_meta-&gt;roles</span> || [] <span class="synIdentifier">}</span>) {
+            <span class="synStatement">return</span> <span class="synIdentifier">$class</span> <span class="synConditional">if</span> <span class="synIdentifier">$role-&gt;name</span> <span class="synOperator">eq</span> <span class="synIdentifier">$role_name</span>;
+        }
+    }
+
+    <span class="synStatement">return</span>;
+}
+
+<span class="synComment"># this can possibly behave in unexpected ways because the roles being composed</span>
+<span class="synComment"># before being applied could differ from call to call; I'm not sure if or how</span>
+<span class="synComment"># to document this possible quirk.</span>
+<span class="synKeyword">sub </span><span class="synFunction">ensure_all_roles </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$applicant</span> = <span class="synStatement">shift</span>;
+    _apply_all_roles(<span class="synIdentifier">$applicant</span>, <span class="synKeyword">sub </span>{ !does_role(<span class="synIdentifier">$applicant</span>, <span class="synIdentifier">$_</span>) }, <span class="synIdentifier">@_</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">apply_all_roles </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$applicant</span> = <span class="synStatement">shift</span>;
+    _apply_all_roles(<span class="synIdentifier">$applicant</span>, <span class="synOperator">undef</span>, <span class="synIdentifier">@_</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_apply_all_roles </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$applicant</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$role_filter</span> = <span class="synStatement">shift</span>;
+
+    <span class="synConditional">unless</span> (<span class="synIdentifier">@_</span>) {
+        <span class="synStatement">require</span> Moose;
+        Moose-&gt;throw_error(<span class="synString">&quot;Must specify at least one role to apply to </span><span class="synIdentifier">$applicant</span><span class="synString">&quot;</span>);
+    }
+
+    <span class="synComment"># If @_ contains role meta objects, mkopt will think that they're values,</span>
+    <span class="synComment"># because they're references.  In other words (roleobj1, roleobj2,</span>
+    <span class="synComment"># roleobj3) will become [ [ roleobj1, roleobj2 ], [ roleobj3, undef ] ]</span>
+    <span class="synComment"># -- this is no good.  We'll preprocess @_ first to eliminate the potential</span>
+    <span class="synComment"># bug.</span>
+    <span class="synComment"># -- rjbs, 2011-04-08</span>
+    <span class="synStatement">my</span> <span class="synIdentifier">$roles</span> = Data::OptList::mkopt( [<span class="synIdentifier">@_</span>], {
+      <span class="synString">moniker</span>   =&gt; <span class="synString">'role'</span>,
+      <span class="synString">name_test</span> =&gt; <span class="synKeyword">sub </span>{
+        ! <span class="synOperator">ref</span> <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> <span class="synOperator">or</span> blessed(<span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>) &amp;&amp; <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;isa</span>(<span class="synString">'Moose::Meta::Role'</span>)
+      }
+    });
+
+    <span class="synStatement">my</span> <span class="synIdentifier">@role_metas</span>;
+    <span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$role</span> (<span class="synIdentifier">@$roles</span>) {
+        <span class="synStatement">my</span> <span class="synIdentifier">$meta</span>;
+
+        <span class="synConditional">if</span> ( blessed <span class="synIdentifier">$role-&gt;[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> ) {
+            <span class="synIdentifier">$meta</span> = <span class="synIdentifier">$role-&gt;[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>;
+        }
+        <span class="synConditional">else</span> {
+            load_class( <span class="synIdentifier">$role-&gt;[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> , <span class="synIdentifier">$role-&gt;[</span><span class="synNumber">1</span><span class="synIdentifier">]</span> );
+            <span class="synIdentifier">$meta</span> = find_meta( <span class="synIdentifier">$role-&gt;[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> );
+        }
+
+        <span class="synConditional">unless</span> (<span class="synIdentifier">$meta</span> &amp;&amp; <span class="synIdentifier">$meta-&gt;isa</span>(<span class="synString">'Moose::Meta::Role'</span>) ) {
+            <span class="synStatement">require</span> Moose;
+            Moose-&gt;throw_error( <span class="synString">&quot;You can only consume roles, &quot;</span>
+                    . <span class="synIdentifier">$role-&gt;[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>
+                    . <span class="synString">&quot; is not a Moose role&quot;</span> );
+        }
+
+        <span class="synStatement">push</span> <span class="synIdentifier">@role_metas</span>, [ <span class="synIdentifier">$meta</span>, <span class="synIdentifier">$role-&gt;[</span><span class="synNumber">1</span><span class="synIdentifier">]</span> ];
+    }
+
+    <span class="synConditional">if</span> ( <span class="synOperator">defined</span> <span class="synIdentifier">$role_filter</span> ) {
+        <span class="synIdentifier">@role_metas</span> = <span class="synStatement">grep</span> <span class="synStatement">{</span> <span class="synStatement">local</span> <span class="synIdentifier">$_</span> = <span class="synIdentifier">$_-&gt;[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>; <span class="synIdentifier">$role_filter</span>-&gt;() <span class="synStatement">}</span> <span class="synIdentifier">@role_metas</span>;
+    }
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">@role_metas</span>;
+
+    load_class(<span class="synIdentifier">$applicant</span>)
+        <span class="synConditional">unless</span> blessed(<span class="synIdentifier">$applicant</span>)
+            || Class::MOP::class_of(<span class="synIdentifier">$applicant</span>);
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$meta</span> = ( blessed <span class="synIdentifier">$applicant</span> ? <span class="synIdentifier">$applicant</span> : Moose::Meta::Class-&gt;initialize(<span class="synIdentifier">$applicant</span>) );
+
+    <span class="synConditional">if</span> ( <span class="synStatement">scalar</span> <span class="synIdentifier">@role_metas</span> == <span class="synNumber">1</span> ) {
+        <span class="synStatement">my</span> ( <span class="synIdentifier">$role</span>, <span class="synIdentifier">$params</span> ) = <span class="synIdentifier">@{</span> <span class="synIdentifier">$role_metas[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> <span class="synIdentifier">}</span>;
+        <span class="synIdentifier">$role-&gt;apply</span>( <span class="synIdentifier">$meta</span>, ( <span class="synOperator">defined</span> <span class="synIdentifier">$params</span> ? <span class="synIdentifier">%$params</span> : () ) );
+    }
+    <span class="synConditional">else</span> {
+        Moose::Meta::Role-&gt;combine(<span class="synIdentifier">@role_metas</span>)-&gt;apply(<span class="synIdentifier">$meta</span>);
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">with_traits </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$class</span>, <span class="synIdentifier">@roles</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">return</span> <span class="synIdentifier">$class</span> <span class="synConditional">unless</span> <span class="synIdentifier">@roles</span>;
+    <span class="synStatement">return</span> Moose::Meta::Class-&gt;create_anon_class(
+        <span class="synString">superclasses</span> =&gt; [<span class="synIdentifier">$class</span>],
+        <span class="synString">roles</span>        =&gt; \<span class="synIdentifier">@roles</span>,
+        <span class="synString">cache</span>        =&gt; <span class="synNumber">1</span>,
+    )-&gt;name;
+}
+
+<span class="synComment"># instance deconstruction ...</span>
+
+<span class="synKeyword">sub </span><span class="synFunction">get_all_attribute_values </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$class</span>, <span class="synIdentifier">$instance</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">return</span> +{
+        <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;name</span> =&gt; <span class="synIdentifier">$_-&gt;get_value</span>(<span class="synIdentifier">$instance</span>) <span class="synStatement">}</span>
+            <span class="synStatement">grep</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;has_value</span>(<span class="synIdentifier">$instance</span>) <span class="synStatement">}</span>
+                <span class="synIdentifier">$class-&gt;get_all_attributes</span>
+    };
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">get_all_init_args </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$class</span>, <span class="synIdentifier">$instance</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">return</span> +{
+        <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;init_arg</span> =&gt; <span class="synIdentifier">$_-&gt;get_value</span>(<span class="synIdentifier">$instance</span>) <span class="synStatement">}</span>
+            <span class="synStatement">grep</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;has_value</span>(<span class="synIdentifier">$instance</span>) <span class="synStatement">}</span>
+                <span class="synStatement">grep</span> <span class="synStatement">{</span> <span class="synOperator">defined</span>(<span class="synIdentifier">$_-&gt;init_arg</span>) <span class="synStatement">}</span>
+                    <span class="synIdentifier">$class-&gt;get_all_attributes</span>
+    };
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">resolve_metatrait_alias </span>{
+    <span class="synStatement">return</span> resolve_metaclass_alias( <span class="synIdentifier">@_</span>, <span class="synString">trait</span> =&gt; <span class="synNumber">1</span> );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_build_alias_package_name </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$type</span>, <span class="synIdentifier">$name</span>, <span class="synIdentifier">$trait</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">return</span> <span class="synString">'Moose::Meta::'</span>
+         . <span class="synIdentifier">$type</span>
+         . <span class="synString">'::Custom::'</span>
+         . ( <span class="synIdentifier">$trait</span> ? <span class="synString">'Trait::'</span> : <span class="synString">''</span> )
+         . <span class="synIdentifier">$name</span>;
+}
+
+{
+    <span class="synStatement">my</span> <span class="synIdentifier">%cache</span>;
+
+    <span class="synKeyword">sub </span><span class="synFunction">resolve_metaclass_alias </span>{
+        <span class="synStatement">my</span> ( <span class="synIdentifier">$type</span>, <span class="synIdentifier">$metaclass_name</span>, <span class="synIdentifier">%options</span> ) = <span class="synIdentifier">@_</span>;
+
+        <span class="synStatement">my</span> <span class="synIdentifier">$cache_key</span> = <span class="synIdentifier">$type</span> . <span class="synString">q{ }</span> . ( <span class="synIdentifier">$options{</span><span class="synString">trait</span><span class="synIdentifier">}</span> ? <span class="synString">'-Trait'</span> : <span class="synString">''</span> );
+        <span class="synStatement">return</span> <span class="synIdentifier">$cache{$cache_key}{$metaclass_name}</span>
+            <span class="synConditional">if</span> <span class="synIdentifier">$cache{$cache_key}{$metaclass_name}</span>;
+
+        <span class="synStatement">my</span> <span class="synIdentifier">$possible_full_name</span> = _build_alias_package_name(
+            <span class="synIdentifier">$type</span>, <span class="synIdentifier">$metaclass_name</span>, <span class="synIdentifier">$options{</span><span class="synString">trait</span><span class="synIdentifier">}</span>
+        );
+
+        <span class="synStatement">my</span> <span class="synIdentifier">$loaded_class</span> = load_first_existing_class(
+            <span class="synIdentifier">$possible_full_name</span>,
+            <span class="synIdentifier">$metaclass_name</span>
+        );
+
+        <span class="synStatement">return</span> <span class="synIdentifier">$cache{$cache_key}{$metaclass_name}</span>
+            = <span class="synIdentifier">$loaded_class-&gt;can</span>(<span class="synString">'register_implementation'</span>)
+            ? <span class="synIdentifier">$loaded_class-&gt;register_implementation</span>
+            : <span class="synIdentifier">$loaded_class</span>;
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">add_method_modifier </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$class_or_obj</span>, <span class="synIdentifier">$modifier_name</span>, <span class="synIdentifier">$args</span> ) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$meta</span>
+        = <span class="synIdentifier">$class_or_obj-&gt;can</span>(<span class="synString">'add_before_method_modifier'</span>)
+        ? <span class="synIdentifier">$class_or_obj</span>
+        : find_meta(<span class="synIdentifier">$class_or_obj</span>);
+    <span class="synStatement">my</span> <span class="synIdentifier">$code</span>                = <span class="synStatement">pop</span> <span class="synIdentifier">@{$args}</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$add_modifier_method</span> = <span class="synString">'add_'</span> . <span class="synIdentifier">$modifier_name</span> . <span class="synString">'_method_modifier'</span>;
+    <span class="synConditional">if</span> ( <span class="synStatement">my</span> <span class="synIdentifier">$method_modifier_type</span> = <span class="synOperator">ref</span>( <span class="synIdentifier">@{$args}[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> ) ) {
+        <span class="synConditional">if</span> ( <span class="synIdentifier">$method_modifier_type</span> <span class="synOperator">eq</span> <span class="synString">'Regexp'</span> ) {
+            <span class="synStatement">my</span> <span class="synIdentifier">@all_methods</span> = <span class="synIdentifier">$meta-&gt;get_all_methods</span>;
+            <span class="synStatement">my</span> <span class="synIdentifier">@matched_methods</span>
+                = <span class="synStatement">grep</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;name</span> =~ <span class="synIdentifier">@{$args}[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> <span class="synStatement">}</span> <span class="synIdentifier">@all_methods</span>;
+            <span class="synIdentifier">$meta-&gt;$add_modifier_method</span>( <span class="synIdentifier">$_-&gt;name</span>, <span class="synIdentifier">$code</span> )
+                <span class="synRepeat">for</span> <span class="synIdentifier">@matched_methods</span>;
+        }
+        <span class="synConditional">elsif</span> (<span class="synIdentifier">$method_modifier_type</span> <span class="synOperator">eq</span> <span class="synString">'ARRAY'</span>) {
+            <span class="synIdentifier">$meta-&gt;$add_modifier_method</span>( <span class="synIdentifier">$_</span>, <span class="synIdentifier">$code</span> ) <span class="synRepeat">for</span> <span class="synIdentifier">@{$args-&gt;[</span><span class="synNumber">0</span><span class="synIdentifier">]}</span>;
+        }
+        <span class="synConditional">else</span> {
+            <span class="synIdentifier">$meta-&gt;throw_error</span>(
+                <span class="synStatement">sprintf</span>(
+                    <span class="synString">&quot;Methods passed to %s must be provided as a list, arrayref or regex, not %s&quot;</span>,
+                    <span class="synIdentifier">$modifier_name</span>,
+                    <span class="synIdentifier">$method_modifier_type</span>,
+                )
+            );
+        }
+    }
+    <span class="synConditional">else</span> {
+        <span class="synIdentifier">$meta-&gt;$add_modifier_method</span>( <span class="synIdentifier">$_</span>, <span class="synIdentifier">$code</span> ) <span class="synRepeat">for</span> <span class="synIdentifier">@{$args}</span>;
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">english_list </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">@items</span> = <span class="synStatement">sort</span> <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$items[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> <span class="synConditional">if</span> <span class="synIdentifier">@items</span> == <span class="synNumber">1</span>;
+    <span class="synStatement">return</span> <span class="synString">&quot;</span><span class="synIdentifier">$items[</span><span class="synNumber">0</span><span class="synIdentifier">]</span><span class="synString"> and </span><span class="synIdentifier">$items[</span><span class="synNumber">1</span><span class="synIdentifier">]</span><span class="synString">&quot;</span> <span class="synConditional">if</span> <span class="synIdentifier">@items</span> == <span class="synNumber">2</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$tail</span> = <span class="synStatement">pop</span> <span class="synIdentifier">@items</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$list</span> = <span class="synStatement">join</span> <span class="synString">', '</span>, <span class="synIdentifier">@items</span>;
+    <span class="synIdentifier">$list</span> .= <span class="synString">', and '</span> . <span class="synIdentifier">$tail</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$list</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_caller_info </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$level</span> = <span class="synIdentifier">@_</span> ? (<span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> + <span class="synNumber">1</span>) : <span class="synNumber">2</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">%info</span>;
+    <span class="synIdentifier">@info{</span><span class="synString">qw(package file line)</span><span class="synIdentifier">}</span> = <span class="synStatement">caller</span>(<span class="synIdentifier">$level</span>);
+    <span class="synStatement">return</span> <span class="synIdentifier">%info</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_create_alias </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$type</span>, <span class="synIdentifier">$name</span>, <span class="synIdentifier">$trait</span>, <span class="synIdentifier">$for</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$package</span> = _build_alias_package_name(<span class="synIdentifier">$type</span>, <span class="synIdentifier">$name</span>, <span class="synIdentifier">$trait</span>);
+    Class::MOP::Class-&gt;initialize(<span class="synIdentifier">$package</span>)-&gt;add_method(
+        <span class="synString">register_implementation</span> =&gt; <span class="synKeyword">sub </span>{ <span class="synIdentifier">$for</span> }
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">meta_attribute_alias </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$to</span>, <span class="synIdentifier">$from</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synIdentifier">$from</span> ||= <span class="synStatement">caller</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$meta</span> = Class::MOP::class_of(<span class="synIdentifier">$from</span>);
+    <span class="synStatement">my</span> <span class="synIdentifier">$trait</span> = <span class="synIdentifier">$meta-&gt;isa</span>(<span class="synString">'Moose::Meta::Role'</span>);
+    _create_alias(<span class="synString">'Attribute'</span>, <span class="synIdentifier">$to</span>, <span class="synIdentifier">$trait</span>, <span class="synIdentifier">$from</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">meta_class_alias </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$to</span>, <span class="synIdentifier">$from</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synIdentifier">$from</span> ||= <span class="synStatement">caller</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$meta</span> = Class::MOP::class_of(<span class="synIdentifier">$from</span>);
+    <span class="synStatement">my</span> <span class="synIdentifier">$trait</span> = <span class="synIdentifier">$meta-&gt;isa</span>(<span class="synString">'Moose::Meta::Role'</span>);
+    _create_alias(<span class="synString">'Class'</span>, <span class="synIdentifier">$to</span>, <span class="synIdentifier">$trait</span>, <span class="synIdentifier">$from</span>);
+}
+
+<span class="synComment"># </span><span class="synTodo">XXX</span><span class="synComment"> - this should be added to Params::Util</span>
+<span class="synKeyword">sub </span><span class="synFunction">_STRINGLIKE0 </span><span class="synType">($) </span>{
+    <span class="synStatement">return</span> <span class="synNumber">1</span> <span class="synConditional">if</span> _STRING( <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> );
+    <span class="synConditional">if</span> ( blessed <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> ) {
+        <span class="synStatement">return</span> overload::Method( <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>, <span class="synString">q{&quot;&quot;}</span> );
+    }
+
+    <span class="synStatement">return</span> <span class="synNumber">1</span> <span class="synConditional">if</span> <span class="synOperator">defined</span> <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> &amp;&amp; <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> <span class="synOperator">eq</span> <span class="synString">q{}</span>;
+
+    <span class="synStatement">return</span> <span class="synNumber">0</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_reconcile_roles_for_metaclass </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$class_meta_name</span>, <span class="synIdentifier">$super_meta_name</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">@role_differences</span> = _role_differences(
+        <span class="synIdentifier">$class_meta_name</span>, <span class="synIdentifier">$super_meta_name</span>,
+    );
+
+    <span class="synComment"># handle the case where we need to fix compatibility between a class and</span>
+    <span class="synComment"># its parent, but all roles in the class are already also done by the</span>
+    <span class="synComment"># parent</span>
+    <span class="synComment"># see t/metaclasses/metaclass_compat_no_fixing_bug.t</span>
+    <span class="synStatement">return</span> <span class="synIdentifier">$super_meta_name</span>
+        <span class="synConditional">unless</span> <span class="synIdentifier">@role_differences</span>;
+
+    <span class="synStatement">return</span> Moose::Meta::Class-&gt;create_anon_class(
+        <span class="synString">superclasses</span> =&gt; [<span class="synIdentifier">$super_meta_name</span>],
+        <span class="synString">roles</span>        =&gt; [<span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_-&gt;name</span> <span class="synStatement">}</span> <span class="synIdentifier">@role_differences</span>],
+        <span class="synString">cache</span>        =&gt; <span class="synNumber">1</span>,
+    )-&gt;name;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_role_differences </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$class_meta_name</span>, <span class="synIdentifier">$super_meta_name</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">@super_role_metas</span> = <span class="synStatement">map</span> <span class="synStatement">{</span>
+        <span class="synIdentifier">$_-&gt;isa</span>(<span class="synString">'Moose::Meta::Role::Composite'</span>)
+            ? (<span class="synIdentifier">@{</span> <span class="synIdentifier">$_-&gt;get_roles</span> <span class="synIdentifier">}</span>)
+            : (<span class="synIdentifier">$_</span>)
+    <span class="synStatement">}</span> <span class="synIdentifier">$super_meta_name-&gt;meta-&gt;can</span>(<span class="synString">'_roles_with_inheritance'</span>)
+        ? <span class="synIdentifier">$super_meta_name-&gt;meta-&gt;_roles_with_inheritance</span>
+    : <span class="synIdentifier">$super_meta_name-&gt;meta-&gt;can</span>(<span class="synString">'roles'</span>)
+        ? <span class="synIdentifier">@{</span> <span class="synIdentifier">$super_meta_name-&gt;meta-&gt;roles</span> <span class="synIdentifier">}</span>
+    :     ();
+    <span class="synStatement">my</span> <span class="synIdentifier">@role_metas</span> = <span class="synStatement">map</span> <span class="synStatement">{</span>
+        <span class="synIdentifier">$_-&gt;isa</span>(<span class="synString">'Moose::Meta::Role::Composite'</span>)
+            ? (<span class="synIdentifier">@{</span> <span class="synIdentifier">$_-&gt;get_roles</span> <span class="synIdentifier">}</span>)
+            : (<span class="synIdentifier">$_</span>)
+    <span class="synStatement">}</span> <span class="synIdentifier">$class_meta_name-&gt;meta-&gt;can</span>(<span class="synString">'_roles_with_inheritance'</span>)
+        ? <span class="synIdentifier">$class_meta_name-&gt;meta-&gt;_roles_with_inheritance</span>
+    : <span class="synIdentifier">$class_meta_name-&gt;meta-&gt;can</span>(<span class="synString">'roles'</span>)
+        ? <span class="synIdentifier">@{</span> <span class="synIdentifier">$class_meta_name-&gt;meta-&gt;roles</span> <span class="synIdentifier">}</span>
+    :     ();
+    <span class="synStatement">my</span> <span class="synIdentifier">@differences</span>;
+    <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$role_meta</span> (<span class="synIdentifier">@role_metas</span>) {
+        <span class="synStatement">push</span> <span class="synIdentifier">@differences</span>, <span class="synIdentifier">$role_meta</span>
+            <span class="synConditional">unless</span> any { <span class="synIdentifier">$_-&gt;name</span> <span class="synOperator">eq</span> <span class="synIdentifier">$role_meta-&gt;name</span> } <span class="synIdentifier">@super_role_metas</span>;
+    }
+    <span class="synStatement">return</span> <span class="synIdentifier">@differences</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_classes_differ_by_roles_only </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$self_meta_name</span>, <span class="synIdentifier">$super_meta_name</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$common_base_name</span>
+        = _find_common_base( <span class="synIdentifier">$self_meta_name</span>, <span class="synIdentifier">$super_meta_name</span> );
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synOperator">defined</span> <span class="synIdentifier">$common_base_name</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">@super_meta_name_ancestor_names</span>
+        = _get_ancestors_until( <span class="synIdentifier">$super_meta_name</span>, <span class="synIdentifier">$common_base_name</span> );
+    <span class="synStatement">my</span> <span class="synIdentifier">@class_meta_name_ancestor_names</span>
+        = _get_ancestors_until( <span class="synIdentifier">$self_meta_name</span>, <span class="synIdentifier">$common_base_name</span> );
+
+    <span class="synStatement">return</span>
+        <span class="synConditional">unless</span> all { _is_role_only_subclass(<span class="synIdentifier">$_</span>) }
+        <span class="synIdentifier">@super_meta_name_ancestor_names</span>,
+        <span class="synIdentifier">@class_meta_name_ancestor_names</span>;
+
+    <span class="synStatement">return</span> <span class="synNumber">1</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_find_common_base </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$meta1</span>, <span class="synIdentifier">$meta2</span>) = <span class="synStatement">map</span> <span class="synStatement">{</span> Class::MOP::class_of(<span class="synIdentifier">$_</span>) <span class="synStatement">}</span> <span class="synIdentifier">@_</span>;
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synOperator">defined</span> <span class="synIdentifier">$meta1</span> &amp;&amp; <span class="synOperator">defined</span> <span class="synIdentifier">$meta2</span>;
+
+    <span class="synComment"># </span><span class="synTodo">FIXME</span><span class="synComment">? This doesn't account for multiple inheritance (not sure</span>
+    <span class="synComment"># if it needs to though). For example, if somewhere in $meta1's</span>
+    <span class="synComment"># history it inherits from both ClassA and ClassB, and $meta2</span>
+    <span class="synComment"># inherits from ClassB &amp; ClassA, does it matter? And what crazy</span>
+    <span class="synComment"># fool would do that anyway?</span>
+
+    <span class="synStatement">my</span> <span class="synIdentifier">%meta1_parents</span> = <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_</span> =&gt; <span class="synNumber">1</span> <span class="synStatement">}</span> <span class="synIdentifier">$meta1-&gt;linearized_isa</span>;
+
+    <span class="synStatement">return</span> first { <span class="synIdentifier">$meta1_parents{$_}</span> } <span class="synIdentifier">$meta2-&gt;linearized_isa</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_get_ancestors_until </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$start_name</span>, <span class="synIdentifier">$until_name</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">@ancestor_names</span>;
+    <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$ancestor_name</span> (Class::MOP::class_of(<span class="synIdentifier">$start_name</span>)-&gt;linearized_isa) {
+        <span class="synStatement">last</span> <span class="synConditional">if</span> <span class="synIdentifier">$ancestor_name</span> <span class="synOperator">eq</span> <span class="synIdentifier">$until_name</span>;
+        <span class="synStatement">push</span> <span class="synIdentifier">@ancestor_names</span>, <span class="synIdentifier">$ancestor_name</span>;
+    }
+    <span class="synStatement">return</span> <span class="synIdentifier">@ancestor_names</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_is_role_only_subclass </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$meta_name</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$meta</span> = Class::MOP::Class-&gt;initialize(<span class="synIdentifier">$meta_name</span>);
+    <span class="synStatement">my</span> <span class="synIdentifier">@parent_names</span> = <span class="synIdentifier">$meta-&gt;superclasses</span>;
+
+    <span class="synComment"># </span><span class="synTodo">XXX:</span><span class="synComment"> don't feel like messing with multiple inheritance here... what would</span>
+    <span class="synComment"># that even do?</span>
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">@parent_names</span> == <span class="synNumber">1</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$parent_name</span>) = <span class="synIdentifier">@parent_names</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$parent_meta</span> = Class::MOP::Class-&gt;initialize(<span class="synIdentifier">$parent_name</span>);
+
+    <span class="synComment"># only get the roles attached to this particular class, don't look at</span>
+    <span class="synComment"># superclasses</span>
+    <span class="synStatement">my</span> <span class="synIdentifier">@roles</span> = <span class="synIdentifier">$meta-&gt;can</span>(<span class="synString">'calculate_all_roles'</span>)
+                    ? <span class="synIdentifier">$meta-&gt;calculate_all_roles</span>
+                    : ();
+
+    <span class="synComment"># it's obviously not a role-only subclass if it doesn't do any roles</span>
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">@roles</span>;
+
+    <span class="synComment"># loop over all methods that are a part of the current class</span>
+    <span class="synComment"># (not inherited)</span>
+    <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$method</span> ( <span class="synIdentifier">$meta-&gt;_get_local_methods</span> ) {
+        <span class="synComment"># always ignore meta</span>
+        <span class="synStatement">next</span> <span class="synConditional">if</span> <span class="synIdentifier">$method-&gt;isa</span>(<span class="synString">'Class::MOP::Method::Meta'</span>);
+        <span class="synComment"># we'll deal with attributes below</span>
+        <span class="synStatement">next</span> <span class="synConditional">if</span> <span class="synIdentifier">$method-&gt;can</span>(<span class="synString">'associated_attribute'</span>);
+        <span class="synComment"># if the method comes from a role we consumed, ignore it</span>
+        <span class="synStatement">next</span> <span class="synConditional">if</span> <span class="synIdentifier">$meta-&gt;can</span>(<span class="synString">'does_role'</span>)
+             &amp;&amp; <span class="synIdentifier">$meta-&gt;does_role</span>(<span class="synIdentifier">$method-&gt;original_package_name</span>);
+        <span class="synComment"># </span><span class="synTodo">FIXME</span><span class="synComment"> - this really isn't right. Just because a modifier is</span>
+        <span class="synComment"># defined in a role doesn't mean it isn't _also_ defined in the</span>
+        <span class="synComment"># subclass.</span>
+        <span class="synStatement">next</span> <span class="synConditional">if</span> <span class="synIdentifier">$method-&gt;isa</span>(<span class="synString">'Class::MOP::Method::Wrapped'</span>)
+             &amp;&amp; (
+                 (!<span class="synStatement">scalar</span>(<span class="synIdentifier">$method-&gt;around_modifiers</span>)
+               || any { <span class="synIdentifier">$_-&gt;has_around_method_modifiers</span>(<span class="synIdentifier">$method-&gt;name</span>) } <span class="synIdentifier">@roles</span>)
+              &amp;&amp; (!<span class="synStatement">scalar</span>(<span class="synIdentifier">$method-&gt;before_modifiers</span>)
+               || any { <span class="synIdentifier">$_-&gt;has_before_method_modifiers</span>(<span class="synIdentifier">$method-&gt;name</span>) } <span class="synIdentifier">@roles</span>)
+              &amp;&amp; (!<span class="synStatement">scalar</span>(<span class="synIdentifier">$method-&gt;after_modifiers</span>)
+               || any { <span class="synIdentifier">$_-&gt;has_after_method_modifiers</span>(<span class="synIdentifier">$method-&gt;name</span>) } <span class="synIdentifier">@roles</span>)
+                );
+
+        <span class="synStatement">return</span> <span class="synNumber">0</span>;
+    }
+
+    <span class="synComment"># loop over all attributes that are a part of the current class</span>
+    <span class="synComment"># (not inherited)</span>
+    <span class="synComment"># </span><span class="synTodo">FIXME</span><span class="synComment"> - this really isn't right. Just because an attribute is</span>
+    <span class="synComment"># defined in a role doesn't mean it isn't _also_ defined in the</span>
+    <span class="synComment"># subclass.</span>
+    <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$attr</span> (<span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$meta-&gt;get_attribute</span>(<span class="synIdentifier">$_</span>) <span class="synStatement">}</span> <span class="synIdentifier">$meta-&gt;get_attribute_list</span>) {
+        <span class="synStatement">next</span> <span class="synConditional">if</span> any { <span class="synIdentifier">$_-&gt;has_attribute</span>(<span class="synIdentifier">$attr-&gt;name</span>) } <span class="synIdentifier">@roles</span>;
+
+        <span class="synStatement">return</span> <span class="synNumber">0</span>;
+    }
+
+    <span class="synStatement">return</span> <span class="synNumber">1</span>;
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: Utilities for working with Moose classes</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Moose::Util - Utilities for working with Moose classes
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> SYNOPSIS</span>
+
+<span class="synPreProc">  use Moose::Util qw/find_meta does_role search_class_by_role/;</span>
+
+<span class="synPreProc">  my $meta = find_meta($object) || die &quot;No metaclass found&quot;;</span>
+
+<span class="synPreProc">  if (does_role($object, $role)) {</span>
+<span class="synPreProc">    print &quot;The object can do $role!\n&quot;;</span>
+<span class="synPreProc">  }</span>
+
+<span class="synPreProc">  my $class = search_class_by_role($object, 'FooRole');</span>
+<span class="synPreProc">  print &quot;Nearest class with 'FooRole' is $class\n&quot;;</span>
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This module provides a set of utility functions. Many of these
+functions are intended for use in Moose itself or MooseX modules, but
+some of them may be useful for use in your own code.
+
+<span class="synStatement">=head1</span><span class="synString"> EXPORTED FUNCTIONS</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;find_meta($class_or_obj)&gt;</span>
+
+This method takes a class name or object and attempts to find a
+metaclass for the class, if one exists. It will <span class="synIdentifier">B&lt;not&gt;</span> create one if it
+does not yet exist.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;does_role($class_or_obj, $role_or_obj)&gt;</span>
+
+Returns true if <span class="synIdentifier">C&lt;$class_or_obj&gt;</span> does the given <span class="synIdentifier">C&lt;$role_or_obj&gt;</span>. The role can
+be provided as a name or a <span class="synIdentifier">L&lt;Moose::Meta::Role&gt;</span> object.
+
+The class must already have a metaclass for this to work. If it doesn't, this
+function simply returns false.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;search_class_by_role($class_or_obj, $role_or_obj)&gt;</span>
+
+Returns the first class in the class's precedence list that does
+<span class="synIdentifier">C&lt;$role_or_obj&gt;</span>, if any. The role can be either a name or a
+<span class="synIdentifier">L&lt;Moose::Meta::Role&gt;</span> object.
+
+The class must already have a metaclass for this to work.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;apply_all_roles($applicant, @roles)&gt;</span>
+
+This function applies one or more roles to the given <span class="synIdentifier">C&lt;$applicant&gt;</span> The
+applicant can be a role name, class name, or object.
+
+The <span class="synIdentifier">C&lt;$applicant&gt;</span> must already have a metaclass object.
+
+The list of <span class="synIdentifier">C&lt;@roles&gt;</span> should a list of names or <span class="synIdentifier">L&lt;Moose::Meta::Role&gt;</span> objects,
+each of which can be followed by an optional hash reference of options
+(<span class="synIdentifier">C&lt;-excludes&gt;</span> and <span class="synIdentifier">C&lt;-alias&gt;</span>).
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;ensure_all_roles($applicant, @roles)&gt;</span>
+
+This function is similar to <span class="synIdentifier">C&lt;apply_all_roles&gt;</span>, but only applies roles that
+<span class="synIdentifier">C&lt;$applicant&gt;</span> does not already consume.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;with_traits($class_name, @role_names)&gt;</span>
+
+This function creates a new class from <span class="synIdentifier">C&lt;$class_name&gt;</span> with each of
+<span class="synIdentifier">C&lt;@role_names&gt;</span> applied. It returns the name of the new class.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;get_all_attribute_values($meta, $instance)&gt;</span>
+
+Returns a hash reference containing all of the <span class="synIdentifier">C&lt;$instance&gt;</span>'s
+attributes. The keys are attribute names.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;get_all_init_args($meta, $instance)&gt;</span>
+
+Returns a hash reference containing all of the <span class="synIdentifier">C&lt;init_arg&gt;</span> values for
+the instance's attributes. The values are the associated attribute
+values. If an attribute does not have a defined <span class="synIdentifier">C&lt;init_arg&gt;</span>, it is
+skipped.
+
+This could be useful in cloning an object.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;resolve_metaclass_alias($category, $name, %options)&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;resolve_metatrait_alias($category, $name, %options)&gt;</span>
+
+Resolves a short name to a full class name. Short names are often used
+when specifying the <span class="synIdentifier">C&lt;metaclass&gt;</span> or <span class="synIdentifier">C&lt;traits&gt;</span> option for an attribute:
+
+<span class="synPreProc">    has foo =&gt; (</span>
+<span class="synPreProc">        metaclass =&gt; &quot;Bar&quot;,</span>
+<span class="synPreProc">    );</span>
+
+The name resolution mechanism is covered in
+<span class="synIdentifier">L&lt;Moose/Metaclass and Trait Name Resolution&gt;</span>.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;meta_class_alias($to[, $from])&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;meta_attribute_alias($to[, $from])&gt;</span>
+
+Create an alias from the class <span class="synIdentifier">C&lt;$from&gt;</span> (or the current package, if
+<span class="synIdentifier">C&lt;$from&gt;</span> is unspecified), so that
+<span class="synIdentifier">L&lt;Moose/Metaclass and Trait Name Resolution&gt;</span> works properly.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;english_list(@items)&gt;</span>
+
+Given a list of scalars, turns them into a proper list in English
+(&quot;one and two&quot;, &quot;one, two, three, and four&quot;). This is used to help us
+make nicer error messages.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> TODO</span>
+
+Here is a list of possible functions to write
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> discovering original method from modified method</span>
+
+<span class="synStatement">=item</span><span class="synString"> search for origin class of a method or attribute</span>
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> BUGS</span>
+
+See <span class="synIdentifier">L&lt;Moose/BUGS&gt;</span> for details on reporting bugs.
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

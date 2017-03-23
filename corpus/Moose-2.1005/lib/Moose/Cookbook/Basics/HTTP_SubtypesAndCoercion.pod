@@ -1,0 +1,302 @@
+package Moose::Cookbook::Basics::HTTP_SubtypesAndCoercion;
+
+# ABSTRACT: Demonstrates subtypes and coercion use HTTP-related classes (Request, Protocol, etc.)
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Moose::Cookbook::Basics::HTTP_SubtypesAndCoercion - Demonstrates subtypes and coercion use HTTP-related classes (Request, Protocol, etc.)
+
+=head1 VERSION
+
+version 2.1005
+
+=head1 SYNOPSIS
+
+  package Request;
+  use Moose;
+  use Moose::Util::TypeConstraints;
+
+  use HTTP::Headers  ();
+  use Params::Coerce ();
+  use URI            ();
+
+  subtype 'My::Types::HTTP::Headers' => as class_type('HTTP::Headers');
+
+  coerce 'My::Types::HTTP::Headers'
+      => from 'ArrayRef'
+          => via { HTTP::Headers->new( @{$_} ) }
+      => from 'HashRef'
+          => via { HTTP::Headers->new( %{$_} ) };
+
+  subtype 'My::Types::URI' => as class_type('URI');
+
+  coerce 'My::Types::URI'
+      => from 'Object'
+          => via { $_->isa('URI')
+                   ? $_
+                   : Params::Coerce::coerce( 'URI', $_ ); }
+      => from 'Str'
+          => via { URI->new( $_, 'http' ) };
+
+  subtype 'Protocol'
+      => as 'Str'
+      => where { /^HTTP\/[0-9]\.[0-9]$/ };
+
+  has 'base' => ( is => 'rw', isa => 'My::Types::URI', coerce => 1 );
+  has 'uri'  => ( is => 'rw', isa => 'My::Types::URI', coerce => 1 );
+  has 'method'   => ( is => 'rw', isa => 'Str' );
+  has 'protocol' => ( is => 'rw', isa => 'Protocol' );
+  has 'headers'  => (
+      is      => 'rw',
+      isa     => 'My::Types::HTTP::Headers',
+      coerce  => 1,
+      default => sub { HTTP::Headers->new }
+  );
+
+=head1 DESCRIPTION
+
+This recipe introduces type coercions, which are defined with the
+C<coerce> sugar function. Coercions are attached to existing type
+constraints, and define a (one-way) transformation from one type to
+another.
+
+This is very powerful, but it can also have unexpected consequences, so
+you have to explicitly ask for an attribute to be coerced. To do this,
+you must set the C<coerce> attribute option to a true value.
+
+First, we create the subtype to which we will coerce the other types:
+
+  subtype 'My::Types::HTTP::Headers' => as class_type('HTTP::Headers');
+
+We are creating a subtype rather than using C<HTTP::Headers> as a type
+directly. The reason we do this is that coercions are global, and a
+coercion defined for C<HTTP::Headers> in our C<Request> class would
+then be defined for I<all> Moose-using classes in the current Perl
+interpreter. It's a L<best practice|Moose::Manual::BestPractices> to
+avoid this sort of namespace pollution.
+
+The C<class_type> sugar function is simply a shortcut for this:
+
+  subtype 'HTTP::Headers'
+      => as 'Object'
+      => where { $_->isa('HTTP::Headers') };
+
+Internally, Moose creates a type constraint for each Moose-using
+class, but for non-Moose classes, the type must be declared
+explicitly.
+
+We could go ahead and use this new type directly:
+
+  has 'headers' => (
+      is      => 'rw',
+      isa     => 'My::Types::HTTP::Headers',
+      default => sub { HTTP::Headers->new }
+  );
+
+This creates a simple attribute which defaults to an empty instance of
+L<HTTP::Headers>.
+
+The constructor for L<HTTP::Headers> accepts a list of key-value pairs
+representing the HTTP header fields. In Perl, such a list could be
+stored in an ARRAY or HASH reference. We want our C<headers> attribute
+to accept those data structures instead of an B<HTTP::Headers>
+instance, and just do the right thing. This is exactly what coercion
+is for:
+
+  coerce 'My::Types::HTTP::Headers'
+      => from 'ArrayRef'
+          => via { HTTP::Headers->new( @{$_} ) }
+      => from 'HashRef'
+          => via { HTTP::Headers->new( %{$_} ) };
+
+The first argument to C<coerce> is the type I<to> which we are
+coercing. Then we give it a set of C<from>/C<via> clauses. The C<from>
+function takes some other type name and C<via> takes a subroutine
+reference which actually does the coercion.
+
+However, defining the coercion doesn't do anything until we tell Moose
+we want a particular attribute to be coerced:
+
+  has 'headers' => (
+      is      => 'rw',
+      isa     => 'My::Types::HTTP::Headers',
+      coerce  => 1,
+      default => sub { HTTP::Headers->new }
+  );
+
+Now, if we use an C<ArrayRef> or C<HashRef> to populate C<headers>, it
+will be coerced into a new L<HTTP::Headers> instance. With the
+coercion in place, the following lines of code are all equivalent:
+
+  $foo->headers( HTTP::Headers->new( bar => 1, baz => 2 ) );
+  $foo->headers( [ 'bar', 1, 'baz', 2 ] );
+  $foo->headers( { bar => 1, baz => 2 } );
+
+As you can see, careful use of coercions can produce a very open
+interface for your class, while still retaining the "safety" of your
+type constraint checks. (1)
+
+Our next coercion shows how we can leverage existing CPAN modules to
+help implement coercions. In this case we use L<Params::Coerce>.
+
+Once again, we need to declare a class type for our non-Moose L<URI>
+class:
+
+  subtype 'My::Types::URI' => as class_type('URI');
+
+Then we define the coercion:
+
+  coerce 'My::Types::URI'
+      => from 'Object'
+          => via { $_->isa('URI')
+                   ? $_
+                   : Params::Coerce::coerce( 'URI', $_ ); }
+      => from 'Str'
+          => via { URI->new( $_, 'http' ) };
+
+The first coercion takes any object and makes it a C<URI> object. The
+coercion system isn't that smart, and does not check if the object is
+already a L<URI>, so we check for that ourselves. If it's not a L<URI>
+already, we let L<Params::Coerce> do its magic, and we just use its
+return value.
+
+If L<Params::Coerce> didn't return a L<URI> object (for whatever
+reason), Moose would throw a type constraint error.
+
+The other coercion takes a string and converts it to a L<URI>. In this
+case, we are using the coercion to apply a default behavior, where a
+string is assumed to be an C<http> URI.
+
+Finally, we need to make sure our attributes enable coercion.
+
+  has 'base' => ( is => 'rw', isa => 'My::Types::URI', coerce => 1 );
+  has 'uri'  => ( is => 'rw', isa => 'My::Types::URI', coerce => 1 );
+
+Re-using the coercion lets us enforce a consistent API across multiple
+attributes.
+
+=for testing-SETUP use Test::Requires {
+    'HTTP::Headers'  => '0',
+    'Params::Coerce' => '0',
+    'URI'            => '0',
+};
+
+=head1 CONCLUSION
+
+This recipe showed the use of coercions to create a more flexible and
+DWIM-y API. Like any powerful feature, we recommend some
+caution. Sometimes it's better to reject a value than just guess at
+how to DWIM.
+
+We also showed the use of the C<class_type> sugar function as a
+shortcut for defining a new subtype of C<Object>.
+
+=head1 FOOTNOTES
+
+=over 4
+
+=item (1)
+
+This particular example could be safer. Really we only want to coerce
+an array with an I<even> number of elements. We could create a new
+C<EvenElementArrayRef> type, and then coerce from that type, as
+opposed to a plain C<ArrayRef>
+
+=back
+
+=begin testing
+
+my $r = Request->new;
+isa_ok( $r, 'Request' );
+
+{
+    my $header = $r->headers;
+    isa_ok( $header, 'HTTP::Headers' );
+
+    is( $r->headers->content_type, '',
+        '... got no content type in the header' );
+
+    $r->headers( { content_type => 'text/plain' } );
+
+    my $header2 = $r->headers;
+    isa_ok( $header2, 'HTTP::Headers' );
+    isnt( $header, $header2, '... created a new HTTP::Header object' );
+
+    is( $header2->content_type, 'text/plain',
+        '... got the right content type in the header' );
+
+    $r->headers( [ content_type => 'text/html' ] );
+
+    my $header3 = $r->headers;
+    isa_ok( $header3, 'HTTP::Headers' );
+    isnt( $header2, $header3, '... created a new HTTP::Header object' );
+
+    is( $header3->content_type, 'text/html',
+        '... got the right content type in the header' );
+
+    $r->headers( HTTP::Headers->new( content_type => 'application/pdf' ) );
+
+    my $header4 = $r->headers;
+    isa_ok( $header4, 'HTTP::Headers' );
+    isnt( $header3, $header4, '... created a new HTTP::Header object' );
+
+    is( $header4->content_type, 'application/pdf',
+        '... got the right content type in the header' );
+
+    isnt(
+        exception {
+            $r->headers('Foo');
+        },
+        undef,
+        '... dies when it gets bad params'
+    );
+}
+
+{
+    is( $r->protocol, undef, '... got nothing by default' );
+
+    is(
+        exception {
+            $r->protocol('HTTP/1.0');
+        },
+        undef,
+        '... set the protocol correctly'
+    );
+
+    is( $r->protocol, 'HTTP/1.0', '... got nothing by default' );
+
+    isnt(
+        exception {
+            $r->protocol('http/1.0');
+        },
+        undef,
+        '... the protocol died with bar params correctly'
+    );
+}
+
+{
+    $r->base('http://localhost/');
+    isa_ok( $r->base, 'URI' );
+
+    $r->uri('http://localhost/');
+    isa_ok( $r->uri, 'URI' );
+}
+
+=end testing
+
+=head1 AUTHOR
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See L<Moose/CABAL> and L<Moose/CONTRIBUTORS> for details.
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut

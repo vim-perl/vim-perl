@@ -1,0 +1,78 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Moose::Meta::Method::Accessor::Native::Hash::accessor</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Method::Accessor::Native::Hash::accessor::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Method::Accessor::Native::Hash::accessor::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Moose::Role;
+
+with <span class="synString">'Moose::Meta::Method::Accessor::Native::Hash::set'</span>,
+     <span class="synString">'Moose::Meta::Method::Accessor::Native::Hash::get'</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_process_arguments </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synIdentifier">$self-&gt;Moose</span>::Meta::Method::Accessor::Native::Hash::set::_inline_process_arguments(<span class="synIdentifier">@_</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_check_argument_count </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synIdentifier">$self-&gt;Moose</span>::Meta::Method::Accessor::Native::Hash::set::_inline_check_argument_count(<span class="synIdentifier">@_</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_check_arguments </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synIdentifier">$self-&gt;Moose</span>::Meta::Method::Accessor::Native::Hash::set::_inline_check_arguments(<span class="synIdentifier">@_</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_return_value </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synIdentifier">$self-&gt;Moose</span>::Meta::Method::Accessor::Native::Hash::set::_return_value(<span class="synIdentifier">@_</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_generate_method </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$inv</span>         = <span class="synString">'$self'</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$slot_access</span> = <span class="synIdentifier">$self-&gt;_get_value</span>(<span class="synIdentifier">$inv</span>);
+
+    <span class="synStatement">return</span> (
+        <span class="synString">'sub {'</span>,
+            <span class="synString">'my '</span> . <span class="synIdentifier">$inv</span> . <span class="synString">' = shift;'</span>,
+            <span class="synIdentifier">$self-&gt;_inline_curried_arguments</span>,
+            <span class="synIdentifier">$self-&gt;_inline_check_lazy</span>(<span class="synIdentifier">$inv</span>, <span class="synString">'$type_constraint'</span>, <span class="synString">'$type_coercion'</span>, <span class="synString">'$type_message'</span>),
+            <span class="synComment"># get</span>
+            <span class="synString">'if (@_ == 1) {'</span>,
+                <span class="synIdentifier">$self-&gt;_inline_check_var_is_valid_key</span>(<span class="synString">'$_[0]'</span>),
+                <span class="synIdentifier">$slot_access</span> . <span class="synString">'-&gt;{$_[0]}'</span>,
+            <span class="synString">'}'</span>,
+            <span class="synComment"># set</span>
+            <span class="synString">'else {'</span>,
+                <span class="synIdentifier">$self-&gt;_inline_writer_core</span>(<span class="synIdentifier">$inv</span>, <span class="synIdentifier">$slot_access</span>),
+            <span class="synString">'}'</span>,
+        <span class="synString">'}'</span>,
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_minimum_arguments </span>{ <span class="synNumber">1</span> }
+<span class="synKeyword">sub </span><span class="synFunction">_maximum_arguments </span>{ <span class="synNumber">2</span> }
+
+<span class="synStatement">no </span>Moose::Role;
+
+<span class="synNumber">1</span>;
+</pre>
+
+ </body>
+</html>

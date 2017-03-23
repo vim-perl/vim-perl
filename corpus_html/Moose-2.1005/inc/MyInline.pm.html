@@ -1,0 +1,99 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> MyInline</span>;
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+{
+    <span class="synStatement">package</span><span class="synType"> My::Extract</span>;
+
+    <span class="synStatement">use base</span> <span class="synString">'Test::Inline::Extract'</span>;
+
+    <span class="synStatement">use </span>List::Util <span class="synString">qw( first )</span>;
+
+    <span class="synComment"># This extracts the SYNOPSIS in addition to code specifically</span>
+    <span class="synComment"># marked for testing</span>
+    <span class="synStatement">my</span> <span class="synIdentifier">$search</span> = <span class="synString">qr/</span>
+<span class="synString">        </span><span class="synSpecial">(?:</span><span class="synString">^|</span><span class="synSpecial">\n)</span><span class="synString">                           # After the beginning of the string, or a newline</span>
+<span class="synString">        </span><span class="synSpecial">(</span><span class="synString">                                  # </span><span class="synSpecial">...</span><span class="synString"> start capturing</span>
+<span class="synString">                                           # EITHER</span>
+<span class="synString">            package</span><span class="synSpecial">\s+</span><span class="synString">                            # A package</span>
+<span class="synString">            [^</span><span class="synSpecial">\W\d</span><span class="synString">]</span><span class="synSpecial">\w*(?:(?:\'</span><span class="synString">|::</span><span class="synSpecial">)</span><span class="synString">[^</span><span class="synSpecial">\W\d</span><span class="synString">]</span><span class="synSpecial">\w*)*</span><span class="synString">    # </span><span class="synSpecial">...</span><span class="synString"> with a name</span>
+<span class="synString">            </span><span class="synSpecial">\s*</span><span class="synString">;                                  # And a statement terminator</span>
+<span class="synString">                |</span>
+<span class="synString">                        =head1[ </span><span class="synSpecial">\t</span><span class="synString">]</span><span class="synSpecial">+</span><span class="synString">SYNOPSIS</span><span class="synSpecial">\n</span>
+<span class="synString">                        </span><span class="synSpecial">.*?</span>
+<span class="synString">                        </span><span class="synSpecial">(?=\n</span><span class="synString">=</span><span class="synSpecial">)</span>
+<span class="synString">        |                                  # OR</span>
+<span class="synString">            =for[ </span><span class="synSpecial">\t</span><span class="synString">]</span><span class="synSpecial">+</span><span class="synString">example[ </span><span class="synSpecial">\t</span><span class="synString">]</span><span class="synSpecial">+</span><span class="synString">begin</span><span class="synSpecial">\n</span><span class="synString">        # </span><span class="synSpecial">...</span><span class="synString"> when we find a =for example begin</span>
+<span class="synString">            </span><span class="synSpecial">.*?</span><span class="synString">                                   # </span><span class="synSpecial">...</span><span class="synString"> and keep capturing</span>
+<span class="synString">            </span><span class="synSpecial">\n</span><span class="synString">=for[ </span><span class="synSpecial">\t</span><span class="synString">]</span><span class="synSpecial">+</span><span class="synString">example[ </span><span class="synSpecial">\t</span><span class="synString">]</span><span class="synSpecial">+</span><span class="synString">end</span><span class="synSpecial">\s*?</span><span class="synString">      # </span><span class="synSpecial">...</span><span class="synString"> until the =for example end</span>
+<span class="synString">            </span><span class="synSpecial">(?:\n</span><span class="synString">|$</span><span class="synSpecial">)</span><span class="synString">                              # </span><span class="synSpecial">...</span><span class="synString"> at the end of file or a newline</span>
+<span class="synString">        |                                  # OR</span>
+<span class="synString">            =begin[ </span><span class="synSpecial">\t</span><span class="synString">]</span><span class="synSpecial">+(?:</span><span class="synString">test|testing</span><span class="synSpecial">)(?:</span><span class="synString">-SETUP</span><span class="synSpecial">)?</span><span class="synString"> # </span><span class="synSpecial">...</span><span class="synString"> when we find a =begin test or testing</span>
+<span class="synString">            </span><span class="synSpecial">.*?</span><span class="synString">                                     # </span><span class="synSpecial">...</span><span class="synString"> and keep capturing</span>
+<span class="synString">            </span><span class="synSpecial">\n</span><span class="synString">=end[ </span><span class="synSpecial">\t</span><span class="synString">]</span><span class="synSpecial">+(?:</span><span class="synString">test|testing</span><span class="synSpecial">)(?:</span><span class="synString">-SETUP</span><span class="synSpecial">)?</span><span class="synString"> # </span><span class="synSpecial">...</span><span class="synString"> until an =end tag</span>
+<span class="synString">                        </span><span class="synSpecial">.*?</span>
+<span class="synString">            </span><span class="synSpecial">(?:\n</span><span class="synString">|$</span><span class="synSpecial">)</span><span class="synString">                              # </span><span class="synSpecial">...</span><span class="synString"> at the end of file or a newline</span>
+<span class="synString">        </span><span class="synSpecial">)</span><span class="synString">                                  # </span><span class="synSpecial">...</span><span class="synString"> and stop capturing</span>
+<span class="synString">        /isx</span>;
+
+    <span class="synKeyword">sub </span><span class="synFunction">_elements </span>{
+        <span class="synStatement">my</span> <span class="synIdentifier">$self</span>     = <span class="synStatement">shift</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">@elements</span> = ();
+        <span class="synRepeat">while</span> ( <span class="synIdentifier">$self-&gt;{</span><span class="synString">source</span><span class="synIdentifier">}</span> =~ <span class="synStatement">m/</span><span class="synIdentifier">$search</span><span class="synStatement">/go</span> ) {
+            <span class="synStatement">my</span> <span class="synIdentifier">$elt</span> = <span class="synIdentifier">$1</span>;
+
+            <span class="synComment"># A hack to turn the SYNOPSIS into something Test::Inline</span>
+            <span class="synComment"># doesn't barf on</span>
+            <span class="synConditional">if</span> ( <span class="synIdentifier">$elt</span> =~ <span class="synStatement">s/</span><span class="synString">=head1[ </span><span class="synSpecial">\t</span><span class="synString">]</span><span class="synSpecial">+</span><span class="synString">SYNOPSIS</span><span class="synStatement">/</span><span class="synString">=begin testing-SETUP</span><span class="synSpecial">\n\n</span><span class="synString">{</span><span class="synStatement">/</span> ) {
+                <span class="synIdentifier">$elt</span> .= <span class="synString">&quot;}</span><span class="synSpecial">\n\n</span><span class="synString">=end testing-SETUP&quot;</span>;
+            }
+
+            <span class="synComment"># It seems like search.cpan doesn't like a name with</span>
+            <span class="synComment"># spaces after =begin. bleah, what a mess.</span>
+            <span class="synIdentifier">$elt</span> =~ <span class="synStatement">s/</span><span class="synString">testing-SETUP</span><span class="synStatement">/</span><span class="synString">testing SETUP</span><span class="synStatement">/g</span>;
+
+            <span class="synStatement">push</span> <span class="synIdentifier">@elements</span>, <span class="synIdentifier">$elt</span>;
+        }
+
+        <span class="synComment"># If we have just one element it's a SYNOPSIS, so there's no</span>
+        <span class="synComment"># tests.</span>
+        <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">@elements</span> &gt; <span class="synNumber">2</span>;
+
+        <span class="synConditional">if</span> ( <span class="synIdentifier">@elements</span> &amp;&amp; <span class="synIdentifier">$self-&gt;{</span><span class="synString">source</span><span class="synIdentifier">}</span> =~ <span class="synStatement">/</span><span class="synString">=head1 NAME</span><span class="synSpecial">\n\n(</span><span class="synString">Moose::Cookbook</span><span class="synSpecial">\S+)</span><span class="synStatement">/</span> ) {
+            <span class="synStatement">unshift</span> <span class="synIdentifier">@elements</span>, <span class="synString">'package '</span> . <span class="synIdentifier">$1</span> . <span class="synString">';'</span>;
+        }
+
+        ( first {<span class="synStatement">/</span><span class="synString">^=</span><span class="synStatement">/</span>} <span class="synIdentifier">@elements</span> ) ? \<span class="synIdentifier">@elements</span> : <span class="synString">''</span>;
+    }
+}
+
+{
+    <span class="synStatement">package</span><span class="synType"> My::Content</span>;
+
+    <span class="synStatement">use base</span> <span class="synString">'Test::Inline::Content::Default'</span>;
+
+    <span class="synKeyword">sub </span><span class="synFunction">process </span>{
+        <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+        <span class="synStatement">my</span> <span class="synIdentifier">$base</span> = <span class="synIdentifier">$self-&gt;SUPER</span>::process(<span class="synIdentifier">@_</span>);
+
+        <span class="synIdentifier">$base</span> =~ <span class="synStatement">s/</span><span class="synSpecial">(\$\|</span><span class="synString"> = 1;</span><span class="synSpecial">)</span><span class="synStatement">/</span><span class="synString">use Test::Fatal;</span><span class="synSpecial">\n</span><span class="synIdentifier">$1</span><span class="synStatement">/</span>;
+
+        <span class="synStatement">return</span> <span class="synIdentifier">$base</span>;
+    }
+}
+
+<span class="synNumber">1</span>;
+</pre>
+
+ </body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> DDP</span>;
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+<span class="synStatement">use </span>Data::Printer;
+
+<span class="synPreProc">BEGIN </span>{
+    <span class="synStatement">push</span> <span class="synStatement">our</span> <span class="synIdentifier">@ISA</span>, <span class="synString">'Data::Printer'</span>;
+    <span class="synStatement">our</span> <span class="synIdentifier">$VERSION</span> = <span class="synIdentifier">$</span><span class="synType">Data::Printer::</span><span class="synIdentifier">VERSION</span>;
+}
+<span class="synNumber">1</span>;
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+DDP - Data::Printer shortcut for faster debugging
+
+<span class="synStatement">=head1</span><span class="synString"> SYNOPSIS</span>
+
+<span class="synPreProc">  use DDP; p $my_data;</span>
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+Tired of typing <span class="synIdentifier">C&lt;use Data::Printer&gt;</span> every time? <span class="synIdentifier">C&lt;DDP&gt;</span> lets you quickly call
+your favorite variable dumper!
+
+It behaves exacly like <span class="synIdentifier">L&lt;Data::Printer&gt;</span> - it is, indeed, just an alias to it :)
+
+Happy debugging!
+
+<span class="synStatement">=head1</span><span class="synString"> SEE ALSO</span>
+
+<span class="synIdentifier">L&lt;Data::Printer&gt;</span>
+
+</pre>
+
+ </body>
+</html>

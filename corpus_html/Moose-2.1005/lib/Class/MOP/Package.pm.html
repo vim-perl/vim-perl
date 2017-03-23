@@ -1,0 +1,417 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre>
+<span class="synStatement">package</span><span class="synType"> Class::MOP::Package</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Class::MOP::Package::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Class::MOP::Package::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Scalar::Util <span class="synString">'blessed'</span>, <span class="synString">'reftype'</span>, <span class="synString">'weaken'</span>;
+<span class="synStatement">use </span>Carp         <span class="synString">'confess'</span>;
+<span class="synStatement">use </span>Devel::GlobalDestruction <span class="synString">'in_global_destruction'</span>;
+<span class="synStatement">use </span>Package::Stash;
+
+<span class="synStatement">use base</span> <span class="synString">'Class::MOP::Object'</span>;
+
+<span class="synComment"># creation ...</span>
+
+<span class="synKeyword">sub </span><span class="synFunction">initialize </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$class</span>, <span class="synIdentifier">@args</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">unshift</span> <span class="synIdentifier">@args</span>, <span class="synString">&quot;package&quot;</span> <span class="synConditional">if</span> <span class="synIdentifier">@args</span> % <span class="synNumber">2</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">%options</span> = <span class="synIdentifier">@args</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$package_name</span> = <span class="synStatement">delete</span> <span class="synIdentifier">$options{</span><span class="synString">package</span><span class="synIdentifier">}</span>;
+
+
+    <span class="synComment"># we hand-construct the class until we can bootstrap it</span>
+    <span class="synConditional">if</span> ( <span class="synStatement">my</span> <span class="synIdentifier">$meta</span> = Class::MOP::get_metaclass_by_name(<span class="synIdentifier">$package_name</span>) ) {
+        <span class="synStatement">return</span> <span class="synIdentifier">$meta</span>;
+    } <span class="synConditional">else</span> {
+        <span class="synStatement">my</span> <span class="synIdentifier">$meta</span> = ( <span class="synOperator">ref</span> <span class="synIdentifier">$class</span> || <span class="synIdentifier">$class</span> )-&gt;_new({
+            <span class="synString">'package'</span>   =&gt; <span class="synIdentifier">$package_name</span>,
+            <span class="synIdentifier">%options</span>,
+        });
+        Class::MOP::store_metaclass_by_name(<span class="synIdentifier">$package_name</span>, <span class="synIdentifier">$meta</span>);
+
+        Class::MOP::weaken_metaclass(<span class="synIdentifier">$package_name</span>) <span class="synConditional">if</span> <span class="synIdentifier">$options{</span><span class="synString">weaken</span><span class="synIdentifier">}</span>;
+
+
+        <span class="synStatement">return</span> <span class="synIdentifier">$meta</span>;
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">reinitialize </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$class</span>, <span class="synIdentifier">@args</span> ) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">unshift</span> <span class="synIdentifier">@args</span>, <span class="synString">&quot;package&quot;</span> <span class="synConditional">if</span> <span class="synIdentifier">@args</span> % <span class="synNumber">2</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">%options</span> = <span class="synIdentifier">@args</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$package_name</span> = <span class="synStatement">delete</span> <span class="synIdentifier">$options{</span><span class="synString">package</span><span class="synIdentifier">}</span>;
+
+    (<span class="synOperator">defined</span> <span class="synIdentifier">$package_name</span> &amp;&amp; <span class="synIdentifier">$package_name</span>
+      &amp;&amp; (!blessed <span class="synIdentifier">$package_name</span> || <span class="synIdentifier">$package_name-&gt;isa</span>(<span class="synString">'Class::MOP::Package'</span>)))
+        || confess <span class="synString">&quot;You must pass a package name or an existing Class::MOP::Package instance&quot;</span>;
+
+    <span class="synIdentifier">$package_name</span> = <span class="synIdentifier">$package_name-&gt;name</span>
+        <span class="synConditional">if</span> blessed <span class="synIdentifier">$package_name</span>;
+
+    Class::MOP::remove_metaclass_by_name(<span class="synIdentifier">$package_name</span>);
+
+    <span class="synIdentifier">$class-&gt;initialize</span>(<span class="synIdentifier">$package_name</span>, <span class="synIdentifier">%options</span>); <span class="synComment"># call with first arg form for compat</span>
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">create </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$class</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">@args</span> = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$class-&gt;initialize</span>(<span class="synIdentifier">@args</span>);
+}
+
+<span class="synComment">## ANON packages</span>
+
+{
+    <span class="synComment"># </span><span class="synTodo">NOTE:</span>
+    <span class="synComment"># this should be sufficient, if you have a</span>
+    <span class="synComment"># use case where it is not, write a test and</span>
+    <span class="synComment"># I will change it.</span>
+    <span class="synStatement">my</span> <span class="synIdentifier">$ANON_SERIAL</span> = <span class="synNumber">0</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">%ANON_PACKAGE_CACHE</span>;
+
+    <span class="synComment"># </span><span class="synTodo">NOTE:</span>
+    <span class="synComment"># we need a sufficiently annoying prefix</span>
+    <span class="synComment"># this should suffice for now, this is</span>
+    <span class="synComment"># used in a couple of places below, so</span>
+    <span class="synComment"># need to put it up here for now.</span>
+    <span class="synKeyword">sub </span><span class="synFunction">_anon_package_prefix </span>{ <span class="synString">'Class::MOP::Package::__ANON__::SERIAL::'</span> }
+
+    <span class="synKeyword">sub </span><span class="synFunction">is_anon </span>{
+        <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+        <span class="synStatement">no warnings</span> <span class="synString">'uninitialized'</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$prefix</span> = <span class="synIdentifier">$self-&gt;_anon_package_prefix</span>;
+        <span class="synIdentifier">$self-&gt;name</span> =~ <span class="synStatement">/</span><span class="synString">^</span><span class="synSpecial">\Q</span><span class="synIdentifier">$prefix</span><span class="synStatement">/</span>;
+    }
+
+    <span class="synKeyword">sub </span><span class="synFunction">create_anon </span>{
+        <span class="synStatement">my</span> (<span class="synIdentifier">$class</span>, <span class="synIdentifier">%options</span>) = <span class="synIdentifier">@_</span>;
+
+        <span class="synStatement">my</span> <span class="synIdentifier">$cache_ok</span> = <span class="synStatement">delete</span> <span class="synIdentifier">$options{</span><span class="synString">cache</span><span class="synIdentifier">}</span>;
+        <span class="synIdentifier">$options{</span><span class="synString">weaken</span><span class="synIdentifier">}</span> = !<span class="synIdentifier">$cache_ok</span> <span class="synConditional">unless</span> <span class="synStatement">exists</span> <span class="synIdentifier">$options{</span><span class="synString">weaken</span><span class="synIdentifier">}</span>;
+
+        <span class="synStatement">my</span> <span class="synIdentifier">$cache_key</span>;
+        <span class="synConditional">if</span> (<span class="synIdentifier">$cache_ok</span>) {
+            <span class="synIdentifier">$cache_key</span> = <span class="synIdentifier">$class-&gt;_anon_cache_key</span>(<span class="synIdentifier">%options</span>);
+            <span class="synOperator">undef</span> <span class="synIdentifier">$cache_ok</span> <span class="synConditional">if</span> !<span class="synOperator">defined</span>(<span class="synIdentifier">$cache_key</span>);
+        }
+
+        <span class="synConditional">if</span> (<span class="synIdentifier">$cache_ok</span>) {
+            <span class="synConditional">if</span> (<span class="synOperator">defined</span> <span class="synIdentifier">$ANON_PACKAGE_CACHE{$cache_key}</span>) {
+                <span class="synStatement">return</span> <span class="synIdentifier">$ANON_PACKAGE_CACHE{$cache_key}</span>;
+            }
+        }
+
+        <span class="synStatement">my</span> <span class="synIdentifier">$package_name</span> = <span class="synIdentifier">$class-&gt;_anon_package_prefix</span> . ++<span class="synIdentifier">$ANON_SERIAL</span>;
+
+        <span class="synStatement">my</span> <span class="synIdentifier">$meta</span> = <span class="synIdentifier">$class-&gt;create</span>(<span class="synIdentifier">$package_name</span>, <span class="synIdentifier">%options</span>);
+
+        <span class="synConditional">if</span> (<span class="synIdentifier">$cache_ok</span>) {
+            <span class="synIdentifier">$ANON_PACKAGE_CACHE{$cache_key}</span> = <span class="synIdentifier">$meta</span>;
+            weaken(<span class="synIdentifier">$ANON_PACKAGE_CACHE{$cache_key}</span>);
+        }
+
+        <span class="synStatement">return</span> <span class="synIdentifier">$meta</span>;
+    }
+
+    <span class="synKeyword">sub </span><span class="synFunction">_anon_cache_key </span>{ confess <span class="synString">&quot;Packages are not cacheable&quot;</span> }
+
+    <span class="synKeyword">sub </span><span class="synFunction">DESTROY </span>{
+        <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+        <span class="synStatement">return</span> <span class="synConditional">if</span> in_global_destruction(); <span class="synComment"># it'll happen soon anyway and this just makes things more complicated</span>
+
+        <span class="synIdentifier">$self-&gt;_free_anon</span>
+            <span class="synConditional">if</span> <span class="synIdentifier">$self-&gt;is_anon</span>;
+    }
+
+    <span class="synKeyword">sub </span><span class="synFunction">_free_anon </span>{
+        <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$name</span> = <span class="synIdentifier">$self-&gt;name</span>;
+
+        <span class="synComment"># Moose does a weird thing where it replaces the metaclass for</span>
+        <span class="synComment"># class when fixing metaclass incompatibility. In that case,</span>
+        <span class="synComment"># we don't want to clean out the namespace now. We can detect</span>
+        <span class="synComment"># that because Moose will explicitly update the singleton</span>
+        <span class="synComment"># cache in Class::MOP using store_metaclass_by_name, which</span>
+        <span class="synComment"># means that the new metaclass will already exist in the cache</span>
+        <span class="synComment"># by this point.</span>
+        <span class="synComment"># The other options here are that $current_meta can be undef if</span>
+        <span class="synComment"># remove_metaclass_by_name is called explicitly (since the hash</span>
+        <span class="synComment"># entry is removed first, and then this destructor is called),</span>
+        <span class="synComment"># or that $current_meta can be the same as $self, which happens</span>
+        <span class="synComment"># when the metaclass goes out of scope (since the weak reference</span>
+        <span class="synComment"># in the metaclass cache won't be freed until after this</span>
+        <span class="synComment"># destructor runs).</span>
+        <span class="synStatement">my</span> <span class="synIdentifier">$current_meta</span> = Class::MOP::get_metaclass_by_name(<span class="synIdentifier">$name</span>);
+        <span class="synStatement">return</span> <span class="synConditional">if</span> <span class="synOperator">defined</span>(<span class="synIdentifier">$current_meta</span>) &amp;&amp; <span class="synIdentifier">$current_meta</span> <span class="synOperator">ne</span> <span class="synIdentifier">$self</span>;
+
+        <span class="synStatement">my</span> (<span class="synIdentifier">$first_fragments</span>, <span class="synIdentifier">$last_fragment</span>) = (<span class="synIdentifier">$name</span> =~ <span class="synStatement">/</span><span class="synString">^</span><span class="synSpecial">(.*)</span><span class="synString">::</span><span class="synSpecial">(.*)</span><span class="synString">$</span><span class="synStatement">/</span>);
+
+        <span class="synStatement">no strict</span> <span class="synString">'refs'</span>;
+        <span class="synComment"># clear @ISA first, to avoid a memory leak</span>
+        <span class="synComment"># see https://rt.perl.org/rt3/Public/Bug/Display.html?id=92708</span>
+        <span class="synIdentifier">@{$name</span> . <span class="synString">'::ISA'</span><span class="synIdentifier">}</span> = ();
+        <span class="synIdentifier">%{$name</span> . <span class="synString">'::'</span><span class="synIdentifier">}</span>    = ();
+        <span class="synStatement">delete</span> <span class="synIdentifier">${$first_fragments</span> . <span class="synString">'::'</span><span class="synIdentifier">}{$last_fragment</span> . <span class="synString">'::'</span><span class="synIdentifier">}</span>;
+
+        Class::MOP::remove_metaclass_by_name(<span class="synIdentifier">$name</span>);
+    }
+
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_new </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$class</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">return</span> Class::MOP::Class-&gt;initialize(<span class="synIdentifier">$class</span>)-&gt;new_object(<span class="synIdentifier">@_</span>)
+        <span class="synConditional">if</span> <span class="synIdentifier">$class</span> <span class="synOperator">ne</span> __PACKAGE__;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$params</span> = <span class="synIdentifier">@_</span> == <span class="synNumber">1</span> ? <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> : {<span class="synIdentifier">@_</span>};
+
+    <span class="synStatement">return</span> <span class="synOperator">bless</span> {
+        <span class="synComment"># Need to quote package to avoid a problem with PPI mis-parsing this</span>
+        <span class="synComment"># as a package statement.</span>
+        <span class="synString">'package'</span> =&gt; <span class="synIdentifier">$params-&gt;{</span><span class="synString">package</span><span class="synIdentifier">}</span>,
+
+        <span class="synComment"># </span><span class="synTodo">NOTE:</span>
+        <span class="synComment"># because of issues with the Perl API</span>
+        <span class="synComment"># to the typeglob in some versions, we</span>
+        <span class="synComment"># need to just always grab a new</span>
+        <span class="synComment"># reference to the hash in the accessor.</span>
+        <span class="synComment"># Ideally we could just store a ref and</span>
+        <span class="synComment"># it would Just Work, but oh well :\</span>
+
+        <span class="synString">namespace</span> =&gt; \<span class="synOperator">undef</span>,
+
+    } =&gt; <span class="synIdentifier">$class</span>;
+}
+
+<span class="synComment"># Attributes</span>
+
+<span class="synComment"># </span><span class="synTodo">NOTE:</span>
+<span class="synComment"># all these attribute readers will be bootstrapped</span>
+<span class="synComment"># away in the Class::MOP bootstrap section</span>
+
+<span class="synKeyword">sub </span><span class="synFunction">_package_stash </span>{
+    <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;{</span><span class="synString">_package_stash</span><span class="synIdentifier">}</span> ||= Package::Stash-&gt;new(<span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;name</span>)
+}
+<span class="synKeyword">sub </span><span class="synFunction">namespace </span>{
+    <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;_package_stash-&gt;namespace</span>
+}
+
+<span class="synComment"># Class attributes</span>
+
+<span class="synComment"># ... these functions have to touch the symbol table itself,.. yuk</span>
+
+<span class="synKeyword">sub </span><span class="synFunction">add_package_symbol </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synIdentifier">$self-&gt;_package_stash-&gt;add_symbol</span>(<span class="synIdentifier">@_</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">remove_package_glob </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synIdentifier">$self-&gt;_package_stash-&gt;remove_glob</span>(<span class="synIdentifier">@_</span>);
+}
+
+<span class="synComment"># ... these functions deal with stuff on the namespace level</span>
+
+<span class="synKeyword">sub </span><span class="synFunction">has_package_symbol </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synIdentifier">$self-&gt;_package_stash-&gt;has_symbol</span>(<span class="synIdentifier">@_</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">get_package_symbol </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synIdentifier">$self-&gt;_package_stash-&gt;get_symbol</span>(<span class="synIdentifier">@_</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">get_or_add_package_symbol </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synIdentifier">$self-&gt;_package_stash-&gt;get_or_add_symbol</span>(<span class="synIdentifier">@_</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">remove_package_symbol </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synIdentifier">$self-&gt;_package_stash-&gt;remove_symbol</span>(<span class="synIdentifier">@_</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">list_all_package_symbols </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synIdentifier">$self-&gt;_package_stash-&gt;list_all_symbols</span>(<span class="synIdentifier">@_</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">get_all_package_symbols </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synIdentifier">$self-&gt;_package_stash-&gt;get_all_symbols</span>(<span class="synIdentifier">@_</span>);
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: Package Meta Object</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Class::MOP::Package - Package Meta Object
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+The Package Protocol provides an abstraction of a Perl 5 package. A
+package is basically namespace, and this module provides methods for
+looking at and changing that namespace's symbol table.
+
+<span class="synStatement">=head1</span><span class="synString"> METHODS</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; Class::MOP::Package-&gt;initialize($package_name, %options) &gt;&gt;</span>
+
+This method creates a new <span class="synIdentifier">C&lt;Class::MOP::Package&gt;</span> instance which
+represents specified package. If an existing metaclass object exists
+for the package, that will be returned instead. No options are valid at the
+package level.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; Class::MOP::Package-&gt;reinitialize($package, %options) &gt;&gt;</span>
+
+This method forcibly removes any existing metaclass for the package
+before calling <span class="synIdentifier">C&lt;initialize&gt;</span>. In contrast to <span class="synIdentifier">C&lt;initialize&gt;</span>, you may
+also pass an existing <span class="synIdentifier">C&lt;Class::MOP::Package&gt;</span> instance instead of just
+a package name as <span class="synIdentifier">C&lt;$package&gt;</span>.
+
+Do not call this unless you know what you are doing.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; Class::MOP::Package-&gt;create($package, %options) &gt;&gt;</span>
+
+Creates a new <span class="synIdentifier">C&lt;Class::MOP::Package&gt;</span> instance which represents the specified
+package, and also does some initialization of that package. Currently, this
+just does the same thing as <span class="synIdentifier">C&lt;initialize&gt;</span>, but is overridden in subclasses,
+such as <span class="synIdentifier">C&lt;Class::MOP::Class&gt;</span>.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; Class::MOP::Package-&gt;create_anon(%options) &gt;&gt;</span>
+
+Creates a new anonymous package. Valid keys for <span class="synIdentifier">C&lt;%options&gt;</span> are:
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">C&lt;weaken&gt;</span>
+
+If this is true (the default), the instance stored in <span class="synIdentifier">C&lt;Class::MOP&gt;</span>'s metaclass
+cache will be weakened, so that the anonymous package will be garbage collected
+when the returned instance goes out of scope.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metapackage-&gt;is_anon &gt;&gt;</span>
+
+Returns true if the package is an anonymous package.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metapackage-&gt;name &gt;&gt;</span>
+
+This is returns the package's name, as passed to the constructor.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metapackage-&gt;namespace &gt;&gt;</span>
+
+This returns a hash reference to the package's symbol table. The keys
+are symbol names and the values are typeglob references.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metapackage-&gt;add_package_symbol($variable_name, $initial_value) &gt;&gt;</span>
+
+This method accepts a variable name and an optional initial value. The
+<span class="synIdentifier">C&lt;$variable_name&gt;</span> must contain a leading sigil.
+
+This method creates the variable in the package's symbol table, and
+sets it to the initial value if one was provided.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metapackage-&gt;get_package_symbol($variable_name) &gt;&gt;</span>
+
+Given a variable name, this method returns the variable as a reference
+or undef if it does not exist. The <span class="synIdentifier">C&lt;$variable_name&gt;</span> must contain a
+leading sigil.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metapackage-&gt;get_or_add_package_symbol($variable_name) &gt;&gt;</span>
+
+Given a variable name, this method returns the variable as a reference.
+If it does not exist, a default value will be generated if possible. The
+<span class="synIdentifier">C&lt;$variable_name&gt;</span> must contain a leading sigil.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metapackage-&gt;has_package_symbol($variable_name) &gt;&gt;</span>
+
+Returns true if there is a package variable defined for
+<span class="synIdentifier">C&lt;$variable_name&gt;</span>. The <span class="synIdentifier">C&lt;$variable_name&gt;</span> must contain a leading sigil.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metapackage-&gt;remove_package_symbol($variable_name) &gt;&gt;</span>
+
+This will remove the package variable specified <span class="synIdentifier">C&lt;$variable_name&gt;</span>. The
+<span class="synIdentifier">C&lt;$variable_name&gt;</span> must contain a leading sigil.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metapackage-&gt;remove_package_glob($glob_name) &gt;&gt;</span>
+
+Given the name of a glob, this will remove that glob from the
+package's symbol table. Glob names do not include a sigil. Removing
+the glob removes all variables and subroutines with the specified
+name.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metapackage-&gt;list_all_package_symbols($type_filter) &gt;&gt;</span>
+
+This will list all the glob names associated with the current
+package. These names do not have leading sigils.
+
+You can provide an optional type filter, which should be one of
+'SCALAR', 'ARRAY', 'HASH', or 'CODE'.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metapackage-&gt;get_all_package_symbols($type_filter) &gt;&gt;</span>
+
+This works much like <span class="synIdentifier">C&lt;list_all_package_symbols&gt;</span>, but it returns a
+hash reference. The keys are glob names and the values are references
+to the value for that name.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; Class::MOP::Package-&gt;meta &gt;&gt;</span>
+
+This will return a <span class="synIdentifier">L&lt;Class::MOP::Class&gt;</span> instance for this class.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

@@ -1,0 +1,303 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre>
+<span class="synStatement">package</span><span class="synType"> Class::MOP::Method::Wrapped</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Class::MOP::Method::Wrapped::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Class::MOP::Method::Wrapped::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Carp         <span class="synString">'confess'</span>;
+<span class="synStatement">use </span>Scalar::Util <span class="synString">'blessed'</span>;
+
+<span class="synStatement">use base</span> <span class="synString">'Class::MOP::Method'</span>;
+
+<span class="synComment"># </span><span class="synTodo">NOTE:</span>
+<span class="synComment"># this ugly beast is the result of trying</span>
+<span class="synComment"># to micro optimize this as much as possible</span>
+<span class="synComment"># while not completely loosing maintainability.</span>
+<span class="synComment"># At this point it's &quot;fast enough&quot;, after all</span>
+<span class="synComment"># you can't get something for nothing :)</span>
+<span class="synStatement">my</span> <span class="synIdentifier">$_build_wrapped_method</span> = <span class="synKeyword">sub </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$modifier_table</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$before</span>, <span class="synIdentifier">$after</span>, <span class="synIdentifier">$around</span>) = (
+        <span class="synIdentifier">$modifier_table-&gt;{</span><span class="synString">before</span><span class="synIdentifier">}</span>,
+        <span class="synIdentifier">$modifier_table-&gt;{</span><span class="synString">after</span><span class="synIdentifier">}</span>,
+        <span class="synIdentifier">$modifier_table-&gt;{</span><span class="synString">around</span><span class="synIdentifier">}</span>,
+    );
+    <span class="synConditional">if</span> (<span class="synIdentifier">@$before</span> &amp;&amp; <span class="synIdentifier">@$after</span>) {
+        <span class="synIdentifier">$modifier_table-&gt;{</span><span class="synString">cache</span><span class="synIdentifier">}</span> = <span class="synKeyword">sub </span>{
+            <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$c</span> (<span class="synIdentifier">@$before</span>) { <span class="synIdentifier">$c</span>-&gt;(<span class="synIdentifier">@_</span>) };
+            <span class="synStatement">my</span> <span class="synIdentifier">@rval</span>;
+            ((<span class="synOperator">defined</span> <span class="synStatement">wantarray</span>) ?
+                ((<span class="synStatement">wantarray</span>) ?
+                    (<span class="synIdentifier">@rval</span> = <span class="synIdentifier">$around-&gt;{</span><span class="synString">cache</span><span class="synIdentifier">}</span>-&gt;(<span class="synIdentifier">@_</span>))
+                    :
+                    (<span class="synIdentifier">$rval[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> = <span class="synIdentifier">$around-&gt;{</span><span class="synString">cache</span><span class="synIdentifier">}</span>-&gt;(<span class="synIdentifier">@_</span>)))
+                :
+                <span class="synIdentifier">$around-&gt;{</span><span class="synString">cache</span><span class="synIdentifier">}</span>-&gt;(<span class="synIdentifier">@_</span>));
+            <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$c</span> (<span class="synIdentifier">@$after</span>) { <span class="synIdentifier">$c</span>-&gt;(<span class="synIdentifier">@_</span>) };
+            <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synOperator">defined</span> <span class="synStatement">wantarray</span>;
+            <span class="synStatement">return</span> <span class="synStatement">wantarray</span> ? <span class="synIdentifier">@rval</span> : <span class="synIdentifier">$rval[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>;
+        }
+    }
+    <span class="synConditional">elsif</span> (<span class="synIdentifier">@$before</span> &amp;&amp; !<span class="synIdentifier">@$after</span>) {
+        <span class="synIdentifier">$modifier_table-&gt;{</span><span class="synString">cache</span><span class="synIdentifier">}</span> = <span class="synKeyword">sub </span>{
+            <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$c</span> (<span class="synIdentifier">@$before</span>) { <span class="synIdentifier">$c</span>-&gt;(<span class="synIdentifier">@_</span>) };
+            <span class="synStatement">return</span> <span class="synIdentifier">$around-&gt;{</span><span class="synString">cache</span><span class="synIdentifier">}</span>-&gt;(<span class="synIdentifier">@_</span>);
+        }
+    }
+    <span class="synConditional">elsif</span> (<span class="synIdentifier">@$after</span> &amp;&amp; !<span class="synIdentifier">@$before</span>) {
+        <span class="synIdentifier">$modifier_table-&gt;{</span><span class="synString">cache</span><span class="synIdentifier">}</span> = <span class="synKeyword">sub </span>{
+            <span class="synStatement">my</span> <span class="synIdentifier">@rval</span>;
+            ((<span class="synOperator">defined</span> <span class="synStatement">wantarray</span>) ?
+                ((<span class="synStatement">wantarray</span>) ?
+                    (<span class="synIdentifier">@rval</span> = <span class="synIdentifier">$around-&gt;{</span><span class="synString">cache</span><span class="synIdentifier">}</span>-&gt;(<span class="synIdentifier">@_</span>))
+                    :
+                    (<span class="synIdentifier">$rval[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> = <span class="synIdentifier">$around-&gt;{</span><span class="synString">cache</span><span class="synIdentifier">}</span>-&gt;(<span class="synIdentifier">@_</span>)))
+                :
+                <span class="synIdentifier">$around-&gt;{</span><span class="synString">cache</span><span class="synIdentifier">}</span>-&gt;(<span class="synIdentifier">@_</span>));
+            <span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$c</span> (<span class="synIdentifier">@$after</span>) { <span class="synIdentifier">$c</span>-&gt;(<span class="synIdentifier">@_</span>) };
+            <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synOperator">defined</span> <span class="synStatement">wantarray</span>;
+            <span class="synStatement">return</span> <span class="synStatement">wantarray</span> ? <span class="synIdentifier">@rval</span> : <span class="synIdentifier">$rval[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>;
+        }
+    }
+    <span class="synConditional">else</span> {
+        <span class="synIdentifier">$modifier_table-&gt;{</span><span class="synString">cache</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$around-&gt;{</span><span class="synString">cache</span><span class="synIdentifier">}</span>;
+    }
+};
+
+<span class="synKeyword">sub </span><span class="synFunction">wrap </span>{
+    <span class="synStatement">my</span> ( <span class="synIdentifier">$class</span>, <span class="synIdentifier">$code</span>, <span class="synIdentifier">%params</span> ) = <span class="synIdentifier">@_</span>;
+
+    (blessed(<span class="synIdentifier">$code</span>) &amp;&amp; <span class="synIdentifier">$code-&gt;isa</span>(<span class="synString">'Class::MOP::Method'</span>))
+        || confess <span class="synString">&quot;Can only wrap blessed CODE&quot;</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$modifier_table</span> = {
+        <span class="synString">cache</span>  =&gt; <span class="synOperator">undef</span>,
+        <span class="synString">orig</span>   =&gt; <span class="synIdentifier">$code-&gt;body</span>,
+        <span class="synString">before</span> =&gt; [],
+        <span class="synString">after</span>  =&gt; [],
+        <span class="synString">around</span> =&gt; {
+            <span class="synString">cache</span>   =&gt; <span class="synIdentifier">$code-&gt;body</span>,
+            <span class="synString">methods</span> =&gt; [],
+        },
+    };
+    <span class="synIdentifier">$_build_wrapped_method</span>-&gt;(<span class="synIdentifier">$modifier_table</span>);
+    <span class="synStatement">return</span> <span class="synIdentifier">$class-&gt;SUPER</span>::wrap(
+        <span class="synKeyword">sub </span>{ <span class="synIdentifier">$modifier_table-&gt;{</span><span class="synString">cache</span><span class="synIdentifier">}</span>-&gt;(<span class="synIdentifier">@_</span>) },
+        <span class="synComment"># get these from the original</span>
+        <span class="synComment"># unless explicitly overridden</span>
+        <span class="synString">package_name</span>   =&gt; <span class="synIdentifier">$params{</span><span class="synString">package_name</span><span class="synIdentifier">}</span> || <span class="synIdentifier">$code-&gt;package_name</span>,
+        <span class="synString">name</span>           =&gt; <span class="synIdentifier">$params{</span><span class="synString">name</span><span class="synIdentifier">}</span>         || <span class="synIdentifier">$code-&gt;name</span>,
+        <span class="synString">original_method</span> =&gt; <span class="synIdentifier">$code</span>,
+
+        <span class="synString">modifier_table</span> =&gt; <span class="synIdentifier">$modifier_table</span>,
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_new </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$class</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">return</span> Class::MOP::Class-&gt;initialize(<span class="synIdentifier">$class</span>)-&gt;new_object(<span class="synIdentifier">@_</span>)
+        <span class="synConditional">if</span> <span class="synIdentifier">$class</span> <span class="synOperator">ne</span> __PACKAGE__;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$params</span> = <span class="synIdentifier">@_</span> == <span class="synNumber">1</span> ? <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> : {<span class="synIdentifier">@_</span>};
+
+    <span class="synStatement">return</span> <span class="synOperator">bless</span> {
+        <span class="synComment"># inherited from Class::MOP::Method</span>
+        <span class="synString">'body'</span>                 =&gt; <span class="synIdentifier">$params-&gt;{</span><span class="synString">body</span><span class="synIdentifier">}</span>,
+        <span class="synString">'associated_metaclass'</span> =&gt; <span class="synIdentifier">$params-&gt;{</span><span class="synString">associated_metaclass</span><span class="synIdentifier">}</span>,
+        <span class="synString">'package_name'</span>         =&gt; <span class="synIdentifier">$params-&gt;{</span><span class="synString">package_name</span><span class="synIdentifier">}</span>,
+        <span class="synString">'name'</span>                 =&gt; <span class="synIdentifier">$params-&gt;{</span><span class="synString">name</span><span class="synIdentifier">}</span>,
+        <span class="synString">'original_method'</span>      =&gt; <span class="synIdentifier">$params-&gt;{</span><span class="synString">original_method</span><span class="synIdentifier">}</span>,
+
+        <span class="synComment"># defined in this class</span>
+        <span class="synString">'modifier_table'</span>       =&gt; <span class="synIdentifier">$params-&gt;{</span><span class="synString">modifier_table</span><span class="synIdentifier">}</span>
+    } =&gt; <span class="synIdentifier">$class</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">get_original_method </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$code</span> = <span class="synStatement">shift</span>;
+    <span class="synIdentifier">$code-&gt;original_method</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">add_before_modifier </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$code</span>     = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$modifier</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">unshift</span> <span class="synIdentifier">@{$code-&gt;{</span><span class="synString">'modifier_table'</span><span class="synIdentifier">}-&gt;{</span><span class="synString">before</span><span class="synIdentifier">}}</span> =&gt; <span class="synIdentifier">$modifier</span>;
+    <span class="synIdentifier">$_build_wrapped_method</span>-&gt;(<span class="synIdentifier">$code-&gt;{</span><span class="synString">'modifier_table'</span><span class="synIdentifier">}</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">before_modifiers </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$code</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">return</span> <span class="synIdentifier">@{$code-&gt;{</span><span class="synString">'modifier_table'</span><span class="synIdentifier">}-&gt;{</span><span class="synString">before</span><span class="synIdentifier">}}</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">add_after_modifier </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$code</span>     = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$modifier</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">push</span> <span class="synIdentifier">@{$code-&gt;{</span><span class="synString">'modifier_table'</span><span class="synIdentifier">}-&gt;{</span><span class="synString">after</span><span class="synIdentifier">}}</span> =&gt; <span class="synIdentifier">$modifier</span>;
+    <span class="synIdentifier">$_build_wrapped_method</span>-&gt;(<span class="synIdentifier">$code-&gt;{</span><span class="synString">'modifier_table'</span><span class="synIdentifier">}</span>);
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">after_modifiers </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$code</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">return</span> <span class="synIdentifier">@{$code-&gt;{</span><span class="synString">'modifier_table'</span><span class="synIdentifier">}-&gt;{</span><span class="synString">after</span><span class="synIdentifier">}}</span>;
+}
+
+{
+    <span class="synComment"># </span><span class="synTodo">NOTE:</span>
+    <span class="synComment"># this is another possible candidate for</span>
+    <span class="synComment"># optimization as well. There is an overhead</span>
+    <span class="synComment"># associated with the currying that, if</span>
+    <span class="synComment"># eliminated might make around modifiers</span>
+    <span class="synComment"># more manageable.</span>
+    <span class="synStatement">my</span> <span class="synIdentifier">$compile_around_method</span> = <span class="synKeyword">sub </span>{{
+        <span class="synStatement">my</span> <span class="synIdentifier">$f1</span> = <span class="synStatement">pop</span>;
+        <span class="synStatement">return</span> <span class="synIdentifier">$f1</span> <span class="synConditional">unless</span> <span class="synIdentifier">@_</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$f2</span> = <span class="synStatement">pop</span>;
+        <span class="synStatement">push</span> <span class="synIdentifier">@_</span>, <span class="synKeyword">sub </span>{ <span class="synIdentifier">$f2</span>-&gt;( <span class="synIdentifier">$f1</span>, <span class="synIdentifier">@_</span> ) };
+        <span class="synStatement">redo</span>;
+    }};
+
+    <span class="synKeyword">sub </span><span class="synFunction">add_around_modifier </span>{
+        <span class="synStatement">my</span> <span class="synIdentifier">$code</span>     = <span class="synStatement">shift</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$modifier</span> = <span class="synStatement">shift</span>;
+        <span class="synStatement">unshift</span> <span class="synIdentifier">@{$code-&gt;{</span><span class="synString">'modifier_table'</span><span class="synIdentifier">}-&gt;{</span><span class="synString">around</span><span class="synIdentifier">}-&gt;{</span><span class="synString">methods</span><span class="synIdentifier">}}</span> =&gt; <span class="synIdentifier">$modifier</span>;
+        <span class="synIdentifier">$code-&gt;{</span><span class="synString">'modifier_table'</span><span class="synIdentifier">}-&gt;{</span><span class="synString">around</span><span class="synIdentifier">}-&gt;{</span><span class="synString">cache</span><span class="synIdentifier">}</span> = <span class="synIdentifier">$compile_around_method</span>-&gt;(
+            <span class="synIdentifier">@{$code-&gt;{</span><span class="synString">'modifier_table'</span><span class="synIdentifier">}-&gt;{</span><span class="synString">around</span><span class="synIdentifier">}-&gt;{</span><span class="synString">methods</span><span class="synIdentifier">}}</span>,
+            <span class="synIdentifier">$code-&gt;{</span><span class="synString">'modifier_table'</span><span class="synIdentifier">}-&gt;{</span><span class="synString">orig</span><span class="synIdentifier">}</span>
+        );
+        <span class="synIdentifier">$_build_wrapped_method</span>-&gt;(<span class="synIdentifier">$code-&gt;{</span><span class="synString">'modifier_table'</span><span class="synIdentifier">}</span>);
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">around_modifiers </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$code</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">return</span> <span class="synIdentifier">@{$code-&gt;{</span><span class="synString">'modifier_table'</span><span class="synIdentifier">}-&gt;{</span><span class="synString">around</span><span class="synIdentifier">}-&gt;{</span><span class="synString">methods</span><span class="synIdentifier">}}</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_make_compatible_with </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$other</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synComment"># </span><span class="synTodo">XXX:</span><span class="synComment"> this is pretty gross. the issue here is that CMOP::Method::Wrapped</span>
+    <span class="synComment"># objects are subclasses of CMOP::Method, but when we get to moose, they'll</span>
+    <span class="synComment"># need to be compatible with Moose::Meta::Method, which isn't possible. the</span>
+    <span class="synComment"># right solution here is to make ::Wrapped into a role that gets applied to</span>
+    <span class="synComment"># whatever the method_metaclass happens to be and get rid of</span>
+    <span class="synComment"># wrapped_method_metaclass entirely, but that's not going to happen until</span>
+    <span class="synComment"># we ditch cmop and get roles into the bootstrapping, so. i'm not</span>
+    <span class="synComment"># maintaining the previous behavior of turning them into instances of the</span>
+    <span class="synComment"># new method_metaclass because that's equally broken, and at least this way</span>
+    <span class="synComment"># any issues will at least be detectable and potentially fixable. -doy</span>
+    <span class="synStatement">return</span> <span class="synIdentifier">$self</span> <span class="synConditional">unless</span> <span class="synIdentifier">$other-&gt;_is_compatible_with</span>(<span class="synIdentifier">$self-&gt;_real_ref_name</span>);
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;SUPER</span>::_make_compatible_with(<span class="synIdentifier">@_</span>);
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: Method Meta Object for methods with before/after/around modifiers</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Class::MOP::Method::Wrapped - Method Meta Object for methods with before/after/around modifiers
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This is a <span class="synIdentifier">L&lt;Class::MOP::Method&gt;</span> subclass which implements before,
+after, and around method modifiers.
+
+<span class="synStatement">=head1</span><span class="synString"> METHODS</span>
+
+<span class="synStatement">=head2</span><span class="synString"> Construction</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; Class::MOP::Method::Wrapped-&gt;wrap($metamethod, %options) &gt;&gt;</span>
+
+This is the constructor. It accepts a <span class="synIdentifier">L&lt;Class::MOP::Method&gt;</span> object and
+a hash of options.
+
+The options are:
+
+<span class="synStatement">=over</span> <span class="synNumber">8</span>
+
+<span class="synStatement">=item</span><span class="synString"> * name</span>
+
+The method name (without a package name). This will be taken from the
+provided <span class="synIdentifier">L&lt;Class::MOP::Method&gt;</span> object if it is not provided.
+
+<span class="synStatement">=item</span><span class="synString"> * package_name</span>
+
+The package name for the method. This will be taken from the provided
+<span class="synIdentifier">L&lt;Class::MOP::Method&gt;</span> object if it is not provided.
+
+<span class="synStatement">=item</span><span class="synString"> * associated_metaclass</span>
+
+An optional <span class="synIdentifier">L&lt;Class::MOP::Class&gt;</span> object. This is the metaclass for the
+method's class.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metamethod-&gt;get_original_method &gt;&gt;</span>
+
+This returns the <span class="synIdentifier">L&lt;Class::MOP::Method&gt;</span> object that was passed to the
+constructor.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metamethod-&gt;add_before_modifier($code) &gt;&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metamethod-&gt;add_after_modifier($code) &gt;&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metamethod-&gt;add_around_modifier($code) &gt;&gt;</span>
+
+These methods all take a subroutine reference and apply it as a
+modifier to the original method.
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metamethod-&gt;before_modifiers &gt;&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metamethod-&gt;after_modifiers &gt;&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> </span><span class="synIdentifier">B&lt;&lt; $metamethod-&gt;around_modifiers &gt;&gt;</span>
+
+These methods all return a list of subroutine references which are
+acting as the specified type of modifier.
+
+<span class="synStatement">=back</span>
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

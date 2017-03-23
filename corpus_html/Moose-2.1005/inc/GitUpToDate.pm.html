@@ -1,0 +1,50 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> inc::GitUpToDate</span>;
+<span class="synStatement">use </span>Moose;
+
+with <span class="synString">'Dist::Zilla::Role::BeforeBuild'</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">git </span>{
+    <span class="synConditional">if</span> (<span class="synStatement">wantarray</span>) {
+        <span class="synStatement">chomp</span>(<span class="synStatement">my</span> <span class="synIdentifier">@ret</span> = <span class="synString">qx{git </span><span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span><span class="synString">}</span>);
+        <span class="synStatement">return</span> <span class="synIdentifier">@ret</span>;
+    }
+    <span class="synConditional">else</span> {
+        <span class="synStatement">chomp</span>(<span class="synStatement">my</span> <span class="synIdentifier">$ret</span> = <span class="synString">qx{git </span><span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span><span class="synString">}</span>);
+        <span class="synStatement">return</span> <span class="synIdentifier">$ret</span>;
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">before_build </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$ENV{</span><span class="synString">DZIL_RELEASING</span><span class="synIdentifier">}</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$branch</span> = git <span class="synString">&quot;symbolic-ref HEAD&quot;</span>;
+    <span class="synStatement">die</span> <span class="synString">&quot;Could not get the current branch&quot;</span>
+        <span class="synConditional">unless</span> <span class="synIdentifier">$branch</span>;
+
+    <span class="synIdentifier">$branch</span> =~ <span class="synStatement">s{</span><span class="synString">refs/heads/</span><span class="synStatement">}{}</span>;
+
+    <span class="synIdentifier">$self-&gt;log</span>(<span class="synString">&quot;Ensuring branch </span><span class="synIdentifier">$branch</span><span class="synString"> is up to date&quot;</span>);
+
+    git <span class="synString">&quot;fetch origin&quot;</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$origin</span> = git <span class="synString">&quot;rev-parse origin/</span><span class="synIdentifier">$branch</span><span class="synString">&quot;</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$head</span> = git <span class="synString">&quot;rev-parse HEAD&quot;</span>;
+
+    <span class="synStatement">die</span> <span class="synString">&quot;Branch </span><span class="synIdentifier">$branch</span><span class="synString"> is not up to date (origin: </span><span class="synIdentifier">$origin</span><span class="synString">, HEAD: </span><span class="synIdentifier">$head</span><span class="synString">)&quot;</span>
+        <span class="synConditional">if</span> <span class="synIdentifier">$origin</span> <span class="synOperator">ne</span> <span class="synIdentifier">$head</span>;
+}
+
+<span class="synNumber">1</span>;
+</pre>
+
+ </body>
+</html>

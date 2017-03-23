@@ -1,0 +1,166 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synPreProc">#!/usr/bin/perl</span>
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Benchmark <span class="synString">qw[timethese]</span>;
+
+<span class="synStatement">=pod</span>
+
+This benchmark is designed to measure how long things with type constraints
+take (constructors, accessors). It was created to measure the impact of
+inlining type constraints.
+
+<span class="synStatement">=cut</span>
+
+{
+    <span class="synStatement">package</span><span class="synType"> Thing</span>;
+
+    <span class="synStatement">use </span>Moose;
+
+    has <span class="synString">int</span> =&gt; (
+        <span class="synString">is</span>  =&gt; <span class="synString">'rw'</span>,
+        <span class="synString">isa</span> =&gt; <span class="synString">'Int'</span>,
+    );
+
+    has <span class="synString">str</span> =&gt; (
+        <span class="synString">is</span>  =&gt; <span class="synString">'rw'</span>,
+        <span class="synString">isa</span> =&gt; <span class="synString">'Str'</span>,
+    );
+
+    has <span class="synString">fh</span> =&gt; (
+        <span class="synString">is</span>  =&gt; <span class="synString">'rw'</span>,
+        <span class="synString">isa</span> =&gt; <span class="synString">'FileHandle'</span>,
+    );
+
+    has <span class="synString">object</span> =&gt; (
+        <span class="synString">is</span>  =&gt; <span class="synString">'rw'</span>,
+        <span class="synString">isa</span> =&gt; <span class="synString">'Object'</span>,
+    );
+
+    has <span class="synString">a_int</span> =&gt; (
+        <span class="synString">is</span>  =&gt; <span class="synString">'rw'</span>,
+        <span class="synString">isa</span> =&gt; <span class="synString">'ArrayRef[Int]'</span>,
+    );
+
+    has <span class="synString">a_str</span> =&gt; (
+        <span class="synString">is</span>  =&gt; <span class="synString">'rw'</span>,
+        <span class="synString">isa</span> =&gt; <span class="synString">'ArrayRef[Str]'</span>,
+    );
+
+    has <span class="synString">a_fh</span> =&gt; (
+        <span class="synString">is</span>  =&gt; <span class="synString">'rw'</span>,
+        <span class="synString">isa</span> =&gt; <span class="synString">'ArrayRef[FileHandle]'</span>,
+    );
+
+    has <span class="synString">a_object</span> =&gt; (
+        <span class="synString">is</span>  =&gt; <span class="synString">'rw'</span>,
+        <span class="synString">isa</span> =&gt; <span class="synString">'ArrayRef[Object]'</span>,
+    );
+
+    has <span class="synString">h_int</span> =&gt; (
+        <span class="synString">is</span>  =&gt; <span class="synString">'rw'</span>,
+        <span class="synString">isa</span> =&gt; <span class="synString">'HashRef[Int]'</span>,
+    );
+
+    has <span class="synString">h_str</span> =&gt; (
+        <span class="synString">is</span>  =&gt; <span class="synString">'rw'</span>,
+        <span class="synString">isa</span> =&gt; <span class="synString">'HashRef[Str]'</span>,
+    );
+
+    has <span class="synString">h_fh</span> =&gt; (
+        <span class="synString">is</span>  =&gt; <span class="synString">'rw'</span>,
+        <span class="synString">isa</span> =&gt; <span class="synString">'HashRef[FileHandle]'</span>,
+    );
+
+    has <span class="synString">h_object</span> =&gt; (
+        <span class="synString">is</span>  =&gt; <span class="synString">'rw'</span>,
+        <span class="synString">isa</span> =&gt; <span class="synString">'HashRef[Object]'</span>,
+    );
+
+    __PACKAGE__<span class="synIdentifier">-&gt;meta-&gt;make_immutable</span>;
+}
+
+{
+    <span class="synStatement">package</span><span class="synType"> Simple</span>;
+    <span class="synStatement">use </span>Moose;
+
+    has <span class="synString">str</span> =&gt; (
+        <span class="synString">is</span>  =&gt; <span class="synString">'rw'</span>,
+        <span class="synString">isa</span> =&gt; <span class="synString">'Str'</span>,
+    );
+
+    __PACKAGE__<span class="synIdentifier">-&gt;meta-&gt;make_immutable</span>;
+}
+
+<span class="synStatement">my</span> <span class="synIdentifier">@ints</span>    = <span class="synNumber">1</span> .. <span class="synNumber">10</span>;
+<span class="synStatement">my</span> <span class="synIdentifier">@strs</span>    = <span class="synString">'a'</span> .. <span class="synString">'j'</span>;
+<span class="synStatement">my</span> <span class="synIdentifier">@fhs</span>     = <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synStatement">my</span> <span class="synIdentifier">$fh</span>; <span class="synStatement">open</span> <span class="synIdentifier">$fh</span>, <span class="synString">'&lt;'</span>, <span class="synIdentifier">$0</span> <span class="synOperator">or</span> <span class="synStatement">die</span>; <span class="synIdentifier">$fh</span>; <span class="synStatement">}</span> <span class="synNumber">1</span> .. <span class="synNumber">10</span>;
+<span class="synStatement">my</span> <span class="synIdentifier">@objects</span> = <span class="synStatement">map</span> <span class="synStatement">{</span> Thing-&gt;new <span class="synStatement">}</span> <span class="synNumber">1</span> .. <span class="synNumber">10</span>;
+
+<span class="synStatement">my</span> <span class="synIdentifier">%ints</span>    = <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_</span> =&gt; <span class="synIdentifier">$_</span> <span class="synStatement">}</span> <span class="synIdentifier">@ints</span>;
+<span class="synStatement">my</span> <span class="synIdentifier">%strs</span>    = <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_</span> =&gt; <span class="synIdentifier">$_</span> <span class="synStatement">}</span> <span class="synIdentifier">@ints</span>;
+<span class="synStatement">my</span> <span class="synIdentifier">%fhs</span>     = <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_</span> =&gt; <span class="synIdentifier">$_</span> <span class="synStatement">}</span> <span class="synIdentifier">@fhs</span>;
+<span class="synStatement">my</span> <span class="synIdentifier">%objects</span> = <span class="synStatement">map</span> <span class="synStatement">{</span> <span class="synIdentifier">$_</span> =&gt; <span class="synIdentifier">$_</span> <span class="synStatement">}</span> <span class="synIdentifier">@objects</span>;
+
+<span class="synStatement">my</span> <span class="synIdentifier">$thing</span> = Thing-&gt;new;
+<span class="synStatement">my</span> <span class="synIdentifier">$simple</span> = Simple-&gt;new;
+
+timethese(
+    <span class="synNumber">1_000_000</span>, {
+        <span class="synString">constructor_simple</span> =&gt; <span class="synKeyword">sub </span>{
+            Simple-&gt;new( <span class="synString">str</span> =&gt; <span class="synIdentifier">$strs[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> );
+        },
+        <span class="synString">accessors_simple</span> =&gt; <span class="synKeyword">sub </span>{
+            <span class="synIdentifier">$simple-&gt;str</span>( <span class="synIdentifier">$strs[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> );
+        },
+    }
+);
+
+timethese(
+    <span class="synNumber">20_000</span>, {
+        <span class="synString">constructor_all</span> =&gt; <span class="synKeyword">sub </span>{
+            Thing-&gt;new(
+                <span class="synString">int</span>      =&gt; <span class="synIdentifier">$ints[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>,
+                <span class="synString">str</span>      =&gt; <span class="synIdentifier">$strs[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>,
+                <span class="synString">fh</span>       =&gt; <span class="synIdentifier">$fhs[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>,
+                <span class="synString">object</span>   =&gt; <span class="synIdentifier">$objects[</span><span class="synNumber">0</span><span class="synIdentifier">]</span>,
+                <span class="synString">a_int</span>    =&gt; \<span class="synIdentifier">@ints</span>,
+                <span class="synString">a_str</span>    =&gt; \<span class="synIdentifier">@strs</span>,
+                <span class="synString">a_fh</span>     =&gt; \<span class="synIdentifier">@fhs</span>,
+                <span class="synString">a_object</span> =&gt; \<span class="synIdentifier">@objects</span>,
+                <span class="synString">h_int</span>    =&gt; \<span class="synIdentifier">%ints</span>,
+                <span class="synString">h_str</span>    =&gt; \<span class="synIdentifier">%strs</span>,
+                <span class="synString">h_fh</span>     =&gt; \<span class="synIdentifier">%fhs</span>,
+                <span class="synString">h_object</span> =&gt; \<span class="synIdentifier">%objects</span>,
+            );
+        },
+        <span class="synString">accessors_all</span> =&gt; <span class="synKeyword">sub </span>{
+            <span class="synIdentifier">$thing-&gt;int</span>( <span class="synIdentifier">$ints[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> );
+            <span class="synIdentifier">$thing-&gt;str</span>( <span class="synIdentifier">$strs[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> );
+            <span class="synIdentifier">$thing-&gt;fh</span>( <span class="synIdentifier">$fhs[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> );
+            <span class="synIdentifier">$thing-&gt;object</span>( <span class="synIdentifier">$objects[</span><span class="synNumber">0</span><span class="synIdentifier">]</span> );
+            <span class="synIdentifier">$thing-&gt;a_int</span>( \<span class="synIdentifier">@ints</span> );
+            <span class="synIdentifier">$thing-&gt;a_str</span>( \<span class="synIdentifier">@strs</span> );
+            <span class="synIdentifier">$thing-&gt;a_fh</span>( \<span class="synIdentifier">@fhs</span> );
+            <span class="synIdentifier">$thing-&gt;a_object</span>( \<span class="synIdentifier">@objects</span> );
+            <span class="synIdentifier">$thing-&gt;h_int</span>( \<span class="synIdentifier">%ints</span> );
+            <span class="synIdentifier">$thing-&gt;h_str</span>( \<span class="synIdentifier">%strs</span> );
+            <span class="synIdentifier">$thing-&gt;h_fh</span>( \<span class="synIdentifier">%fhs</span> );
+            <span class="synIdentifier">$thing-&gt;h_object</span>( \<span class="synIdentifier">%objects</span> );
+        },
+    }
+);
+
+</pre>
+
+ </body>
+</html>

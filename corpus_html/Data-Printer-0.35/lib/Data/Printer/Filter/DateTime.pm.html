@@ -1,0 +1,169 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Data::Printer::Filter::DateTime</span>;
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+<span class="synStatement">use </span>Data::Printer::Filter;
+<span class="synStatement">use </span>Term::ANSIColor;
+
+filter <span class="synString">'Time::Piece'</span>, <span class="synKeyword">sub </span>{
+    <span class="synStatement">return</span> _format(<span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;cdate</span>, <span class="synIdentifier">@_</span> );
+};
+
+filter <span class="synString">'DateTime'</span>, <span class="synKeyword">sub </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$obj</span>, <span class="synIdentifier">$p</span>) = <span class="synIdentifier">@_</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$string</span> = <span class="synString">&quot;</span><span class="synIdentifier">$obj</span><span class="synString">&quot;</span>;
+    <span class="synConditional">if</span> ( <span class="synOperator">not</span> <span class="synStatement">exists</span> <span class="synIdentifier">$p-&gt;{</span><span class="synString">datetime</span><span class="synIdentifier">}{</span><span class="synString">show_timezone</span><span class="synIdentifier">}</span> <span class="synOperator">or</span> <span class="synIdentifier">$p-&gt;{</span><span class="synString">datetime</span><span class="synIdentifier">}{</span><span class="synString">show_timezone</span><span class="synIdentifier">}</span> ) {
+        <span class="synIdentifier">$string</span> .= <span class="synString">' ['</span> . <span class="synIdentifier">$obj-&gt;time_zone-&gt;name</span> . <span class="synString">']'</span>;
+    }
+    <span class="synStatement">return</span> _format( <span class="synIdentifier">$string</span>, <span class="synIdentifier">@_</span> );
+};
+
+<span class="synComment"># DateTime::TimeZone filters</span>
+filter <span class="synString">'-class'</span> =&gt; <span class="synKeyword">sub </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$obj</span>, <span class="synIdentifier">$properties</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synConditional">if</span> ( <span class="synIdentifier">$obj-&gt;isa</span>(<span class="synString">'DateTime::TimeZone'</span> ) ) {
+        <span class="synStatement">return</span> <span class="synIdentifier">$obj-&gt;name</span>;
+    }
+    <span class="synConditional">else</span> {
+        <span class="synStatement">return</span>;
+    }
+};
+
+filter <span class="synString">'DateTime::Incomplete'</span>, <span class="synKeyword">sub </span>{
+    <span class="synStatement">return</span> _format( <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;iso8601</span>, <span class="synIdentifier">@_</span> );
+};
+
+filter <span class="synString">'DateTime::Duration'</span>, <span class="synKeyword">sub </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$object</span>, <span class="synIdentifier">$p</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">@dur</span> = <span class="synIdentifier">$object-&gt;in_units</span>(
+         <span class="synString">qw(years months days hours minutes seconds)</span>
+    );
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$string</span> = <span class="synString">&quot;</span><span class="synIdentifier">$dur[</span><span class="synNumber">0</span><span class="synIdentifier">]</span><span class="synString">y </span><span class="synIdentifier">$dur[</span><span class="synNumber">1</span><span class="synIdentifier">]</span><span class="synString">m </span><span class="synIdentifier">$dur[</span><span class="synNumber">2</span><span class="synIdentifier">]</span><span class="synString">d </span><span class="synIdentifier">$dur[</span><span class="synNumber">3</span><span class="synIdentifier">]</span><span class="synString">h </span><span class="synIdentifier">$dur[</span><span class="synNumber">4</span><span class="synIdentifier">]</span><span class="synString">m </span><span class="synIdentifier">$dur[</span><span class="synNumber">5</span><span class="synIdentifier">]</span><span class="synString">s&quot;</span>;
+
+    <span class="synStatement">return</span> _format( <span class="synIdentifier">$string</span>, <span class="synIdentifier">@_</span> );
+};
+
+filter <span class="synString">'DateTime::Tiny'</span>, <span class="synKeyword">sub </span>{
+    <span class="synStatement">return</span> _format( <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;as_string</span>, <span class="synIdentifier">@_</span> );
+};
+
+filter <span class="synString">'Date::Calc::Object'</span>, <span class="synKeyword">sub </span>{
+    <span class="synStatement">return</span> _format( <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;string</span>(<span class="synNumber">2</span>), <span class="synIdentifier">@_</span> );
+};
+
+filter <span class="synString">'Date::Pcalc::Object'</span>, <span class="synKeyword">sub </span>{
+    <span class="synStatement">return</span> _format( <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;string</span>(<span class="synNumber">2</span>), <span class="synIdentifier">@_</span> );
+};
+
+filter <span class="synString">'Date::Handler'</span>, <span class="synKeyword">sub </span>{
+    <span class="synStatement">return</span> _format( <span class="synString">&quot;</span><span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]</span><span class="synString">&quot;</span>, <span class="synIdentifier">@_</span> );
+};
+
+filter <span class="synString">'Date::Handler::Delta'</span>, <span class="synKeyword">sub </span>{
+    <span class="synStatement">return</span> _format( <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]-&gt;AsScalar</span>, <span class="synIdentifier">@_</span> );
+};
+
+
+<span class="synKeyword">sub </span><span class="synFunction">_format </span>{
+    <span class="synStatement">my</span> (<span class="synIdentifier">$str</span>, <span class="synIdentifier">$obj</span>, <span class="synIdentifier">$p</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synConditional">if</span> ( <span class="synIdentifier">$p-&gt;{</span><span class="synString">datetime</span><span class="synIdentifier">}{</span><span class="synString">show_class_name</span><span class="synIdentifier">}</span> ) {
+        <span class="synIdentifier">$str</span> .= <span class="synString">' ('</span> . <span class="synOperator">ref</span>(<span class="synIdentifier">$obj</span>) . <span class="synString">')'</span>;
+    }
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$color</span> = <span class="synIdentifier">$p-&gt;{</span><span class="synString">color</span><span class="synIdentifier">}{</span><span class="synString">datetime</span><span class="synIdentifier">}</span>;
+    <span class="synIdentifier">$color</span> = <span class="synString">'bright_green'</span> <span class="synConditional">unless</span> <span class="synOperator">defined</span> <span class="synIdentifier">$color</span>;
+
+    <span class="synStatement">return</span> colored( <span class="synIdentifier">$str</span>, <span class="synIdentifier">$color</span> );
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Data::Printer::Filter::DateTime - pretty-printing date and time objects (not just DateTime!)
+
+<span class="synStatement">=head1</span><span class="synString"> SYNOPSIS</span>
+
+In your program:
+
+<span class="synPreProc">  use Data::Printer filters =&gt; {</span>
+<span class="synPreProc">    -external =&gt; [ 'DateTime' ],</span>
+<span class="synPreProc">  };</span>
+
+or, in your <span class="synIdentifier">C&lt;.dataprinter&gt;</span> file:
+
+<span class="synPreProc">  {</span>
+<span class="synPreProc">    filters =&gt; {</span>
+<span class="synPreProc">       -external =&gt; [ 'DateTime' ],</span>
+<span class="synPreProc">    },</span>
+<span class="synPreProc">  };</span>
+
+You can also setup color and display details:
+
+<span class="synPreProc">  use Data::Printer</span>
+<span class="synPreProc">      filters =&gt; {</span>
+<span class="synPreProc">          -external =&gt; [ 'DateTime' ],</span>
+<span class="synPreProc">      },</span>
+<span class="synPreProc">      color   =&gt; {</span>
+<span class="synPreProc">          datetime =&gt; 'bright_green',</span>
+<span class="synPreProc">      }</span>
+<span class="synPreProc">      datetime =&gt; {</span>
+<span class="synPreProc">          show_class_name =&gt; 1,  # default is 0</span>
+<span class="synPreProc">          show_timezone   =&gt; 0,  # default is 1 (only works for DateTime objects)</span>
+<span class="synPreProc">      },</span>
+<span class="synPreProc">  };</span>
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This is a filter plugin for <span class="synIdentifier">L&lt;Data::Printer&gt;</span>. It filters through
+several date and time manipulation classes and displays the time
+(or time duration) as a string.
+
+<span class="synStatement">=head2</span><span class="synString"> Parsed Modules</span>
+
+<span class="synStatement">=over</span> <span class="synNumber">4</span>
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">L&lt;DateTime&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">L&lt;DateTime::Duration&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">L&lt;DateTime::Incomplete&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">L&lt;Time::Piece&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">L&lt;Date::Handler&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">L&lt;Date::Handler::Delta&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">L&lt;Date::Calc::Object&gt;</span>
+
+<span class="synStatement">=item</span><span class="synString"> * </span><span class="synIdentifier">L&lt;Date::Pcalc::Object&gt;</span>
+
+<span class="synStatement">=back</span>
+
+If you have any suggestions for more modules or better output,
+please let us know.
+
+
+<span class="synStatement">=head1</span><span class="synString"> SEE ALSO</span>
+
+<span class="synIdentifier">L&lt;Data::Printer&gt;</span>
+
+
+</pre>
+
+ </body>
+</html>

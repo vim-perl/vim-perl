@@ -1,0 +1,195 @@
+
+package # hide the package from PAUSE
+    InsideOutClass::Attribute;
+
+use strict;
+use warnings;
+
+our $VERSION = '0.02';
+
+use Carp         'confess';
+use Scalar::Util 'refaddr';
+
+use base 'Class::MOP::Attribute';
+
+sub initialize_instance_slot {
+    my ($self, $meta_instance, $instance, $params) = @_;
+    my $init_arg = $self->init_arg;
+    # try to fetch the init arg from the %params ...
+    my $val;
+    $val = $params->{$init_arg} if exists $params->{$init_arg};
+    # if nothing was in the %params, we can use the
+    # attribute's default value (if it has one)
+    if (!defined $val && defined $self->default) {
+        $val = $self->default($instance);
+    }
+    my $_meta_instance = $self->associated_class->get_meta_instance;
+    $_meta_instance->initialize_slot($instance, $self->name);
+    $_meta_instance->set_slot_value($instance, $self->name, $val);
+}
+
+sub accessor_metaclass { 'InsideOutClass::Method::Accessor' }
+
+package # hide the package from PAUSE
+    InsideOutClass::Method::Accessor;
+
+use strict;
+use warnings;
+
+our $VERSION = '0.01';
+
+use Carp         'confess';
+use Scalar::Util 'refaddr';
+
+use base 'Class::MOP::Method::Accessor';
+
+## Method generation helpers
+
+sub _generate_accessor_method {
+    my $attr       = (shift)->associated_attribute;
+    my $meta_class = $attr->associated_class;
+    my $attr_name  = $attr->name;
+    return sub {
+        my $meta_instance = $meta_class->get_meta_instance;
+        $meta_instance->set_slot_value($_[0], $attr_name, $_[1]) if scalar(@_) == 2;
+        $meta_instance->get_slot_value($_[0], $attr_name);
+    };
+}
+
+sub _generate_reader_method {
+    my $attr       = (shift)->associated_attribute;
+    my $meta_class = $attr->associated_class;
+    my $attr_name  = $attr->name;
+    return sub {
+        confess "Cannot assign a value to a read-only accessor" if @_ > 1;
+        $meta_class->get_meta_instance
+                   ->get_slot_value($_[0], $attr_name);
+    };
+}
+
+sub _generate_writer_method {
+    my $attr       = (shift)->associated_attribute;
+    my $meta_class = $attr->associated_class;
+    my $attr_name  = $attr->name;
+    return sub {
+        $meta_class->get_meta_instance
+                   ->set_slot_value($_[0], $attr_name, $_[1]);
+    };
+}
+
+sub _generate_predicate_method {
+    my $attr       = (shift)->associated_attribute;
+    my $meta_class = $attr->associated_class;
+    my $attr_name  = $attr->name;
+    return sub {
+        defined $meta_class->get_meta_instance
+                           ->get_slot_value($_[0], $attr_name) ? 1 : 0;
+    };
+}
+
+package # hide the package from PAUSE
+    InsideOutClass::Instance;
+
+use strict;
+use warnings;
+
+our $VERSION = '0.01';
+
+use Carp         'confess';
+use Scalar::Util 'refaddr';
+
+use base 'Class::MOP::Instance';
+
+sub create_instance {
+    my ($self, $class) = @_;
+        bless \(my $instance), $self->_class_name;
+}
+
+sub get_slot_value {
+    my ($self, $instance, $slot_name) = @_;
+    $self->associated_metaclass->get_package_symbol('%' . $slot_name)->{refaddr $instance};
+}
+
+sub set_slot_value {
+    my ($self, $instance, $slot_name, $value) = @_;
+    $self->associated_metaclass->get_package_symbol('%' . $slot_name)->{refaddr $instance} = $value;
+}
+
+sub initialize_slot {
+    my ($self, $instance, $slot_name) = @_;
+    $self->associated_metaclass->add_package_symbol(('%' . $slot_name) => {})
+        unless $self->associated_metaclass->has_package_symbol('%' . $slot_name);
+    $self->associated_metaclass->get_package_symbol('%' . $slot_name)->{refaddr $instance} = undef;
+}
+
+sub is_slot_initialized {
+    my ($self, $instance, $slot_name) = @_;
+    return 0 unless $self->associated_metaclass->has_package_symbol('%' . $slot_name);
+    return exists $self->associated_metaclass->get_package_symbol('%' . $slot_name)->{refaddr $instance} ? 1 : 0;
+}
+
+1;
+
+__END__
+
+=pod
+
+=head1 NAME
+
+InsideOutClass - A set of example metaclasses which implement the Inside-Out technique
+
+=head1 SYNOPSIS
+
+  package Foo;
+
+  use metaclass (
+    ':attribute_metaclass' => 'InsideOutClass::Attribute',
+    ':instance_metaclass'  => 'InsideOutClass::Instance'
+  );
+
+  __PACKAGE__->meta->add_attribute('foo' => (
+      reader => 'get_foo',
+      writer => 'set_foo'
+  ));
+
+  sub new  {
+      my $class = shift;
+      $class->meta->new_object(@_);
+  }
+
+  # now you can just use the class as normal
+
+=head1 DESCRIPTION
+
+This is a set of example metaclasses which implement the Inside-Out
+class technique. What follows is a brief explaination of the code
+found in this module.
+
+We must create a subclass of B<Class::MOP::Instance> and override
+the slot operations. This requires
+overloading C<get_slot_value>, C<set_slot_value>, C<slot_initialized>, and
+C<initialize_slot>, as well as their inline counterparts. Additionally we
+overload C<add_slot> in order to initialize the global hash containing the
+actual slot values.
+
+And that is pretty much all. Of course I am ignoring need for
+inside-out objects to be C<DESTROY>-ed, and some other details as
+well (threading, etc), but this is an example. A real implementation is left as
+an exercise to the reader.
+
+=head1 AUTHORS
+
+Stevan Little E<lt>stevan@iinteractive.comE<gt>
+
+Yuval Kogman E<lt>nothingmuch@woobling.comE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2006-2008 by Infinity Interactive, Inc.
+
+L<http://www.iinteractive.com>
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut

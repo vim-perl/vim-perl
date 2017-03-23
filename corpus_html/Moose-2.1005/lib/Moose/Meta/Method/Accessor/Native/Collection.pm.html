@@ -1,0 +1,182 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Moose::Meta::Method::Accessor::Native::Collection</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Method::Accessor::Native::Collection::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Method::Accessor::Native::Collection::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Moose::Role;
+
+requires <span class="synString">qw( _adds_members )</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_coerce_new_values </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$self-&gt;associated_attribute-&gt;should_coerce</span>;
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$self-&gt;_tc_member_type_can_coerce</span>;
+
+    <span class="synStatement">return</span> (
+        <span class="synString">'('</span> . <span class="synIdentifier">$self-&gt;_new_members</span> . <span class="synString">') = map { $member_coercion-&gt;($_) }'</span>,
+                                             <span class="synIdentifier">$self-&gt;_new_members</span> . <span class="synString">';'</span>,
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_tc_member_type_can_coerce </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$member_tc</span> = <span class="synIdentifier">$self-&gt;_tc_member_type</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$member_tc</span> &amp;&amp; <span class="synIdentifier">$member_tc-&gt;has_coercion</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_tc_member_type </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$tc</span> = <span class="synIdentifier">$self-&gt;associated_attribute-&gt;type_constraint</span>;
+    <span class="synRepeat">while</span> (<span class="synIdentifier">$tc</span>) {
+        <span class="synStatement">return</span> <span class="synIdentifier">$tc-&gt;type_parameter</span>
+            <span class="synConditional">if</span> <span class="synIdentifier">$tc-&gt;can</span>(<span class="synString">'type_parameter'</span>);
+        <span class="synIdentifier">$tc</span> = <span class="synIdentifier">$tc-&gt;parent</span>;
+    }
+
+    <span class="synStatement">return</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_writer_value_needs_copy </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;_constraint_must_be_checked</span>
+        &amp;&amp; !<span class="synIdentifier">$self-&gt;_check_new_members_only</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_tc_code </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$value</span>, <span class="synIdentifier">$tc</span>, <span class="synIdentifier">$coercion</span>, <span class="synIdentifier">$message</span>, <span class="synIdentifier">$is_lazy</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$self-&gt;_constraint_must_be_checked</span>;
+
+    <span class="synConditional">if</span> (<span class="synIdentifier">$self-&gt;_check_new_members_only</span>) {
+        <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$self-&gt;_adds_members</span>;
+
+        <span class="synStatement">return</span> <span class="synIdentifier">$self-&gt;_inline_check_member_constraint</span>(<span class="synIdentifier">$self-&gt;_new_members</span>);
+    }
+    <span class="synConditional">else</span> {
+        <span class="synStatement">return</span> (
+            <span class="synIdentifier">$self-&gt;_inline_check_coercion</span>(<span class="synIdentifier">$value</span>, <span class="synIdentifier">$tc</span>, <span class="synIdentifier">$coercion</span>, <span class="synIdentifier">$is_lazy</span>),
+            <span class="synIdentifier">$self-&gt;_inline_check_constraint</span>(<span class="synIdentifier">$value</span>, <span class="synIdentifier">$tc</span>, <span class="synIdentifier">$message</span>, <span class="synIdentifier">$is_lazy</span>),
+        );
+    }
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_check_new_members_only </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$attr</span> = <span class="synIdentifier">$self-&gt;associated_attribute</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$tc</span> = <span class="synIdentifier">$attr-&gt;type_constraint</span>;
+
+    <span class="synComment"># If we have a coercion, we could come up with an entirely new value after</span>
+    <span class="synComment"># coercing, so we need to check everything,</span>
+    <span class="synStatement">return</span> <span class="synNumber">0</span> <span class="synConditional">if</span> <span class="synIdentifier">$attr-&gt;should_coerce</span> &amp;&amp; <span class="synIdentifier">$tc-&gt;has_coercion</span>;
+
+    <span class="synComment"># If the parent is our root type (ArrayRef, HashRef, etc), that means we</span>
+    <span class="synComment"># can just check the new members of the collection, because we know that</span>
+    <span class="synComment"># we will always be generating an appropriate collection type.</span>
+    <span class="synComment">#</span>
+    <span class="synComment"># However, if this type has its own constraint (it's Parameteriz_able_,</span>
+    <span class="synComment"># not Paramet_erized_), we don't know what is being checked by the</span>
+    <span class="synComment"># constraint, so we need to check the whole value, not just the members.</span>
+    <span class="synStatement">return</span> <span class="synNumber">1</span>
+        <span class="synConditional">if</span> <span class="synIdentifier">$self-&gt;_is_root_type</span>( <span class="synIdentifier">$tc-&gt;parent</span> )
+            &amp;&amp; ( <span class="synIdentifier">$tc-&gt;isa</span>(<span class="synString">'Moose::Meta::TypeConstraint::Parameterized'</span>)
+                 || <span class="synIdentifier">$tc-&gt;isa</span>(<span class="synString">'Specio::Constraint::Parameterized'</span>) );
+
+    <span class="synStatement">return</span> <span class="synNumber">0</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_check_member_constraint </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$new_value</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$attr_name</span> = <span class="synIdentifier">$self-&gt;associated_attribute-&gt;name</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$check</span>
+        = <span class="synIdentifier">$self-&gt;_tc_member_type-&gt;can_be_inlined</span>
+        ? <span class="synString">'! ('</span> . <span class="synIdentifier">$self-&gt;_tc_member_type-&gt;_inline_check</span>(<span class="synString">'$new_val'</span>) . <span class="synString">')'</span>
+        : <span class="synString">' !$member_tc-&gt;($new_val) '</span>;
+
+    <span class="synStatement">return</span> (
+        <span class="synString">'for my $new_val ('</span> . <span class="synIdentifier">$new_value</span> . <span class="synString">') {'</span>,
+            <span class="synString">&quot;if (</span><span class="synIdentifier">$check</span><span class="synString">) {&quot;</span>,
+                <span class="synIdentifier">$self-&gt;_inline_throw_error</span>(
+                    <span class="synString">'&quot;A new member value for '</span> . <span class="synIdentifier">$attr_name</span>
+                  . <span class="synString">' does not pass its type constraint because: &quot;'</span> . <span class="synString">' . '</span>
+                  . <span class="synString">'do { local $_ = $new_val; $member_message-&gt;($new_val) }'</span>,
+                    <span class="synString">'data =&gt; $new_val'</span>,
+                ) . <span class="synString">';'</span>,
+            <span class="synString">'}'</span>,
+        <span class="synString">'}'</span>,
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_get_old_value_for_trigger </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$instance</span>, <span class="synIdentifier">$old</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$attr</span> = <span class="synIdentifier">$self-&gt;associated_attribute</span>;
+    <span class="synStatement">return</span> <span class="synConditional">unless</span> <span class="synIdentifier">$attr-&gt;has_trigger</span>;
+
+    <span class="synStatement">return</span> (
+        <span class="synString">'my '</span> . <span class="synIdentifier">$old</span> . <span class="synString">' = '</span> . <span class="synIdentifier">$self-&gt;_has_value</span>(<span class="synIdentifier">$instance</span>),
+            <span class="synString">'? '</span> . <span class="synIdentifier">$self-&gt;_copy_old_value</span>(<span class="synIdentifier">$self-&gt;_get_value</span>(<span class="synIdentifier">$instance</span>)),
+            <span class="synString">': ();'</span>,
+    );
+}
+
+around <span class="synString">_eval_environment</span> =&gt; <span class="synKeyword">sub </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$orig</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$env</span> = <span class="synIdentifier">$self-&gt;$orig</span>(<span class="synIdentifier">@_</span>);
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$member_tc</span> = <span class="synIdentifier">$self-&gt;_tc_member_type</span>;
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$env</span> <span class="synConditional">unless</span> <span class="synIdentifier">$member_tc</span>;
+
+    <span class="synIdentifier">$env-&gt;{</span><span class="synString">'$member_tc'</span><span class="synIdentifier">}</span> = \( <span class="synIdentifier">$member_tc-&gt;_compiled_type_constraint</span> );
+    <span class="synIdentifier">$env-&gt;{</span><span class="synString">'$member_coercion'</span><span class="synIdentifier">}</span> = \(
+        <span class="synIdentifier">$member_tc-&gt;coercion-&gt;_compiled_type_coercion</span>
+    ) <span class="synConditional">if</span> <span class="synIdentifier">$member_tc-&gt;has_coercion</span>;
+    <span class="synIdentifier">$env-&gt;{</span><span class="synString">'$member_message'</span><span class="synIdentifier">}</span> = \(
+        <span class="synIdentifier">$member_tc-&gt;has_message</span>
+            ? <span class="synIdentifier">$member_tc-&gt;message</span>
+            : <span class="synIdentifier">$member_tc-&gt;_default_message</span>
+    );
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$tc_env</span> = <span class="synIdentifier">$member_tc-&gt;inline_environment</span>();
+
+    <span class="synIdentifier">$env</span> = { <span class="synIdentifier">%{$env}</span>, <span class="synIdentifier">%{$tc_env}</span> };
+
+    <span class="synStatement">return</span> <span class="synIdentifier">$env</span>;
+};
+
+<span class="synStatement">no </span>Moose::Role;
+
+<span class="synNumber">1</span>;
+</pre>
+
+ </body>
+</html>

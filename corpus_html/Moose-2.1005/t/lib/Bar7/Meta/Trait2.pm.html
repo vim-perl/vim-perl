@@ -1,0 +1,25 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Bar7::Meta::Trait2</span>;
+<span class="synStatement">use </span>Moose::Role;
+
+has <span class="synString">foo</span> =&gt; (
+    <span class="synString">traits</span>  =&gt; [<span class="synString">'Array'</span>],
+    <span class="synString">handles</span> =&gt; {
+        <span class="synString">push_foo</span> =&gt; <span class="synString">'push'</span>,
+    },
+);
+
+<span class="synStatement">no </span>Moose::Role;
+
+<span class="synNumber">1</span>;
+</pre>
+
+ </body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> NoInlineAttribute</span>;
+
+<span class="synStatement">use </span>Moose::Meta::Class;
+<span class="synStatement">use </span>Moose::Role;
+
+around <span class="synString">accessor_metaclass</span> =&gt; <span class="synKeyword">sub </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$orig</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$class</span> = <span class="synIdentifier">$self-&gt;$orig</span>();
+
+    <span class="synStatement">return</span> Moose::Meta::Class-&gt;create_anon_class(
+        <span class="synString">superclasses</span> =&gt; [<span class="synIdentifier">$class</span>],
+        <span class="synString">roles</span>        =&gt; [<span class="synString">'NoInlineAccessor'</span>],
+        <span class="synString">cache</span>        =&gt; <span class="synNumber">1</span>,
+    )-&gt;name;
+};
+
+<span class="synStatement">no </span>Moose::Role;
+
+{
+    <span class="synStatement">package</span><span class="synType"> NoInlineAccessor</span>;
+
+    <span class="synStatement">use </span>Moose::Role;
+
+    <span class="synKeyword">sub </span><span class="synFunction">is_inline </span>{ <span class="synNumber">0</span> }
+}
+
+<span class="synNumber">1</span>;
+</pre>
+
+ </body>
+</html>

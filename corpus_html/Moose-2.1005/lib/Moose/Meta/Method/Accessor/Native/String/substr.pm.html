@@ -1,0 +1,128 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Moose::Meta::Method::Accessor::Native::String::substr</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Method::Accessor::Native::String::substr::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Moose::Meta::Method::Accessor::Native::String::substr::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>Moose::Util ();
+
+<span class="synStatement">use </span>Moose::Role;
+
+with <span class="synString">'Moose::Meta::Method::Accessor::Native::Reader'</span>,
+     <span class="synString">'Moose::Meta::Method::Accessor::Native::Writer'</span>;
+
+<span class="synKeyword">sub </span><span class="synFunction">_generate_method </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">$inv</span>         = <span class="synString">'$self'</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$slot_access</span> = <span class="synIdentifier">$self-&gt;_get_value</span>(<span class="synIdentifier">$inv</span>);
+
+    <span class="synStatement">return</span> (
+        <span class="synString">'sub {'</span>,
+            <span class="synString">'my '</span> . <span class="synIdentifier">$inv</span> . <span class="synString">' = shift;'</span>,
+            <span class="synIdentifier">$self-&gt;_inline_curried_arguments</span>,
+            <span class="synString">'if (@_ == 1 || @_ == 2) {'</span>,
+                <span class="synIdentifier">$self-&gt;_inline_reader_core</span>(<span class="synIdentifier">$inv</span>, <span class="synIdentifier">$slot_access</span>),
+            <span class="synString">'}'</span>,
+            <span class="synString">'elsif (@_ == 3) {'</span>,
+                <span class="synIdentifier">$self-&gt;_inline_writer_core</span>(<span class="synIdentifier">$inv</span>, <span class="synIdentifier">$slot_access</span>),
+            <span class="synString">'}'</span>,
+            <span class="synString">'else {'</span>,
+                <span class="synIdentifier">$self-&gt;_inline_check_argument_count</span>,
+            <span class="synString">'}'</span>,
+        <span class="synString">'}'</span>,
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_minimum_arguments </span>{ <span class="synNumber">1</span> }
+<span class="synKeyword">sub </span><span class="synFunction">_maximum_arguments </span>{ <span class="synNumber">3</span> }
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_process_arguments </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$inv</span>, <span class="synIdentifier">$slot_access</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> (
+        <span class="synString">'my $offset = shift;'</span>,
+        <span class="synString">'my $length = @_ ? shift : length '</span> . <span class="synIdentifier">$slot_access</span> . <span class="synString">';'</span>,
+        <span class="synString">'my $replacement = shift;'</span>,
+    );
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_check_arguments </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$for_writer</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">my</span> <span class="synIdentifier">@code</span> = (
+        <span class="synString">'if ($offset !~ /^-?\d+$/) {'</span>,
+            <span class="synIdentifier">$self-&gt;_inline_throw_error</span>(
+                <span class="synString">'&quot;The first argument passed to substr must be an integer&quot;'</span>
+            ) . <span class="synString">';'</span>,
+        <span class="synString">'}'</span>,
+        <span class="synString">'if ($length !~ /^-?\d+$/) {'</span>,
+            <span class="synIdentifier">$self-&gt;_inline_throw_error</span>(
+                <span class="synString">'&quot;The second argument passed to substr must be an integer&quot;'</span>
+            ) . <span class="synString">';'</span>,
+        <span class="synString">'}'</span>,
+    );
+
+    <span class="synConditional">if</span> (<span class="synIdentifier">$for_writer</span>) {
+        <span class="synStatement">push</span> <span class="synIdentifier">@code</span>, (
+            <span class="synString">'if (!Moose::Util::_STRINGLIKE0($replacement)) {'</span>,
+                <span class="synIdentifier">$self-&gt;_inline_throw_error</span>(
+                    <span class="synString">'&quot;The third argument passed to substr must be a string&quot;'</span>
+                ) . <span class="synString">';'</span>,
+            <span class="synString">'}'</span>,
+        );
+    }
+
+    <span class="synStatement">return</span> <span class="synIdentifier">@code</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_potential_value </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$slot_access</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> <span class="synString">'(do { '</span>
+             . <span class="synString">'my $potential = '</span> . <span class="synIdentifier">$slot_access</span> . <span class="synString">'; '</span>
+             . <span class="synString">'@return = substr $potential, $offset, $length, $replacement; '</span>
+             . <span class="synString">'$potential; '</span>
+         . <span class="synString">'})'</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_inline_optimized_set_new_value </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$inv</span>, <span class="synIdentifier">$new</span>, <span class="synIdentifier">$slot_access</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> <span class="synString">'@return = substr '</span> . <span class="synIdentifier">$slot_access</span> . <span class="synString">', '</span>
+                           . <span class="synString">'$offset, $length, $replacement;'</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_return_value </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> (<span class="synIdentifier">$slot_access</span>, <span class="synIdentifier">$for_writer</span>) = <span class="synIdentifier">@_</span>;
+
+    <span class="synStatement">return</span> <span class="synString">'$return[0]'</span> <span class="synConditional">if</span> <span class="synIdentifier">$for_writer</span>;
+
+    <span class="synStatement">return</span> <span class="synString">'substr '</span> . <span class="synIdentifier">$slot_access</span> . <span class="synString">', $offset, $length'</span>;
+}
+
+<span class="synStatement">no </span>Moose::Role;
+
+<span class="synNumber">1</span>;
+</pre>
+
+ </body>
+</html>

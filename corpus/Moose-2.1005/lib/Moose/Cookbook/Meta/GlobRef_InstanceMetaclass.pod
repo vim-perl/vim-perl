@@ -1,0 +1,270 @@
+package Moose::Cookbook::Meta::GlobRef_InstanceMetaclass;
+
+# ABSTRACT: Creating a glob reference meta-instance class
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Moose::Cookbook::Meta::GlobRef_InstanceMetaclass - Creating a glob reference meta-instance class
+
+=head1 VERSION
+
+version 2.1005
+
+=head1 SYNOPSIS
+
+  package My::Meta::Instance;
+
+  use Scalar::Util qw( weaken );
+  use Symbol qw( gensym );
+
+  use Moose;
+  extends 'Moose::Meta::Instance';
+
+  sub create_instance {
+      my $self = shift;
+      my $sym = gensym();
+      bless $sym, $self->_class_name;
+  }
+
+  sub clone_instance {
+      my ( $self, $instance ) = @_;
+
+      my $new_sym = gensym();
+      %{*$new_sym} = %{*$instance};
+
+      bless $new_sym, $self->_class_name;
+  }
+
+  sub get_slot_value {
+      my ( $self, $instance, $slot_name ) = @_;
+      return *$instance->{$slot_name};
+  }
+
+  sub set_slot_value {
+      my ( $self, $instance, $slot_name, $value ) = @_;
+      *$instance->{$slot_name} = $value;
+  }
+
+  sub deinitialize_slot {
+      my ( $self, $instance, $slot_name ) = @_;
+      delete *$instance->{$slot_name};
+  }
+
+  sub is_slot_initialized {
+      my ( $self, $instance, $slot_name ) = @_;
+      exists *$instance->{$slot_name};
+  }
+
+  sub weaken_slot_value {
+      my ( $self, $instance, $slot_name ) = @_;
+      weaken *$instance->{$slot_name};
+  }
+
+  sub inline_create_instance {
+      my ( $self, $class_variable ) = @_;
+      return 'do { my $sym = Symbol::gensym(); bless $sym, ' . $class_variable . ' }';
+  }
+
+  sub inline_slot_access {
+      my ( $self, $instance, $slot_name ) = @_;
+      return '*{' . $instance . '}->{' . $slot_name . '}';
+  }
+
+  package MyApp::User;
+
+  use metaclass 'Moose::Meta::Class' =>
+      ( instance_metaclass => 'My::Meta::Instance' );
+
+  use Moose;
+
+  has 'name' => (
+      is  => 'rw',
+      isa => 'Str',
+  );
+
+  has 'email' => (
+      is  => 'rw',
+      isa => 'Str',
+  );
+
+=head1 DESCRIPTION
+
+This recipe shows how to build your own meta-instance. The meta
+instance is the metaclass that creates object instances and helps
+manages access to attribute slots.
+
+In this example, we're creating a meta-instance that is based on a
+glob reference rather than a hash reference. This example is largely
+based on the Piotr Roszatycki's L<MooseX::GlobRef> module.
+
+Our class is a subclass of L<Moose::Meta::Instance>, which creates
+hash reference based objects. We need to override all the methods
+which make assumptions about the object's data structure.
+
+The first method we override is C<create_instance>:
+
+  sub create_instance {
+      my $self = shift;
+      my $sym = gensym();
+      bless $sym, $self->_class_name;
+  }
+
+This returns an glob reference which has been blessed into our
+meta-instance's associated class.
+
+We also override C<clone_instance> to create a new array reference:
+
+  sub clone_instance {
+      my ( $self, $instance ) = @_;
+
+      my $new_sym = gensym();
+      %{*$new_sym} = %{*$instance};
+
+      bless $new_sym, $self->_class_name;
+  }
+
+After that, we have a series of methods which mediate access to the
+object's slots (attributes are stored in "slots"). In the default
+instance class, these expect the object to be a hash reference, but we
+need to change this to expect a glob reference instead.
+
+  sub get_slot_value {
+      my ( $self, $instance, $slot_name ) = @_;
+      *$instance->{$slot_name};
+  }
+
+This level of indirection probably makes our instance class I<slower>
+than the default. However, when attribute access is inlined, this
+lookup will be cached:
+
+  sub inline_slot_access {
+      my ( $self, $instance, $slot_name ) = @_;
+      return '*{' . $instance . '}->{' . $slot_name . '}';
+  }
+
+The code snippet that the C<inline_slot_access> method returns will
+get C<eval>'d once per attribute.
+
+Finally, we use this meta-instance in our C<MyApp::User> class:
+
+  use metaclass 'Moose::Meta::Class' =>
+      ( instance_metaclass => 'My::Meta::Instance' );
+
+We actually don't recommend the use of L<metaclass> in most
+cases. However, the other ways of using alternate metaclasses are more
+complex, and would complicate our example code unnecessarily.
+
+=begin testing-SETUP
+
+{
+    package My::Meta::Instance;
+    use Moose;
+
+    # This needs to be in a BEGIN block so to avoid a metaclass
+    # incompatibility error from Moose. In normal usage,
+    # My::Meta::Instance would be in a separate file from MyApp::User,
+    # and this would be a non-issue.
+    BEGIN { extends 'Moose::Meta::Instance' }
+}
+
+=end testing-SETUP
+
+=head1 CONCLUSION
+
+This recipe shows how to create your own meta-instance class. It's
+unlikely that you'll need to do this yourself, but it's interesting to
+take a peek at how Moose works under the hood.
+
+=head1 SEE ALSO
+
+There are a few meta-instance class extensions on CPAN:
+
+=over 4
+
+=item * L<MooseX::Singleton>
+
+This module extends the instance class in order to ensure that the
+object is a singleton. The instance it uses is still a blessed hash
+reference.
+
+=item * L<MooseX::GlobRef>
+
+This module makes the instance a blessed glob reference. This lets you
+use a handle as an object instance.
+
+=back
+
+=begin testing
+
+{
+    package MyApp::Employee;
+
+    use Moose;
+    extends 'MyApp::User';
+
+    has 'employee_number' => ( is => 'rw' );
+}
+
+for my $x ( 0 .. 1 ) {
+    MyApp::User->meta->make_immutable if $x;
+
+    my $user = MyApp::User->new(
+        name  => 'Faye',
+        email => 'faye@example.com',
+    );
+
+    ok( eval { *{$user} }, 'user object is an glob ref with some values' );
+
+    is( $user->name,  'Faye',             'check name' );
+    is( $user->email, 'faye@example.com', 'check email' );
+
+    $user->name('Ralph');
+    is( $user->name, 'Ralph', 'check name after changing it' );
+
+    $user->email('ralph@example.com');
+    is( $user->email, 'ralph@example.com', 'check email after changing it' );
+}
+
+for my $x ( 0 .. 1 ) {
+    MyApp::Employee->meta->make_immutable if $x;
+
+    my $emp = MyApp::Employee->new(
+        name            => 'Faye',
+        email           => 'faye@example.com',
+        employee_number => $x,
+    );
+
+    ok( eval { *{$emp} }, 'employee object is an glob ref with some values' );
+
+    is( $emp->name,            'Faye',             'check name' );
+    is( $emp->email,           'faye@example.com', 'check email' );
+    is( $emp->employee_number, $x,                 'check employee_number' );
+
+    $emp->name('Ralph');
+    is( $emp->name, 'Ralph', 'check name after changing it' );
+
+    $emp->email('ralph@example.com');
+    is( $emp->email, 'ralph@example.com', 'check email after changing it' );
+
+    $emp->employee_number(42);
+    is( $emp->employee_number, 42, 'check employee_number after changing it' );
+}
+
+=end testing
+
+=head1 AUTHOR
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See L<Moose/CABAL> and L<Moose/CONTRIBUTORS> for details.
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut

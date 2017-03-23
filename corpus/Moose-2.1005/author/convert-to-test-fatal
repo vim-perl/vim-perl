@@ -1,0 +1,128 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use File::Slurp qw( write_file );
+use PPI;
+
+rewrite_doc($_) for grep { -w } @ARGV;
+
+sub rewrite_doc {
+    my $file = shift;
+
+    my $doc = PPI::Document->new($file);
+
+    return unless $doc =~ /Test::Exception/;
+
+    print $file, "\n";
+
+    my $pattern = sub {
+        my $elt = $_[1];
+
+        return 1
+            if $elt->isa('PPI::Statement')
+                && $elt->content()
+                =~ /^\s*(?:::)?(?:lives_|throws_|dies_)(?:ok|and)/;
+
+        return 0;
+    };
+
+    for my $elt ( @{ $doc->find($pattern) || [] } ) {
+        transform_statement($elt);
+    }
+
+    my $content = $doc->content();
+    $content =~ s/Test::Exception/Test::Fatal/g;
+
+    write_file( $file, $content );
+}
+
+sub transform_statement {
+    my $stmt = shift;
+
+    my @children = $stmt->schildren;
+
+    my $func = shift @children;
+
+    my $colons = $func =~ /^::/ ? '::' : q{};
+
+    my $code;
+    if ( $func =~ /lives_/ ) {
+        $code = function(
+            $colons . 'is',
+            $children[0],
+            'undef',
+            $children[1]
+        );
+    }
+    elsif ( $func =~ /dies_/ ) {
+        $code = function(
+            $colons . 'isnt',
+            $children[0],
+            'undef',
+            $children[1]
+        );
+    }
+    elsif ( $func =~ /throws_/ ) {
+
+        # $children[2] is always a comma if it exists
+        if ( $children[1]->isa('PPI::Token::QuoteLike::Regexp') ) {
+            $code = function(
+                $colons . 'like',
+                $children[0],
+                $children[1],
+                $children[3]
+            );
+        }
+        else {
+            $code = function(
+                $colons . 'is',
+                $children[0],
+                $children[1],
+                $children[3]
+            );
+        }
+    }
+
+    $stmt->insert_before($code);
+    $stmt->remove;
+}
+
+sub function {
+    my $func      = shift;
+    my $exception = shift;
+    my $expect    = shift;
+    my $desc      = shift;
+
+    my $exc_func = $func =~ /^::/ ? '::exception' : 'exception';
+
+    my @code;
+
+    push @code,
+        PPI::Token::Word->new($func),
+        PPI::Token::Structure->new('('),
+        PPI::Token::Whitespace->new(q{ }),
+        PPI::Token::Word->new($exc_func),
+        PPI::Token::Whitespace->new(q{ }),
+        $exception->clone,
+        PPI::Token::Operator->new(','),
+        PPI::Token::Whitespace->new(q{ }),
+        ( ref $expect ? $expect->clone : PPI::Token::Word->new($expect) );
+
+    if ( $desc && $desc->isa('PPI::Token::Quote') ) {
+        push @code, PPI::Token::Operator->new(','),
+            PPI::Token::Whitespace->new(q{ }),
+            $desc->clone;
+    }
+
+    push @code,
+        PPI::Token::Whitespace->new(q{ }),
+        PPI::Token::Structure->new(')'),
+        PPI::Token::Structure->new(';');
+
+    my $stmt = PPI::Statement->new;
+    $stmt->add_element($_) for @code;
+
+    return $stmt;
+}

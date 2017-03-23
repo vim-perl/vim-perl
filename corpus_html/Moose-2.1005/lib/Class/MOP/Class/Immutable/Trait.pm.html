@@ -1,0 +1,139 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synStatement">package</span><span class="synType"> Class::MOP::Class::Immutable::Trait</span>;
+<span class="synPreProc">BEGIN </span>{
+  <span class="synIdentifier">$</span><span class="synType">Class::MOP::Class::Immutable::Trait::</span><span class="synIdentifier">AUTHORITY</span> = <span class="synString">'cpan:STEVAN'</span>;
+}
+{
+  <span class="synIdentifier">$</span><span class="synType">Class::MOP::Class::Immutable::Trait::</span><span class="synIdentifier">VERSION</span> = <span class="synString">'2.1005'</span>;
+}
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>MRO::Compat;
+
+<span class="synStatement">use </span>Carp <span class="synString">'confess'</span>;
+<span class="synStatement">use </span>Scalar::Util <span class="synString">'blessed'</span>, <span class="synString">'weaken'</span>;
+
+<span class="synComment"># the original class of the metaclass instance</span>
+<span class="synKeyword">sub </span><span class="synFunction">_get_mutable_metaclass_name </span>{ <span class="synIdentifier">$_[</span><span class="synNumber">0</span><span class="synIdentifier">]{</span><span class="synString">__immutable</span><span class="synIdentifier">}{</span><span class="synString">original_class</span><span class="synIdentifier">}</span> }
+
+<span class="synKeyword">sub </span><span class="synFunction">is_mutable   </span>{ <span class="synNumber">0</span> }
+<span class="synKeyword">sub </span><span class="synFunction">is_immutable </span>{ <span class="synNumber">1</span> }
+
+<span class="synKeyword">sub </span><span class="synFunction">_immutable_metaclass </span>{ <span class="synOperator">ref</span> <span class="synIdentifier">$_[</span><span class="synNumber">1</span><span class="synIdentifier">]</span> }
+
+<span class="synKeyword">sub </span><span class="synFunction">_immutable_read_only </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$name</span> = <span class="synStatement">shift</span>;
+    confess <span class="synString">&quot;The '</span><span class="synIdentifier">$name</span><span class="synString">' method is read-only when called on an immutable instance&quot;</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_immutable_cannot_call </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$name</span> = <span class="synStatement">shift</span>;
+    Carp::confess <span class="synString">&quot;The '</span><span class="synIdentifier">$name</span><span class="synString">' method cannot be called on an immutable instance&quot;</span>;
+}
+
+<span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$name</span> (<span class="synString">qw/superclasses/</span>) {
+    <span class="synStatement">no strict</span> <span class="synString">'refs'</span>;
+    <span class="synIdentifier">*{</span>__PACKAGE__.<span class="synString">&quot;::</span><span class="synIdentifier">$name</span><span class="synString">&quot;</span><span class="synIdentifier">}</span> = <span class="synKeyword">sub </span>{
+        <span class="synStatement">my</span> <span class="synIdentifier">$orig</span> = <span class="synStatement">shift</span>;
+        <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+        _immutable_read_only(<span class="synIdentifier">$name</span>) <span class="synConditional">if</span> <span class="synIdentifier">@_</span>;
+        <span class="synIdentifier">$self-&gt;$orig</span>;
+    };
+}
+
+<span class="synRepeat">for</span> <span class="synStatement">my</span> <span class="synIdentifier">$name</span> (<span class="synString">qw/add_method alias_method remove_method add_attribute remove_attribute remove_package_symbol add_package_symbol/</span>) {
+    <span class="synStatement">no strict</span> <span class="synString">'refs'</span>;
+    <span class="synIdentifier">*{</span>__PACKAGE__.<span class="synString">&quot;::</span><span class="synIdentifier">$name</span><span class="synString">&quot;</span><span class="synIdentifier">}</span> = <span class="synKeyword">sub </span>{ _immutable_cannot_call(<span class="synIdentifier">$name</span>) };
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">class_precedence_list </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$orig</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synIdentifier">@{</span> <span class="synIdentifier">$self-&gt;{</span><span class="synString">__immutable</span><span class="synIdentifier">}{</span><span class="synString">class_precedence_list</span><span class="synIdentifier">}</span>
+            ||= [ <span class="synIdentifier">$self-&gt;$orig</span> ] <span class="synIdentifier">}</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">linearized_isa </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$orig</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synIdentifier">@{</span> <span class="synIdentifier">$self-&gt;{</span><span class="synString">__immutable</span><span class="synIdentifier">}{</span><span class="synString">linearized_isa</span><span class="synIdentifier">}</span> ||= [ <span class="synIdentifier">$self-&gt;$orig</span> ] <span class="synIdentifier">}</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">get_all_methods </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$orig</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synIdentifier">@{</span> <span class="synIdentifier">$self-&gt;{</span><span class="synString">__immutable</span><span class="synIdentifier">}{</span><span class="synString">get_all_methods</span><span class="synIdentifier">}</span> ||= [ <span class="synIdentifier">$self-&gt;$orig</span> ] <span class="synIdentifier">}</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">get_all_method_names </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$orig</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synIdentifier">@{</span> <span class="synIdentifier">$self-&gt;{</span><span class="synString">__immutable</span><span class="synIdentifier">}{</span><span class="synString">get_all_method_names</span><span class="synIdentifier">}</span> ||= [ <span class="synIdentifier">$self-&gt;$orig</span> ] <span class="synIdentifier">}</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">get_all_attributes </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$orig</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synIdentifier">@{</span> <span class="synIdentifier">$self-&gt;{</span><span class="synString">__immutable</span><span class="synIdentifier">}{</span><span class="synString">get_all_attributes</span><span class="synIdentifier">}</span> ||= [ <span class="synIdentifier">$self-&gt;$orig</span> ] <span class="synIdentifier">}</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">get_meta_instance </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$orig</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synIdentifier">$self-&gt;{</span><span class="synString">__immutable</span><span class="synIdentifier">}{</span><span class="synString">get_meta_instance</span><span class="synIdentifier">}</span> ||= <span class="synIdentifier">$self-&gt;$orig</span>;
+}
+
+<span class="synKeyword">sub </span><span class="synFunction">_method_map </span>{
+    <span class="synStatement">my</span> <span class="synIdentifier">$orig</span> = <span class="synStatement">shift</span>;
+    <span class="synStatement">my</span> <span class="synIdentifier">$self</span> = <span class="synStatement">shift</span>;
+    <span class="synIdentifier">$self-&gt;{</span><span class="synString">__immutable</span><span class="synIdentifier">}{</span><span class="synString">_method_map</span><span class="synIdentifier">}</span> ||= <span class="synIdentifier">$self-&gt;$orig</span>;
+}
+
+<span class="synNumber">1</span>;
+
+<span class="synComment"># ABSTRACT: Implements immutability for metaclass objects</span>
+
+<span class="synComment">__END__</span>
+
+<span class="synStatement">=pod</span>
+
+<span class="synStatement">=head1</span><span class="synString"> NAME</span>
+
+Class::MOP::Class::Immutable::Trait - Implements immutability for metaclass objects
+
+<span class="synStatement">=head1</span><span class="synString"> VERSION</span>
+
+version 2.1005
+
+<span class="synStatement">=head1</span><span class="synString"> DESCRIPTION</span>
+
+This class provides a pseudo-trait that is applied to immutable metaclass
+objects. In reality, it is simply a parent class.
+
+It implements caching and read-only-ness for various metaclass methods.
+
+<span class="synStatement">=head1</span><span class="synString"> AUTHOR</span>
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See <span class="synIdentifier">L&lt;Moose/CABAL&gt;</span> and <span class="synIdentifier">L&lt;Moose/CONTRIBUTORS&gt;</span> for details.
+
+<span class="synStatement">=head1</span><span class="synString"> COPYRIGHT AND LICENSE</span>
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+<span class="synStatement">=cut</span>
+</pre>
+
+ </body>
+</html>

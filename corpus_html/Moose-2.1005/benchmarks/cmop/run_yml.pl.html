@@ -1,0 +1,32 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>[untitled]</title>
+  <link rel="stylesheet" type="text/css" href="../../t/vim_syntax.css" />
+ </head>
+ <body>
+
+<pre><span class="synPreProc">#!/usr/bin/perl</span>
+
+<span class="synStatement">use strict</span>;
+<span class="synStatement">use warnings</span>;
+
+<span class="synStatement">use </span>FindBin;
+<span class="synStatement">use lib</span> <span class="synString">&quot;</span><span class="synIdentifier">$</span><span class="synType">FindBin::</span><span class="synIdentifier">Bin</span><span class="synString">/lib&quot;</span>;
+
+<span class="synStatement">use </span>YAML::Syck;
+<span class="synStatement">use </span>Bench::Run;
+
+<span class="synStatement">my</span> <span class="synIdentifier">$data</span> = LoadFile( <span class="synStatement">shift</span> || <span class="synString">&quot;</span><span class="synIdentifier">$</span><span class="synType">FindBin::</span><span class="synIdentifier">Bin</span><span class="synString">/all.yml&quot;</span> );
+
+<span class="synRepeat">foreach</span> <span class="synStatement">my</span> <span class="synIdentifier">$bench</span> ( <span class="synIdentifier">@$data</span> ) {
+    <span class="synStatement">print</span> <span class="synString">&quot;== &quot;</span>, <span class="synStatement">delete</span> <span class="synIdentifier">$bench-&gt;{</span><span class="synString">name</span><span class="synIdentifier">}</span>, <span class="synString">&quot; ==</span><span class="synSpecial">\n\n</span><span class="synString">&quot;</span>;
+    Bench::Run-&gt;new( <span class="synIdentifier">%$bench</span> )-&gt;run;
+    <span class="synStatement">print</span> <span class="synString">&quot;</span><span class="synSpecial">\n\n</span><span class="synString">&quot;</span>;
+}
+
+
+</pre>
+
+ </body>
+</html>
