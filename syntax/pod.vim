@@ -59,12 +59,14 @@ syn match podSpecial	"\(\<\|&\)\I\i*\(::\I\i*\)*([^)]*)" contains=@NoSpell
 syn match podSpecial	"[$@%]\I\i*\(::\I\i*\)*\>" contains=@NoSpell
 
 " Special formatting sequences
-syn region podFormat	start="[IBSCLFX]<[^<]"me=e-1 end=">" oneline contains=podFormat,@NoSpell
-syn region podFormat	start="[IBSCLFX]<<\s" end="\s>>" oneline contains=podFormat,@NoSpell
+syn region podFormat	start="[IBSCLFX]<<\s"  end="\s>>" oneline contains=podFormat,podFormatError,@NoSpell
+syn region podFormat	start="[IBSCLFX]<[^<]" end=">"    oneline contains=podFormat,podFormatError,@NoSpell
 syn match  podFormat	"Z<>"
 syn match  podFormat	"E<\(\d\+\|\I\i*\)>" contains=podEscape,podEscape2,@NoSpell
 syn match  podEscape	"\I\i*>"me=e-1 contained contains=@NoSpell
 syn match  podEscape2	"\d\+>"me=e-1 contained contains=@NoSpell
+
+syn match podFormatError "[IBSCLFXE]<>"
 
 " Define the default highlighting.
 " For version 5.7 and earlier: only when not done already
@@ -82,6 +84,7 @@ if version >= 508 || !exists("did_pod_syntax_inits")
   HiLink podOverIndent		Number
   HiLink podForKeywd		Identifier
   HiLink podFormat		Identifier
+  HiLink podFormatError		Error
   HiLink podVerbatimLine	PreProc
   HiLink podSpecial		Identifier
   HiLink podEscape		String
