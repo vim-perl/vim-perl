@@ -101,7 +101,8 @@ let s:keywords = {
  \   "rat rat1 rat2 rat4 rat8 rat16 rat32 rat64",
  \   "buf buf1 buf2 buf4 buf8 buf16 buf32 buf64",
  \   "uint uint1 uint2 uint4 uint8 uint16 uint32 bit bool",
- \   "uint64 utf8 utf16 utf32 bag set mix num complex",
+ \   "uint64 utf8 utf16 utf32 bag set mix complex",
+ \   "num num32 num64 long longlong Pointer size_t str",
  \ ],
 \ }
 
