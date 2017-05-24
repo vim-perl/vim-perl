@@ -5,7 +5,6 @@ install:
   - git fetch origin p5-corpus:origin/p5-corpus
   - vim --version
 script:
-  - cmp syntax/perl6.vim <(perl tools/preproc.pl syntax/perl6.vim.pre)
   - make test
 branches:
   except:

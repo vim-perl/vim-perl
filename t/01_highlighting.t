@@ -9,22 +9,17 @@ use Test::More;
 use Test::Differences;
 use Text::VimColor 0.25;
 
-my %LANG_HIGHLIGHTERS = (
-    perl  => [
-        construct_highlighter('perl', ['+let perl_include_pod=1']),
-        construct_highlighter('perl', [
-            '+let perl_include_pod=1',
-            '+let perl_fold=1',
-        ]),
-        construct_highlighter('perl', [
-            '+let perl_include_pod=1',
-            '+let perl_fold=1',
-            '+let perl_fold_anonymous_subs=1',
-        ]),
-    ],
-    perl6 => [
-        construct_highlighter('perl6', []),
-    ],
+my @HIGHLIGHTERS = (
+    construct_highlighter('perl', ['+let perl_include_pod=1']),
+    construct_highlighter('perl', [
+        '+let perl_include_pod=1',
+        '+let perl_fold=1',
+    ]),
+    construct_highlighter('perl', [
+        '+let perl_include_pod=1',
+        '+let perl_fold=1',
+        '+let perl_fold_anonymous_subs=1',
+    ]),
 );
 
 sub construct_highlighter {
@@ -73,12 +68,6 @@ sub create_custom_highlighter {
     my ($syntax) = grep { /^\+source syntax/ } $orig->vim_options;
     my ($lang) = $syntax =~ /(\w+)\.vim/;
     return construct_highlighter($lang, \@options);
-}
-
-sub get_language_for_file {
-    my ( $filename ) = @_;
-
-    return $filename =~ /perl6/ ? 'perl6' : 'perl';
 }
 
 sub test_source_file {
@@ -139,11 +128,11 @@ if(@ARGV) {
         return if !/\.(?:pl|pm|pod|t)$/;
 
         push @test_files, $File::Find::name;
-    }, 't_source/perl', 't_source/perl6');
+    }, 't_source/perl');
 }
 
-plan tests => scalar(map { @{ $LANG_HIGHLIGHTERS{get_language_for_file($_)} } } @test_files);
+plan tests => scalar(map { @HIGHLIGHTERS } @test_files);
 
 foreach my $test_file (@test_files) {
-    test_source_file($test_file, $LANG_HIGHLIGHTERS{ get_language_for_file($test_file) });
+    test_source_file($test_file, \@HIGHLIGHTERS);
 }
