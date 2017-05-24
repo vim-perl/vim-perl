@@ -138,18 +138,18 @@ let s:alpha_metaops_or = join(s:temp, "\\|")
 syn match p6KeywordStart display "\%(\%([A-Za-z_\xC0-\xFF]\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\@=\)*\)\%([A-Za-z_\xC0-\xFF0-9]\|[-'][A-Za-z_\xC0-\xFF]\)\@!\)\@=[A-Za-z_\xC0-\xFF0-9]\@1<!\%([A-Za-z_\xC0-\xFF][-']\)\@2<!"
     \ nextgroup=p6Attention,p6Variable,p6Include,p6Conditional,p6VarStorage,p6Repeat,p6FlowControl,p6ClosureTrait,p6Exception,p6Number,p6Pragma,p6Type,p6Operator,p6Identifier
 
-for [group, words] in items(s:keywords)
-    let s:words_space = join(words, " ")
+for [s:group, s:words_list] in items(s:keywords)
+    let s:words_space = join(s:words_list, " ")
     let s:temp = split(s:words_space)
     let s:words = join(s:temp, "\\|")
-    exec "syn match ". group ." display \"[.^]\\@1<!\\%(". s:words . "\\)(\\@!\\%([A-Za-z_\\xC0-\\xFF0-9]\\|[-'][A-Za-z_\\xC0-\\xFF]\\)\\@!\" contained"
+    exec "syn match ". s:group ." display \"[.^]\\@1<!\\%(". s:words . "\\)(\\@!\\%([A-Za-z_\\xC0-\\xFF0-9]\\|[-'][A-Za-z_\\xC0-\\xFF]\\)\\@!\" contained"
 endfor
 
 let s:words_space = join(s:types, " ")
 let s:temp = split(s:words_space)
 let s:words = join(s:temp, "\\|")
 exec "syn match p6Type display \"\\%(". s:words . "\\)\\%([A-Za-z_\\xC0-\\xFF0-9]\\|[-'][A-Za-z_\\xC0-\\xFF]\\)\\@!\" contained"
-unlet s:keywords s:types s:words_space s:temp s:words
+unlet s:group s:words_list s:keywords s:types s:words_space s:temp s:words
 
 syn match p6PreDeclare display "[.^]\@1<!\<\%(multi\|proto\|only\)\>" nextgroup=p6Declare,p6Identifier skipwhite skipempty
 syn match p6Declare display "[.^]\@1<!\<\%(macro\|sub\|submethod\|method\|category\|module\|class\|role\|package\|enum\|grammar\|slang\|subset\)\>" nextgroup=p6Identifier skipwhite skipempty
@@ -490,20 +490,21 @@ let s:bracketing_delims = [
 \ ]
 let s:all_delims = s:plain_delims + s:bracketing_delims
 
-for [name, start_delim, end_delim, end_group, skip] in s:all_delims
-    exec "syn region p6StringQ matchgroup=p6Quote start=\"".start_delim."\" end=\"".end_delim."\" contained"
-    exec "syn region p6StringQ_q matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contains=@p6Interp_q,".end_group." contained"
-    exec "syn region p6StringQ_qww matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contains=@p6Interp_q,p6StringSQ,p6StringDQ".end_group." contained"
-    exec "syn region p6StringQ_qq matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contains=@p6Interp_qq,".end_group." contained"
-    exec "syn region p6StringQ_to matchgroup=p6Quote start=\"".start_delim."\\z([^".end_delim."]\\+\\)".end_delim."\" end=\"^\\s*\\z1$\" contained"
-    exec "syn region p6StringQ_qto matchgroup=p6Quote start=\"".start_delim."\\z([^".end_delim."]\\+\\)".end_delim."\" skip=\"".skip."\" end=\"^\\s*\\z1$\" contains=@p6Interp_q,".end_group." contained"
-    exec "syn region p6StringQ_qqto matchgroup=p6Quote start=\"".start_delim."\\z(\[^".end_delim."]\\+\\)".end_delim."\" skip=\"".skip."\" end=\"^\\s*\\z1$\" contains=@p6Interp_qq,".end_group." contained"
+for [s:name, s:start_delim, s:end_delim, s:end_group, s:skip] in s:all_delims
+    exec "syn region p6StringQ matchgroup=p6Quote start=\"".s:start_delim."\" end=\"".s:end_delim."\" contained"
+    exec "syn region p6StringQ_q matchgroup=p6Quote start=\"".s:start_delim."\" skip=\"".s:skip."\" end=\"".s:end_delim."\" contains=@p6Interp_q,".s:end_group." contained"
+    exec "syn region p6StringQ_qww matchgroup=p6Quote start=\"".s:start_delim."\" skip=\"".s:skip."\" end=\"".s:end_delim."\" contains=@p6Interp_q,p6StringSQ,p6StringDQ".s:end_group." contained"
+    exec "syn region p6StringQ_qq matchgroup=p6Quote start=\"".s:start_delim."\" skip=\"".s:skip."\" end=\"".s:end_delim."\" contains=@p6Interp_qq,".s:end_group." contained"
+    exec "syn region p6StringQ_to matchgroup=p6Quote start=\"".s:start_delim."\\z([^".s:end_delim."]\\+\\)".s:end_delim."\" end=\"^\\s*\\z1$\" contained"
+    exec "syn region p6StringQ_qto matchgroup=p6Quote start=\"".s:start_delim."\\z([^".s:end_delim."]\\+\\)".s:end_delim."\" skip=\"".s:skip."\" end=\"^\\s*\\z1$\" contains=@p6Interp_q,".s:end_group." contained"
+    exec "syn region p6StringQ_qqto matchgroup=p6Quote start=\"".s:start_delim."\\z(\[^".s:end_delim."]\\+\\)".s:end_delim."\" skip=\"".s:skip."\" end=\"^\\s*\\z1$\" contains=@p6Interp_qq,".s:end_group." contained"
 
     if exists("perl6_embedded_pir") || exists("perl6_extended_all")
-        exec "syn region p6StringQ_PIR matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contains=@p6PIR,".end_group." contained"
+        exec "syn region p6StringQ_PIR matchgroup=p6Quote start=\"".s:start_delim."\" skip=\"".s:skip."\" end=\"".s:end_delim."\" contains=@p6PIR,".s:end_group." contained"
     endif
 endfor
-unlet s:plain_delims s:all_delims
+
+unlet s:name s:start_delim s:end_delim s:end_group s:skip s:plain_delims s:all_delims
 
 " :key
 syn match p6Operator display ":\@1<!::\@!!\?" nextgroup=p6Key,p6StringAngleFixed,p6StringAngles,p6StringFrench
@@ -745,9 +746,11 @@ syn region p6Match
     \ contains=@p6Regexen,p6Variable,p6VarNum
 
 " m<foo>, m«foo», m{foo}, etc
-for [name, start_delim, end_delim, end_group, skip] in s:bracketing_delims
-    exec "syn region p6Match matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contained keepend contains=@p6Regexen,@p6Variables"
+for [s:name, s:start_delim, s:end_delim, s:end_group, s:skip] in s:bracketing_delims
+    exec "syn region p6Match matchgroup=p6Quote start=\"".s:start_delim."\" skip=\"".s:skip."\" end=\"".s:end_delim."\" contained keepend contains=@p6Regexen,@p6Variables"
 endfor
+
+unlet s:name, s:start_delim, s:end_delim, s:end_group, s:skip
 
 " Substitutions
 
@@ -770,10 +773,12 @@ syn region p6Replacement
     \ contains=@p6Interp_qq
 
 " s<foo><bar>, s«foo»«bar», s{foo}{bar}, etc
-for [name, start_delim, end_delim, end_group, skip] in s:bracketing_delims
-    exec "syn region p6Substitution matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contained keepend contains=@p6Regexen,@p6Variables nextgroup=p6Repl".name
-    exec "syn region p6Repl".name." matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contained keepend contains=@p6Interp_qq"
+for [s:name, s:start_delim, s:end_delim, s:end_group, s:skip] in s:bracketing_delims
+    exec "syn region p6Substitution matchgroup=p6Quote start=\"".s:start_delim."\" skip=\"".s:skip."\" end=\"".s:end_delim."\" contained keepend contains=@p6Regexen,@p6Variables nextgroup=p6Repl".s:name
+    exec "syn region p6Repl".s:name." matchgroup=p6Quote start=\"".s:start_delim."\" skip=\"".s:skip."\" end=\"".s:end_delim."\" contained keepend contains=@p6Interp_qq"
 endfor
+
+unlet s:name s:start_delim s:end_delim s:end_group s:skip
 
 " Transliteration
 
@@ -796,11 +801,12 @@ syn region p6TransRepl
     \ contains=@p6Interp_qq,p6RxRange
 
 " tr<foo><bar>, tr«foo»«bar», tr{foo}{bar}, etc
-for [name, start_delim, end_delim, end_group, skip] in s:bracketing_delims
-    exec "syn region p6Transliteration matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contained keepend contains=p6RxRange nextgroup=p6TransRepl".name
-    exec "syn region p6TransRepl".name." matchgroup=p6Quote start=\"".start_delim."\" skip=\"".skip."\" end=\"".end_delim."\" contained keepend contains=@p6Interp_qq,p6RxRange"
+for [s:name, s:start_delim, s:end_delim, s:end_group, s:skip] in s:bracketing_delims
+    exec "syn region p6Transliteration matchgroup=p6Quote start=\"".s:start_delim."\" skip=\"".s:skip."\" end=\"".s:end_delim."\" contained keepend contains=p6RxRange nextgroup=p6TransRepl".s:name
+    exec "syn region p6TransRepl".s:name." matchgroup=p6Quote start=\"".s:start_delim."\" skip=\"".s:skip."\" end=\"".s:end_delim."\" contained keepend contains=@p6Interp_qq,p6RxRange"
 endfor
-unlet s:bracketing_delims
+
+unlet s:name, s:start_delim, s:end_delim, s:end_group, s:skip s:bracketing_delims
 
 if exists("perl6_perl5_regexes") || exists("perl6_extended_all")
 
