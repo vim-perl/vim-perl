@@ -40,4 +40,10 @@ sub color_file {
     return $self->{'hilite'}->syntax_mark_file($filename)->html;
 }
 
+sub markup_file {
+    my ( $self, $filename ) = @_;
+
+    return $self->{'hilite'}->syntax_mark_file($filename)->marked;
+}
+
 1;
