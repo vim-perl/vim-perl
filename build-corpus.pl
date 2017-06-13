@@ -123,7 +123,7 @@ my $fold = Local::VimFolds->new(
 
 my $json = JSON->new->utf8->canonical;
 
-my $iter = get_blob_iterator('origin/p5-corpus', 'corpus');
+my $iter = get_blob_iterator('origin/p5-corpus-ng', 'corpus');
 my $tree = {};
 
 while(my ( $filename, $contents ) = $iter->()) {
@@ -133,26 +133,26 @@ while(my ( $filename, $contents ) = $iter->()) {
     print { $source } $contents;
     close $source;
 
-    my $html  = $color->color_file($source->filename);
+    my $marked  = $color->markup_file($source->filename);
     my @folds = $fold->_get_folds($source->filename);
 
-    my $html_filename = $filename;
-    $html_filename    =~ s{\Acorpus/}{};
-    $html_filename   .= '.html';
+    my $marked_filename = $filename;
+    $marked_filename    =~ s{\Acorpus/}{};
+    $marked_filename   .= '.json';
 
     my $folds_filename = $filename;
     $folds_filename    =~ s{\Acorpus/}{};
     $folds_filename   .= '-folds.json';
 
-    insert_into_tree($tree, $html_filename, $html);
+    insert_into_tree($tree, $marked_filename, $json->encode($marked));
     insert_into_tree($tree, $folds_filename, $json->encode(\@folds));
 }
 
 $tree = create_tree($tree);
 
-my $corpus_tree = find_git_object('origin/p5-corpus', 'corpus');
+my $corpus_tree = find_git_object('origin/p5-corpus-ng', 'corpus');
 
-$tree = two_way_pipe('git', 'mktree', "040000 tree $tree\tcorpus_html\n040000 tree $corpus_tree\tcorpus\n");
+$tree = two_way_pipe('git', 'mktree', "040000 tree $tree\tcorpus_marked\n040000 tree $corpus_tree\tcorpus\n");
 chomp $tree;
 
 open my $pipe, '-|', 'git', 'commit-tree', '-m', 'Update Perl 5 corpus', $tree;
@@ -160,5 +160,5 @@ my $commit = <$pipe>;
 close $pipe;
 chomp $commit;
 
-system 'git', 'update-ref', 'refs/heads/p5-corpus', $commit;
-system 'git', 'push', 'origin', '--force', 'p5-corpus:p5-corpus';
+system 'git', 'update-ref', 'refs/heads/p5-corpus-ng', $commit;
+system 'git', 'push', 'origin', '--force', 'p5-corpus-ng:p5-corpus-ng';
