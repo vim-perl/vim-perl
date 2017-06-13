@@ -266,7 +266,7 @@ my $fold = Local::VimFolds->new(
 );
 
 my $pm         = Parallel::ForkManager->new(16);
-my $iter       = get_blob_iterator('p5-corpus', 'corpus');
+my $iter       = get_blob_iterator('origin/p5-corpus-ng', 'corpus');
 
 $pm->run_on_finish(sub {
     my ( undef, $status, undef, undef, undef, $data ) = @_;
@@ -305,7 +305,7 @@ $pm->wait_all_children;
 
 unless(Test::More->builder->is_passing) {
     diag <<'END_DIAG';
-The corpus test failed!  This means that among the files stored under corpus/ in the p5-corpus
+The corpus test failed!  This means that among the files stored under corpus/ in the p5-corpus-ng
 branch, the syntax highlighting and/or the folding has changed for one or more files.  You need
 to let a vim-perl maintainer know about this!
 
