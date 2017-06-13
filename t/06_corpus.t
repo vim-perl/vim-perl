@@ -32,12 +32,14 @@ my $fold = Local::VimFolds->new(
 
 my $pm         = Parallel::ForkManager->new(16);
 my $iter       = get_blob_iterator('origin/p5-corpus', 'corpus');
-my $is_passing = 1;
 
 $pm->run_on_finish(sub {
-    my ( undef, $status ) = @_;
+    my ( undef, $status, undef, undef, undef, $result ) = @_;
 
-    $is_passing &&= ($status == 0);
+    my ( $filename, $expected_html, $got_html, $expected_folds, $got_folds ) = @$result;
+
+    is_string($got_html, $expected_html, "colors for file '$filename' match");
+    eq_or_diff($got_folds, $expected_folds, "folds for file '$filename' match");
 });
 
 while(my ( $filename, $content ) = $iter->()) {
@@ -54,15 +56,13 @@ while(my ( $filename, $content ) = $iter->()) {
     my $got_html  = $color->color_file($source->filename);
     my @got_folds = $fold->_get_folds($source->filename);
 
-    is_string($got_html, $expected_html, "colors for file '$filename' match");
-    eq_or_diff(\@got_folds, \@expected_folds, "folds for file '$filename' match");
-
-    $pm->finish(Test::More->builder->is_passing ? 0 : 1);
+    $pm->finish(0, [ $filename, $expected_html, $got_html,
+        \@expected_folds, \@got_folds ]);
 }
 
 $pm->wait_all_children;
 
-unless($is_passing) {
+unless(Test::More->builder->is_passing) {
     diag <<'END_DIAG';
 The corpus test failed!  This means that among the files stored under corpus/ in the p5-corpus
 branch, the syntax highlighting and/or the folding has changed for one or more files.  You need
