@@ -3,8 +3,6 @@
 use strict;
 use warnings;
 use lib 'tools';
-use experimental qw(signatures);
-use feature qw(say);
 
 use Local::MissingModule;
 use Local::VimColor;
@@ -52,7 +50,8 @@ $fg_color_map{'Repeat'}      = $fg_color_map{'Statement'};
 my $GRAY =  "\e[38;5;243m";
 my $RESET = "\e[0m";
 
-sub lines_from_marked($marked) {
+sub lines_from_marked {
+    my ($marked) = @_;
     my @lines = ();
     my $current_line = [];
 
@@ -84,11 +83,13 @@ sub lines_from_marked($marked) {
 }
 
 # XXX not Unicode-aware! naïve implementation for now (sanity check the underlying text)
-sub split_glyphs($s) {
+sub split_glyphs {
+    my ($s) = @_;
     return $s =~ /(.)/g;
 }
 
-sub build_color_map($marked) {
+sub build_color_map {
+    my ($marked) = @_;
     my @map;
 
     for my $line (lines_from_marked($marked)) {
@@ -107,7 +108,8 @@ sub build_color_map($marked) {
     return \@map;
 }
 
-sub build_glyph_map($marked) {
+sub build_glyph_map {
+    my ($marked) = @_;
     my @map;
 
     for my $line (lines_from_marked($marked)) {
@@ -126,11 +128,13 @@ sub build_glyph_map($marked) {
     return \@map;
 }
 
-sub is_visible($glyph) {
+sub is_visible {
+    my ($glyph) = @_;
     return $glyph !~ /\pZ/; # XXX is this good enough?
 }
 
-sub find_differently_colored_lines($a_lines, $b_lines) {
+sub find_differently_colored_lines {
+    my ($a_lines, $b_lines) = @_;
     my @differences;
 
     my $glyph_map  = build_glyph_map($a_lines);
@@ -170,7 +174,8 @@ sub find_differently_colored_lines($a_lines, $b_lines) {
 }
 
 # XXX background
-sub get_color_code($group) {
+sub get_color_code {
+    my ($group) = @_;
     my $code = $fg_color_map{$group};
     if($code eq '') {
         return '';
@@ -178,7 +183,8 @@ sub get_color_code($group) {
     return "\e[38;5;${code}m";
 }
 
-sub color_line($line) {
+sub color_line {
+    my ($line) = @_;
     my @pieces;
     for my $chunk (@$line) {
         my ( $group, $text ) = @$chunk;
@@ -188,14 +194,16 @@ sub color_line($line) {
     return join('', @pieces);
 }
 
-sub extract_text($line) {
+sub extract_text {
+    my ($line) = @_;
     return join('', map { $_->[1] } @$line);
 }
 
 # XXX only print the first N differences?
 #     visually indicate the differing columns (via underline, reverse video, etc)?
 #     handle terminals too narrow to show results
-sub diag_differences($before_lines, $after_lines, $diffs) {
+sub diag_differences {
+    my ($before_lines, $after_lines, $diffs) = @_;
     my $num_context = 3;
     my @print_me = map { '' } 0..$#$before_lines;
 
