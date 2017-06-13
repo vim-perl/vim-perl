@@ -98,15 +98,6 @@ sub get_corpus_contents {
     return $content;
 }
 
-sub get_html_output_for {
-    my ( $filename ) = @_;
-
-    $filename  =~ s{\Acorpus/}{corpus_html/};
-    $filename .= '.html';
-
-    return get_corpus_contents($filename);
-}
-
 sub get_folds_for {
     my ( $filename ) = @_;
 
@@ -118,6 +109,6 @@ sub get_folds_for {
     return @{ decode_json($contents) };
 }
 
-our @EXPORT = qw(get_blob_iterator get_corpus_contents get_html_output_for get_folds_for find_git_object);
+our @EXPORT = qw(get_blob_iterator get_corpus_contents get_folds_for find_git_object);
 
 1;
