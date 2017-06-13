@@ -173,14 +173,20 @@ sub find_differently_colored_lines {
     return \@differences;
 }
 
-# XXX background
 sub get_color_code {
     my ($group) = @_;
-    my $code = $fg_color_map{$group};
-    if($code eq '') {
-        return '';
+
+    my $fg_color_code = $fg_color_map{$group};
+    if($fg_color_code ne '') {
+        $fg_color_code = "\e[38;5;${fg_color_code}m";
     }
-    return "\e[38;5;${code}m";
+
+    my $bg_color_code = $bg_color_map{$group};
+    if($bg_color_code ne '') {
+        $bg_color_code = "\e[38;5;${bg_color_code}m";
+    }
+
+    return $fg_color_code . $bg_color_code;
 }
 
 sub color_line {
