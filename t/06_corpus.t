@@ -11,9 +11,9 @@ use Local::Utils;
 
 use File::Temp;
 use JSON qw(decode_json);
+use List::Util qw(min max);
 use Parallel::ForkManager;
 use Path::Tiny;
-use POSIX qw(fmin fmax);
 use Test::Differences;
 use Test::More;
 use Test::SharedFork;
@@ -209,7 +209,7 @@ sub diag_differences {
 
     for my $diff (@$diffs) {
         my ( $line_no, undef ) = @$diff;
-        for my $line (fmax(0, $line_no - 3)..fmin($#$before_lines, $line_no + 3)) {
+        for my $line (max(0, $line_no - 3)..min($#$before_lines, $line_no + 3)) {
             $print_me[$line] = 'context';
         }
     }
