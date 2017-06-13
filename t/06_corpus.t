@@ -229,7 +229,7 @@ sub diag_differences {
 
     for my $lindex (0..$#print_me) {
         if($print_me[$lindex]) {
-            $max_line_length = fmax($max_line_length, length(extract_text($before_lines->[$lindex])));
+            $max_line_length = max($max_line_length, length(extract_text($before_lines->[$lindex])));
         }
     }
 
