@@ -181,7 +181,7 @@ sub get_color_code {
         $fg_color_code = "\e[38;5;${fg_color_code}m";
     }
 
-    my $bg_color_code = $bg_color_map{$group};
+    my $bg_color_code = $bg_color_map{$group} || '';
     if($bg_color_code ne '') {
         $bg_color_code = "\e[38;5;${bg_color_code}m";
     }
