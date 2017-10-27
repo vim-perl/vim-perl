@@ -121,6 +121,7 @@ sub test_source_file {
                     [ lines_from_marked($output) ], $differences);
                 open my $fh, '>', $fail or die "Can't open $fail: $!\n";
                 print $fh encode_json($output);
+                close $fh;
                 diag("You can inspect the incorrect output at $fail");
             }
         }
