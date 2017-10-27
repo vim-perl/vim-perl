@@ -47,8 +47,9 @@ $fg_color_map{'Function'}    = $fg_color_map{'Statement'};
 $fg_color_map{'Label'}       = $fg_color_map{'Statement'};
 $fg_color_map{'Repeat'}      = $fg_color_map{'Statement'};
 
-my $GRAY =  "\e[38;5;243m";
-my $RESET = "\e[0m";
+my $GRAY       = "\e[38;5;243m";
+my $MASK_COLOR = "\e[48;5;088m";
+my $RESET      = "\e[0m";
 
 sub lines_from_marked {
     my ($marked) = @_;
@@ -204,6 +205,77 @@ sub color_line {
     return join('', @pieces);
 }
 
+sub is_prefix {
+    my ($maybe_prefix, $s) = @_;
+    $maybe_prefix = quotemeta($maybe_prefix);
+    return $s =~ /^$maybe_prefix/;
+}
+
+sub color_mask {
+    my ($before, $after) = @_;
+
+    my @before = @$before;
+    my @after  = @$after;
+
+    my @pieces;
+    while(@before) {
+        # the lines represented by $before and $after should
+        # be the same length, and we should be processing
+        # each of $before and $after in equal-sized chunks.
+        # If that *doesn't* happen for some reason, @before
+        # and @after could end up out of sync
+        die 'this should never happen' unless @after;
+
+        my $before_token                 = shift @before;
+        my $after_token                  = shift @after;
+        my ($before_group, $before_text) = @$before_token;
+        my ($after_group, $after_text)   = @$after_token;
+
+        my $text;
+
+        if($before_text eq $after_text) {
+            $text = $before_text;
+        } else {
+            if(is_prefix($before_text, $after_text)) {
+                my $suffix = substr($after_text, length($before_text));
+                unshift @after, [
+                    $after_group,
+                    $suffix,
+                ];
+                $text = $before_text;
+            } elsif(is_prefix($after_text, $before_text)) {
+                my $suffix = substr($before_text, length($after_text));
+                unshift @before, [
+                    $before_group,
+                    $suffix,
+                ];
+
+                $text = $after_text;
+            } else {
+                die 'this should never happen';
+            }
+        }
+
+        my $before_color = get_color_code($before_group);
+        my $after_color  = get_color_code($after_group);
+
+        if($before_color eq $after_color) {
+            push @pieces, $GRAY . $text . $RESET;
+        } else {
+            push @pieces, $MASK_COLOR . $text . $RESET;
+        }
+    }
+
+    # the lines represented by $before and $after should
+    # be the same length, and we should be processing
+    # each of $before and $after in equal-sized chunks.
+    # If that *doesn't* happen for some reason, @before
+    # and @after could end up out of sync
+    die 'this should never happen' if @after;
+
+    return join('', @pieces);
+}
+
 sub extract_text {
     my ($line) = @_;
     return join('', map { $_->[1] } @$line);
@@ -265,14 +337,17 @@ sub diag_differences {
                 ' ',
                 strip_indent($shortest_common_indent, extract_text($before_lines->[$lindex]) . $padding),
                 ' | ',
-                strip_indent($shortest_common_indent, extract_text($after_lines->[$lindex])),
+                strip_indent($shortest_common_indent, extract_text($after_lines->[$lindex])  . $padding),
+                ' | ',
                 $RESET;
         } elsif($print_me[$lindex] eq 'diff') {
             diag sprintf('%4d', $line_no),
                 ' ',
                 strip_indent($shortest_common_indent, color_line($before_lines->[$lindex]) . $padding),
                 ' | ',
-                strip_indent($shortest_common_indent, color_line($after_lines->[$lindex]));
+                strip_indent($shortest_common_indent, color_line($after_lines->[$lindex])  . $padding),
+                ' | ',
+                strip_indent($shortest_common_indent, color_mask($before_lines->[$lindex], $after_lines->[$lindex]));
         }
     }
 }
