@@ -139,7 +139,7 @@ if(@ARGV) {
     }, 't_source/perl');
 }
 
-plan tests => scalar(map { @HIGHLIGHTERS } @test_files);
+plan tests => @HIGHLIGHTERS * @test_files;
 
 foreach my $test_file (@test_files) {
     test_source_file($test_file, \@HIGHLIGHTERS);
