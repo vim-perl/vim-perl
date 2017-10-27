@@ -25,11 +25,14 @@ my %fg_color_map = (
     PreProc    => 84,
     Special    => 179,
     Todo       => 88,
+    Error      => 253,
 
     '' => 253,
 );
 
 my %bg_color_map = (
+    Error => 216,
+
     '' => '',
 );
 
