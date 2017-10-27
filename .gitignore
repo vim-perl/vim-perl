@@ -2,5 +2,6 @@
 .*.swp
 vim-perl.tar.gz
 t_source/*/*_fail.html
+t_source/*/*_fail.json
 /corpus/
 /corpus_html/
