@@ -1,0 +1,1 @@
+[["Statement","s{"],["String","^#!"],["Special",".+"],["Statement","}{}"],["","\n"],["Statement","m{"],["String","^#!"],["Special",".+"],["Statement","}"],["","\n"],["Statement","s["],["String","^#!"],["Special",".+"],["Statement","][]"],["","\n"],["Statement","m["],["String","^#!"],["Special",".+"],["Statement","]"],["","\n"]]

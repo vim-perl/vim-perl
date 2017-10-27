@@ -1,0 +1,1 @@
+[["Keyword","sub "],["Function","_build_debugging_regex "],["","{\n    "],["Statement","s{"],["","\n"],["String","        "],["Special","(.*)"],["","\n"],["String","    "],["Statement","}{"],["","\n"],["String","        # a comment!"],["","\n"],["String","    "],["Statement","}eg"],["",";\n}\n"]]

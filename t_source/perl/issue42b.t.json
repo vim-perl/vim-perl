@@ -1,0 +1,1 @@
+[["Comment","# vim:ft=perl"],["","\n\n"],["Statement","use strict"],["",";\n"],["Statement","use warnings"],["",";\n\n"],["Comment","__END__"],["","\n\n"],["Statement","=head1"],["String"," NAME"],["","\n\nExample\n\n"],["Statement","=cut"],["","\n"]]
