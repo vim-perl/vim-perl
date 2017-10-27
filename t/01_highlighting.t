@@ -95,10 +95,6 @@ sub test_source_file {
         $marked_file .= '.json';
 
         SKIP: {
-            # remove old failure output if present
-            my $fail = "${file}_fail.json";
-            unlink $fail;
-
             # create the corresponding html file if it's missing
             if (!-e $marked_file) {
                 open my $markup, '>', $marked_file or die "Can't open $marked_file: $!\n";
@@ -119,10 +115,7 @@ sub test_source_file {
             if (@$differences) {
                 diag_differences([ lines_from_marked($expected) ],
                     [ lines_from_marked($output) ], $differences);
-                open my $fh, '>', $fail or die "Can't open $fail: $!\n";
-                print $fh encode_json($output);
-                close $fh;
-                diag("You can inspect the incorrect output at $fail");
+                diag("if the middle column is correct, you can delete $marked_file and re-run this test to regenerate the file based on the current syntax definitions");
             }
         }
     }
