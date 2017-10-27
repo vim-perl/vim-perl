@@ -195,7 +195,11 @@ sub color_line {
     for my $chunk (@$line) {
         my ( $group, $text ) = @$chunk;
         my $color_code = get_color_code($group);
-        push @pieces, $color_code, $text, $RESET;
+        if($color_code) {
+            push @pieces, $color_code, $text, $RESET;
+        } else {
+            push @pieces, $text;
+        }
     }
     return join('', @pieces);
 }
@@ -203,6 +207,17 @@ sub color_line {
 sub extract_text {
     my ($line) = @_;
     return join('', map { $_->[1] } @$line);
+}
+
+sub strip_indent {
+    my ( $amount, $line ) = @_;
+
+    my $indent = ' ' x $amount;
+
+    my $opt_esc_seq = qr/(?:\x1b \[ \d+ (?:;\d+)* m)?/x;
+
+    $line =~ s/^$opt_esc_seq\K$indent//;
+    return $line;
 }
 
 # XXX only print the first N differences?
@@ -226,10 +241,14 @@ sub diag_differences {
     }
 
     my $max_line_length = 0;
+    my $shortest_common_indent = 9999;
 
     for my $lindex (0..$#print_me) {
         if($print_me[$lindex]) {
-            $max_line_length = max($max_line_length, length(extract_text($before_lines->[$lindex])));
+            my $line = extract_text($before_lines->[$lindex]);
+            $max_line_length = max($max_line_length, length($line));
+            my ( $indent ) = $line =~ /^(\s*)/;
+            $shortest_common_indent = min($shortest_common_indent, length($indent));
         }
     }
 
@@ -244,16 +263,16 @@ sub diag_differences {
         if($print_me[$lindex] eq 'context') {
             diag $GRAY, sprintf('%4d', $line_no),
                 ' ',
-                extract_text($before_lines->[$lindex]) . $padding,
+                strip_indent($shortest_common_indent, extract_text($before_lines->[$lindex]) . $padding),
                 ' | ',
-                extract_text($after_lines->[$lindex]),
+                strip_indent($shortest_common_indent, extract_text($after_lines->[$lindex])),
                 $RESET;
         } elsif($print_me[$lindex] eq 'diff') {
             diag sprintf('%4d', $line_no),
                 ' ',
-                color_line($before_lines->[$lindex]) . $padding,
+                strip_indent($shortest_common_indent, color_line($before_lines->[$lindex]) . $padding),
                 ' | ',
-                color_line($after_lines->[$lindex]);
+                strip_indent($shortest_common_indent, color_line($after_lines->[$lindex]));
         }
     }
 }
