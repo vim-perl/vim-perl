@@ -2,6 +2,10 @@
 
 use strict;
 use warnings;
+use lib 'tools';
+
+use Local::VisualDiff;
+
 use Cwd;
 use File::Find;
 use File::Spec::Functions qw<catfile catdir>;
@@ -107,11 +111,14 @@ sub test_source_file {
             open my $handle, '<', $marked_file or die "Can't open $marked_file: $!\n";
             my $expected = decode_json(do { local $/; scalar <$handle> });
 
-            eq_or_diff($output, $expected, "Correct output for $file");
+            my $differences = find_differently_colored_lines($expected, $output);
+            ok(!@$differences, "Correct output for $file");
 
             # if the markup is incorrect, write it out to a file for
             # the user to inspect
-            if (encode_json($output) ne encode_json($expected)) {
+            if (@$differences) {
+                diag_differences([ lines_from_marked($expected) ],
+                    [ lines_from_marked($output) ], $differences);
                 open my $fh, '>', $fail or die "Can't open $fail: $!\n";
                 print $fh encode_json($output);
                 diag("You can inspect the incorrect output at $fail");
