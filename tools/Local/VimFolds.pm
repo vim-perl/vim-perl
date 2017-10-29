@@ -177,6 +177,14 @@ sub _find_expected_folds {
         $line_no++;
     }
 
+    while(@fold_stack) {
+        my $start = pop @fold_stack;
+        push @folds, {
+            start => $start,
+            end   => $line_no - 1,
+        };
+    }
+
     return @folds;
 }
 
