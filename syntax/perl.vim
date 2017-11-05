@@ -412,7 +412,7 @@ if exists("perl_fold")
   endif
   if !exists("perl_nofold_subs")
     if get(g:, "perl_fold_anonymous_subs", 0)
-      syn region perlSubFold start="\<sub\>[^{]*{" end="}" transparent fold keepend extend
+      syn region perlSubFold start="\<sub\>[^{]*{" end="}$" transparent fold keepend extend
       syn region perlSubFold start="\<\%(BEGIN\|END\|CHECK\|INIT\)\>\s*{" end="}" transparent fold keepend
     else
       syn region perlSubFold     start="^\z(\s*\)\<sub\>.*[^};]$" end="^\z1}\s*\%(#.*\)\=$" transparent fold keepend
