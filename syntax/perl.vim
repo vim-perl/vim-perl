@@ -408,9 +408,9 @@ if exists("perl_fold")
   " keyword, otherwise this will screw up Pod lines that match /^package/
   if !get(g:, 'perl_nofold_packages', 0)
     syn region perlPackageFold start="^package \S\+;\s*\%(#.*\)\=$" end="^1;\=\s*\%(#.*\)\=$" end="\n\+package"me=s-1 transparent fold keepend
-    syn region perlPackageFold start="^package\s*\S\+\s*{" end="}" transparent fold keepend
+    syn region perlPackageFold start="^package \S\+\s*{" end="}$" transparent fold keepend
   endif
-  if !exists("perl_nofold_subs")
+  if !get(g:, 'perl_nofold_packages', 0)
     if get(g:, "perl_fold_anonymous_subs", 0)
       syn region perlSubFold start="\<sub\>[^{]*{" end="}$" transparent fold keepend extend
       syn region perlSubFold start="\<\%(BEGIN\|END\|CHECK\|INIT\)\>\s*{" end="}" transparent fold keepend
