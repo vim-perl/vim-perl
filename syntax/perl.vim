@@ -406,7 +406,7 @@ endif
 if exists("perl_fold")
   " Note: this bit must come before the actual highlighting of the "package"
   " keyword, otherwise this will screw up Pod lines that match /^package/
-  if !exists("perl_nofold_packages")
+  if !get(g:, 'perl_nofold_packages', 0)
     syn region perlPackageFold start="^package \S\+;\s*\%(#.*\)\=$" end="^1;\=\s*\%(#.*\)\=$" end="\n\+package"me=s-1 transparent fold keepend
     syn region perlPackageFold start="^package\s*\S\+\s*{" end="}" transparent fold keepend
   endif
