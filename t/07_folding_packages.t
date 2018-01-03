@@ -74,9 +74,6 @@ sub ok {1}
 1;
 END_PERL
 
-TODO: {
-    local $TODO = 'Brace package folding is not quite working';
-
     $pkg_folds->folds_match(<<'END_PERL', 'Brace packages fold correctly');
 package Null { # {{{
 my $null = bless {}, __PACKAGE__;
@@ -95,8 +92,6 @@ sub ok       {0}
 
 # }}}
 END_PERL
-
-}
 
 $nopkg_folds->folds_match(<<'END_PERL', 'perl_nofold_packages disables folding');
 package Null {
