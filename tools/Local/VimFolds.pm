@@ -13,13 +13,13 @@ use Test::More;
 use Test::Deep;
 
 my $FOLD_RE = qr{
-    \s* [#] \s*
+    [ \t]* [#] [ \t]*
     (?:
         (?:[{][{][{])
         |
         (?:[}][}][}])
     )
-    \s* $
+    [ \t]* $
 }xm;
 
 sub new {
