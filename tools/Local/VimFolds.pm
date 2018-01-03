@@ -188,17 +188,28 @@ sub _find_expected_folds {
     return @folds;
 }
 
+# XXX visual diff
 sub folds_match {
     my ( $self, $code, $name ) = @_;
 
     my $tempfile      = File::Temp->new;
     my $foldless_code = $code;
     $foldless_code    =~ s/$FOLD_RE//g;
+    my $foldless_code_lines =()= $foldless_code =~ /\n/g;
     print { $tempfile } $foldless_code;
     close $tempfile;
 
     my @expected_folds = $self->_find_expected_folds($code);
     my @got_folds      = $self->_get_folds($tempfile->filename);
+
+    foreach my $fold (@expected_folds) {
+        if($fold->{'start'} > $foldless_code_lines) {
+            croak "Fold starts past end of example code! (starts at $fold->{'start'}, ends at $fold->{'end'})";
+        }
+        if($fold->{'end'} > $foldless_code_lines) {
+            croak "Fold ends past end of example code! (starts at $fold->{'start'}, ends at $fold->{'end'})";
+        }
+    }
 
     foreach my $fold (@got_folds) {
         delete $fold->{'level'};
