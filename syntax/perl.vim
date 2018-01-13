@@ -41,11 +41,11 @@ set cpo&vim
 
 " POD starts with ^=<word> and ends with ^=cut
 
-if !exists("perl_include_pod") || perl_include_pod == 1
+if get(g:, 'perl_include_pod', 1)
   " Include a while extra syntax file
   syn include @Pod syntax/pod.vim
   unlet b:current_syntax
-  if exists("perl_fold")
+  if get(g:, 'perl_fold', 1)
     syn region perlPOD start="^=[a-z]" end="^=cut" contains=@Pod,@Spell,perlTodo keepend fold extend
     syn region perlPOD start="^=cut" end="^=cut" contains=perlTodo keepend fold extend
   else
@@ -54,7 +54,7 @@ if !exists("perl_include_pod") || perl_include_pod == 1
   endif
 else
   " Use only the bare minimum of rules
-  if exists("perl_fold")
+  if get(g:, 'perl_fold', 1)
     syn region perlPOD start="^=[a-z]" end="^=cut" fold
   else
     syn region perlPOD start="^=[a-z]" end="^=cut"
@@ -138,7 +138,7 @@ syn match  perlPackageRef	 "[$@#%*&]\%(\%(::\|'\)\=\I\i*\%(\%(::\|'\)\I\i*\)*\)\
 " If you don't want complex things like @{${"foo"}} to be processed,
 " just set the variable "perl_no_extended_vars"...
 
-if !exists("perl_no_scope_in_variables")
+if !get(g:, 'perl_no_scope_in_variables', 0)
   syn match  perlVarPlain       "\%([@$]\|\$#\)\$*\%(\I\i*\)\=\%(\%(::\|'\)\I\i*\)*\%(::\|\i\@<=\)" contains=perlPackageRef nextgroup=perlVarMember,perlVarSimpleMember,perlPostDeref
   syn match  perlVarPlain2                   "%\$*\%(\I\i*\)\=\%(\%(::\|'\)\I\i*\)*\%(::\|\i\@<=\)" contains=perlPackageRef nextgroup=perlVarMember,perlVarSimpleMember,perlPostDeref
   syn match  perlFunctionName                "&\$*\%(\I\i*\)\=\%(\%(::\|'\)\I\i*\)*\%(::\|\i\@<=\)" contains=perlPackageRef nextgroup=perlVarMember,perlVarSimpleMember,perlPostDeref
@@ -150,7 +150,7 @@ endif
 
 syn match  perlVarPlain2	 "%[-+]"
 
-if !exists("perl_no_extended_vars")
+if !get(g:, 'perl_no_extended_vars', 0)
   syn cluster perlExpr		contains=perlStatementIndirObjWrap,perlStatementScalar,perlStatementRegexp,perlStatementNumeric,perlStatementList,perlStatementHash,perlStatementFiles,perlStatementTime,perlStatementMisc,perlVarPlain,perlVarPlain2,perlVarNotInMatches,perlVarSlash,perlVarBlock,perlVarBlock2,perlShellCommand,perlFloat,perlNumber,perlStringUnexpanded,perlString,perlQQ,perlArrow,perlBraces
   syn region perlArrow		matchgroup=perlArrow start="->\s*(" end=")" contains=@perlExpr nextgroup=perlVarMember,perlVarSimpleMember,perlPostDeref contained
   syn region perlArrow		matchgroup=perlArrow start="->\s*\[" end="\]" contains=@perlExpr nextgroup=perlVarMember,perlVarSimpleMember,perlPostDeref contained
@@ -332,7 +332,7 @@ syn region perlHereDocStart	matchgroup=perlStringStartEnd start=+<<\s*"\z([^\\"]
 syn region perlHereDocStart	matchgroup=perlStringStartEnd start=+<<\s*'\z([^\\']*\%(\\.[^\\']*\)*\)'+ end=+$+ contains=@perlTop oneline
 syn region perlHereDocStart	matchgroup=perlStringStartEnd start=+<<\s*""+       end=+$+     contains=@perlTop oneline
 syn region perlHereDocStart	matchgroup=perlStringStartEnd start=+<<\s*''+       end=+$+     contains=@perlTop oneline
-if exists("perl_fold")
+if get(g:, 'perl_fold', 0)
   syn region perlHereDoc	start=+<<\z(\I\i*\)+ matchgroup=perlStringStartEnd      end=+^\z1$+ contains=perlHereDocStart,@perlInterpDQ fold extend
   syn region perlHereDoc	start=+<<\s*"\z([^\\"]*\%(\\.[^\\"]*\)*\)"+ matchgroup=perlStringStartEnd end=+^\z1$+ contains=perlHereDocStart,@perlInterpDQ fold extend
   syn region perlHereDoc	start=+<<\s*'\z([^\\']*\%(\\.[^\\']*\)*\)'+ matchgroup=perlStringStartEnd end=+^\z1$+ contains=perlHereDocStart,@perlInterpSQ fold extend
@@ -392,7 +392,7 @@ syn match  perlFormatField	"@[^A-Za-z_|<>~#*]"me=e-1 contained
 syn match  perlFormatField	"@$" contained
 
 " __END__ and __DATA__ clauses
-if exists("perl_fold")
+if get(g:, 'perl_fold', 0)
   syntax region perlDATA		start="^__DATA__$" skip="." end="." contains=@perlDATA fold
   syntax region perlDATA		start="^__END__$" skip="." end="." contains=perlPOD,@perlDATA fold
 else
@@ -403,14 +403,14 @@ endif
 "
 " Folding
 
-if exists("perl_fold")
+if get(g:, 'perl_fold', 0)
   " Note: this bit must come before the actual highlighting of the "package"
   " keyword, otherwise this will screw up Pod lines that match /^package/
   if !get(g:, 'perl_nofold_packages', 0)
     syn region perlPackageFold start="^package \S\+;\s*\%(#.*\)\=$" end="^1;\=\s*\%(#.*\)\=$" end="\n\+package"me=s-1 transparent fold keepend
     syn region perlPackageFold start="^\z(\s*\)package\s*\S\+\s*{" end="^\z1}" transparent fold keepend
   endif
-  if !exists("perl_nofold_subs")
+  if !get(g:, 'perl_nofold_subs', 0)
     if get(g:, "perl_fold_anonymous_subs", 0)
       syn region perlSubFold start="\<sub\>[^{]*{" end="}" transparent fold keepend extend
       syn region perlSubFold start="\<\%(BEGIN\|END\|CHECK\|INIT\)\>\s*{" end="}" transparent fold keepend
@@ -420,7 +420,7 @@ if exists("perl_fold")
     endif
   endif
 
-  if exists("perl_fold_blocks")
+  if get(g:, 'perl_fold_blocks', 0)
     syn region perlBlockFold start="^\z(\s*\)\%(if\|elsif\|unless\|for\|while\|until\|given\)\s*(.*)\%(\s*{\)\=\s*\%(#.*\)\=$" start="^\z(\s*\)for\%(each\)\=\s*\%(\%(my\|our\)\=\s*\S\+\s*\)\=(.*)\%(\s*{\)\=\s*\%(#.*\)\=$" end="^\z1}\s*;\=\%(#.*\)\=$" transparent fold keepend
     syn region perlBlockFold start="^\z(\s*\)\%(do\|else\)\%(\s*{\)\=\s*\%(#.*\)\=$" end="^\z1}\s*while" end="^\z1}\s*;\=\%(#.*\)\=$" transparent fold keepend
   endif
@@ -459,7 +459,7 @@ hi def link perlSubAttributes	PreProc
 hi def link perlSubAttributesCont	perlSubAttributes
 hi def link perlComment		Comment
 hi def link perlTodo			Todo
-if exists("perl_string_as_statement")
+if get(g:, 'perl_string_as_statement', 0)
   hi def link perlStringStartEnd	perlStatement
 else
   hi def link perlStringStartEnd	perlString
@@ -551,18 +551,18 @@ hi def link perlSubError		Error
 
 " Syncing to speed up processing
 "
-if !exists("perl_no_sync_on_sub")
+if !get(g:, 'perl_no_sync_on_sub', 0)
   syn sync match perlSync	grouphere NONE "^\s*\<package\s"
   syn sync match perlSync	grouphere NONE "^\s*\<sub\>"
   syn sync match perlSync	grouphere NONE "^}"
 endif
 
-if !exists("perl_no_sync_on_global_var")
+if !get(g:, 'perl_no_sync_on_global_var', 0)
   syn sync match perlSync	grouphere NONE "^$\I[[:alnum:]_:]+\s*=\s*{"
   syn sync match perlSync	grouphere NONE "^[@%]\I[[:alnum:]_:]+\s*=\s*("
 endif
 
-if exists("perl_sync_dist")
+if get(g:, 'perl_sync_dist', 0)
   execute "syn sync maxlines=" . perl_sync_dist
 else
   syn sync maxlines=100
