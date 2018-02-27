@@ -425,7 +425,6 @@ if get(g:, 'perl_fold', 0)
     syn region perlBlockFold start="^\z(\s*\)\%(do\|else\)\%(\s*{\)\=\s*\%(#.*\)\=$" end="^\z1}\s*while" end="^\z1}\s*;\=\%(#.*\)\=$" transparent fold keepend
   endif
 
-  setlocal foldmethod=syntax
   syn sync fromstart
 else
   " fromstart above seems to set minlines even if perl_fold is not set.
