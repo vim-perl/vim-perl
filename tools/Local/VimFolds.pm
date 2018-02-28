@@ -26,9 +26,10 @@ sub new {
     my ( $class, %params ) = @_;
 
     if(my $options = $params{'options'}) {
-        $params{'script_before'} = join(' | ', map {
-            "let $_=" . $options->{$_}
-        } keys %$options);
+        $params{'script_before'} = join(' | ',
+            'set foldmethod=syntax',
+            map { "let $_=" . $options->{$_} } keys %$options,
+        );
     }
 
     if(my $tty = $params{'debug_tty'}) {
