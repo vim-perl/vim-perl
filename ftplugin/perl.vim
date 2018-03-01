@@ -42,6 +42,10 @@ setlocal iskeyword+=:
 "       set isfname-=:
 set isfname+=:
 
+if get(g:, 'perl_fold', 1)
+  setlocal foldmethod=syntax
+endif
+
 " Set this once, globally.
 if !exists("perlpath")
     if executable("perl")
