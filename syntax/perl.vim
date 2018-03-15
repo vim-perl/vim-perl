@@ -334,7 +334,7 @@ syn region perlHereDocStart	matchgroup=perlStringStartEnd start=+<<\(\~\)\{0,1}\
 syn region perlHereDocStart	matchgroup=perlStringStartEnd start=+<<\(\~\)\{0,1}\s*'\z([^\\']*\%(\\.[^\\']*\)*\)'+ end=+$+ contains=@perlTop oneline
 syn region perlHereDocStart	matchgroup=perlStringStartEnd start=+<<\(\~\)\{0,1}\s*""+       end=+$+     contains=@perlTop oneline
 syn region perlHereDocStart	matchgroup=perlStringStartEnd start=+<<\(\~\)\{0,1}\s*''+       end=+$+     contains=@perlTop oneline
-if exists("perl_fold")
+if get(g:, 'perl_fold', 0)
   syn region perlHereDoc	start=+<<\(\~\)\{0,1}\z(\I\i*\)+ matchgroup=perlStringStartEnd      end=+^\s*\z1$+ contains=perlHereDocStart,@perlInterpDQ fold extend
   syn region perlHereDoc	start=+<<\(\~\)\{0,1}\s*"\z([^\\"]*\%(\\.[^\\"]*\)*\)"+ matchgroup=perlStringStartEnd end=+^\s*\z1$+ contains=perlHereDocStart,@perlInterpDQ fold extend
   syn region perlHereDoc	start=+<<\(\~\)\{0,1}\s*'\z([^\\']*\%(\\.[^\\']*\)*\)'+ matchgroup=perlStringStartEnd end=+^\s*\z1$+ contains=perlHereDocStart,@perlInterpSQ fold extend
