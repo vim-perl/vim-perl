@@ -56,6 +56,14 @@ print <<RandomID;
 here document
 RandomID
 
+do {
+    print <<'EOF' if $true;
+    Here document
+    EOF
+$true
+EOF
+}
+
 # Don't fold
 #
 sub x;
