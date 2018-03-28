@@ -1,6 +1,7 @@
 " Highlight Javascript and CSS in Mason methods
 " Maintainer:   vim-perl <vim-perl@groups.google.com>
 " Installation: Put into after/syntax/mason/js-css-in-mason.vim
+" License: Vim License (see :help license)
 
 " highlight Javascript inside <%method js_inline>
 unlet b:current_syntax

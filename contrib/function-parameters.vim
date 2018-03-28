@@ -1,6 +1,7 @@
 " Perl highlighting and folding for Function::Parameters keywords
 " Maintainer:   vim-perl <vim-perl@groups.google.com>
 " Installation: Put into after/syntax/perl/function-parameters.vim
+" License: Vim License (see :help license)
 
 syn match perlFunction +\<method\>\_s*+ nextgroup=perlSubName
 syn match perlFunction +\<fun\>\_s*+ nextgroup=perlSubName
