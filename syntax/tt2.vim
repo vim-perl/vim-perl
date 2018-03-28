@@ -2,6 +2,7 @@
 " Maintainer:    vim-perl <vim-perl@googlegroups.com>
 " Author:        Moriki, Atsushi <4woods+vim@gmail.com>
 " Homepage:      http://github.com/vim-perl/vim-perl
+" License: Vim License (see :help license)
 " Bugs/requests: http://github.com/vim-perl/vim-perl/issues
 " Last Change:   {{LAST_CHANGE}}
 "
@@ -42,9 +43,6 @@
 "               Release
 "           0.1.0
 "               Internal
-"
-" License: follow Vim :help uganda
-"
 
 if !exists("b:tt2_syn_tags")
     let b:tt2_syn_tags = '\[% %]'

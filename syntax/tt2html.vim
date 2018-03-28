@@ -3,6 +3,7 @@
 " Author:        Moriki, Atsushi <4woods+vim@gmail.com>
 " Homepage:      http://github.com/vim-perl/vim-perl
 " Bugs/requests: http://github.com/vim-perl/vim-perl/issues
+" License: Vim License (see :help license)
 " Last Change:   {{LAST_CHANGE}}
 
 if exists("b:current_syntax")

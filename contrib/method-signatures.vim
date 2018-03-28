@@ -1,6 +1,7 @@
 " Perl highlighting and folding for Method::Signatures keywords
 " Maintainer:   vim-perl <vim-perl@groups.google.com>
 " Installation: Put into after/syntax/perl/method-signatures.vim
+" License: Vim License (see :help license)
 
 syn match perlFunction +\<method\>\_s*+ nextgroup=perlSubName
 syn match perlFunction +\<func\>\_s*+ nextgroup=perlSubName

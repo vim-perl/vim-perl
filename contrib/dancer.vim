@@ -1,6 +1,7 @@
 " Perl highlighting for Dancer keywords
 " Maintainer:   vim-perl <vim-perl@groups.google.com>
 " Installation: Put into after/syntax/perl/dancer.vim
+" License: Vim License (see :help license)
 
 " XXX include guard
 

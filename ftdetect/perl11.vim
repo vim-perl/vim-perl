@@ -1,3 +1,5 @@
+" License: Vim License (see :help license)
+
 function! s:DetectPerl6()
   let line_no = 1
   let eof     = line('$')
