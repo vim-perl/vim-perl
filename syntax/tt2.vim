@@ -155,7 +155,7 @@ syn match   tt2_operator  "[!=<>]=\=\|&&\|||"               contained
 syn match   tt2_operator  "\(\s\)\@<=_\(\s\)\@="            contained
 syn match   tt2_operator  "=>\|,"                           contained
 syn match   tt2_deref     "\([[:alnum:]_)\]}]\s*\)\@<=\."   contained
-syn match   tt2_comment   +#.*$+                            contained extend
+syn match   tt2_comment   +#.*$+                            contained
 syn match   tt2_func      +\<\I\w*\(\s*(\)\@=+              contained nextgroup=tt2_bracket_r skipempty skipwhite
 "
 syn region  tt2_bracket_r  start=+(+ end=+)+                contained contains=@tt2_statement_cluster keepend extend
