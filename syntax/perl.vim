@@ -384,7 +384,7 @@ syn keyword perlStatementPackage	package contained
 "
 syn match perlSubError "[^[:space:];{#]" contained
 syn match perlSubAttributesCont "\h\w*\_s*\%(:\_s*\)\=" nextgroup=@perlSubAttrMaybe contained
-syn region perlSubAttributesCont matchgroup=perlSubAttributesCont start="\h\w*(" end=")\_s*\%(:\_s*\)\=" nextgroup=@perlSubAttrMaybe contained contains=@perlInterpSQ,perlParensSQ
+syn region perlSubAttributesCont matchgroup=perlSubAttributesCont start="\h\w*(" end=")\_s*\%(:\_s*\)\=" nextgroup=@perlSubAttrMaybe,perlSignature contained contains=@perlInterpSQ,perlParensSQ
 syn cluster perlSubAttrMaybe contains=perlSubAttributesCont,perlSubError,perlFakeGroup
 syn match perlSubAttributes "" contained nextgroup=perlSubError
 syn match perlSubAttributes ":\_s*" contained nextgroup=@perlSubAttrMaybe
