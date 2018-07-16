@@ -72,6 +72,23 @@ sub subtract($x, $y) { # {{{
 } # }}}
 END_PERL
 
+$folds = Local::VimFolds->new(
+    language => 'perl',
+    options  => {
+        perl_fold                => 1,
+        perl_fold_anonymous_subs => 1,
+    },
+);
+
+$folds->folds_match(<<'END_PERL', 'test folds when method calls contain a post-deref slice');
+sub add_domain_filter ( $self, $domain_filter ) { # {{{
+    my $index = {};
+
+    $index->@{ $DOMAIN_FILTER->@*, $domain_filter->@* } = ();
+
+    return;
+} # }}}
+END_PERL
 
 # block fold tests - I know these don't really belong here, but we can
 # break them out into a new file if they get extended
