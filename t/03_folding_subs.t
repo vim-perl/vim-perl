@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use lib 'tools';
 
-use Test::More tests => 5;
+use Test::More tests => 6;
 use Local::VimFolds;
 
 my $folds = Local::VimFolds->new(
@@ -62,10 +62,7 @@ $folds = Local::VimFolds->new(
     },
 );
 
-TODO: {
-    local $TODO = q{Prototypes and folding don't really mix};
-
-    $folds->folds_match(<<'END_PERL', 'test folds for subs with signatures');
+$folds->folds_match(<<'END_PERL', 'test folds for subs with signatures');
 sub add($x, $y) { # {{{
     return $x + $y;
 } # }}}
@@ -74,7 +71,7 @@ sub subtract($x, $y) { # {{{
     return $x - $y;
 } # }}}
 END_PERL
-}
+
 
 # block fold tests - I know these don't really belong here, but we can
 # break them out into a new file if they get extended
