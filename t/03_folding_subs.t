@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use lib 'tools';
 
-use Test::More tests => 6;
+use Test::More tests => 7;
 use Local::VimFolds;
 
 my $folds = Local::VimFolds->new(
@@ -113,3 +113,28 @@ foreach my $i (@list) { # {{{
 } # }}}
 END_PERL
 }
+
+$folds = Local::VimFolds->new(
+    language => 'perl',
+    options  => {
+        perl_fold                  => 1,
+        perl_nofold_packages       => 1,
+        perl_fold_anonymous_subs   => 1,
+        perl_no_subprototype_error => 1,
+        perl_sub_signatures        => 1,
+    },
+);
+
+$folds->folds_match(<<'END_PERL', 'test folds with signatures and multiple attributes');
+sub asas::asdsad::adsa : prototype() : lvalue : method ($d) { # {{{
+    return;
+} # }}}
+
+sub asdsad : prototype() : lvalue : method($d) { # {{{
+    my $s = sub : prototype($$) ( $a, $v ) { # {{{
+        return;
+    }; # }}}
+
+    return;
+} # }}}
+END_PERL
