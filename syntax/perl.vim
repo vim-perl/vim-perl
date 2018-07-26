@@ -383,11 +383,11 @@ syn keyword perlStatementPackage	package contained
 "       sub [name] [(prototype)] {
 "
 syn match perlSubError "[^[:space:];{#]" contained
-syn match perlSubAttributesCont "\h\w*\_s*\%(:\_s*\)\=" nextgroup=@perlSubAttrMaybe contained
+syn match perlSubAttributesCont "\h\w*\_s*\%(:\_s*\)\=" nextgroup=@perlSubAttrMaybe,perlSignature contained
 syn region perlSubAttributesCont matchgroup=perlSubAttributesCont start="\h\w*(" end=")\_s*\%(:\_s*\)\=" nextgroup=@perlSubAttrMaybe,perlSignature contained contains=@perlInterpSQ,perlParensSQ
 syn cluster perlSubAttrMaybe contains=perlSubAttributesCont,perlSubError,perlFakeGroup
 syn match perlSubAttributes "" contained nextgroup=perlSubError
-syn match perlSubAttributes ":\_s*" contained nextgroup=@perlSubAttrMaybe
+syn match perlSubAttributes ":\_s*" contained nextgroup=@perlSubAttrMaybe,perlSignature
 if get(g:, "perl_sub_signatures", 0)
     syn match perlSignature +(\_[^)]*)\_s*+ nextgroup=perlSubAttributes,perlComment contained
 else
