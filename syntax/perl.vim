@@ -387,7 +387,7 @@ else
 endif
 
 syn match perlSubAttribute "\s*:\s*\h\w*\%(([^)]*)\|\)" contained
-syn match perlSubName "\%(\h\|::\|'\w\)\%(\w\|::\|'\w\)*\s*" contained nextgroup=perlSubDeclaration
+syn match perlSubName "\%(\h\|::\|'\w\)\%(\w\|::\|'\w\)*\s*" contained
 syn match perlSubDeclaration "\_.\{-}[{;]" contained contains=perlSubName,perlSubPrototype,perlSubAttribute,perlSubSignature,perlComment transparent
 syn match perlFunction "\<sub\>\s*" nextgroup=perlSubDeclaration
 
@@ -429,11 +429,13 @@ if get(g:, 'perl_fold', 0)
   if !get(g:, 'perl_nofold_subs', 0)
     if get(g:, "perl_fold_anonymous_subs", 0)
       syn region perlSubFold start="\<sub\>\_[^;]\{-}{" end="}" transparent fold keepend extend
-      syn region perlSubFold start="\<\%(BEGIN\|END\|CHECK\|INIT\)\>\_s*{" end="}" transparent fold keepend
     else
+      " TODO regexp is unclear and may not work properly in all cases
+      " TODO do we reallt need perl_fold_anonymous_subs option??? 
       syn region perlSubFold     start="^\z(\s*\)\<sub\>.*[^};]$" end="^\z1}\s*\%(#.*\)\=$" transparent fold keepend
-      syn region perlSubFold start="^\z(\s*\)\<\%(BEGIN\|END\|CHECK\|INIT\|UNITCHECK\)\>.*[^};]$" end="^\z1}\s*$" transparent fold keepend
     endif
+
+    syn region perlSubFold start="\<\%(BEGIN\|END\|CHECK\|INIT\|UNITCHECK\)\>\_s*{" end="}" transparent fold keepend
   endif
 
   if get(g:, 'perl_fold_blocks', 0)
