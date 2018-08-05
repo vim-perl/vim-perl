@@ -430,8 +430,8 @@ if get(g:, 'perl_fold', 0)
     if get(g:, "perl_fold_anonymous_subs", 0)
       syn region perlSubFold start="\<sub\>\_[^;]\{-}{" end="}" transparent fold keepend extend
     else
-      " TODO regexp is unclear and may not work properly in all cases
-      " TODO do we reallt need perl_fold_anonymous_subs option??? 
+      " TODO regexp is not clear and may not work properly in all cases
+      " TODO do we really need perl_fold_anonymous_subs option??? 
       syn region perlSubFold     start="^\z(\s*\)\<sub\>.*[^};]$" end="^\z1}\s*\%(#.*\)\=$" transparent fold keepend
     endif
 
@@ -440,7 +440,14 @@ if get(g:, 'perl_fold', 0)
 
   if get(g:, 'perl_fold_blocks', 0)
     syn region perlBlockFold start="^\z(\s*\)\%(if\|elsif\|unless\|for\|while\|until\|given\)\s*(.*)\%(\s*{\)\=\s*\%(#.*\)\=$" start="^\z(\s*\)for\%(each\)\=\s*\%(\%(my\|our\)\=\s*\S\+\s*\)\=(.*)\%(\s*{\)\=\s*\%(#.*\)\=$" end="^\z1}\s*;\=\%(#.*\)\=$" transparent fold keepend
+
+    " TODO this is works incorrectly
     syn region perlBlockFold start="^\z(\s*\)\%(do\|else\)\%(\s*{\)\=\s*\%(#.*\)\=$" end="^\z1}\s*while" end="^\z1}\s*;\=\%(#.*\)\=$" transparent fold keepend
+  else
+    if get(g:, 'perl_fold_do_blocks', 0)
+      syn match perlOperator "\<do\>\_.\{-}{" contains=perlComment extend
+      syn region perlDoBlockFold start="\<do\>\_.\{-}{" end="}" transparent fold keepend
+    endif
   endif
 
   syn sync fromstart
