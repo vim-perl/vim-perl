@@ -380,24 +380,16 @@ syn match   perlPackageDecl		"\<package\s\+\%(\h\|::\)\%(\w\|::\)*" contains=per
 syn keyword perlStatementPackage	package contained
 
 " Functions
-"       sub [name] [(prototype)] {
-"
-syn match perlSubError "[^[:space:];{#]" contained
-syn match perlSubAttributesCont "\h\w*\_s*\%(:\_s*\)\=" nextgroup=@perlSubAttrMaybe,perlSignature contained
-syn region perlSubAttributesCont matchgroup=perlSubAttributesCont start="\h\w*(" end=")\_s*\%(:\_s*\)\=" nextgroup=@perlSubAttrMaybe,perlSignature contained contains=@perlInterpSQ,perlParensSQ
-syn cluster perlSubAttrMaybe contains=perlSubAttributesCont,perlSubError,perlFakeGroup
-syn match perlSubAttributes "" contained nextgroup=perlSubError
-syn match perlSubAttributes ":\_s*" contained nextgroup=@perlSubAttrMaybe,perlSignature
 if get(g:, "perl_sub_signatures", 0)
-    syn match perlSignature +(\_[^)]*)\_s*+ nextgroup=perlSubAttributes,perlComment contained
+    syn match perlSubSignature "\s*([^)]*)" contained
 else
-    syn match perlSubPrototypeError "(\%(\_s*\%(\%(\\\%([$@%&*]\|\[[$@%&*]\+\]\)\|[$&*]\|[@%]\%(\_s*)\)\@=\|;\%(\_s*[)$@%&*\\]\)\@=\|_\%(\_s*[);]\)\@=\)\_s*\)*\)\@>\zs\_[^)]\+" contained
-    syn match perlSubPrototype +(\_[^)]*)\_s*+ nextgroup=perlSubAttributes,perlComment contained contains=perlSubPrototypeError
+    syn match perlSubPrototype "\s*([^)]*)" contained
 endif
 
-syn match perlSubName +\%(\h\|::\|'\w\)\%(\w\|::\|'\w\)*\_s*\|+ contained nextgroup=perlSubPrototype,perlSignature,perlSubAttributes,perlComment
-
-syn match perlFunction +\<sub\>\_s*+ nextgroup=perlSubName
+syn match perlSubAttribute "\s*:\s*\h\w*\%(([^)]*)\|\)" contained
+syn match perlSubName "\%(\h\|::\|'\w\)\%(\w\|::\|'\w\)*\s*" contained nextgroup=perlSubDeclaration
+syn match perlSubDeclaration "\_.\{-}[{;]" contained contains=perlSubName,perlSubPrototype,perlSubAttribute,perlSubSignature,perlComment transparent
+syn match perlFunction "\<sub\>\s*" nextgroup=perlSubDeclaration
 
 " The => operator forces a bareword to the left of it to be interpreted as
 " a string
@@ -427,7 +419,6 @@ endif
 
 "
 " Folding
-
 if get(g:, 'perl_fold', 0)
   " Note: this bit must come before the actual highlighting of the "package"
   " keyword, otherwise this will screw up Pod lines that match /^package/
@@ -437,8 +428,8 @@ if get(g:, 'perl_fold', 0)
   endif
   if !get(g:, 'perl_nofold_subs', 0)
     if get(g:, "perl_fold_anonymous_subs", 0)
-      syn region perlSubFold start="\<sub\>[^{]*{" end="}" transparent fold keepend extend
-      syn region perlSubFold start="\<\%(BEGIN\|END\|CHECK\|INIT\)\>\s*{" end="}" transparent fold keepend
+      syn region perlSubFold start="\<sub\>\_[^;]\{-}{" end="}" transparent fold keepend extend
+      syn region perlSubFold start="\<\%(BEGIN\|END\|CHECK\|INIT\)\>\_s*{" end="}" transparent fold keepend
     else
       syn region perlSubFold     start="^\z(\s*\)\<sub\>.*[^};]$" end="^\z1}\s*\%(#.*\)\=$" transparent fold keepend
       syn region perlSubFold start="^\z(\s*\)\<\%(BEGIN\|END\|CHECK\|INIT\|UNITCHECK\)\>.*[^};]$" end="^\z1}\s*$" transparent fold keepend
@@ -478,9 +469,8 @@ hi def link perlOperator		Operator
 hi def link perlFunction		Keyword
 hi def link perlSubName		Function
 hi def link perlSubPrototype		Type
-hi def link perlSignature		Type
-hi def link perlSubAttributes	PreProc
-hi def link perlSubAttributesCont	perlSubAttributes
+hi def link perlSubSignature		Type
+hi def link perlSubAttribute	PreProc
 hi def link perlComment		Comment
 hi def link perlTodo			Todo
 if get(g:, 'perl_string_as_statement', 0)
@@ -571,8 +561,6 @@ hi def link perlSpecialStringU2	perlString
 " Possible errors
 hi def link perlNotEmptyLine		Error
 hi def link perlElseIfError		Error
-hi def link perlSubPrototypeError	Error
-hi def link perlSubError		Error
 
 " Syncing to speed up processing
 "
