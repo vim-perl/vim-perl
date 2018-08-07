@@ -381,15 +381,14 @@ syn keyword perlStatementPackage	package contained
 
 " Functions
 if get(g:, "perl_sub_signatures", 0)
-    syn match perlSubSignature "\s*([^)]*)" contained
+    syn match perlSubSignature "\s*([^)]*)" contained extend
 else
-    syn match perlSubPrototype "\s*([^)]*)" contained
+    syn match perlSubPrototype "\s*([\\$@%&*\[\];]*)" contained extend
 endif
-
-syn match perlSubAttribute "\s*:\s*\h\w*\%(([^)]*)\|\)" contained
-syn match perlSubName "\%(\h\|::\|'\w\)\%(\w\|::\|'\w\)*\s*" contained
-syn match perlSubDeclaration "\_.\{-}[{;]" contained contains=perlSubName,perlSubPrototype,perlSubAttribute,perlSubSignature,perlComment transparent
-syn match perlFunction "\<sub\>\s*" nextgroup=perlSubDeclaration
+syn match perlSubAttribute "\s*:\s*\h\w*\%(([^)]*)\|\)" contained extend
+syn match perlSubName "\%(\h\|::\|'\w\)\%(\w\|::\|'\w\)*\s*" contained extend
+syn region perlSubDeclaration start="" end="[;{]" contains=perlSubName,perlSubPrototype,perlSubAttribute,perlSubSignature,perlComment contained transparent
+syn match perlFunction "\<sub\>\_s*" nextgroup=perlSubDeclaration
 
 " The => operator forces a bareword to the left of it to be interpreted as
 " a string
@@ -428,11 +427,18 @@ if get(g:, 'perl_fold', 0)
   endif
   if !get(g:, 'perl_nofold_subs', 0)
     if get(g:, "perl_fold_anonymous_subs", 0)
-      syn region perlSubFold start="\<sub\>\_[^;]\{-}{" end="}" transparent fold keepend extend
+      " EXPLANATION:
+      " \<sub\>                  - "sub" keyword
+      " \_[^;{]*                 - any characters, including new line, but not ";" or "{", zero or more times
+      " \%(([\\$@%&*\[\];]*)\)\= - prototype definition, \$@%&*[]; characters between (), zero or 1 times
+      " \_[^;]*                  - any characters, including new line, but not ";", zero or more times
+      " {                        - start subroutine block
+      syn region perlSubFold start="\<sub\>\_[^;{]*\%(([\\$@%&*\[\];]*)\)\=\_[^;]*{" end="}" transparent fold keepend extend
     else
-      " TODO regexp is not clear and may not work properly in all cases
-      " TODO do we really need perl_fold_anonymous_subs option??? 
-      syn region perlSubFold     start="^\z(\s*\)\<sub\>.*[^};]$" end="^\z1}\s*\%(#.*\)\=$" transparent fold keepend
+      " EXPLANATION:
+      " same, as above, but first non-space character after "sub" keyword must
+      " be [A-Za-z_] 
+      syn region perlSubFold start="\<sub\>\s*\h\_[^;{]*\%(([\\$@%&*\[\];]*)\)\=\_[^;]*{" end="}" transparent fold keepend extend
     endif
 
     syn region perlSubFold start="\<\%(BEGIN\|END\|CHECK\|INIT\|UNITCHECK\)\>\_s*{" end="}" transparent fold keepend
