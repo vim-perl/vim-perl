@@ -451,8 +451,10 @@ if get(g:, 'perl_fold', 0)
     syn region perlBlockFold start="^\z(\s*\)\%(do\|else\)\%(\s*{\)\=\s*\%(#.*\)\=$" end="^\z1}\s*while" end="^\z1}\s*;\=\%(#.*\)\=$" transparent fold keepend
   else
     if get(g:, 'perl_fold_do_blocks', 0)
-      " syn match perlOperator "\<do\>\_.\{-}{" contains=perlComment extend
-      " syn region perlDoBlockFold start="\<do\>\_.\{-}{" end="}" transparent fold keepend
+      syn region perlDoBlockDeclaration start="" end="{" contains=perlComment contained transparent
+      syn match perlOperator "\<do\>\_s*" nextgroup=perlDoBlockDeclaration
+
+      syn region perlDoBlockFold start="\<do\>\_[^{]*{" end="}" transparent fold keepend extend
     endif
   endif
 
