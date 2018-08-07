@@ -431,9 +431,9 @@ if get(g:, 'perl_fold', 0)
       " \<sub\>                  - "sub" keyword
       " \_[^;{]*                 - any characters, including new line, but not ";" or "{", zero or more times
       " \%(([\\$@%&*\[\];]*)\)\= - prototype definition, \$@%&*[]; characters between (), zero or 1 times
-      " \_[^;]*                  - any characters, including new line, but not ";", zero or more times
+      " \_[^;]*                  - any characters, including new line, but not ";" or "{", zero or more times
       " {                        - start subroutine block
-      syn region perlSubFold start="\<sub\>\_[^;{]*\%(([\\$@%&*\[\];]*)\)\=\_[^;]*{" end="}" transparent fold keepend extend
+      syn region perlSubFold start="\<sub\>\_[^;{]*\%(([\\$@%&*\[\];]*)\)\=\_[^;{]*{" end="}" transparent fold keepend extend
     else
       " EXPLANATION:
       " same, as above, but first non-space character after "sub" keyword must
@@ -451,8 +451,8 @@ if get(g:, 'perl_fold', 0)
     syn region perlBlockFold start="^\z(\s*\)\%(do\|else\)\%(\s*{\)\=\s*\%(#.*\)\=$" end="^\z1}\s*while" end="^\z1}\s*;\=\%(#.*\)\=$" transparent fold keepend
   else
     if get(g:, 'perl_fold_do_blocks', 0)
-      syn match perlOperator "\<do\>\_.\{-}{" contains=perlComment extend
-      syn region perlDoBlockFold start="\<do\>\_.\{-}{" end="}" transparent fold keepend
+      " syn match perlOperator "\<do\>\_.\{-}{" contains=perlComment extend
+      " syn region perlDoBlockFold start="\<do\>\_.\{-}{" end="}" transparent fold keepend
     endif
   endif
 
