@@ -63,6 +63,8 @@ You can also populate the local `after/syntax/perl/` via `make`:
     $ ls after/syntax/perl
     dancer.vim  moose.vim
 
+This local copy of after will be concidered by a later `make install`
+
 ## Curly braces inside of regexes/strings are considered when I use %
 
 (See also [GH #86](https://github.com/vim-perl/vim-perl/issues/86))

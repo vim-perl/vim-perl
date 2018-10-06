@@ -1,5 +1,6 @@
 PREFIX?=$(HOME)/.vim
 
+AFTERPERL=$(PREFIX)/after/syntax/perl
 FTPLUGIN=$(PREFIX)/ftplugin
 INDENT=$(PREFIX)/indent
 SYNTAX=$(PREFIX)/syntax
@@ -8,9 +9,11 @@ TOOLS=$(PREFIX)/tools
 default: preproc
 
 dirs:
+	if [ -d after/syntax/perl ]; then mkdir -p $(AFTERPERL); fi
 	mkdir -p $(FTPLUGIN) $(INDENT) $(SYNTAX) $(TOOLS)
 
 install: dirs
+	if [ -d after/syntax/perl ]; then cp after/syntax/perl/*.vim $(AFTERPERL)/; fi
 	cp ftplugin/*.vim    $(FTPLUGIN)/
 	cp indent/*.vim      $(INDENT)/
 	cp syntax/*.vim      $(SYNTAX)/
