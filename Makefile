@@ -34,6 +34,9 @@ carp: contrib_syntax
 dancer: contrib_syntax
 	cp contrib/dancer.vim after/syntax/perl/
 
+function-parameters: contrib_syntax
+	cp contrib/function-parameters.vim after/syntax/perl/
+
 heredoc-sql-mason: contrib_syntax
 	cp contrib/heredoc-sql-mason.vim after/syntax/perl/
 
