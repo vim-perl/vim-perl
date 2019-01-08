@@ -31,17 +31,10 @@ endif
 
 " Provided by Ned Konz <ned at bike-nomad dot com>
 "---------------------------------------------
-setlocal include=\\<\\(use\\\|require\\)\\>
+setlocal include=\\v^\\s*(use\|require)\\s+\\zs(\\f\|:)+
 setlocal includeexpr=substitute(substitute(substitute(v:fname,'::','/','g'),'->\*','',''),'$','.pm','')
 setlocal define=[^A-Za-z_]
 setlocal iskeyword+=:
-
-" The following line changes a global variable but is necessary to make
-" gf and similar commands work. Thanks to Andrew Pimlott for pointing
-" out the problem. If this causes a problem for you, add an
-" after/ftplugin/perl.vim file that contains
-"       set isfname-=:
-set isfname+=:
 
 if get(g:, 'perl_fold', 1)
   setlocal foldmethod=syntax
