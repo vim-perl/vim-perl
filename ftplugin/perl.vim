@@ -43,7 +43,7 @@ setlocal iskeyword+=:
 "       set isfname-=:
 set isfname+=:
 
-if get(g:, 'perl_fold', 1)
+if get(g:, 'perl_fold', 0)
   setlocal foldmethod=syntax
 endif
 
