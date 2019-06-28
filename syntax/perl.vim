@@ -94,7 +94,7 @@ syn keyword perlStatementVector		vec
 syn keyword perlStatementFiles		chdir chmod chown chroot glob link mkdir readlink rename rmdir symlink umask unlink utime
 syn keyword perlStatementFlow		caller die dump eval exit wantarray evalbytes 
 syn keyword perlStatementInclude	require import unimport 
-syn keyword perlStatementProc		alarm exec fork getpgrp getppid getpriority kill pipe setpgrp setpriority sleep system times waitwaitpid
+syn keyword perlStatementProc		alarm exec fork getpgrp getppid getpriority kill pipe setpgrp setpriority sleep system times wait waitpid
 syn keyword perlStatementSocket		accept bind connect getpeername getsockname getsockopt listen recv send setsockopt shutdown socket socketpair
 syn keyword perlStatementIPC		msgctl msgget msgrcv msgsnd semctl semget semop shmctl shmget shmread shmwrite
 syn keyword perlStatementNetwork	sethostent endnetent endprotoent endservent sethostent setnetent setprotoent setservent gethostent getnetent getprotoent getservent
