@@ -4,6 +4,6 @@
 " License: Vim License (see :help license)
 
 " XXX include guard
-syntax match perlStatementProc "\<\%(try\|catch\|finally\)\>"
+syntax keyword perlStatementProc try catch finally
 
 " XXX catch instances where you forget the semicolon after the closing brace?

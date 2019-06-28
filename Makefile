@@ -43,6 +43,9 @@ heredoc-sql: contrib_syntax
 highlight-all-pragmas: contrib_syntax
 	cp contrib/highlight-all-pragmas.vim after/syntax/perl/
 
+inline: contrib_syntax
+	cp contrib/inline.vim after/syntax/perl
+
 js-css-in-mason: contrib_syntax
 	cp contrib/js-css-in-mason.vim after/syntax/perl/
 

@@ -19,19 +19,18 @@
 " The following parameters are available for tuning the
 " perl syntax highlighting, with defaults given:
 "
-" let perl_include_pod = 1
-" unlet perl_no_scope_in_variables
-" unlet perl_no_extended_vars
-let g:perl_string_as_statement = 1
-" unlet perl_no_sync_on_sub
-" unlet perl_no_sync_on_global_var
-" let perl_sync_dist = 100
-" unlet perl_fold
-" unlet perl_fold_blocks
-" unlet perl_nofold_packages
-" unlet perl_nofold_subs
-" unlet perl_fold_anonymous_subs
-" unlet perl_no_subprototype_error
+" let g:perl_include_pod = 1
+" unlet g:perl_no_scope_in_variables
+" unlet g:perl_no_extended_vars
+" unlet g:perl_string_as_statement
+" unlet g:perl_no_sync_on_sub
+" unlet g:perl_no_sync_on_global_var
+" let g:perl_sync_dist = 100
+" unlet g:perl_fold
+" unlet g:perl_fold_blocks
+" unlet g:perl_nofold_packages
+" unlet g:perl_nofold_subs
+" unlet g:perl_fold_anonymous_subs
 
 if exists('b:current_syntax')
   finish
@@ -86,19 +85,18 @@ syn keyword perlStatementNumeric	abs atan2 cos exp hex int log oct rand sin sqrt
 syn keyword perlStatementList		splice unshift shift push pop join reverse grep map sort unpack 
 syn keyword perlStatementHash		delete each exists keys values 
 syn keyword perlStatementIOfunc		syscall dbmopen dbmclose 
-syn match perlStatementFiledesc		"\<\%(binmode\|close\%(dir\)\=\|eof\|fileno\|getc\|lstat\|printf\=\|read\%(dir\|line\|pipe\)\|rewinddir\|say\|select\|stat\|tell\%(dir\)\=\|write\)\>" nextgroup=perlFiledescStatementNocomma skipwhite
-syn match perlStatementFiledesc		"\<\%(fcntl\|flock\|ioctl\|open\%(dir\)\=\|read\|seek\%(dir\)\=\|sys\%(open\|read\|seek\|write\)\|truncate\)\>" nextgroup=perlFiledescStatementComma skipwhite
+syn match   perlStatementFiledesc	"\<\%(binmode\|close\%(dir\)\=\|eof\|fileno\|getc\|lstat\|printf\=\|read\%(dir\|line\|pipe\)\|rewinddir\|say\|select\|stat\|tell\%(dir\)\=\|write\)\>" nextgroup=perlFiledescStatementNocomma skipwhite
+syn match   perlStatementFiledesc	"\<\%(fcntl\|flock\|ioctl\|open\%(dir\)\=\|read\|seek\%(dir\)\=\|sys\%(open\|read\|seek\|write\)\|truncate\)\>" nextgroup=perlFiledescStatementComma skipwhite
 syn keyword perlStatementVector		vec
 syn keyword perlStatementFiles		chdir chmod chown chroot glob link mkdir readlink rename rmdir symlink umask unlink utime
-syn match perlStatementFiles		"-[rwxoRWXOezsfdlpSbctugkTBMAC]\>"
+syn match   perlStatementFiles		"-[rwxoRWXOezsfdlpSbctugkTBMAC]\>"
 syn keyword perlStatementFlow		caller die dump eval exit wantarray evalbytes 
 syn keyword perlStatementInclude	require import unimport 
-syn match perlStatementInclude		"\<\%(use\|no\)\s\+\%(\%(attributes\|attrs\|autodie\|autouse\|parent\|base\|big\%(int\|num\|rat\)\|blib\|bytes\|charnames\|constant\|diagnostics\|encoding\%(::warnings\)\=\|feature\|fields\|filetest\|if\|integer\|less\|lib\|locale\|mro\|open\|ops\|overload\|overloading\|re\|sigtrap\|sort\|strict\|subs\|threads\%(::shared\)\=\|utf8\|vars\|version\|vmsish\|warnings\%(::register\)\=\)\>\)\="
-syn match perlStatementProc		"\<\%(alarm\|exec\|fork\|get\%(pgrp\|ppid\|priority\)\|kill\|pipe\|set\%(pgrp\|priority\)\|sleep\|system\|times\|wait\%(pid\)\=\)\>"
-syn match perlStatementSocket		"\<\%(accept\|bind\|connect\|get\%(peername\|sock\%(name\|opt\)\)\|listen\|recv\|send\|setsockopt\|shutdown\|socket\%(pair\)\=\)\>"
-syn match perlStatementIPC		"\v<%(msg%(ctl|get|rcv|snd)|sem%(ctl|get|op)|shm%(ctl|get|read|write))>"
-syn match perlStatementNetwork		"\v<%(%(end|[gs]et)%(host|net|proto|serv)ent|get%(%(host|net)by%(addr|name)|protoby%(name|number)|servby%(name|port)))>"
-" syn match perlStatementPword		'\v<%(get%(pw%(uid|nam)|gr%(gid|nam)|login))|%(end|[gs]et)%(pw|gr)ent>'
+syn match   perlStatementInclude	"\<\%(use\|no\)\s\+\%(\%(attributes\|attrs\|autodie\|autouse\|parent\|base\|big\%(int\|num\|rat\)\|blib\|bytes\|charnames\|constant\|diagnostics\|encoding\%(::warnings\)\=\|feature\|fields\|filetest\|if\|integer\|less\|lib\|locale\|mro\|open\|ops\|overload\|overloading\|re\|sigtrap\|sort\|strict\|subs\|threads\%(::shared\)\=\|utf8\|vars\|version\|vmsish\|warnings\%(::register\)\=\)\>\)\="
+syn match   perlStatementProc		"\<\%(alarm\|exec\|fork\|get\%(pgrp\|ppid\|priority\)\|kill\|pipe\|set\%(pgrp\|priority\)\|sleep\|system\|times\|wait\%(pid\)\=\)\>"
+syn keyword perlStatementSocket		accept bind connect getpeername getsockname getsockopt listen recv send setsockopt shutdown socket socketpair
+syn match   perlStatementIPC		"\v<%(msg%(ctl|get|rcv|snd)|sem%(ctl|get|op)|shm%(ctl|get|read|write))>"
+syn match   perlStatementNetwork	"\v<%(%(end|[gs]et)%(host|net|proto|serv)ent|get%(%(host|net)by%(addr|name)|protoby%(name|number)|servby%(name|port)))>"
 syn keyword perlStatementPword		getpwuid getpwnam getgrgid getgrnam getlogin endpwent endgrent getpwent getgrent setpwent setgrent
 syn keyword perlStatementTime		gmtime localtime time 
 
@@ -172,7 +170,7 @@ if !get(g:, 'perl_no_extended_vars', 0)
     syn match   perlPackageConst	"__PACKAGE__" nextgroup=perlPostDeref,perlSpecPostDeref
     syn match   perlPostDeref		"->\%($#\|[$@%&*]\)\*" contained nextgroup=perlVarSimpleMember,perlVarMember,perlPostDeref,perlSpecPostDeref
     syn region  perlPostDeref		start="->\%($#\|[$@%&*]\)\[" skip="\\]" end="]" contained contains=@perlExpr nextgroup=perlVarSimpleMember,perlVarMember,perlPostDeref,perlSpecPostDeref
-    syn region  perlPostDeref		matchgroup=perlPostDeref start="->\%($#\|[$@%&*]\){" skip="\\}" end="}" keepend extend contained contains=@perlExpr nextgroup=perlVarSimpleMember,perlVarMember,perlPostDeref,perlSpecPostDeref
+    syn region  perlPostDeref		matchgroup=perlPostDeref start="->\%($#\|[$@%&*]\){" skip="\\}" end="}" contained contains=@perlExpr nextgroup=perlVarSimpleMember,perlVarMember,perlPostDeref,perlSpecPostDeref
 endif
 
 " syn region perlArrow		matchgroup=perlArrow start="->\s*{" end="}" contains=@perlExpr nextgroup=perlVarMember,perlVarSimpleMember,perlPostDeref
@@ -183,14 +181,11 @@ syn match  perlFiledescStatementComma	"(\=\s*\<\u\w*\>\s*,"me=e-1       transpar
 syn match  perlFiledescStatementNocomma	"(\=\s*\<\u\w*\>\s*[^, \t]"me=e-1 transparent contained contains=perlFiledescStatement
 syn match  perlFiledescStatement	"\<\u\w*\>" contained
 
-
-" ADDED START: Special handling for capturing roups and for the '|' separator (ie 'or') symbol.
+" Special handling for capturing roups and for the '|' separator (ie 'or') symbol.
 syn region perlCaptureGroup 		matchgroup=MatchGroupStartEnd	start="(\([?!]\)\@!"   end=")" contained transparent
 syn region perlNonCaptureGroup 		matchgroup=MatchGroupStartEnd2	start="(?[#:=!]"       end=")" contained transparent
 syn region perlNonCaptureGroup 		matchgroup=MatchGroupStartEnd2	start="(?\%(<=\|<!\)"  end=")" contained transparent
 syn match  perlPatSep			"|" contained
-" ADDED END:
-"
 
 " Special characters in strings and matches
 syn match  perlSpecialString	"\\\%(\o\{1,3}\|x\%({\x\+}\|\x\{1,2}\)\|c.\|[^cx]\)" contained extend
@@ -345,8 +340,6 @@ syn region perlQQ		matchgroup=perlStringStartEnd start=+\<\%(::\|'\|->\)\@<!qr\s
 " XXX Any statements after the identifier are in perlString colour (i.e.
 " 'if $a' in 'print <<EOF if $a'). This is almost impossible to get right it
 " seems due to the 'auto-extending nature' of regions.
-" XXX Indented heredocs are not perfect - they sometimes seem to take a moment
-"     to update if switched from double to single quotes and vice versa.
 
 syn region perlHereDocStart	matchgroup=perlStringStartEnd start=+<<\z(\I\i*\)+                        end=+$+     contains=@perlTop oneline
 syn region perlHereDocStart	matchgroup=perlStringStartEnd start=+<<\s*"\z([^\\"]*\%(\\.[^\\"]*\)*\)"+ end=+$+     contains=@perlTop oneline
@@ -483,23 +476,14 @@ endif
 " NOTE: If you're linking new highlight groups to perlString, please also put
 "       them into b:match_skip in ftplugin/perl.vim.
 
-" SHITIADDED:
-" syn keyword perlModuleFunctions		basename realpath which move copy mv cp
-syn keyword perlStatementStorageExtra	new struct
-hi def link perlStatementStorageExtra	perlType
-hi def link perlStatementStorage	perlTypeSpec
-hi def link perlPatSep			SpecialChar
-hi def link perlModuleFunctions		perlStatement
-
-highlight default link perlCaptureGroup    SpecialChar
-highlight default link perlNonCaptureGroup SpecialChar
-highlight default link perlMultiModifiers  perlMulti
-highlight default link perlSpecialString   mutedFunc
-hi def link MatchGroupStartEnd		PerlSpecialChar
-hi def link MatchGroupStartEnd2		PerlSpecialChar2
-
-
-" hi def link perlSpecPostDeref		perlSpecDeref
+" Some new groups for regular expressions.
+" I would recommend setting these up to colors of your choosing by hand.
+" hi def link perlCaptureGroup		Operator
+" hi def link perlNonCaptureGroup		Operator
+hi def link perlPatSep			Keyword
+hi def link perlMultiModifiers		Special
+hi def link MatchGroupStartEnd		SpecialChar
+hi def link MatchGroupStartEnd2		SpecialChar
 
 " The default highlighting.
 hi def link perlSharpBang		PreProc
@@ -555,8 +539,8 @@ hi def link perlFormatField		perlString
 hi def link perlPackageDecl		perlType
 hi def link perlStorageClass		perlType
 hi def link perlPackageRef		perlType
+hi def link perlStatementStorage	perlType
 hi def link perlStatementPackage	perlStatement
-"hi def link perlStatementStorage	perlType
 hi def link perlStatementControl	perlStatement
 hi def link perlStatementScalar		perlStatement
 hi def link perlStatementRegexp		perlStatement
