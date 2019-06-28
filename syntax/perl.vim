@@ -77,32 +77,31 @@ syn match perlOperator			"\<\%(defined\|undef\|eq\|ne\|[gl][et]\|cmp\|not\|and\|
 " folding issues...
 syn match perlFakeGroup 		"" contained
 syn match perlControl			"\<\%(BEGIN\|CHECK\|INIT\|END\|UNITCHECK\)\>\_s*" nextgroup=perlFakeGroup
-
-syn match perlStatementStorage		"\<\%(my\|our\|local\|state\)\>"
-syn match perlStatementControl		"\<\%(return\|last\|next\|redo\|goto\|break\)\>"
-syn match perlStatementScalar		"\<\%(chom\=p\|chr\|crypt\|r\=index\|lc\%(first\)\=\|length\|ord\|pack\|sprintf\|substr\|fc\|uc\%(first\)\=\)\>"
-syn match perlStatementRegexp		"\<\%(pos\|quotemeta\|split\|study\)\>"
-syn match perlStatementNumeric		"\<\%(abs\|atan2\|cos\|exp\|hex\|int\|log\|oct\|rand\|sin\|sqrt\|srand\)\>"
-syn match perlStatementList		"\<\%(splice\|unshift\|shift\|push\|pop\|join\|reverse\|grep\|map\|sort\|unpack\)\>"
-syn match perlStatementHash		"\<\%(delete\|each\|exists\|keys\|values\)\>"
-syn match perlStatementIOfunc		"\<\%(syscall\|dbmopen\|dbmclose\)\>"
 syn match perlStatementFiledesc		"\<\%(binmode\|close\%(dir\)\=\|eof\|fileno\|getc\|lstat\|printf\=\|read\%(dir\|line\|pipe\)\|rewinddir\|say\|select\|stat\|tell\%(dir\)\=\|write\)\>" nextgroup=perlFiledescStatementNocomma skipwhite
 syn match perlStatementFiledesc		"\<\%(fcntl\|flock\|ioctl\|open\%(dir\)\=\|read\|seek\%(dir\)\=\|sys\%(open\|read\|seek\|write\)\|truncate\)\>" nextgroup=perlFiledescStatementComma skipwhite
-syn match perlStatementVector		"\<vec\>"
-syn match perlStatementFiles		"\<\%(ch\%(dir\|mod\|own\|root\)\|glob\|link\|mkdir\|readlink\|rename\|rmdir\|symlink\|umask\|unlink\|utime\)\>"
-syn match perlStatementFiles		"-[rwxoRWXOezsfdlpSbctugkTBMAC]\>"
-syn match perlStatementFlow		"\<\%(caller\|die\|dump\|eval\|exit\|wantarray\|evalbytes\)\>"
-syn match perlStatementInclude		"\<\%(require\|import\|unimport\)\>"
 syn match perlStatementInclude		"\<\%(use\|no\)\s\+\%(\%(attributes\|attrs\|autodie\|autouse\|parent\|base\|big\%(int\|num\|rat\)\|blib\|bytes\|charnames\|constant\|diagnostics\|encoding\%(::warnings\)\=\|feature\|fields\|filetest\|if\|integer\|less\|lib\|locale\|mro\|open\|ops\|overload\|overloading\|re\|sigtrap\|sort\|strict\|subs\|threads\%(::shared\)\=\|utf8\|vars\|version\|vmsish\|warnings\%(::register\)\=\)\>\)\="
-syn match perlStatementProc		"\<\%(alarm\|exec\|fork\|get\%(pgrp\|ppid\|priority\)\|kill\|pipe\|set\%(pgrp\|priority\)\|sleep\|system\|times\|wait\%(pid\)\=\)\>"
-syn match perlStatementSocket		"\<\%(accept\|bind\|connect\|get\%(peername\|sock\%(name\|opt\)\)\|listen\|recv\|send\|setsockopt\|shutdown\|socket\%(pair\)\=\)\>"
-syn match perlStatementIPC		"\<\%(msg\%(ctl\|get\|rcv\|snd\)\|sem\%(ctl\|get\|op\)\|shm\%(ctl\|get\|read\|write\)\)\>"
-syn match perlStatementNetwork		"\<\%(\%(end\|[gs]et\)\%(host\|net\|proto\|serv\)ent\|get\%(\%(host\|net\)by\%(addr\|name\)\|protoby\%(name\|number\)\|servby\%(name\|port\)\)\)\>"
-syn match perlStatementPword		"\<\%(get\%(pw\%(uid\|nam\)\|gr\%(gid\|nam\)\|login\)\)\|\%(end\|[gs]et\)\%(pw\|gr\)ent\>"
-syn match perlStatementTime		"\<\%(gmtime\|localtime\|time\)\>"
+syn match perlStatementFiles		"-[rwxoRWXOezsfdlpSbctugkTBMAC]\>"
 
-syn match perlStatementMisc		"\<\%(warn\|format\|formline\|reset\|scalar\|prototype\|lock\|tied\=\|untie\)\>"
-
+syn keyword perlStatementStorage	my our local state
+syn keyword perlStatementControl	return last next redo goto break 
+syn keyword perlStatementScalar		chop chomp chr crypt index rindex lc lcfirst length ord pack sprintf substr fc uc ucfirst
+syn keyword perlStatementRegexp		pos quotemeta split study 
+syn keyword perlStatementNumeric	abs atan2 cos exp hex int log oct rand sin sqrt srand 
+syn keyword perlStatementList		splice unshift shift push pop join reverse grep map sort unpack 
+syn keyword perlStatementHash		delete each exists keys values 
+syn keyword perlStatementIOfunc		syscall dbmopen dbmclose 
+syn keyword perlStatementVector		vec
+syn keyword perlStatementFiles		chdir chmod chown chroot glob link mkdir readlink rename rmdir symlink umask unlink utime
+syn keyword perlStatementFlow		caller die dump eval exit wantarray evalbytes 
+syn keyword perlStatementInclude	require import unimport 
+syn keyword perlStatementProc		alarm exec fork getpgrp getppid getpriority kill pipe setpgrp setpriority sleep system times waitwaitpid
+syn keyword perlStatementSocket		accept bind connect getpeername getsockname getsockopt listen recv send setsockopt shutdown socket socketpair
+syn keyword perlStatementIPC		msgctl msgget msgrcv msgsnd semctl semget semop shmctl shmget shmread shmwrite
+syn keyword perlStatementNetwork	sethostent endnetent endprotoent endservent sethostent setnetent setprotoent setservent gethostent getnetent getprotoent getservent
+syn keyword perlStatementNetwork	gethostbyaddr gethostbyname getnetbyaddr getnetbyname getprotobyname getprotobynumber getservbyname getservbyport
+syn keyword perlStatementPword		getpwuid getpwnam getgrgid getgrnam getlogin endpwent endgrent getpwent getgrent setpwent setgrent
+syn keyword perlStatementTime		gmtime localtime time 
+syn keyword perlStatementMisc		warn format formline reset scalar prototype lock tie tied untie 
 syn keyword perlTodo			TODO TODO: TBD TBD: FIXME FIXME: XXX XXX: NOTE NOTE: contained
 
 syn region perlStatementIndirObjWrap   matchgroup=perlStatementIndirObj start="\%(\<\%(map\|grep\|sort\|printf\=\|say\|system\|exec\)\>\s*\)\@<={" end="}" transparent extend

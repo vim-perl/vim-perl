@@ -3,4 +3,4 @@
 " Installation: Put into after/syntax/perl/carp.vim
 " License: Vim License (see :help license)
 
-syntax match perlStatementProc "\<\%(croak\|confess\|carp\|cluck\)\>"
+syntax keyword perlStatementProc croak confess carp cluck
