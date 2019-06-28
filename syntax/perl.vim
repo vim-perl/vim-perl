@@ -69,19 +69,18 @@ syn region perlBraces start="{" end="}" transparent extend
 
 " All keywords
 "
-syn match perlConditional		"\<\%(if\|elsif\|unless\|given\|when\|default\)\>"
-syn match perlConditional		"\<else\%(\%(\_s\*if\>\)\|\>\)" contains=perlElseIfError skipwhite skipnl skipempty
-syn match perlRepeat			"\<\%(while\|for\%(each\)\=\|do\|until\|continue\)\>"
-syn match perlOperator			"\<\%(defined\|undef\|eq\|ne\|[gl][et]\|cmp\|not\|and\|or\|xor\|not\|bless\|ref\|do\)\>"
-" for some reason, adding this as the nextgroup for perlControl fixes BEGIN
-" folding issues...
+" for some reason, adding this as the nextgroup for perlControl fixes BEGIN folding issues...
 syn match perlFakeGroup 		"" contained
 syn match perlControl			"\<\%(BEGIN\|CHECK\|INIT\|END\|UNITCHECK\)\>\_s*" nextgroup=perlFakeGroup
 syn match perlStatementFiledesc		"\<\%(binmode\|close\%(dir\)\=\|eof\|fileno\|getc\|lstat\|printf\=\|read\%(dir\|line\|pipe\)\|rewinddir\|say\|select\|stat\|tell\%(dir\)\=\|write\)\>" nextgroup=perlFiledescStatementNocomma skipwhite
 syn match perlStatementFiledesc		"\<\%(fcntl\|flock\|ioctl\|open\%(dir\)\=\|read\|seek\%(dir\)\=\|sys\%(open\|read\|seek\|write\)\|truncate\)\>" nextgroup=perlFiledescStatementComma skipwhite
 syn match perlStatementInclude		"\<\%(use\|no\)\s\+\%(\%(attributes\|attrs\|autodie\|autouse\|parent\|base\|big\%(int\|num\|rat\)\|blib\|bytes\|charnames\|constant\|diagnostics\|encoding\%(::warnings\)\=\|feature\|fields\|filetest\|if\|integer\|less\|lib\|locale\|mro\|open\|ops\|overload\|overloading\|re\|sigtrap\|sort\|strict\|subs\|threads\%(::shared\)\=\|utf8\|vars\|version\|vmsish\|warnings\%(::register\)\=\)\>\)\="
 syn match perlStatementFiles		"-[rwxoRWXOezsfdlpSbctugkTBMAC]\>"
+syn match perlConditional		"\<else\%(\%(\_s\*if\>\)\|\>\)" contains=perlElseIfError skipwhite skipnl skipempty
 
+syn keyword perlConditional		if elsif unless given when default
+syn keyword perlRepeat			while for foreach do until continue
+syn keyword perlOperator		defined undef eq ne ge gt le lt cmp not and or xor not bless ref do 
 syn keyword perlStatementStorage	my our local state
 syn keyword perlStatementControl	return last next redo goto break 
 syn keyword perlStatementScalar		chop chomp chr crypt index rindex lc lcfirst length ord pack sprintf substr fc uc ucfirst
