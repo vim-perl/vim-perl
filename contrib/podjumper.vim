@@ -1,3 +1,5 @@
+" License: Vim License (see :help license)
+
 " PerlPodJumper() will:
 " 1) Find the closests attribute (has) or sub definition and jump to
 "    the first =head2 section with the same name.

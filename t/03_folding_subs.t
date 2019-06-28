@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use lib 'tools';
 
-use Test::More tests => 5;
+use Test::More tests => 7;
 use Local::VimFolds;
 
 my $folds = Local::VimFolds->new(
@@ -62,10 +62,7 @@ $folds = Local::VimFolds->new(
     },
 );
 
-TODO: {
-    local $TODO = q{Prototypes and folding don't really mix};
-
-    $folds->folds_match(<<'END_PERL', 'test folds for subs with signatures');
+$folds->folds_match(<<'END_PERL', 'test folds for subs with signatures');
 sub add($x, $y) { # {{{
     return $x + $y;
 } # }}}
@@ -74,7 +71,24 @@ sub subtract($x, $y) { # {{{
     return $x - $y;
 } # }}}
 END_PERL
-}
+
+$folds = Local::VimFolds->new(
+    language => 'perl',
+    options  => {
+        perl_fold                => 1,
+        perl_fold_anonymous_subs => 1,
+    },
+);
+
+$folds->folds_match(<<'END_PERL', 'test folds when method calls contain a post-deref slice');
+sub add_domain_filter ( $self, $domain_filter ) { # {{{
+    my $index = {};
+
+    $index->@{ $DOMAIN_FILTER->@*, $domain_filter->@* } = ();
+
+    return;
+} # }}}
+END_PERL
 
 # block fold tests - I know these don't really belong here, but we can
 # break them out into a new file if they get extended
@@ -99,3 +113,28 @@ foreach my $i (@list) { # {{{
 } # }}}
 END_PERL
 }
+
+$folds = Local::VimFolds->new(
+    language => 'perl',
+    options  => {
+        perl_fold                  => 1,
+        perl_nofold_packages       => 1,
+        perl_fold_anonymous_subs   => 1,
+        perl_no_subprototype_error => 1,
+        perl_sub_signatures        => 1,
+    },
+);
+
+$folds->folds_match(<<'END_PERL', 'test folds with signatures and multiple attributes');
+sub asas::asdsad::adsa : prototype() : lvalue : method ($d) { # {{{
+    return;
+} # }}}
+
+sub asdsad : prototype() : lvalue : method($d) { # {{{
+    my $s = sub : prototype($$) ( $a, $v ) { # {{{
+        return;
+    }; # }}}
+
+    return;
+} # }}}
+END_PERL

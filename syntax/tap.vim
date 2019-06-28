@@ -2,7 +2,7 @@
 " Language:    Verbose TAP Output
 " Maintainer:  Rufus Cable <rufus@threebytesfull.com>
 " Remark:      Simple syntax highlighting for TAP output
-" License:
+" License: Vim License (see :help license)
 " Copyright:   (c) 2008-2013 Rufus Cable
 " Last Change: {{LAST_CHANGE}}
 

@@ -1,0 +1,1 @@
+[["Comment","# extra-option: let perl_sub_signatures=1"],["","\n\n"],["Statement","use strict"],["",";\n"],["Statement","use warnings"],["",";\n"],["Statement","use "],["","experimental "],["String","'signatures'"],["",";\n\n"],["Keyword","sub "],["Function","aaa "],["PreProc",": prototype($$) "],["Type","($a, $b) "],["","{\n    "],["Statement","return"],["",";\n}\n"]]

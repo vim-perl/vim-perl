@@ -3,6 +3,7 @@
 " Maintainer:   vim-perl <vim-perl@googlegroups.com>
 " Homepage:      http://github.com/vim-perl/vim-perl/tree/master
 " Bugs/requests: http://github.com/vim-perl/vim-perl/issues
+" License: Vim License (see :help license)
 " Last Change:  {{LAST_CHANGE}}
 " Contributors: Hinrik Örn Sigurðsson <hinrik.sig@gmail.com>
 "               Andrew Smith <andrewdsmith@yahoo.com>
