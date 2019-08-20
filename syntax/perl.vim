@@ -387,7 +387,7 @@ else
 endif
 syn match perlSubAttribute "\s*:\s*\h\w*\%(([^)]*)\|\)" contained extend
 syn match perlSubName "\%(\h\|::\|'\w\)\%(\w\|::\|'\w\)*\s*" contained extend
-syn region perlSubDeclaration start="" end="[;{]" contains=perlSubName,perlSubPrototype,perlSubAttribute,perlSubSignature,perlComment contained transparent
+syn region perlSubDeclaration start="" end="[;{]"me=e-1 contains=perlSubName,perlSubPrototype,perlSubAttribute,perlSubSignature,perlComment contained transparent
 syn match perlFunction "\<sub\>\_s*" nextgroup=perlSubDeclaration
 
 " The => operator forces a bareword to the left of it to be interpreted as
