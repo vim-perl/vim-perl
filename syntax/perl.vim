@@ -101,6 +101,7 @@ syn match perlStatementPword		"\<\%(get\%(pw\%(uid\|nam\)\|gr\%(gid\|nam\)\|logi
 syn match perlStatementTime		"\<\%(gmtime\|localtime\|time\)\>"
 
 syn match perlStatementMisc		"\<\%(warn\|format\|formline\|reset\|scalar\|prototype\|lock\|tied\=\|untie\)\>"
+syn match perlStatementSpecialToken	"\<__\%(FILE\|LINE\|PACKAGE\|SUB\)__\>"
 
 syn keyword perlTodo			TODO TODO: TBD TBD: FIXME FIXME: XXX XXX: NOTE NOTE: contained
 
@@ -511,6 +512,7 @@ hi def link perlStatementNetwork	perlStatement
 hi def link perlStatementPword	perlStatement
 hi def link perlStatementTime	perlStatement
 hi def link perlStatementMisc	perlStatement
+hi def link perlStatementSpecialToken	perlStatement
 hi def link perlStatementIndirObj	perlStatement
 hi def link perlFunctionName		perlIdentifier
 hi def link perlMethod		perlIdentifier
