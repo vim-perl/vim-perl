@@ -29,12 +29,12 @@ syn match tapTestStatusOK /ok/ contained
 syn match tapTestStatusNotOK /not ok/ contained
 
 " highlight todo tests
-syn match tapTestTodo /\(# TODO\|Failed (TODO)\) .*$/ contained contains=tapTestTodoRev
-syn match tapTestTodoRev /\<TODO\>/ contained
+syn match tapTestTodo /\c\(# TODO\|Failed (TODO)\) .*$/ contained contains=tapTestTodoRev
+syn match tapTestTodoRev /\c\<TODO\>/ contained
 
 " highlight skipped tests
-syn match tapTestSkip /# skip .*$/ contained contains=tapTestSkipTag
-syn match tapTestSkipTag /\(# \)\@<=skip\>/ contained
+syn match tapTestSkip /\c# skip .*$/ contained contains=tapTestSkipTag
+syn match tapTestSkipTag /\c\(# \)\@<=skip\>/ contained
 
 " look behind so "ok 123" and "not ok 124" match test number
 syn match tapTestNumber /\(ok \)\@<=\d\d*/ contained
