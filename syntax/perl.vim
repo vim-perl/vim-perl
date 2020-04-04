@@ -61,16 +61,15 @@ else
     endif
 endif
 
-syn cluster perlTop		contains=TOP
-
-syn region perlBraces start="{" end="}" transparent extend
+syn cluster perlTop	contains=TOP
+syn region  perlBraces	start="{" end="}" transparent extend
 
 " All keywords
 "
 " for some reason, adding this as the nextgroup for perlControl fixes BEGIN folding issues...
 syn match perlFakeGroup			"" contained
 syn match perlControl			"\<\%(BEGIN\|CHECK\|INIT\|END\|UNITCHECK\)\>\_s*" nextgroup=perlFakeGroup
-syn match perlStatementFiledesc		"\<\%(binmode\|close\%(dir\)\=\|eof\|fileno\|getc\|lstat\|printf\=\|read\%(dir\|line\|pipe\)\|rewinddir\|say\|select\|stat\|tell\%(dir\)\=\|write\)\>" nextgroup=perlFiledescStatementNocomma skipwhite
+syn match perlStatementFiledesc		"\<\%(binmode\|close\%(dir\)\=\|eof\|fileno\|getc\|lstat\|read\%(dir\|line\|pipe\)\|rewinddir\|select\|stat\|tell\%(dir\)\=\|write\)\>" nextgroup=perlFiledescStatementNocomma skipwhite
 syn match perlStatementFiledesc		"\<\%(fcntl\|flock\|ioctl\|open\%(dir\)\=\|read\|seek\%(dir\)\=\|sys\%(open\|read\|seek\|write\)\|truncate\)\>" nextgroup=perlFiledescStatementComma skipwhite
 syn match perlStatementInclude		"\<\%(use\|no\)\s\+\%(\%(attributes\|attrs\|autodie\|autouse\|parent\|base\|big\%(int\|num\|rat\)\|blib\|bytes\|charnames\|constant\|diagnostics\|encoding\%(::warnings\)\=\|feature\|fields\|filetest\|if\|integer\|less\|lib\|locale\|mro\|open\|ops\|overload\|overloading\|re\|sigtrap\|sort\|strict\|subs\|threads\%(::shared\)\=\|utf8\|vars\|version\|vmsish\|warnings\%(::register\)\=\)\>\)\="
 syn match perlStatementFiles		"-[rwxoRWXOezsfdlpSbctugkTBMAC]\>"
@@ -82,10 +81,10 @@ syn keyword perlRepeat			while for foreach do until continue
 syn keyword perlOperator		defined undef eq ne ge gt le lt cmp not and or xor not bless ref do 
 syn keyword perlStatementStorage	my our local state
 syn keyword perlStatementControl	return last next redo goto break 
-syn keyword perlStatementScalar		chop chomp chr crypt index rindex lc lcfirst length ord pack sprintf substr fc uc ucfirst
+syn keyword perlStatementScalar		chop chomp chr crypt index rindex lc lcfirst length ord pack sprintf substr fc uc ucfirst print printf say
 syn keyword perlStatementRegexp		pos quotemeta split study 
 syn keyword perlStatementNumeric	abs atan2 cos exp hex int log oct rand sin sqrt srand 
-syn keyword perlStatementList		splice unshift shift push pop join reverse grep map sort unpack 
+syn keyword perlStatementList		splice unshift shift push pop join reverse grep map sort unpack
 syn keyword perlStatementHash		delete each exists keys values 
 syn keyword perlStatementIOfunc		syscall dbmopen dbmclose 
 syn keyword perlStatementVector		vec
@@ -102,7 +101,9 @@ syn keyword perlStatementTime		gmtime localtime time
 syn keyword perlStatementMisc		warn format formline reset scalar prototype lock tie tied untie 
 syn keyword perlTodo			TODO TODO: TBD TBD: FIXME FIXME: XXX XXX: NOTE NOTE: contained
 
-syn region perlStatementIndirObjWrap   matchgroup=perlStatementIndirObj start="\%(\<\%(map\|grep\|sort\|printf\=\|say\|system\|exec\)\>\s*\)\@<={" end="}" transparent extend
+syn region  perlStatementIndirObjWrap	matchgroup=perlStatementIndirObj start="\%(\<\%(map\|grep\|sort\|printf\=\|say\|system\|exec\)\>\s*\)\@<={" end="}" transparent extend
+
+syn cluster perlStringGroup		contains=perlString,perlSpecialString,perlSpecialStringU,perlSpecialStringU2,perlStringUnexpanded,perlVStringV,perlHereDoc,perlIndentedHereDoc,perlQQ
 
 " Perl Identifiers.
 "
@@ -388,13 +389,12 @@ if get(g:, "perl_sub_signatures", 0)
 else
     syn match perlSubPrototype "\s*([\\$@%&*\[\];]*)" contained extend
 endif
-syn match perlSubAttribute "\s*:\s*\h\w*\%(([^)]*)\|\)" contained extend
-syn match perlSubName "\%(\h\|::\|'\w\)\%(\w\|::\|'\w\)*\s*" contained extend
-syn region perlSubDeclaration start="" end="[;{]" contains=perlSubName,perlSubPrototype,perlSubAttribute,perlSubSignature,perlComment contained transparent
-syn match perlFunction "\<sub\>\_s*" nextgroup=perlSubDeclaration
+syn match  perlSubAttribute	"\s*:\s*\h\w*\%(([^)]*)\|\)" contained extend
+syn match  perlSubName		"\%(\h\|::\|'\w\)\%(\w\|::\|'\w\)*\s*" contained extend
+syn region perlSubDeclaration	start="" end="[;{]" contains=perlSubName,perlSubPrototype,perlSubAttribute,perlSubSignature,perlComment contained transparent
+syn match  perlFunction		"\<sub\>\_s*" nextgroup=perlSubDeclaration
 
-" The => operator forces a bareword to the left of it to be interpreted as
-" a string
+" The => operator forces a bareword to the left of it to be interpreted as a string
 syn match  perlString "\I\@<!-\?\I\i*\%(\s*=>\)\@="
 
 " All other # are comments, except ^#!
@@ -454,10 +454,10 @@ if get(g:, 'perl_fold', 0)
     syn region perlBlockFold start="^\z(\s*\)\%(do\|else\)\%(\s*{\)\=\s*\%(#.*\)\=$" end="^\z1}\s*while" end="^\z1}\s*;\=\%(#.*\)\=$" transparent fold keepend
   else
     if get(g:, 'perl_fold_do_blocks', 0)
-      syn region perlDoBlockDeclaration start="" end="{" contains=perlComment contained transparent
-      syn match perlOperator "\<do\>\_s*" nextgroup=perlDoBlockDeclaration
+      syn region perlDoBlockDeclaration	start="" end="{" contains=perlComment contained transparent
+      syn match  perlOperator		"\<do\>\_s*" nextgroup=perlDoBlockDeclaration
 
-      syn region perlDoBlockFold start="\<do\>\_[^{]*{" end="}" transparent fold keepend extend
+      syn region perlDoBlockFold	start="\<do\>\_[^{]*{" end="}" transparent fold keepend extend
     endif
   endif
     syn sync fromstart
@@ -471,8 +471,6 @@ endif
 
 " Some new groups for regular expressions.
 " I would recommend setting these up to colors of your choosing by hand.
-" hi def link perlCaptureGroup		Operator
-" hi def link perlNonCaptureGroup		Operator
 hi def link perlPatSep			Keyword
 hi def link perlMultiModifiers		Special
 hi def link MatchGroupStartEnd		SpecialChar
