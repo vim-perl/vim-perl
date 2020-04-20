@@ -1,0 +1,9 @@
+test_requires 'IO::Pty';
+test_requires 'JSON';
+test_requires 'Parallel::ForkManager';
+test_requires 'Path::Tiny';
+test_requires 'Test::Deep';
+test_requires 'Test::Differences';
+test_requires 'Test::LongString';
+test_requires 'Test::SharedFork';
+test_requires 'Text::VimColor';
