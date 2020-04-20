@@ -1,12 +1,49 @@
+---
+addons:
+  apt:
+    packages:
+      - aspell
+      - aspell-en
+      - vim
 language: perl
-dist: trusty
+perl:
+  - blead
+  - dev
+  - "5.30"
+  - "5.28"
+  - "5.26"
+  - "5.24"
+  - "5.22"
+  - "5.20"
+  - "5.18"
+  - "5.16"
+  - "5.14"
+cache:
+  directories:
+    - $HOME/perl5
+matrix:
+  allow_failures:
+    - perl: blead
+    - perl: dev
+  fast_finish: 1
+  include:
+    - env: COVERAGE=1
+      perl: "5.30"
+branches:
+  except:
+    - p5-corpus
+before_install:
+  - git clone git://github.com/travis-perl/helpers ~/travis-perl-helpers
+  - source ~/travis-perl-helpers/init
 install:
-  - sudo apt-get install vim
-  - curl -sL https://git.io/cpm | perl - install -g --show-build-log-on-failure
+  - "curl -sL https://git.io/cpm | perl - install -g --show-build-log-on-failure"
   - git fetch origin p5-corpus-ng:origin/p5-corpus-ng
   - vim --version
 script:
   - make test
-branches:
-  except:
-    - p5-corpus
+### __app_cisetup__
+# ---
+# force_threaded_perls: 0
+# perl_caching: 1
+
+### __app_cisetup__
