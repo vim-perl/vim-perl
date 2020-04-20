@@ -2,7 +2,7 @@ language: perl
 dist: trusty
 install:
   - sudo apt-get install vim
-  - cpanm --notest Test::Differences Text::VimColor IO::Pty Test::Deep Parallel::ForkManager JSON Path::Tiny Test::SharedFork Test::LongString
+  - curl -sL https://git.io/cpm | perl - install -g --show-build-log-on-failure
   - git fetch origin p5-corpus-ng:origin/p5-corpus-ng
   - vim --version
 script:
