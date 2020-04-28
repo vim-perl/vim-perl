@@ -12,14 +12,16 @@ if exists('b:did_ftplugin')
 endif
 let b:did_ftplugin = 1
 
-set foldtext=TAPTestLine_foldtext()
+setlocal foldtext=TAPTestLine_foldtext()
 function! TAPTestLine_foldtext()
     let line = getline(v:foldstart)
     let sub = substitute(line, '/\*\|\*/\|{{{\d\=', '', 'g')
     return sub
 endfunction
 
-set foldminlines=5
-set foldcolumn=2
-set foldenable
-set foldmethod=syntax
+setlocal foldminlines=5
+setlocal foldcolumn=2
+setlocal foldenable
+setlocal foldmethod=syntax
+
+let b:undo_ftplugin = 'setlocal foldtext< foldminlines< foldcolumn< foldenable< foldmethod<'
