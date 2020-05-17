@@ -5,7 +5,7 @@
 This is the aggregation of all the various Perl-related syntax and
 helper files for Perl 5.
 
-For Perl 6 files, please see [vim-perl6](https://github.com/vim-perl/vim-perl6).
+For Perl 6, which is now named Raku, please see [vim-raku](https://github.com/Raku/vim-raku).
 
 # Installation
 
