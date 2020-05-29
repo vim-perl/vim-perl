@@ -6,7 +6,7 @@
 " License: Vim License (see :help license)
 " Last Change:   {{LAST_CHANGE}}
 
-if exists("b:did_ftplugin") | finish | endif
+if exists('b:did_ftplugin') | finish | endif
 let b:did_ftplugin = 1
 
 " Make sure the continuation lines below do not cause problems in
@@ -22,11 +22,11 @@ setlocal comments=:#
 setlocal commentstring=#%s
 
 " Change the browse dialog on Win32 to show mainly Perl-related files
-if has("gui_win32")
-    let b:browsefilter = "Perl Source Files (*.pl)\t*.pl\n" .
-		       \ "Perl Modules (*.pm)\t*.pm\n" .
-		       \ "Perl Documentation Files (*.pod)\t*.pod\n" .
-		       \ "All Files (*.*)\t*.*\n"
+if has('gui_win32')
+    let b:browsefilter = "Perl Source Files (*.pl)\t*.pl\n"
+                     \ . "Perl Modules (*.pm)\t*.pm\n"
+		     \ . "Perl Documentation Files (*.pod)\t*.pod\n"
+		     \ . "All Files (*.*)\t*.*\n"
 endif
 
 " Provided by Ned Konz <ned at bike-nomad dot com>
@@ -48,45 +48,45 @@ if get(g:, 'perl_fold', 0)
 endif
 
 " Set this once, globally.
-if !exists("perlpath")
-    if executable("perl")
-      try
-	if &shellxquote != '"'
-	    let perlpath = system('perl -e "print join(q/,/,@INC)"')
-	else
-	    let perlpath = system("perl -e 'print join(q/,/,@INC)'")
-	endif
-	let perlpath = substitute(perlpath,',.$',',,','')
-      catch /E145:/
-	let perlpath = ".,,"
-      endtry
+if !exists('g:perlpath')
+    if executable('perl')
+        try
+            if &shellxquote !=# '"'
+                let g:perlpath = system('perl -e "print join(q/,/,@INC)"')
+            else
+                let g:perlpath = system("perl -e 'print join(q/,/,@INC)'")
+            endif
+            let g:perlpath = substitute(g:perlpath,',.$',',,','')
+        catch /E145:/
+            let g:perlpath = '.,,'
+        endtry
     else
-	" If we can't call perl to get its path, just default to using the
-	" current directory and the directory of the current file.
-	let perlpath = ".,,"
+        " If we can't call perl to get its path, just default to using the
+        " current directory and the directory of the current file.
+        let g:perlpath = '.,,'
     endif
 endif
 
-" Append perlpath to the existing path value, if it is set.  Since we don't
-" use += to do it because of the commas in perlpath, we have to handle the
+" Append g:perlpath to the existing path value, if it is set.  Since we don't
+" use += to do it because of the commas in g:perlpath, we have to handle the
 " global / local settings, too.
-if &l:path == ""
-    if &g:path == ""
-        let &l:path=perlpath
+if &l:path ==# ''
+    if &g:path ==# ''
+        let &l:path=g:perlpath
     else
-        let &l:path=&g:path.",".perlpath
+        let &l:path=&g:path.','.g:perlpath
     endif
 else
-    let &l:path=&l:path.",".perlpath
+    let &l:path=&l:path.','.g:perlpath
 endif
 "---------------------------------------------
 
 " Undo the stuff we changed.
-let b:undo_ftplugin = "setlocal fo< com< cms< inc< inex< def< isk< isf< kp< path<" .
-	    \	      " | unlet! b:browsefilter"
+let b:undo_ftplugin = 'setlocal fo< com< cms< inc< inex< def< isk< isf< kp< path<'
+             	  \ . ' | unlet! b:browsefilter'
 
 " proper matching for matchit plugin
-let b:match_skip = 's:comment\|string\|perlQQ\|perlShellCommand\|perlHereDoc\|perlSubstitution\|perlTranslation\|perlMatch\|perlFormatField'
+let b:match_skip  = 's:comment\|string\|perlQQ\|perlShellCommand\|perlHereDoc\|perlSubstitution\|perlTranslation\|perlMatch\|perlFormatField'
 let b:match_words = '\<if\>:\<elsif\>:\<else\>'
 
 " Restore the saved compatibility options.
