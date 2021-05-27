@@ -32,7 +32,7 @@ endif
 " Provided by Ned Konz <ned at bike-nomad dot com>
 "---------------------------------------------
 setlocal include=\\<\\(use\\\|require\\)\\>
-setlocal includeexpr=substitute(substitute(substitute(v:fname,'::','/','g'),'->\*','',''),'$','.pm','')
+setlocal includeexpr=substitute(substitute(substitute(substitute(v:fname,'+','',''),'::','/','g'),'->\*','',''),'$','.pm','')
 setlocal define=[^A-Za-z_]
 setlocal iskeyword+=:
 
