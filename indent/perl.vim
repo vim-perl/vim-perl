@@ -36,6 +36,8 @@ if !b:indent_use_syntax
     setlocal indentkeys+=0=EO
 endif
 
+let b:undo_indent = "setl inde< indk<"
+
 let s:cpo_save = &cpo
 set cpo-=C
 
