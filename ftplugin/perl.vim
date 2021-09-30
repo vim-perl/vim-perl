@@ -21,14 +21,6 @@ setlocal keywordprg=perldoc\ -f
 setlocal comments=:#
 setlocal commentstring=#%s
 
-" Change the browse dialog on Win32 to show mainly Perl-related files
-if has("gui_win32")
-    let b:browsefilter = "Perl Source Files (*.pl)\t*.pl\n" .
-		       \ "Perl Modules (*.pm)\t*.pm\n" .
-		       \ "Perl Documentation Files (*.pod)\t*.pod\n" .
-		       \ "All Files (*.*)\t*.*\n"
-endif
-
 " Provided by Ned Konz <ned at bike-nomad dot com>
 "---------------------------------------------
 setlocal include=\\<\\(use\\\|require\\)\\>
@@ -45,8 +37,12 @@ setlocal iskeyword+=:
 "       set isfname-=:
 set isfname+=:
 
+" Undo the stuff we changed.
+let b:undo_ftplugin = "setlocal fo< kp< com< cms< inc< inex< def< isk<"
+
 if get(g:, 'perl_fold', 0)
   setlocal foldmethod=syntax
+  let b:undo_ftplugin .= " | setlocal fdm<"
 endif
 
 " Set this once, globally.
@@ -81,15 +77,25 @@ if &l:path == ""
 else
     let &l:path=&l:path.",".perlpath
 endif
+
+let b:undo_ftplugin .= " | setlocal pa<"
 "---------------------------------------------
 
-" Undo the stuff we changed.
-let b:undo_ftplugin = "setlocal fo< com< cms< inc< inex< def< isk< isf< kp< path<" .
-	    \	      " | unlet! b:browsefilter"
+" Change the browse dialog to show mainly Perl-related files
+if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
+    let b:browsefilter = "Perl Source Files (*.pl)\t*.pl\n" .
+		       \ "Perl Modules (*.pm)\t*.pm\n" .
+		       \ "Perl Documentation Files (*.pod)\t*.pod\n" .
+		       \ "All Files (*.*)\t*.*\n"
+    let b:undo_ftplugin .= " | unlet! b:browsefilter"
+endif
 
-" proper matching for matchit plugin
-let b:match_skip = 's:comment\|string\|perlQQ\|perlShellCommand\|perlHereDoc\|perlSubstitution\|perlTranslation\|perlMatch\|perlFormatField'
-let b:match_words = '\<if\>:\<elsif\>:\<else\>'
+" Proper matching for matchit plugin
+if exists("loaded_matchit") && !exists("b:match_words")
+    let b:match_skip = 's:comment\|string\|perlQQ\|perlShellCommand\|perlHereDoc\|perlSubstitution\|perlTranslation\|perlMatch\|perlFormatField'
+    let b:match_words = '\<if\>:\<elsif\>:\<else\>'
+    let b:undo_ftplugin .= " | unlet! b:match_words b:match_skip"
+endif
 
 " Restore the saved compatibility options.
 let &cpo = s:save_cpo
