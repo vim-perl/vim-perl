@@ -28,11 +28,11 @@ endif
 let b:did_indent = 1
 
 " Is syntax highlighting active ?
-let b:indent_use_syntax = has("syntax")
+let s:indent_use_syntax = has("syntax_items")
 
 setlocal indentexpr=GetPerlIndent()
 setlocal indentkeys+=0=,0),0],0=or,0=and
-if !b:indent_use_syntax
+if !s:indent_use_syntax
     setlocal indentkeys+=0=EO
 endif
 
@@ -58,7 +58,7 @@ function GetPerlIndent()
 
     " Get current syntax item at the line's first char
     let csynid = ''
-    if b:indent_use_syntax
+    if s:indent_use_syntax
         let csynid = synIDattr(synID(v:lnum,1,0),"name")
     endif
 
@@ -68,7 +68,7 @@ function GetPerlIndent()
     endif
 
     " Indent end-of-heredocs markers to column 0
-    if b:indent_use_syntax
+    if s:indent_use_syntax
         " Assumes that an end-of-heredoc marker matches \I\i* to avoid
         " confusion with other types of strings
         if csynid == "perlStringStartEnd" && cline =~ '^\I\i*$'
@@ -92,7 +92,7 @@ function GetPerlIndent()
     let line = getline(lnum)
     let ind = indent(lnum)
     " Skip heredocs, POD, and comments on 1st column
-    if b:indent_use_syntax
+    if s:indent_use_syntax
         let skippin = 2
         while skippin
             let synid = synIDattr(synID(lnum,1,0),"name")
@@ -121,7 +121,7 @@ function GetPerlIndent()
     endif
 
     " Indent blocks enclosed by {}, (), or []
-    if b:indent_use_syntax
+    if s:indent_use_syntax
         " Find a real opening brace
         " NOTE: Unlike Perl character classes, we do NOT need to escape the
         " closing brackets with a backslash.  Doing so just puts a backslash
@@ -183,6 +183,6 @@ function GetPerlIndent()
 endfunction
 
 let &cpo = s:cpo_save
-unlet s:cpo_save
+unlet s:cpo_save s:indent_use_syntax
 
 " vim:ts=8:sts=4:sw=4:expandtab:ft=vim
