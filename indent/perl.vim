@@ -38,10 +38,15 @@ endif
 
 let b:undo_indent = "setl inde< indk<"
 
+" Only define the functions once.
+if exists("*GetPerlIndent")
+   finish
+endif
+
 let s:cpo_save = &cpo
 set cpo-=C
 
-function! GetPerlIndent()
+function GetPerlIndent()
 
     " Get the line to be indented
     let cline = getline(v:lnum)
