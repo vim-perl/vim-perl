@@ -40,6 +40,9 @@ EOF
 print <<'EOF' if $true;
 Here document
 EOF
+print <<`EOF` if $true;
+Here document
+EOF
 
 # Here documents finishing with an empty line. Note the Error colour because of
 # the line with only a space in it.
@@ -48,6 +51,10 @@ Here document
  
 
 print <<'' if $true;
+Here document
+ 
+
+print <<`` if $true;
 Here document
  
 
