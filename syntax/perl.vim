@@ -221,13 +221,14 @@ syn region  perlShellCommand	matchgroup=perlMatchStartEnd start="`" end="`" cont
 "
 " Numbers
 syn case   ignore
-syn match  perlNumber	"\<\%(0\%(x\x[[:xdigit:]_]*\|b[01][01_]*\|o\=\o[0-7_]*\|\)\|[1-9][[:digit:]_]*\)\>"
-syn match  perlFloat	"\<\d[[:digit:]_]*e[\-+]\=\d\+"
-syn match  perlFloat	"\<\d[[:digit:]_]*\.[[:digit:]_]*\%(e[\-+]\=\d\+\)\="
-syn match  perlFloat    "\.[[:digit:]][[:digit:]_]*\%(e[\-+]\=\d\+\)\="
+syn match  perlNumber	"\<\%(0\|[1-9][[:digit:]_]*\)\>"
+syn match  perlNumber	"\<0\%(x\x[[:xdigit:]_]*\|b[01][01_]*\|o\=\o[0-7_]*\)\>"
+syn match  perlFloat	"\<\d[[:digit:]_]*e[-+]\=\d\+"
+syn match  perlFloat	"\<\d[[:digit:]_]*\.[[:digit:]_]*\%(e[-+]\=\d\+\)\="
+syn match  perlFloat    "\.\d[[:digit:]_]*\%(e[-+]\=\d\+\)\="
 syn match  perlFloat	"\<0x\x[[:xdigit:]_]*p[-+]\=\d\+"
 syn match  perlFloat	"\<0x\x[[:xdigit:]_]*\.[[:xdigit:]_]*\%(p[-+]\=\d\+\)\="
-syn match  perlFloat    "\<0x\.[[:xdigit:]][[:xdigit:]_]*\%(p[-+]\=\d\+\)\="
+syn match  perlFloat    "\<0x\.\x[[:xdigit:]_]*\%(p[-+]\=\d\+\)\="
 syn case   match
 
 syn match  perlString	"\<\%(v\d\+\%(\.\d\+\)*\|\d\+\%(\.\d\+\)\{2,}\)\>" contains=perlVStringV
