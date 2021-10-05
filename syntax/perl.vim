@@ -409,11 +409,11 @@ syn match  perlFormatField	"@$" contained
 
 " __END__ and __DATA__ clauses
 if get(g:, 'perl_fold', 0)
-  syntax region perlDATA		start="^__DATA__$" skip="." end="." contains=@perlDATA fold
-  syntax region perlDATA		start="^__END__$" skip="." end="." contains=perlPOD,@perlDATA fold
+  syntax region perlDATA matchgroup=perlDATAStart start="^__DATA__$" end="\%$" contains=@perlDATA fold
+  syntax region perlDATA matchgroup=perlDATAStart start="^__END__$"  end="\%$" contains=perlPOD,@perlDATA fold
 else
-  syntax region perlDATA		start="^__DATA__$" skip="." end="." contains=@perlDATA
-  syntax region perlDATA		start="^__END__$" skip="." end="." contains=perlPOD,@perlDATA
+  syntax region perlDATA matchgroup=perlDATAStart start="^__DATA__$" end="\%$" contains=@perlDATA
+  syntax region perlDATA matchgroup=perlDATAStart start="^__END__$"  end="\%$" contains=perlPOD,@perlDATA
 endif
 
 "
@@ -558,6 +558,7 @@ hi def link perlSpecialString	perlSpecial
 hi def link perlSpecialStringU	perlSpecial
 hi def link perlSpecialMatch		perlSpecial
 hi def link perlDATA			perlComment
+hi def link perlDATAStart		perlDATA
 
 " NOTE: Due to a bug in Vim (or more likely, a misunderstanding on my part),
 "       I had to remove the transparent property from the following regions
