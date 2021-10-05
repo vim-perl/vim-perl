@@ -11,6 +11,7 @@
 "                Nick Hibma <nick@van-laarhoven.org>
 "                Sonia Heimann <niania@netsurf.org>
 "                Rob Hoelz <rob@hoelz.ro>
+"                Doug Kearns <dougkearns@gmail.com>
 "                and many others.
 "
 " Please download the most recent version first, before mailing
