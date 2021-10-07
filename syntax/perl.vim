@@ -502,26 +502,26 @@ endif
 
 " The default highlighting.
 hi def link perlSharpBang		PreProc
-hi def link perlControl		PreProc
-hi def link perlInclude		Include
-hi def link perlSpecial		Special
-hi def link perlString		String
+hi def link perlControl			PreProc
+hi def link perlInclude			Include
+hi def link perlSpecial			Special
+hi def link perlString			String
 hi def link perlCharacter		Character
-hi def link perlNumber		Number
-hi def link perlFloat		Float
+hi def link perlNumber			Number
+hi def link perlFloat			Float
 hi def link perlType			Type
 hi def link perlIdentifier		Identifier
-hi def link perlLabel		Label
+hi def link perlLabel			Label
 hi def link perlStatement		Statement
 hi def link perlConditional		Conditional
-hi def link perlRepeat		Repeat
+hi def link perlRepeat			Repeat
 hi def link perlOperator		Operator
 hi def link perlFunction		Keyword
-hi def link perlSubName		Function
+hi def link perlSubName			Function
 hi def link perlSubPrototype		Type
 hi def link perlSubSignature		Type
-hi def link perlSubAttribute	PreProc
-hi def link perlComment		Comment
+hi def link perlSubAttribute		PreProc
+hi def link perlComment			Comment
 hi def link perlTodo			Todo
 if get(g:, 'perl_string_as_statement', 0)
   hi def link perlStringStartEnd	perlStatement
@@ -533,12 +533,12 @@ hi def link perlList			perlStatement
 hi def link perlMisc			perlStatement
 hi def link perlVarPlain		perlIdentifier
 hi def link perlVarPlain2		perlIdentifier
-hi def link perlArrow		perlIdentifier
+hi def link perlArrow			perlIdentifier
 hi def link perlFiledescRead		perlIdentifier
 hi def link perlFiledescStatement	perlIdentifier
-hi def link perlVarSimpleMember	perlIdentifier
-hi def link perlVarSimpleMemberName 	perlString
-hi def link perlVarNotInMatches	perlIdentifier
+hi def link perlVarSimpleMember		perlIdentifier
+hi def link perlVarSimpleMemberName	perlString
+hi def link perlVarNotInMatches		perlIdentifier
 hi def link perlVarSlash		perlIdentifier
 hi def link perlQ			perlString
 hi def link perlQQ			perlString
@@ -551,11 +551,11 @@ hi def link perlQRModifiers             perlStringStartEnd
 hi def link perlHereDoc			perlString
 hi def link perlIndentedHereDoc		perlString
 hi def link perlStringUnexpanded	perlString
-hi def link perlSubstitutionSQ	perlString
-hi def link perlSubstitutionGQQ	perlString
-hi def link perlTranslationGQ	perlString
-hi def link perlMatch		perlString
-hi def link perlMatchStartEnd	perlStatement
+hi def link perlSubstitutionSQ		perlString
+hi def link perlSubstitutionGQQ		perlString
+hi def link perlTranslationGQ		perlString
+hi def link perlMatch			perlString
+hi def link perlMatchStartEnd		perlStatement
 hi def link perlFormatName		perlIdentifier
 hi def link perlFormatField		perlString
 hi def link perlPackageDecl		perlType
@@ -564,27 +564,27 @@ hi def link perlPackageRef		perlType
 hi def link perlStatementPackage	perlStatement
 hi def link perlStatementStorage	perlStatement
 hi def link perlStatementControl	perlStatement
-hi def link perlStatementScalar	perlStatement
-hi def link perlStatementRegexp	perlStatement
+hi def link perlStatementScalar		perlStatement
+hi def link perlStatementRegexp		perlStatement
 hi def link perlStatementNumeric	perlStatement
-hi def link perlStatementList	perlStatement
-hi def link perlStatementHash	perlStatement
-hi def link perlStatementIOfunc	perlStatement
+hi def link perlStatementList		perlStatement
+hi def link perlStatementHash		perlStatement
+hi def link perlStatementIOfunc		perlStatement
 hi def link perlStatementFiledesc	perlStatement
-hi def link perlStatementVector	perlStatement
-hi def link perlStatementFiles	perlStatement
-hi def link perlStatementFlow	perlStatement
+hi def link perlStatementVector		perlStatement
+hi def link perlStatementFiles		perlStatement
+hi def link perlStatementFlow		perlStatement
 hi def link perlStatementInclude	perlStatement
-hi def link perlStatementProc	perlStatement
-hi def link perlStatementSocket	perlStatement
+hi def link perlStatementProc		perlStatement
+hi def link perlStatementSocket		perlStatement
 hi def link perlStatementIPC		perlStatement
 hi def link perlStatementNetwork	perlStatement
-hi def link perlStatementPword	perlStatement
-hi def link perlStatementTime	perlStatement
-hi def link perlStatementMisc	perlStatement
+hi def link perlStatementPword		perlStatement
+hi def link perlStatementTime		perlStatement
+hi def link perlStatementMisc		perlStatement
 hi def link perlStatementIndirObj	perlStatement
 hi def link perlFunctionName		perlIdentifier
-hi def link perlMethod		perlIdentifier
+hi def link perlMethod			perlIdentifier
 hi def link perlPostDeref		perlIdentifier
 hi def link perlFunctionPRef		perlType
 
@@ -593,17 +593,17 @@ if !get(g:, 'perl_include_pod', 1)
 endif
 hi def link perlShellCommand		perlString
 hi def link perlSpecialAscii		perlSpecial
-hi def link perlSpecialDollar	perlSpecial
-hi def link perlSpecialString	perlSpecial
-hi def link perlSpecialStringU	perlSpecial
+hi def link perlSpecialDollar		perlSpecial
+hi def link perlSpecialString		perlSpecial
+hi def link perlSpecialStringU		perlSpecial
 hi def link perlSpecialMatch		perlSpecial
 hi def link perlDATA			perlComment
 hi def link perlDATAStart		perlDATA
 
 " NOTE: Due to a bug in Vim (or more likely, a misunderstanding on my part),
-"       I had to remove the transparent property from the following regions
-"       in order to get them to highlight correctly.  Feel free to remove
-"       these and reinstate the transparent property if you know how.
+"	I had to remove the transparent property from the following regions
+"	in order to get them to highlight correctly.  Feel free to remove
+"	these and reinstate the transparent property if you know how.
 hi def link perlParensSQ		perlString
 hi def link perlBracketsSQ		perlString
 hi def link perlBracesSQ		perlString
