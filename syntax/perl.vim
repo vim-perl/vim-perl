@@ -408,9 +408,21 @@ syn match  perlFormatField	"@[^A-Za-z_|<>~#*]"me=e-1 contained
 syn match  perlFormatField	"@$" contained
 
 " __END__ and __DATA__ clauses
+
+" Vim excludes empty syn-region end lines from the fold region.  This is
+" probably a bug and means a DATA section ending with an empty line does not
+" have that final line included in the fold.
+"
+" As a workaround we exploit an unterminated syntax region here with an end
+" pattern that will (probably) never match.  This forces all lines to be
+" included in the fold region.  Of course, if it does match then there's
+" nothing to work around as it is a non-empty line.
+"
+" This problem also exists with empty string delimited heredocs but there's no
+" known workaround for that case.
 if get(g:, 'perl_fold', 0)
-  syntax region perlDATA matchgroup=perlDATAStart start="^__DATA__$" end="\%$" contains=@perlDATA fold
-  syntax region perlDATA matchgroup=perlDATAStart start="^__END__$"  end="\%$" contains=perlPOD,@perlDATA fold
+  syntax region perlDATA matchgroup=perlDATAStart start="^__DATA__$" end="VIM_PERL_EOF\%$" contains=@perlDATA fold
+  syntax region perlDATA matchgroup=perlDATAStart start="^__END__$"  end="VIM_PERL_EOF\%$" contains=perlPOD,@perlDATA fold
 else
   syntax region perlDATA matchgroup=perlDATAStart start="^__DATA__$" end="\%$" contains=@perlDATA
   syntax region perlDATA matchgroup=perlDATAStart start="^__END__$"  end="\%$" contains=perlPOD,@perlDATA
