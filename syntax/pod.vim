@@ -57,6 +57,7 @@ syn match  podFormat	"E<\(\d\+\|\I\i*\)>" contains=podEscape,podEscape2,@NoSpell
 syn match  podEscape	"\I\i*>"me=e-1 contained contains=@NoSpell
 syn match  podEscape2	"\d\+>"me=e-1 contained contains=@NoSpell
 
+
 " POD commands
 syn match podCommand    "^=encoding\>"   nextgroup=podEncoding skipwhite contains=@NoSpell
 syn match podCommand    "^=head[1234]\>" nextgroup=podCmdText skipwhite skipnl contains=@NoSpell
@@ -69,10 +70,27 @@ syn match podCommand    "^=for"          nextgroup=podForKeywd skipwhite contain
 syn match podCommand    "^=begin"        nextgroup=podForKeywd skipwhite contains=@NoSpell
 syn match podCommand    "^=end"          nextgroup=podForKeywd skipwhite contains=@NoSpell
 
+" Comments
+
+syn keyword podForKeywd comment contained nextgroup=podForComment skipwhite skipnl
+
+if exists("perl_pod_no_comment_fold")
+  syn region podBeginComment start="^=begin\s\+comment\s*$" end="^=end\s\+comment\ze\s*$" keepend extend contains=podCommand
+  syn region podForComment start="\S.*$" end="^\ze\s*$" end="^\ze=cut\>" contained contains=@Spell,podTodo
+else
+  syn region podBeginComment start="^=begin\s\+comment\s*$" end="^=end\s\+comment\ze\s*$" keepend extend contains=podCommand,podTodo fold
+  syn region podForComment start="\S.*$" end="^\ze\s*$" end="^\ze=cut\>" contained contains=@Spell,podTodo fold
+endif
+
+syn keyword podTodo contained TODO FIXME XXX
+
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
 
 hi def link podCommand		Statement
+hi def link podBeginComment	Comment
+hi def link podForComment	Comment
+hi def link podTodo		Todo
 hi def link podCmdText		String
 hi def link podEncoding		Constant
 hi def link podOverIndent	Number
