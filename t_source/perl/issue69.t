@@ -12,7 +12,15 @@ print "Start\n";
 
 =begin comment
 
-a block comment
+comment line
+
+=cut
+
+print "TODO: host file content\n";
+
+=pod
+
+comment line
 
 =end comment
 
