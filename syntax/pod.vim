@@ -84,12 +84,18 @@ endif
 
 syn keyword podTodo contained TODO FIXME XXX
 
+" Plain Pod files
+syn region podNonPod			   start="\%^\%(=\w\+\>\)\@!" end="^\ze=\a\w*\>"
+syn region podNonPod matchgroup=podCommand start="^=cut\>"	      end="\%$"
+syn region podNonPod matchgroup=podCommand start="^=cut\>"	      end="^\ze=\a\w*\>"
+
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
 
 hi def link podCommand		Statement
 hi def link podBeginComment	Comment
 hi def link podForComment	Comment
+hi def link podNonPod		Comment
 hi def link podTodo		Todo
 hi def link podCmdText		String
 hi def link podEncoding		Constant
