@@ -339,6 +339,7 @@ syn region perlQQ		matchgroup=perlStringStartEnd start=+\<\%(::\|'\|->\)\@<!qr\s
 "     to update if switched from double to single quotes and vice versa.
 
 syn region perlHereDocStart	matchgroup=perlStringStartEnd start=+<<\z(\I\i*\)+                        end=+$+     contains=@perlTop oneline
+syn region perlHereDocStart	matchgroup=perlStringStartEnd start=+<<\\\I\i*+                           end=+$+     contains=@perlTop oneline
 syn region perlHereDocStart	matchgroup=perlStringStartEnd start=+<<\s*"\z([^\\"]*\%(\\.[^\\"]*\)*\)"+ end=+$+     contains=@perlTop oneline
 syn region perlHereDocStart	matchgroup=perlStringStartEnd start=+<<\s*'\z([^\\']*\%(\\.[^\\']*\)*\)'+ end=+$+     contains=@perlTop oneline
 syn region perlHereDocStart	matchgroup=perlStringStartEnd start=+<<\s*`\z([^\\`]*\%(\\.[^\\`]*\)*\)`+ end=+$+     contains=@perlTop oneline
@@ -347,6 +348,7 @@ syn region perlHereDocStart	matchgroup=perlStringStartEnd start=+<<\s*''+       
 syn region perlHereDocStart	matchgroup=perlStringStartEnd start=+<<\s*``+                             end=+$+     contains=@perlTop oneline
 if get(g:, 'perl_fold', 0)
   syn region perlHereDoc	start=+<<\z(\I\i*\)+                        matchgroup=perlStringStartEnd end=+^\z1$+ contains=perlHereDocStart,@perlInterpDQ fold extend
+  syn region perlHereDoc	start=+<<\\\z(\I\i*\)+                      matchgroup=perlStringStartEnd end=+^\z1$+ contains=perlHereDocStart,@perlInterpSQ fold extend
   syn region perlHereDoc	start=+<<\s*"\z([^\\"]*\%(\\.[^\\"]*\)*\)"+ matchgroup=perlStringStartEnd end=+^\z1$+ contains=perlHereDocStart,@perlInterpDQ fold extend
   syn region perlHereDoc	start=+<<\s*'\z([^\\']*\%(\\.[^\\']*\)*\)'+ matchgroup=perlStringStartEnd end=+^\z1$+ contains=perlHereDocStart,@perlInterpSQ fold extend
   syn region perlHereDoc	start=+<<\s*`\z([^\\`]*\%(\\.[^\\`]*\)*\)`+ matchgroup=perlStringStartEnd end=+^\z1$+ contains=perlHereDocStart,@perlInterpDQ fold extend
@@ -356,6 +358,7 @@ if get(g:, 'perl_fold', 0)
   syn region perlAutoload	matchgroup=perlStringStartEnd start=+<<\s*\(['"]\=\)\z(END_\%(SUB\|OF_FUNC\|OF_AUTOLOAD\)\)\1+ end=+^\z1$+ contains=ALL fold extend
 else
   syn region perlHereDoc	start=+<<\z(\I\i*\)+                        matchgroup=perlStringStartEnd end=+^\z1$+ contains=perlHereDocStart,@perlInterpDQ
+  syn region perlHereDoc	start=+<<\\\z(\I\i*\)+                      matchgroup=perlStringStartEnd end=+^\z1$+ contains=perlHereDocStart,@perlInterpSQ
   syn region perlHereDoc	start=+<<\s*"\z([^\\"]*\%(\\.[^\\"]*\)*\)"+ matchgroup=perlStringStartEnd end=+^\z1$+ contains=perlHereDocStart,@perlInterpDQ
   syn region perlHereDoc	start=+<<\s*'\z([^\\']*\%(\\.[^\\']*\)*\)'+ matchgroup=perlStringStartEnd end=+^\z1$+ contains=perlHereDocStart,@perlInterpSQ
   syn region perlHereDoc	start=+<<\s*`\z([^\\`]*\%(\\.[^\\`]*\)*\)`+ matchgroup=perlStringStartEnd end=+^\z1$+ contains=perlHereDocStart,@perlInterpDQ
@@ -366,6 +369,7 @@ else
 endif
 
 syn region perlIndentedHereDocStart	matchgroup=perlStringStartEnd start=+<<\~\z(\I\i*\)+                        end=+$+        contains=@perlTop oneline
+syn region perlIndentedHereDocStart	matchgroup=perlStringStartEnd start=+<<\~\\\I\i*+                           end=+$+        contains=@perlTop oneline
 syn region perlIndentedHereDocStart	matchgroup=perlStringStartEnd start=+<<\~\s*"\z([^\\"]*\%(\\.[^\\"]*\)*\)"+ end=+$+        contains=@perlTop oneline
 syn region perlIndentedHereDocStart	matchgroup=perlStringStartEnd start=+<<\~\s*'\z([^\\']*\%(\\.[^\\']*\)*\)'+ end=+$+        contains=@perlTop oneline
 syn region perlIndentedHereDocStart	matchgroup=perlStringStartEnd start=+<<\~\s*`\z([^\\`]*\%(\\.[^\\`]*\)*\)`+ end=+$+        contains=@perlTop oneline
@@ -374,6 +378,7 @@ syn region perlIndentedHereDocStart	matchgroup=perlStringStartEnd start=+<<\~\s*
 syn region perlIndentedHereDocStart	matchgroup=perlStringStartEnd start=+<<\~\s*``+                             end=+$+        contains=@perlTop oneline
 if get(g:, 'perl_fold', 0)
   syn region perlIndentedHereDoc	start=+<<\~\z(\I\i*\)+                        matchgroup=perlStringStartEnd end=+^\s*\z1$+ contains=perlIndentedHereDocStart,@perlInterpDQ fold extend
+  syn region perlIndentedHereDoc	start=+<<\~\\\z(\I\i*\)+                      matchgroup=perlStringStartEnd end=+^\s*\z1$+ contains=perlIndentedHereDocStart,@perlInterpSQ fold extend
   syn region perlIndentedHereDoc	start=+<<\~\s*"\z([^\\"]*\%(\\.[^\\"]*\)*\)"+ matchgroup=perlStringStartEnd end=+^\s*\z1$+ contains=perlIndentedHereDocStart,@perlInterpDQ fold extend
   syn region perlIndentedHereDoc	start=+<<\~\s*'\z([^\\']*\%(\\.[^\\']*\)*\)'+ matchgroup=perlStringStartEnd end=+^\s*\z1$+ contains=perlIndentedHereDocStart,@perlInterpSQ fold extend
   syn region perlIndentedHereDoc	start=+<<\~\s*`\z([^\\`]*\%(\\.[^\\`]*\)*\)`+ matchgroup=perlStringStartEnd end=+^\s*\z1$+ contains=perlIndentedHereDocStart,@perlInterpDQ fold extend
@@ -383,6 +388,7 @@ if get(g:, 'perl_fold', 0)
   syn region perlIndentedAutoload	matchgroup=perlStringStartEnd start=+<<\~\s*\(['"]\=\)\z(END_\%(SUB\|OF_FUNC\|OF_AUTOLOAD\)\)\1+ end=+^\s*\z1$+ contains=ALL fold extend
 else
   syn region perlIndentedHereDoc	start=+<<\~\z(\I\i*\)+                        matchgroup=perlStringStartEnd end=+^\s*\z1$+ contains=perlIndentedHereDocStart,@perlInterpDQ
+  syn region perlIndentedHereDoc	start=+<<\~\\\z(\I\i*\)+                      matchgroup=perlStringStartEnd end=+^\s*\z1$+ contains=perlIndentedHereDocStart,@perlInterpSQ
   syn region perlIndentedHereDoc	start=+<<\~\s*"\z([^\\"]*\%(\\.[^\\"]*\)*\)"+ matchgroup=perlStringStartEnd end=+^\s*\z1$+ contains=perlIndentedHereDocStart,@perlInterpDQ
   syn region perlIndentedHereDoc	start=+<<\~\s*'\z([^\\']*\%(\\.[^\\']*\)*\)'+ matchgroup=perlStringStartEnd end=+^\s*\z1$+ contains=perlIndentedHereDocStart,@perlInterpSQ
   syn region perlIndentedHereDoc	start=+<<\~\s*`\z([^\\`]*\%(\\.[^\\`]*\)*\)`+ matchgroup=perlStringStartEnd end=+^\s*\z1$+ contains=perlIndentedHereDocStart,@perlInterpDQ
