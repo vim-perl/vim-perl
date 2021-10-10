@@ -28,18 +28,6 @@ endif
 let s:cpo_save = &cpo
 set cpo&vim
 
-" POD commands
-syn match podCommand    "^=encoding"  nextgroup=podCmdText contains=@NoSpell
-syn match podCommand    "^=head[1234]"  nextgroup=podCmdText contains=@NoSpell
-syn match podCommand    "^=item"        nextgroup=podCmdText contains=@NoSpell
-syn match podCommand    "^=over"        nextgroup=podOverIndent skipwhite contains=@NoSpell
-syn match podCommand    "^=back"        contains=@NoSpell
-syn match podCommand    "^=cut"         contains=@NoSpell
-syn match podCommand    "^=pod"         contains=@NoSpell
-syn match podCommand    "^=for"         nextgroup=podForKeywd skipwhite contains=@NoSpell
-syn match podCommand    "^=begin"       nextgroup=podForKeywd skipwhite contains=@NoSpell
-syn match podCommand    "^=end"         nextgroup=podForKeywd skipwhite contains=@NoSpell
-
 " Text of a =head1, =head2 or =item command
 syn match podCmdText	".*$" contained contains=podFormat,@NoSpell
 
@@ -50,7 +38,9 @@ syn match podOverIndent	"\d\+" contained contains=@NoSpell
 syn match podForKeywd	"\S\+" contained contains=@NoSpell
 
 " An indented line, to be displayed verbatim
-syn match podVerbatimLine	"^\s.*$" contains=@NoSpell
+syn region podVerbatim	start="^\s\+\S.*$" end="^\ze\s*$" end="^\ze=cut\>" contains=@NoSpell
+
+syn region podOrdinary	start="^\S.*$" end="^\ze\s*$" end="^\ze=cut\>" contains=podFormat,podSpecial,@NoSpell
 
 " Inline textual items handled specially by POD
 syn match podSpecial	"\(\<\|&\)\I\i*\(::\I\i*\)*([^)]*)" contains=@NoSpell
@@ -64,6 +54,18 @@ syn match  podFormat	"E<\(\d\+\|\I\i*\)>" contains=podEscape,podEscape2,@NoSpell
 syn match  podEscape	"\I\i*>"me=e-1 contained contains=@NoSpell
 syn match  podEscape2	"\d\+>"me=e-1 contained contains=@NoSpell
 
+" POD commands
+syn match podCommand    "^=encoding"  nextgroup=podCmdText skipwhite contains=@NoSpell
+syn match podCommand    "^=head[1234]"  nextgroup=podCmdText contains=@NoSpell
+syn match podCommand    "^=item"        nextgroup=podCmdText contains=@NoSpell
+syn match podCommand    "^=over"        nextgroup=podOverIndent skipwhite contains=@NoSpell
+syn match podCommand    "^=back"        contains=@NoSpell
+syn match podCommand    "^=cut"         contains=@NoSpell
+syn match podCommand    "^=pod"         contains=@NoSpell
+syn match podCommand    "^=for"         nextgroup=podForKeywd skipwhite contains=@NoSpell
+syn match podCommand    "^=begin"       nextgroup=podForKeywd skipwhite contains=@NoSpell
+syn match podCommand    "^=end"         nextgroup=podForKeywd skipwhite contains=@NoSpell
+
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
 
@@ -72,7 +74,7 @@ hi def link podCmdText		String
 hi def link podOverIndent	Number
 hi def link podForKeywd		Identifier
 hi def link podFormat		Identifier
-hi def link podVerbatimLine	PreProc
+hi def link podVerbatim		PreProc
 hi def link podSpecial		Identifier
 hi def link podEscape		String
 hi def link podEscape2		Number
@@ -129,7 +131,7 @@ if exists("perl_pod_formatting")
   syn region podIndexAlternativeDelim start="X<<\s"ms=s-2 end="\s>>"me=e oneline contains=podIndexAlternativeDelimOpen
 
   " Restore this (otherwise B<> is shown as bold inside verbatim)
-  syn match podVerbatimLine	"^\s.*$" contains=@NoSpell
+  syn region podVerbatim start="^\s\+\S.*$" end="^\ze\s*$" end="^\ze=cut\>" contains=@NoSpell
 
   " Ensure formatted text can be displayed in headings and items
   syn clear podCmdText

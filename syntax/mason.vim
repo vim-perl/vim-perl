@@ -75,6 +75,7 @@ syn cluster masonTop contains=masonLine,masonExpr,masonPerl,masonComp,masonArgs,
 " syntax files.
 hi def link masonDoc Comment
 hi def link masonPod Comment
+hi def link podOrdinary masonPod
 hi def link masonPerlComment perlComment
 
 let b:current_syntax = "mason"

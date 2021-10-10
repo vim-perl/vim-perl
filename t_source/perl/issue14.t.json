@@ -1,0 +1,1 @@
+[["Label","vim:"],["","ft=pod\n\n"],["Statement","=for"],[""," "],["Identifier","when"],[""," we get switching of instances working\n\n"],["PreProc","    my $sql = <<'HERE';"],["","\n"],["PreProc","        select ...."],["","\n"],["PreProc","HERE"],["","\n\n"],["PreProc","    my $row = sqldo_hashref( $sql ... );"],["","\n\n"],["Statement","=cut"],["","\n\n"]]
