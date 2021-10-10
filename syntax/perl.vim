@@ -338,11 +338,11 @@ syn region perlQQ		matchgroup=perlStringStartEnd start=+\<\%(::\|'\|->\)\@<!qr\s
 " XXX Indented heredocs are not perfect - they sometimes seem to take a moment
 "     to update if switched from double to single quotes and vice versa.
 
-syn region perlHereDocStart	matchgroup=perlStringStartEnd start=+<<\z(\I\i*\)+                        end=+$+     contains=@perlTop oneline
+syn region perlHereDocStart	matchgroup=perlStringStartEnd start=+<<\I\i*+                             end=+$+     contains=@perlTop oneline
 syn region perlHereDocStart	matchgroup=perlStringStartEnd start=+<<\\\I\i*+                           end=+$+     contains=@perlTop oneline
-syn region perlHereDocStart	matchgroup=perlStringStartEnd start=+<<\s*"\z([^\\"]*\%(\\.[^\\"]*\)*\)"+ end=+$+     contains=@perlTop oneline
-syn region perlHereDocStart	matchgroup=perlStringStartEnd start=+<<\s*'\z([^\\']*\%(\\.[^\\']*\)*\)'+ end=+$+     contains=@perlTop oneline
-syn region perlHereDocStart	matchgroup=perlStringStartEnd start=+<<\s*`\z([^\\`]*\%(\\.[^\\`]*\)*\)`+ end=+$+     contains=@perlTop oneline
+syn region perlHereDocStart	matchgroup=perlStringStartEnd start=+<<\s*"[^\\"]*\%(\\.[^\\"]*\)*"+      end=+$+     contains=@perlTop oneline
+syn region perlHereDocStart	matchgroup=perlStringStartEnd start=+<<\s*'[^\\']*\%(\\.[^\\']*\)*'+      end=+$+     contains=@perlTop oneline
+syn region perlHereDocStart	matchgroup=perlStringStartEnd start=+<<\s*`[^\\`]*\%(\\.[^\\`]*\)*`+      end=+$+     contains=@perlTop oneline
 syn region perlHereDocStart	matchgroup=perlStringStartEnd start=+<<\s*""+                             end=+$+     contains=@perlTop oneline
 syn region perlHereDocStart	matchgroup=perlStringStartEnd start=+<<\s*''+                             end=+$+     contains=@perlTop oneline
 syn region perlHereDocStart	matchgroup=perlStringStartEnd start=+<<\s*``+                             end=+$+     contains=@perlTop oneline
@@ -368,11 +368,11 @@ else
   syn region perlAutoload	matchgroup=perlStringStartEnd start=+<<\s*\(['"]\=\)\z(END_\%(SUB\|OF_FUNC\|OF_AUTOLOAD\)\)\1+ end=+^\z1$+ contains=ALL
 endif
 
-syn region perlIndentedHereDocStart	matchgroup=perlStringStartEnd start=+<<\~\z(\I\i*\)+                        end=+$+        contains=@perlTop oneline
+syn region perlIndentedHereDocStart	matchgroup=perlStringStartEnd start=+<<\~\I\i*+                             end=+$+        contains=@perlTop oneline
 syn region perlIndentedHereDocStart	matchgroup=perlStringStartEnd start=+<<\~\\\I\i*+                           end=+$+        contains=@perlTop oneline
-syn region perlIndentedHereDocStart	matchgroup=perlStringStartEnd start=+<<\~\s*"\z([^\\"]*\%(\\.[^\\"]*\)*\)"+ end=+$+        contains=@perlTop oneline
-syn region perlIndentedHereDocStart	matchgroup=perlStringStartEnd start=+<<\~\s*'\z([^\\']*\%(\\.[^\\']*\)*\)'+ end=+$+        contains=@perlTop oneline
-syn region perlIndentedHereDocStart	matchgroup=perlStringStartEnd start=+<<\~\s*`\z([^\\`]*\%(\\.[^\\`]*\)*\)`+ end=+$+        contains=@perlTop oneline
+syn region perlIndentedHereDocStart	matchgroup=perlStringStartEnd start=+<<\~\s*"[^\\"]*\%(\\.[^\\"]*\)*"+      end=+$+        contains=@perlTop oneline
+syn region perlIndentedHereDocStart	matchgroup=perlStringStartEnd start=+<<\~\s*'[^\\']*\%(\\.[^\\']*\)*'+      end=+$+        contains=@perlTop oneline
+syn region perlIndentedHereDocStart	matchgroup=perlStringStartEnd start=+<<\~\s*`[^\\`]*\%(\\.[^\\`]*\)*`+      end=+$+        contains=@perlTop oneline
 syn region perlIndentedHereDocStart	matchgroup=perlStringStartEnd start=+<<\~\s*""+                             end=+$+        contains=@perlTop oneline
 syn region perlIndentedHereDocStart	matchgroup=perlStringStartEnd start=+<<\~\s*''+                             end=+$+        contains=@perlTop oneline
 syn region perlIndentedHereDocStart	matchgroup=perlStringStartEnd start=+<<\~\s*``+                             end=+$+        contains=@perlTop oneline
