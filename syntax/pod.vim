@@ -28,6 +28,9 @@ endif
 let s:cpo_save = &cpo
 set cpo&vim
 
+" TODO: add supported encodings when we can utilize better performing Vim 8 features
+syn match podEncoding	"[0-9A-Za-z_-]\+" contained contains=@NoSpell
+
 " Text of a =head1, =head2 or =item command
 syn match podCmdText	".*$" contained contains=podFormat,@NoSpell
 
@@ -55,7 +58,7 @@ syn match  podEscape	"\I\i*>"me=e-1 contained contains=@NoSpell
 syn match  podEscape2	"\d\+>"me=e-1 contained contains=@NoSpell
 
 " POD commands
-syn match podCommand    "^=encoding"  nextgroup=podCmdText skipwhite contains=@NoSpell
+syn match podCommand    "^=encoding\>"  nextgroup=podEncoding skipwhite contains=@NoSpell
 syn match podCommand    "^=head[1234]"  nextgroup=podCmdText contains=@NoSpell
 syn match podCommand    "^=item"        nextgroup=podCmdText contains=@NoSpell
 syn match podCommand    "^=over"        nextgroup=podOverIndent skipwhite contains=@NoSpell
@@ -71,6 +74,7 @@ syn match podCommand    "^=end"         nextgroup=podForKeywd skipwhite contains
 
 hi def link podCommand		Statement
 hi def link podCmdText		String
+hi def link podEncoding		Constant
 hi def link podOverIndent	Number
 hi def link podForKeywd		Identifier
 hi def link podFormat		Identifier
