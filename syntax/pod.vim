@@ -35,7 +35,7 @@ syn match podEncoding	"[0-9A-Za-z_-]\+" contained contains=@NoSpell
 syn match podCmdText	".*$" contained contains=podFormat,@NoSpell
 
 " Indent amount of =over command
-syn match podOverIndent	"\d\+" contained contains=@NoSpell
+syn match podOverIndent	"\d*\.\=\d\+\>" contained contains=@NoSpell
 
 " Formatter identifier keyword for =for, =begin and =end commands
 syn match podForKeywd	"\S\+" contained contains=@NoSpell
@@ -61,7 +61,7 @@ syn match  podEscape2	"\d\+>"me=e-1 contained contains=@NoSpell
 syn match podCommand    "^=encoding\>"  nextgroup=podEncoding skipwhite contains=@NoSpell
 syn match podCommand    "^=head[1234]"  nextgroup=podCmdText contains=@NoSpell
 syn match podCommand    "^=item"        nextgroup=podCmdText contains=@NoSpell
-syn match podCommand    "^=over"        nextgroup=podOverIndent skipwhite contains=@NoSpell
+syn match podCommand    "^=over\>"      nextgroup=podOverIndent skipwhite contains=@NoSpell
 syn match podCommand    "^=back"        contains=@NoSpell
 syn match podCommand    "^=cut"         contains=@NoSpell
 syn match podCommand    "^=pod"         contains=@NoSpell
