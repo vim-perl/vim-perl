@@ -32,7 +32,7 @@ set cpo&vim
 syn match podEncoding	"[0-9A-Za-z_-]\+" contained contains=@NoSpell
 
 " Text of a =head1, =head2 or =item command
-syn match podCmdText	".*$" contained contains=podFormat,@NoSpell
+syn region podCmdText	start="\S.*$" end="^\ze\s*$" end="^\ze=cut\>" contained contains=podFormat,@NoSpell
 
 " Indent amount of =over command
 syn match podOverIndent	"\d*\.\=\d\+\>" contained contains=@NoSpell
@@ -58,16 +58,16 @@ syn match  podEscape	"\I\i*>"me=e-1 contained contains=@NoSpell
 syn match  podEscape2	"\d\+>"me=e-1 contained contains=@NoSpell
 
 " POD commands
-syn match podCommand    "^=encoding\>"  nextgroup=podEncoding skipwhite contains=@NoSpell
-syn match podCommand    "^=head[1234]"  nextgroup=podCmdText contains=@NoSpell
-syn match podCommand    "^=item"        nextgroup=podCmdText contains=@NoSpell
-syn match podCommand    "^=over\>"      nextgroup=podOverIndent skipwhite contains=@NoSpell
-syn match podCommand    "^=back"        contains=@NoSpell
-syn match podCommand    "^=cut"         contains=@NoSpell
-syn match podCommand    "^=pod"         contains=@NoSpell
-syn match podCommand    "^=for"         nextgroup=podForKeywd skipwhite contains=@NoSpell
-syn match podCommand    "^=begin"       nextgroup=podForKeywd skipwhite contains=@NoSpell
-syn match podCommand    "^=end"         nextgroup=podForKeywd skipwhite contains=@NoSpell
+syn match podCommand    "^=encoding\>"   nextgroup=podEncoding skipwhite contains=@NoSpell
+syn match podCommand    "^=head[1234]\>" nextgroup=podCmdText skipwhite skipnl contains=@NoSpell
+syn match podCommand    "^=item\>"       nextgroup=podCmdText skipwhite skipnl contains=@NoSpell
+syn match podCommand    "^=over\>"       nextgroup=podOverIndent skipwhite contains=@NoSpell
+syn match podCommand    "^=back"         contains=@NoSpell
+syn match podCommand    "^=cut"          contains=@NoSpell
+syn match podCommand    "^=pod"          contains=@NoSpell
+syn match podCommand    "^=for"          nextgroup=podForKeywd skipwhite contains=@NoSpell
+syn match podCommand    "^=begin"        nextgroup=podForKeywd skipwhite contains=@NoSpell
+syn match podCommand    "^=end"          nextgroup=podForKeywd skipwhite contains=@NoSpell
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
@@ -86,7 +86,7 @@ hi def link podEscape2		Number
 if exists("perl_pod_spellcheck_headings")
   " Spell-check headings
   syn clear podCmdText
-  syn match podCmdText    ".*$" contained contains=podFormat
+  syn region podCmdText start="\S.*$" end="^\s*$" end="^\ze=cut\>" contained contains=podFormat
 endif
 
 if exists("perl_pod_formatting")
