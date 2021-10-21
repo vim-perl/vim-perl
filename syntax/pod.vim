@@ -50,8 +50,13 @@ syn match podSpecial	"\(\<\|&\)\I\i*\(::\I\i*\)*([^)]*)" contains=@NoSpell
 syn match podSpecial	"[$@%]\I\i*\(::\I\i*\)*\>" contains=@NoSpell
 
 " Special formatting sequences
-syn region podFormat	start="[IBSCLFX]<[^<]"me=e-1 end=">" oneline contains=podFormat,@NoSpell
-syn region podFormat	start="[IBSCLFX]<<\s" end="\s>>" oneline contains=podFormat,@NoSpell
+
+syn cluster podFormat contains=podFormat,podFormatError
+
+syn match  podFormatError "[ADGHJKM-RT-WY]<"
+
+syn region podFormat	start="[IBSCLFX]<[^<]"me=e-1 end=">" oneline contains=@podFormat,@NoSpell
+syn region podFormat	start="[IBSCLFX]<<\s" end="\s>>" oneline contains=@podFormat,@NoSpell
 syn match  podFormat	"Z<>"
 
 syn region podFormat	start="E<" end=">" oneline contains=podEscape,podEscape2,@NoSpell
@@ -87,6 +92,7 @@ hi def link podOverIndent	Number
 hi def link podForKeywd		Identifier
 hi def link podFormat		Identifier
 hi def link podVerbatim		PreProc
+hi def link podFormatError	Error
 hi def link podSpecial		Identifier
 hi def link podEscape		Constant
 hi def link podEscape2		Number
@@ -101,8 +107,8 @@ if exists("perl_pod_formatting")
   " By default, escapes like C<> are not checked for spelling. Remove B<>
   " and I<> from the list of escapes.
   syn clear podFormat
-  syn region podFormat start="[CLF]<[^<]"me=e-1 end=">" oneline contains=podFormat,@NoSpell
-  syn region podFormat start="[CLF]<<\s" end="\s>>" oneline contains=podFormat,@NoSpell
+  syn region podFormat start="[CLF]<[^<]"me=e-1 end=">" oneline contains=@podFormat,@NoSpell
+  syn region podFormat start="[CLF]<<\s" end="\s>>" oneline contains=@podFormat,@NoSpell
 
   " Don't spell-check inside E<>, but ensure that the E< itself isn't
   " marked as a spelling mistake.
@@ -149,12 +155,12 @@ if exists("perl_pod_formatting")
   syn clear podCmdText
 
   if exists("perl_pod_spellcheck_headings")
-    syn match podCmdText ".*$" contained contains=podFormat,podBold,
+    syn match podCmdText ".*$" contained contains=@podFormat,podBold,
           \podBoldAlternativeDelim,podItalic,podItalicAlternativeDelim,
           \podBoldOpen,podItalicOpen,podBoldAlternativeDelimOpen,
           \podItalicAlternativeDelimOpen,podNoSpaceOpen
   else
-    syn match podCmdText ".*$" contained contains=podFormat,podBold,
+    syn match podCmdText ".*$" contained contains=@podFormat,podBold,
           \podBoldAlternativeDelim,podItalic,podItalicAlternativeDelim,
           \@NoSpell
   endif
