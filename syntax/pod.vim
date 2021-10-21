@@ -56,7 +56,7 @@ syn cluster podFormat contains=podFormat,podFormatError
 syn match  podFormatError "[ADGHJKM-RT-WY]<"
 
 syn region podFormat	start="[IBSCLFX]<[^<]"me=e-1 end=">" oneline contains=@podFormat,@NoSpell
-syn region podFormat	start="[IBSCLFX]<<\s" end="\s>>" oneline contains=@podFormat,@NoSpell
+syn region podFormat	start="[IBSCLFX]<<\s\+" end="\s\+>>" oneline contains=@podFormat,@NoSpell
 syn match  podFormat	"Z<>"
 
 syn region podFormat	start="E<" end=">" oneline contains=podEscape,podEscape2,@NoSpell
@@ -108,7 +108,7 @@ if exists("perl_pod_formatting")
   " and I<> from the list of escapes.
   syn clear podFormat
   syn region podFormat start="[CLF]<[^<]"me=e-1 end=">" oneline contains=@podFormat,@NoSpell
-  syn region podFormat start="[CLF]<<\s" end="\s>>" oneline contains=@podFormat,@NoSpell
+  syn region podFormat start="[CLF]<<\s\+" end="\s\+>>" oneline contains=@podFormat,@NoSpell
 
   " Don't spell-check inside E<>, but ensure that the E< itself isn't
   " marked as a spelling mistake.
@@ -126,27 +126,27 @@ if exists("perl_pod_formatting")
   syn match podIndexOpen   "X<" contains=@NoSpell
 
   " Same as above but for the << >> syntax.
-  syn match podBoldAlternativeDelimOpen    "B<< " contains=@NoSpell
-  syn match podItalicAlternativeDelimOpen  "I<< " contains=@NoSpell
-  syn match podNoSpaceAlternativeDelimOpen "S<< " contains=@NoSpell
-  syn match podIndexAlternativeDelimOpen   "X<< " contains=@NoSpell
+  syn match podBoldAlternativeDelimOpen    "B<<\s\+" contains=@NoSpell
+  syn match podItalicAlternativeDelimOpen  "I<<\s\+" contains=@NoSpell
+  syn match podNoSpaceAlternativeDelimOpen "S<<\s\+" contains=@NoSpell
+  syn match podIndexAlternativeDelimOpen   "X<<\s\+" contains=@NoSpell
 
   " Add support for spell checking text inside B<>, I<>, S<> and X<>.
   syn region podBold start="B<[^<]"me=e end=">" oneline contains=podBoldItalic,podBoldOpen
-  syn region podBoldAlternativeDelim start="B<<\s" end="\s>>" oneline contains=podBoldAlternativeDelimOpen
+  syn region podBoldAlternativeDelim start="B<<\s\+" end="\s\+>>" oneline contains=podBoldAlternativeDelimOpen
 
   syn region podItalic start="I<[^<]"me=e end=">" oneline contains=podItalicBold,podItalicOpen
-  syn region podItalicAlternativeDelim start="I<<\s" end="\s>>" oneline contains=podItalicAlternativeDelimOpen
+  syn region podItalicAlternativeDelim start="I<<\s\+" end="\s\+>>" oneline contains=podItalicAlternativeDelimOpen
 
   " Nested bold/italic and vice-versa
   syn region podBoldItalic contained start="I<[^<]"me=e end=">" oneline
   syn region podItalicBold contained start="B<[^<]"me=e end=">" oneline
 
   syn region podNoSpace start="S<[^<]"ms=s-2 end=">"me=e oneline contains=podNoSpaceOpen
-  syn region podNoSpaceAlternativeDelim start="S<<\s"ms=s-2 end="\s>>"me=e oneline contains=podNoSpaceAlternativeDelimOpen
+  syn region podNoSpaceAlternativeDelim start="S<<\s\+"ms=s-2 end="\s\+>>"me=e oneline contains=podNoSpaceAlternativeDelimOpen
 
   syn region podIndex start="X<[^<]"ms=s-2 end=">"me=e oneline contains=podIndexOpen
-  syn region podIndexAlternativeDelim start="X<<\s"ms=s-2 end="\s>>"me=e oneline contains=podIndexAlternativeDelimOpen
+  syn region podIndexAlternativeDelim start="X<<\s\+"ms=s-2 end="\s\+>>"me=e oneline contains=podIndexAlternativeDelimOpen
 
   " Restore this (otherwise B<> is shown as bold inside verbatim)
   syn region podVerbatim start="^\s\+\S.*$" end="^\ze\s*$" end="^\ze=cut\>" contains=@NoSpell
