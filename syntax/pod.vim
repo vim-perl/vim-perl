@@ -53,9 +53,17 @@ syn match podSpecial	"[$@%]\I\i*\(::\I\i*\)*\>" contains=@NoSpell
 syn region podFormat	start="[IBSCLFX]<[^<]"me=e-1 end=">" oneline contains=podFormat,@NoSpell
 syn region podFormat	start="[IBSCLFX]<<\s" end="\s>>" oneline contains=podFormat,@NoSpell
 syn match  podFormat	"Z<>"
-syn match  podFormat	"E<\(\d\+\|\I\i*\)>" contains=podEscape,podEscape2,@NoSpell
-syn match  podEscape	"\I\i*>"me=e-1 contained contains=@NoSpell
-syn match  podEscape2	"\d\+>"me=e-1 contained contains=@NoSpell
+
+syn region podFormat	start="E<" end=">" oneline contains=podEscape,podEscape2,@NoSpell
+
+" HTML entities {{{1
+" Source: Pod/Escapes.pm
+syn keyword podEscape contained lt gt quot amp apos sol verbar lchevron rchevron nbsp iexcl cent pound curren yen brvbar sect uml copy ordf laquo not shy reg macr deg plusmn sup2 sup3 acute micro para middot cedil sup1 ordm raquo frac14 frac12 frac34 iquest Agrave Aacute Acirc Atilde Auml Aring AElig Ccedil Egrave Eacute Ecirc Euml Igrave Iacute Icirc Iuml ETH Ntilde Ograve Oacute Ocirc Otilde Ouml times Oslash Ugrave Uacute Ucirc Uuml Yacute THORN szlig agrave aacute acirc atilde auml aring aelig ccedil egrave eacute ecirc euml igrave iacute icirc iuml eth ntilde ograve oacute ocirc otilde ouml divide oslash ugrave uacute ucirc uuml yacute thorn yuml fnof Alpha Beta Gamma Delta Epsilon Zeta Eta Theta Iota Kappa Lambda Mu Nu Xi Omicron Pi Rho Sigma Tau Upsilon Phi Chi Psi Omega alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu xi omicron pi rho sigmaf sigma tau upsilon phi chi psi omega thetasym upsih piv bull hellip prime Prime oline frasl weierp image real trade alefsym larr uarr rarr darr harr crarr lArr uArr rArr dArr hArr forall part exist empty nabla isin notin ni prod sum minus lowast radic prop infin ang and or cap cup int there4 sim cong asymp ne equiv le ge sub sup nsub sube supe oplus otimes perp sdot lceil rceil lfloor rfloor lang rang loz spades clubs hearts diams OElig oelig Scaron scaron Yuml circ tilde ensp emsp thinsp zwnj zwj lrm rlm ndash mdash lsquo rsquo sbquo ldquo rdquo bdquo dagger Dagger permil lsaquo rsaquo
+" }}}
+
+syn match  podEscape2	"\d\+"     contained contains=@NoSpell
+syn match  podEscape2	"0\=x\x\+" contained contains=@NoSpell
+syn match  podEscape2	"0\o\+"    contained contains=@NoSpell
 
 " POD commands
 syn match podCommand    "^=encoding\>"   nextgroup=podEncoding skipwhite contains=@NoSpell
@@ -80,7 +88,7 @@ hi def link podForKeywd		Identifier
 hi def link podFormat		Identifier
 hi def link podVerbatim		PreProc
 hi def link podSpecial		Identifier
-hi def link podEscape		String
+hi def link podEscape		Constant
 hi def link podEscape2		Number
 
 if exists("perl_pod_spellcheck_headings")
@@ -98,7 +106,7 @@ if exists("perl_pod_formatting")
 
   " Don't spell-check inside E<>, but ensure that the E< itself isn't
   " marked as a spelling mistake.
-  syn match podFormat   "E<\(\d\+\|\I\i*\)>" contains=podEscape,podEscape2,@NoSpell
+  syn region podFormat	start="E<" end=">" oneline contains=podEscape,podEscape2,@NoSpell
 
   " Z<> is a mock formatting code. Ensure Z<> on its own isn't marked as a
   " spelling mistake.
@@ -179,4 +187,4 @@ let b:current_syntax = "pod"
 let &cpo = s:cpo_save
 unlet s:cpo_save
 
-" vim: ts=8
+" vim: ts=8 fdm=marker:
