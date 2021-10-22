@@ -51,17 +51,6 @@ syn region tapTestResultsSummaryNotOK start=/TODO passed:/ end=/$/ contained
 
 syn region tapTestInstructionsRegion start=/\%1l/ end=/^$/
 
-set foldtext=TAPTestLine_foldtext()
-function! TAPTestLine_foldtext()
-    let line = getline(v:foldstart)
-    let sub = substitute(line, '/\*\|\*/\|{{{\d\=', '', 'g')
-    return sub
-endfunction
-
-set foldminlines=5
-set foldcolumn=2
-set foldenable
-set foldmethod=syntax
 syn sync fromstart
 
 if !exists("did_tapverboseoutput_syntax_inits")
