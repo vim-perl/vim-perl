@@ -32,6 +32,8 @@ endif
 " Provided by Ned Konz <ned at bike-nomad dot com>
 "---------------------------------------------
 setlocal include=\\<\\(use\\\|require\\)\\>
+" '+' is removed to support plugins in Catalyst or DBIx::Class
+" where the leading plus indicates a fully-qualified module name.
 setlocal includeexpr=substitute(substitute(substitute(substitute(v:fname,'+','',''),'::','/','g'),'->\*','',''),'$','.pm','')
 setlocal define=[^A-Za-z_]
 setlocal iskeyword+=:
