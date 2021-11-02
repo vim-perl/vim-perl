@@ -19,10 +19,10 @@ endif
 let s:savecpo = &cpo
 set cpo&vim
 
-if exists('g:perl_compiler_force_warnings') && g:perl_compiler_force_warnings == 0
-	let s:warnopt = 'w'
-else
+if get(g:, 'perl_compiler_force_warnings', 1)
 	let s:warnopt = 'W'
+else
+	let s:warnopt = 'w'
 endif
 
 if getline(1) =~# '-[^ ]*T'
