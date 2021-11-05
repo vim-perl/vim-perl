@@ -28,6 +28,18 @@ endif
 let s:cpo_save = &cpo
 set cpo&vim
 
+if exists("pod_space_errors")
+  if !exists("pod_no_trail_space_error")
+    syn match	podSpaceError	display excludenl "\s\+$"
+  endif
+  if !exists("pod_no_tab_space_error")
+    syn match	podSpaceError	display " \+\t"me=e-1
+  endif
+  if !exists("pod_no_blank_line_error")
+    syn match	podSpaceError	display "^\s\+$"
+  endif
+endif
+
 " POD commands
 syn match podCommand    "^=encoding"  nextgroup=podCmdText contains=@NoSpell
 syn match podCommand    "^=head[1234]"  nextgroup=podCmdText contains=@NoSpell
