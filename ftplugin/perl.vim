@@ -32,13 +32,20 @@ setlocal iskeyword+=:
 
 " The following line changes a global variable but is necessary to make
 " gf and similar commands work. Thanks to Andrew Pimlott for pointing
-" out the problem. If this causes a problem for you, add an
-" after/ftplugin/perl.vim file that contains
-"       set isfname-=:
+" out the problem.
+let s:old_isfname = &isfname
 set isfname+=:
+let s:new_isfname = &isfname
+
+augroup perl_global_options
+  au!
+  exe "au BufEnter * if &filetype == 'perl' | let &isfname = '" . s:new_isfname . "' | endif"
+  exe "au BufLeave * if &filetype == 'perl' | let &isfname = '" . s:old_isfname . "' | endif"
+augroup END
 
 " Undo the stuff we changed.
-let b:undo_ftplugin = "setlocal fo< kp< com< cms< inc< inex< def< isk<"
+let b:undo_ftplugin = "setlocal fo< kp< com< cms< inc< inex< def< isk<" .
+      \               " | let &isfname = '" .  s:old_isfname . "'"
 
 if get(g:, 'perl_fold', 0)
   setlocal foldmethod=syntax
@@ -99,4 +106,4 @@ endif
 
 " Restore the saved compatibility options.
 let &cpo = s:save_cpo
-unlet s:save_cpo
+unlet s:save_cpo s:old_isfname s:new_isfname
