@@ -1,0 +1,1 @@
+[["Statement","package"],["Type"," Role::Child"],["",";\n"],["Statement","use "],["","Moose::Role;\n\nwith "],["String","'Role::Parent'"],[""," => { "],["String","-alias"],[""," => { "],["String","meth1"],[""," => "],["String","'aliased_meth1'"],["",", } };\n\n"],["Keyword","sub "],["Function","meth1 "],["","{ }\n\n"],["Number","1"],["",";\n"]]

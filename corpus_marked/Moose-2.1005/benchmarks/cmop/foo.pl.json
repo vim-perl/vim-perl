@@ -1,0 +1,1 @@
+[["PreProc","#!perl -wd:NYTProf"],["","\n"],["Comment","# a moose using script for profiling"],["","\n"],["Comment","# Usage: perl bench/profile.pl"],["","\n\n"],["Statement","require"],[""," KiokuDB;\n"]]

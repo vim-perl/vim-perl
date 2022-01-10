@@ -1,0 +1,475 @@
+Revision history for Data-Printer
+
+0.35  2012-11-25
+    BUG FIXES:
+        - fixed escaped chars colorization issue in bleadperl
+          (thanks Andreas Koenig for reporting!)
+    OTHER:
+        - more tests added
+
+0.34  2012-11-11
+    NEW FEATURES:
+        - improved display of DBIC ResultSets
+        - 'Digest' filter now works on any Digest::base modules [RT#80039]
+        - enclosing quotes on strings are displayed using a different colour
+          (patch by Ivan Bessarabov)
+
+    OTHER:
+        - new tip by dirk: creating fiddling filters
+        - updated documentation including external filters
+          (JSON, ClassicRegex, URI)
+
+0.33    2012-08-20
+    BUG FIXES:
+        - fixed warning in external filters for some
+          perl versions (thanks Stanislaw Pusep for reporting).
+        - prevented repeated tie display
+
+    OTHER:
+        - removed deprecated escape_chars, as promised in version 0.30.
+
+0.32    2012-08-11
+    BUG FIXES:
+        - fixed (other) test failures in 5.8
+        - pod fix in DDP.pm (nuno carvalho)
+
+    NEW HIGHLY EXPERIMENTAL FEATURE:
+        - extra options for external filters. Right now
+          the only available one is 'show_repeated', to
+          let filters override Data::Printer's behaviour
+          of not showing duplicate variables.
+
+
+0.31   2012-08-09
+    BUG FIXES:
+        - fixed test failures in 5.8
+
+    OTHER:
+        - releasing as stable version
+
+0.30_06   2012-07-22
+    NEW FEATURES:
+        - new filter for DateTime::Tiny
+
+    OTHER:
+        - new tip: using DDP with Template Toolkit
+
+0.30_05   2012-07-21
+    NEW FEATURES:
+        - Add support for FORMAT and LVALUE refs (Rebecca Turner)
+
+    BUG FIXES:
+        - prevent warning when dumping refs to unopened or closed
+          file handles (Rebecca Turner)
+        - on Win32, it is allowed to use an RC file without
+          read-only permissions
+
+0.30_04   2012-07-08
+    NEW FEATURES:
+        - Improved support for unknown core datatypes (Rebecca Turner)
+
+    BUG FIXES:
+        - fixed indentation when using colored output (Stanislaw Pusep)
+        - fixed t/05-obj.t on older perls (Mike Doherty)
+        - fixed dev-only pod tests
+        - Issue warning (carp) when color/colour is not a hashref
+
+0.30_03   2012-07-05
+    NEW FEATURES:
+        - new class property 'universal', letting you choose whether
+          to include UNIVERSAL methods during inheritance display
+          or not (default is 1, meaning to show).
+        - support for VSTRINGs (Rebecca Turner)
+
+    NEW ***EXPERIMENTAL*** FEATURES:
+        - new 'show_readonly' property, off by default, to show
+          variables marked as read-only
+          (scalars only for now, patches welcome!)
+
+    BUG FIXES:
+        - fixed issue with t/05-obj.t
+        - minor pod fixes (Rebecca Turner, myself)
+        - Protect against unknown core data types that don't implement "can" (Rebecca Turner)
+
+0.30_02   2012-07-02
+    BUG FIXES:
+        - RC file under taint mode should be properly parsed now.
+
+    OTHER:
+        - Rob Hoeltz and Stephen Thirlwall added to the
+          contributors list. Thanks guys!
+
+0.30_01   2012-07-02
+    CHANGES THAT BREAK BACKWARDS COMPATIBILITY:
+        - linear_isa option is now set to 'auto' by default (see below)
+
+    NEW FEATURES:
+        - linear_isa can now be set to 'auto', in which case
+          it will show the @ISA only if the object has more than
+          one parent. Other values are 0 (never show) and 1 (always show)
+        - new "Digest" filter bundle, for MD5, SHA and other Digest objects!
+        - separate colours for classes and methods (feature request
+          by Ivan Bessarabov)
+        - environment variable DATAPRINTERRC overrides .dataprinter
+          and lets you pick different RCs at will (Stephen Thirlwall)
+        - new option 'separator' lets you pick a custom separator
+          for array/hash elements, including none (''). Default is ','.
+        - new option 'end_separator' can be set to 1 to show the last
+          item of an array or hash with a separator (Ivan Bessarabov)
+        - DateTime filter bundle now also handles DateTime::TimeZone
+          objects (RT#77755)
+
+    BUG FIXES:
+        - RC file now works under taint mode, with restrictions
+          (feature request by Rob Hoelz)
+        - class_method call now includes properties hashref (Joel Berger)
+
+    OTHER:
+        - Replacement of dependencies to permit pure perl operation:
+            Class::MOP is replaced with mro and Package::Stash
+            Clone is replaced with Clone::PP
+            Hash::FieldHash is replaced with Hash::Util::FieldHash
+          Note that if <5.10 is detected, Data::Printer also requires:
+            MRO::Compat to provide mro
+            Hash::Util::FieldHash::Compat to provide Hash::Util::FieldHash
+          As a result, Data::Printer should now be fatpackable (cpan:MSTROUT)
+        - new /examples dir, with a sample file to let you easily try
+          different color schemes (Yanick Champoux)
+        - pod coverage tests (developer only)
+
+0.30    2012-02-13
+    CHANGES THAT BREAK BACKWARDS COMPATIBILITY:
+        - 'escape_chars' was renamed 'print_escapes' to
+          avoid ambiguity. The old name will work until
+          v0.32, but will trigger a warning so you can
+          update your code. Sorry for the inconvenience,
+          the previous name was hard to figure out because
+          'escape' could be interpreted as a noun or as
+          an adjective (perigrin++ for suggesting the new
+          name).
+
+    NEW FEATURES:
+        - in hashes, surround key names with quotes if they
+          contain spaces (feature request by Maxim Vuets)
+        - escape_chars also works for hash keys now.
+        - new 'quote_keys' property to add quotes in hash
+          keys. Defaults to 'auto' which means it will
+          quote keys containing spaces (and empty keys)
+
+    BUG FIXES:
+        - fixed temporary file handling during tests. Thanks
+          Andy Bach for reporting and providing a patch.
+
+    OTHER:
+        - added documentation for the new 'rc_file' feature
+          introduced in the previous version.
+
+0.29    2012-01-25
+    NEW FEATURES:
+        - custom rc file names via the new 'rc_file' property
+          (many thanks to Maxim Vuets for the idea and the
+           original implementation)
+
+    BUG FIXES:
+        - fixed unescaped null character during colored output
+          (reported by bowtie++)
+
+
+0.28    2012-01-23
+    NEW FEATURES:
+        - new 'escape_chars' property to show '\t', '\n'
+          escaped (default is 1, meaning escape, which
+          will render the actual character instead). Note that
+          the '\0' special character is never escaped.
+        - new 'escaped' colour, defaults to bright red.
+
+    OTHER:
+        - fixed Changes file for compliance against latest
+          CPAN::Changes specification
+
+0.27    2012-01-22
+    BUG FIXES:
+        - properly escape nulls in strings (oylenshpeegul)
+
+    NEW FEATURES:
+        - control the output target with the 'output' property.
+          It can be set to 'stdout', 'stderr', a file name,
+          a file handle or even a scalar reference! Default, as
+          usual, is 'stderr'
+
+    OTHER:
+        - added tests for auto-coloring (DOY)
+        - updated link to Any::Renderer::Data::Printer (Allan Whiteford)
+
+0.26    2011-11-23
+    BUG FIXES:
+        - colored => 'auto' properly detects terminals again
+
+0.25    2011-11-20
+    BUG FIXES:
+        - Increased version requirement for Test::Pod to 1.41 (Fitz Elliott)
+        - Updated tests to handle newer Class::MOP installations (J Mash)
+
+    OTHER:
+        - POD tests enabled only for developers
+        - Updated Class::MOP version requirement to 0.81 since
+          ActiveState was complaining about ancient versions.
+
+0.24    2011-10-23
+    NEW FEATURES:
+        - link to the external URI filter (by SYP)
+        - display object's reference type (Denis Howe)
+
+    OTHER:
+        - only load Class::MOP when inspecting objects.
+
+0.23    2011-08-30
+    NEW FEATURES:
+        - control the return value with the 'return_value'
+          property. This can be set to 'void', 'dump', and
+          'pass' (for pass-through). Default is 'dump',
+          which behaves exactly like previous versions. Note
+          that, as usual, the 'dump' mode will only print
+          the dump if called in void context. Otherwise, it
+          will only return it. (MST, GARU)
+
+    OTHER:
+        - more extra tips (HANEKOMU, RANDIR, MST)
+        - updated documentation
+
+0.22    2011-07-19
+    NEW FEATURES:
+        - display taint information via the 'show_tainted'
+          display customization (default true)
+        - control weak information display via 'show_weak'
+          customization (default true)
+    OTHER:
+        - major documentation overhaul and update
+        - more extra tips (MST, HANEKOMU)
+
+0.21    2011-07-01
+    BUG FIXES:
+        - removed legacy dependency on Object::ID
+        - increased Term::ANSIColor version (David Raab)
+        - switched to EU:MM to make people happy :)
+          (seriously though, M:I was being too clever
+           while resolving dependencies)
+    OTHER:
+        - adding bugtracker meta information
+
+0.20    2011-06-23
+    CHANGES THAT BREAK BACKWARDS COMPATIBILITY:
+        - respect ANSI_COLORS_DISABLED if colored => 'auto',
+          but force color codes if colored => 1.
+        - colored => 'auto' prints colored output only
+          in void mode, not when returning a string. In other
+          words, doing p($var) will show colors, but
+          my $out = p($var) will not (unless you force it
+          via colored => 1). This behavior differs from
+          previous versions, but is more consistent and
+          we consider the previous way to have been a bug.
+
+          Many thanks to SZABGAB, CSJEWELL and specially RANDIR
+          for detecting, analyzing and helping to come up with
+          a solution, initially addressed as a Microsoft Windows
+          issue (RT#68630).
+
+    OTHER:
+        - reduced some dependencies to make installation even easier.
+
+0.19    2011-06-08
+    NEW FEATURES:
+        - toggle 'parents' class display, activated by default (RANDIR)
+        - toggle 'show_methods' class display, activated by default (RANDIR, GARU)
+        - toggle 'linear_isa' class display, activated by default
+
+    BUG FIXES:
+        - specific class filters now fallback to generic -class
+          filters when used (RANDIR)
+        - show flags from handles even when not all flags are
+          implemented on the target system (DOHERTY, GARU)
+
+0.18    2011-06-07
+    NEW FEATURES:
+        - toggle timezone display on DateTime filters (Elliot Shank)
+        - showing weak references (RANDIR)
+        - more concise output for empty structures (RANDIR)
+
+    OTHER:
+        - extra tip on unified dumping interfaces (cat|grep)
+        - extra tip on using Data::Printer with Devel::REPL
+
+0.17    2011-06-06
+    NEW FEATURES:
+        - filter fallback also for Perl types (RANDIR, GARU)
+        - no need to pass arrayref in -external filters
+          if you only have one.
+        - new "use_prototypes" option, defaults to 1. Set to 0
+          to stop using prototypes in p(), which will let you
+          do p( { foo => "bar" } ); but you'll have to pass
+          the data to be printed as a reference.
+
+    BUG FIXES:
+        - corrected filter order (should be LIFO, not FIFO)
+        - fixed edge-case behavior of p() within standalone filters
+        - make sure filter output is defined, not just true (RANDIR)
+        - fixed filter tests for Date::Calc & Date::Pcalc (SUGYAN, GARU)
+
+    OTHER:
+        - more tests
+        - big internal refactoring
+        - extra tips on circumveinting prototypes (DAMS, GARU)
+        - extra tips on loading p() across all loaded modules (Árpád Szász)
+
+0.16    2011-05-31
+    BUG FIXES:
+        - patch to make it work on 5.8.8 again (RANDIR)
+
+0.15    2011-05-30
+    OTHERS:
+        - updating filters docs
+        - adding default color for DateTime filter
+
+0.14    2011-05-30
+    NEW FEATURES:
+        - allowing 'colored' display customization to control colored
+          output. Default is 'auto', showing colors only when
+          output is not being piped. You may also set this to 0 to
+          disable colors completely, or 1 to enable output coloring
+          all the time (even when piped).
+        - new 'caller_info' display customization.
+        - default 'class_method' is now set to '_data_printer', so your
+          modules and apps can be aware of Data::Printer automatically.
+
+    BUG FIXES:
+        - Skipping calls to fcntl() in systems that don't support it.
+
+0.13    2011-05-24
+    CHANGES THAT ***BREAK*** BACKWARDS COMPATIBILITY:
+        - 'external' is now called '-external' to avoid name clash
+          with a potential "external.pm" class;
+        - filters for the same type/class are now stacked and called
+          in order. The first one that returns a defined value (string)
+          is used, otherwise it will forward the call to the next filter.
+          In earlier versions, the last declared filter would be the one
+          used. Note that this feature is only available for stand-alone
+          filters, since inline filters are actually a hash.
+
+    NEW FEATURES:
+        - use a specific dump method via the 'class_method' display
+          customization (default undef)
+        - display tie information via the 'show_tied' display
+          customization (default true)
+        - display extra information (mode, flags, layers) on I/O handles
+        - new '-class' type (note the dash) called when we find a
+          non-native type (i.e. an object). If you return anything at
+          all - even an empty string - the filter will succeed. Otherwise
+          it will forward the call to the next '-class' filter, in order.
+        - new DDP package alias
+
+
+    OTHERS:
+        - improved test suite
+        - improved documentation
+
+0.12    2011-05-03
+    BUG FIXES:
+        - fixed failing filter test due to timezone/epoch issues
+
+0.11    2011-05-03
+    NEW FEATURES:
+        - allowing 'sort_keys' display customization (default true)
+        - allowing 'sort_methods' class display customization (default true)
+        - now you can add options to Data::Printer as a plain hash, not
+          just as a hash ref (feature request by edenc)
+
+    NEW ***EXPERIMENTAL*** FEATURES:
+        - Data::Printer::Filter, enabling separate filter classes
+        - filter for modules handling date and time (DateTime & friends)
+        - filter for database modules (DBI only for now)
+
+    OTHERS:
+        - more tests
+        - improved documentation, including how to turn output to HTML
+        - some internal refactorings
+
+0.10    2011-04-18
+    NEW FEATURES:
+        - allowing toggle for array indices
+        - allowing 'multiline' display customization
+        - allowing 'deparse' display customization
+        - allowing 'max_depth' display customization
+        - allowing 'inherited' class display customization
+        - allowing 'expand' class display customization, defaults
+          to 1 (expand only the object itself)
+
+    OTHERS:
+        - removed ending comma from arrays and hashes
+        - showing parents/ISA information only when it's there
+        - default separator for key/values reduced to 3 spaces for
+          improved readability.
+        - improved test suite
+
+0.09    2011-04-13
+    NEW FEATURES:
+        - allowing for 'internals' display customization
+
+    BUG FIXES:
+        - improving test suite
+        - improving documentation
+
+0.08    2011-04-11
+    BUG FIXES:
+        - improving test suite (was still failing on NetBSD)
+        - Improved handling of extended regexps (thanks Getty for reporting)
+
+0.07    2011-04-02
+    BUG FIXES:
+        - Making sure File::HomeDir is 0.91 or higher
+        - Making tests stricter, since they were failing on Win32
+
+0.06    2011-03-31
+    BUG FIXES:
+        - if you want to call p() from within a filter, the
+          argument to p() must be passed as a *reference*. This
+          is now enforced to avoid users shooting themselves in the foot.
+        - more tests added
+
+0.05    2011-03-23
+    NEW FEATURES:
+        - local configuration file support ($HOME/.dataprinter)
+        - you can now alias p() to whatever name you like
+
+0.04    2011-02-21
+    NEW FEATURE (or BUGFIX depending on how you look at it):
+        - supporting the new (5.13.6) perl regex modifiers syntax
+
+0.03    2011-02-14
+    BUG FIXES:
+        - reseting colors before starting
+
+0.02    2011-02-13
+
+    CHANGES THAT BREAK BACKWARDS COMPATIBILITY:
+        - d() function removed. You can now call p($var) in void context to print,
+          or as "my $output = p($var)" to retrieve results without printing.
+
+    NEW FEATURES:
+        - new import syntax, use Data::Printer { option => value }
+        - new "filters" property available to filter certain types.
+        - updated documentation.
+
+    NEW ***EXPERIMENTAL*** FEATURES
+        - local properties setting, p($var, key => value).
+
+    BUG FIXES:
+        - properly handles GLOB references
+        - colors now work on Win32 as well.
+        - uncolors piped output, for "less" & friends (thanks Getty for reporting).
+        - added all possible regex modifiers to the regex output.
+        - more tests added.
+
+
+0.01    2011-01-20
+        - First version, released on an unsuspecting world.
+

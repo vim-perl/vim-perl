@@ -1,0 +1,249 @@
+package Moose::Manual::BestPractices;
+
+# ABSTRACT: Get the most out of Moose
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Moose::Manual::BestPractices - Get the most out of Moose
+
+=head1 VERSION
+
+version 2.1005
+
+=head1 RECOMMENDATIONS
+
+Moose has a lot of features, and there's definitely more than one way
+to do it. However, we think that picking a subset of these features
+and using them consistently makes everyone's life easier.
+
+Of course, as with any list of "best practices", these are really just
+opinions. Feel free to ignore us.
+
+=head2 C<namespace::autoclean> and immutabilize
+
+We recommend that you remove the Moose sugar and end your Moose class
+definitions by making your class immutable.
+
+  package Person;
+
+  use Moose;
+  use namespace::autoclean;
+
+  # extends, roles, attributes, etc.
+
+  # methods
+
+  __PACKAGE__->meta->make_immutable;
+
+  1;
+
+The C<use namespace::autoclean> bit is simply good code hygiene, as it removes
+imported symbols from your class's namespace at the end of your package's
+compile cycle, including Moose keywords.  Once the class has been built, these
+keywords are not needed. (This is preferred to placing C<no Moose> at the end
+of your package).
+
+The C<make_immutable> call allows Moose to speed up a lot of things, most
+notably object construction. The trade-off is that you can no longer change
+the class definition.
+
+=head2 Never override C<new>
+
+Overriding C<new> is a very bad practice. Instead, you should use a
+C<BUILD> or C<BUILDARGS> methods to do the same thing. When you
+override C<new>, Moose can no longer inline a constructor when your
+class is immutabilized.
+
+There are two good reasons to override C<new>. One, you are writing a
+MooseX extension that provides its own L<Moose::Object> subclass
+I<and> a subclass of L<Moose::Meta::Method::Constructor> to inline the
+constructor. Two, you are subclassing a non-Moose parent.
+
+If you know how to do that, you know when to ignore this best practice
+;)
+
+=head2 Always call the original/parent C<BUILDARGS>
+
+If you C<override> the C<BUILDARGS> method in your class, make sure to play
+nice and call C<super()> to handle cases you're not checking for explicitly.
+
+The default C<BUILDARGS> method in L<Moose::Object> handles both a
+list and hashref of named parameters correctly, and also checks for a
+I<non-hashref> single argument.
+
+=head2 Provide defaults whenever possible, otherwise use C<required>
+
+When your class provides defaults, this makes constructing new objects
+simpler. If you cannot provide a default, consider making the
+attribute C<required>.
+
+If you don't do either, an attribute can simply be left unset,
+increasing the complexity of your object, because it has more possible
+states that you or the user of your class must account for.
+
+=head2 Use C<builder> instead of C<default> most of the time
+
+Builders can be inherited, they have explicit names, and they're just
+plain cleaner.
+
+However, I<do> use a default when the default is a non-reference,
+I<or> when the default is simply an empty reference of some sort.
+
+Also, keep your builder methods private.
+
+=head2 Be C<lazy>
+
+Lazy is good, and often solves initialization ordering problems. It's also
+good for deferring work that may never have to be done. Make your attributes
+C<lazy> unless they're C<required> or have trivial defaults.
+
+=head2 Consider keeping clearers and predicates private
+
+Does everyone I<really> need to be able to clear an attribute?
+Probably not. Don't expose this functionality outside your class
+by default.
+
+Predicates are less problematic, but there's no reason to make your
+public API bigger than it has to be.
+
+=head2 Avoid C<lazy_build>
+
+As described above, you rarely actually need a clearer or a predicate.
+C<lazy_build> adds both to your public API, which exposes you to use cases that
+you must now test for. It's much better to avoid adding them until you really
+need them - use explicit C<lazy> and C<builder> options instead.
+
+=head2 Default to read-only, and consider keeping writers private
+
+Making attributes mutable just means more complexity to account for in
+your program. The alternative to mutable state is to encourage users
+of your class to simply make new objects as needed.
+
+If you I<must> make an attribute read-write, consider making the
+writer a separate private method. Narrower APIs are easy to maintain,
+and mutable state is trouble.
+
+In order to declare such attributes, provide a private C<writer>
+parameter:
+
+    has pizza => (
+        is     => 'ro',
+        isa    => 'Pizza',
+        writer => '_pizza',
+    );
+
+=head2 Think twice before changing an attribute's type in a subclass
+
+Down this path lies great confusion. If the attribute is an object
+itself, at least make sure that it has the same interface as the type
+of object in the parent class.
+
+=head2 Don't use the C<initializer> feature
+
+Don't know what we're talking about? That's fine.
+
+=head2 Use L<Moose::Meta::Attribute::Native> traits instead of C<auto_deref>
+
+The C<auto_deref> feature is a bit troublesome. Directly exposing a complex
+attribute is ugly. Instead, consider using L<Moose::Meta::Attribute::Native>
+traits to define an API that only exposes the necessary pieces of
+functionality.
+
+=head2 Always call C<inner> in the most specific subclass
+
+When using C<augment> and C<inner>, we recommend that you call
+C<inner> in the most specific subclass of your hierarchy. This makes
+it possible to subclass further and extend the hierarchy without
+changing the parents.
+
+=head2 Namespace your types
+
+Use some sort of namespacing convention for type names. We recommend something
+like "MyApp::Type::Foo". We also recommend considering L<MooseX::Types>.
+
+=head2 Do not coerce Moose built-ins directly
+
+If you define a coercion for a Moose built-in like C<ArrayRef>, this
+will affect every application in the Perl interpreter that uses this
+type.
+
+    # very naughty!
+    coerce 'ArrayRef'
+        => from Str
+        => via { [ split /,/ ] };
+
+Instead, create a subtype and coerce that:
+
+    subtype 'My::ArrayRef' => as 'ArrayRef';
+
+    coerce 'My::ArrayRef'
+        => from 'Str'
+        => via { [ split /,/ ] };
+
+=head2 Do not coerce class names directly
+
+Just as with Moose built-in types, a class type is global for the
+entire interpreter. If you add a coercion for that class name, it can
+have magical side effects elsewhere:
+
+    # also very naughty!
+    coerce 'HTTP::Headers'
+        => from 'HashRef'
+        => via { HTTP::Headers->new( %{$_} ) };
+
+Instead, we can create an "empty" subtype for the coercion:
+
+    subtype 'My::HTTP::Headers' => as class_type('HTTP::Headers');
+
+    coerce 'My::HTTP::Headers'
+        => from 'HashRef'
+        => via { HTTP::Headers->new( %{$_} ) };
+
+=head2 Use coercion instead of unions
+
+Consider using a type coercion instead of a type union. This was
+covered in L<Moose::Manual::Types>.
+
+=head2 Define all your types in one module
+
+Define all your types and coercions in one module. This was also
+covered in L<Moose::Manual::Types>.
+
+=head1 BENEFITS OF BEST PRACTICES
+
+Following these practices has a number of benefits.
+
+It helps ensure that your code will play nice with others, making it
+more reusable and easier to extend.
+
+Following an accepted set of idioms will make maintenance easier,
+especially when someone else has to maintain your code. It will also
+make it easier to get support from other Moose users, since your code
+will be easier to digest quickly.
+
+Some of these practices are designed to help Moose do the right thing,
+especially when it comes to immutabilization. This means your code
+will be faster when immutabilized.
+
+Many of these practices also help get the most out of meta
+programming. If you used an overridden C<new> to do type coercion by
+hand, rather than defining a real coercion, there is no introspectable
+metadata. This sort of thing is particularly problematic for MooseX
+extensions which rely on introspection to do the right thing.
+
+=head1 AUTHOR
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See L<Moose/CABAL> and L<Moose/CONTRIBUTORS> for details.
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut

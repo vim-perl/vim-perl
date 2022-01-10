@@ -1,0 +1,1 @@
+[["","\n"],["Statement","package"],["Type"," Bar"],["",";\n"],["Statement","use "],["","Moose;\n"],["Statement","use "],["","Moose::Util::TypeConstraints;\n\ntype "],["String","Baz"],[""," => where { "],["Number","1"],[""," };\n\nsubtype "],["String","Bling"],[""," => as "],["String","Baz"],[""," => where { "],["Number","1"],[""," };\n\n"],["Number","1"],["",";\n"]]

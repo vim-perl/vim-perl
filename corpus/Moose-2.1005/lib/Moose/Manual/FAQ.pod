@@ -1,0 +1,427 @@
+package Moose::Manual::FAQ;
+
+# ABSTRACT: Frequently asked questions about Moose
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Moose::Manual::FAQ - Frequently asked questions about Moose
+
+=head1 VERSION
+
+version 2.1005
+
+=head1 FREQUENTLY ASKED QUESTIONS
+
+=head2 Module Stability
+
+=head3 Is Moose "production ready"?
+
+Yes! Many sites with household names are using Moose to build
+high-traffic services. Countless others are using Moose in production.
+See L<http://moose.iinteractive.com/about.html#organizations> for
+a partial list.
+
+As of this writing, Moose is a dependency of several hundred CPAN
+modules. L<https://metacpan.org/requires/module/Moose>
+
+=head3 Is Moose's API stable?
+
+Yes. The sugary API, the one 95% of users will interact with, is
+B<very stable>. Any changes will be B<100% backwards compatible>.
+
+The meta API is less set in stone. We reserve the right to tweak
+parts of it to improve efficiency or consistency. This will not be
+done lightly. We do perform deprecation cycles. We I<really>
+do not like making ourselves look bad by breaking your code.
+Submitting test cases is the best way to ensure that your code is not
+inadvertently broken by refactoring.
+
+=head3 I heard Moose is slow, is this true?
+
+Again, this one is tricky, so Yes I<and> No.
+
+Firstly, I<nothing> in life is free, and some Moose features do cost
+more than others. It is also the policy of Moose to B<only charge you
+for the features you use>, and to do our absolute best to not place
+any extra burdens on the execution of your code for features you are
+not using. Of course using Moose itself does involve some overhead,
+but it is mostly compile time. At this point we do have some options
+available for getting the speed you need.
+
+Currently we provide the option of making your classes immutable as a
+means of boosting speed. This will mean a slightly larger compile time
+cost, but the runtime speed increase (especially in object
+construction) is pretty significant. This can be done with the
+following code:
+
+  MyClass->meta->make_immutable();
+
+=head2 Constructors
+
+=head3 How do I write custom constructors with Moose?
+
+Ideally, you should never write your own C<new> method, and should use
+Moose's other features to handle your specific object construction
+needs. Here are a few scenarios, and the Moose way to solve them;
+
+If you need to call initialization code post instance construction,
+then use the C<BUILD> method. This feature is taken directly from Perl
+6. Every C<BUILD> method in your inheritance chain is called (in the
+correct order) immediately after the instance is constructed.  This
+allows you to ensure that all your superclasses are initialized
+properly as well. This is the best approach to take (when possible)
+because it makes subclassing your class much easier.
+
+If you need to affect the constructor's parameters prior to the
+instance actually being constructed, you have a number of options.
+
+To change the parameter processing as a whole, you can use the
+C<BUILDARGS> method. The default implementation accepts key/value
+pairs or a hash reference. You can override it to take positional
+args, or any other format
+
+To change the handling of individual parameters, there are I<coercions> (See
+the L<Moose::Cookbook::Basics::HTTP_SubtypesAndCoercion> for a complete
+example and explanation of coercions). With coercions it is possible to morph
+argument values into the correct expected types. This approach is the most
+flexible and robust, but does have a slightly higher learning curve.
+
+=head3 How do I make non-Moose constructors work with Moose?
+
+Usually the correct approach to subclassing a non-Moose class is
+delegation.  Moose makes this easy using the C<handles> keyword,
+coercions, and C<lazy_build>, so subclassing is often not the ideal
+route.
+
+That said, if you really need to inherit from a non-Moose class, see
+L<Moose::Cookbook::Basics::DateTime_ExtendingNonMooseParent> for an example of how to do it,
+or take a look at L<Moose::Manual::MooseX/"MooseX::NonMoose">.
+
+=head2 Accessors
+
+=head3 How do I tell Moose to use get/set accessors?
+
+The easiest way to accomplish this is to use the C<reader> and
+C<writer> attribute options:
+
+  has 'bar' => (
+      isa    => 'Baz',
+      reader => 'get_bar',
+      writer => 'set_bar',
+  );
+
+Moose will still take advantage of type constraints, triggers, etc.
+when creating these methods.
+
+If you do not like this much typing, and wish it to be a default for
+your classes, please see L<MooseX::FollowPBP>. This extension will
+allow you to write:
+
+  has 'bar' => (
+      isa => 'Baz',
+      is  => 'rw',
+  );
+
+Moose will create separate C<get_bar> and C<set_bar> methods instead
+of a single C<bar> method.
+
+If you like C<bar> and C<set_bar>, see
+L<MooseX::SemiAffordanceAccessor>.
+
+NOTE: This B<cannot> be set globally in Moose, as that would break
+other classes which are built with Moose. You can still save on typing
+by defining a new C<MyApp::Moose> that exports Moose's sugar and then
+turns on L<MooseX::FollowPBP>. See
+L<Moose::Cookbook::Extending::Mooseish_MooseSugar>.
+
+=head3 How can I inflate/deflate values in accessors?
+
+Well, the first question to ask is if you actually need both inflate
+and deflate.
+
+If you only need to inflate, then we suggest using coercions. Here is
+some basic sample code for inflating a L<DateTime> object:
+
+  class_type 'DateTime';
+
+  coerce 'DateTime'
+      => from 'Str'
+      => via { DateTime::Format::MySQL->parse_datetime($_) };
+
+  has 'timestamp' => (is => 'rw', isa => 'DateTime', coerce => 1);
+
+This creates a custom type for L<DateTime> objects, then attaches
+a coercion to that type. The C<timestamp> attribute is then told
+to expect a C<DateTime> type, and to try to coerce it. When a C<Str>
+type is given to the C<timestamp> accessor, it will attempt to
+coerce the value into a C<DateTime> object using the code in found
+in the C<via> block.
+
+For a more comprehensive example of using coercions, see the
+L<Moose::Cookbook::Basics::HTTP_SubtypesAndCoercion>.
+
+If you need to deflate your attribute's value, the current best
+practice is to add an C<around> modifier to your accessor:
+
+  # a timestamp which stores as
+  # seconds from the epoch
+  has 'timestamp' => (is => 'rw', isa => 'Int');
+
+  around 'timestamp' => sub {
+      my $next = shift;
+      my $self = shift;
+
+      return $self->$next unless @_;
+
+      # assume we get a DateTime object ...
+      my $timestamp = shift;
+      return $self->$next( $timestamp->epoch );
+  };
+
+It is also possible to do deflation using coercion, but this tends to
+get quite complex and require many subtypes. An example of this is
+outside the scope of this document, ask on #moose or send a mail to
+the list.
+
+Still another option is to write a custom attribute metaclass, which
+is also outside the scope of this document, but we would be happy to
+explain it on #moose or the mailing list.
+
+=head2 Method Modifiers
+
+=head3 How can I affect the values in C<@_> using C<before>?
+
+You can't, actually: C<before> only runs before the main method, and
+it cannot easily affect the method's execution.
+
+You similarly can't use C<after> to affect the return value of a
+method.
+
+We limit C<before> and C<after> because this lets you write more
+concise code. You do not have to worry about passing C<@_> to the
+original method, or forwarding its return value (being careful to
+preserve context).
+
+The C<around> method modifier has neither of these limitations, but is
+a little more verbose.
+
+Alternatively, the L<MooseX::Mangle> extension provides the
+C<mangle_args> function, which does allow you to affect C<@_>.
+
+=head3 Can I use C<before> to stop execution of a method?
+
+Yes, but only if you throw an exception. If this is too drastic a
+measure then we suggest using C<around> instead. The C<around> method
+modifier is the only modifier which can gracefully prevent execution
+of the main method. Here is an example:
+
+    around 'baz' => sub {
+        my $next = shift;
+        my ($self, %options) = @_;
+        unless ($options->{bar} eq 'foo') {
+            return 'bar';
+        }
+        $self->$next(%options);
+    };
+
+By choosing not to call the C<$next> method, you can stop the
+execution of the main method.
+
+Alternatively, the L<MooseX::Mangle> extension provides the
+C<guard> function, which will conditionally prevent execution
+of the original method.
+
+=head3 Why can't I see return values in an C<after> modifier?
+
+As with the C<before> modifier, the C<after> modifier is simply called
+I<after> the main method. It is passed the original contents of C<@_>
+and B<not> the return values of the main method.
+
+Again, the arguments are too lengthy as to why this has to be. And as
+with C<before> I recommend using an C<around> modifier instead.  Here
+is some sample code:
+
+  around 'foo' => sub {
+      my $next = shift;
+      my ($self, @args) = @_;
+      my @rv = $next->($self, @args);
+      # do something silly with the return values
+      return reverse @rv;
+  };
+
+Alternatively, the L<MooseX::Mangle> extension provides the
+C<mangle_return> function, which allows modifying the return values
+of the original method.
+
+=head2 Type Constraints
+
+=head3 How can I provide a custom error message for a type constraint?
+
+Use the C<message> option when building the subtype:
+
+  subtype 'NaturalLessThanTen'
+      => as 'Natural'
+      => where { $_ < 10 }
+      => message { "This number ($_) is not less than ten!" };
+
+This C<message> block will be called when a value fails to pass the
+C<NaturalLessThanTen> constraint check.
+
+=head3 Can I turn off type constraint checking?
+
+There's no support for it in the core of Moose yet. This option may
+come in a future release.
+
+Meanwhile there's a L<MooseX
+extension|MooseX::Attribute::TypeConstraint::CustomizeFatal> that
+allows you to do this on a per-attribute basis, and if it doesn't do
+what you it's easy to write one that fits your use case.
+
+=head3 My coercions stopped working with recent Moose, why did you break it?
+
+Moose 0.76 fixed a case where coercions were being applied even if the original
+constraint passed. This has caused some edge cases to fail where people were
+doing something like
+
+    subtype 'Address', as 'Str';
+    coerce 'Address', from 'Str', via { get_address($_) };
+
+This is not what they intended, because the type constraint C<Address> is too
+loose in this case. It is saying that all strings are Addresses, which is
+obviously not the case. The solution is to provide a C<where> clause that
+properly restricts the type constraint:
+
+    subtype 'Address', as 'Str', where { looks_like_address($_) };
+
+This will allow the coercion to apply only to strings that fail to look like an
+Address.
+
+=head2 Roles
+
+=head3 Why is BUILD not called for my composed roles?
+
+C<BUILD> is never called in composed roles. The primary reason is that
+roles are B<not> order sensitive. Roles are composed in such a way
+that the order of composition does not matter (for information on the
+deeper theory of this read the original traits papers here
+L<http://www.iam.unibe.ch/~scg/Research/Traits/>).
+
+Because roles are essentially unordered, it would be impossible to
+determine the order in which to execute the C<BUILD> methods.
+
+As for alternate solutions, there are a couple.
+
+=over 4
+
+=item *
+
+Using a combination of lazy and default in your attributes to defer
+initialization (see the Binary Tree example in the cookbook for a good example
+of lazy/default usage
+L<Moose::Cookbook::Basics::BinaryTree_AttributeFeatures>)
+
+=item *
+
+Use attribute triggers, which fire after an attribute is set, to
+facilitate initialization. These are described in the L<Moose> docs,
+and examples can be found in the test suite.
+
+=back
+
+In general, roles should not I<require> initialization; they should
+either provide sane defaults or should be documented as needing
+specific initialization. One such way to "document" this is to have a
+separate attribute initializer which is required for the role. Here is
+an example of how to do this:
+
+  package My::Role;
+  use Moose::Role;
+
+  has 'height' => (
+      is      => 'rw',
+      isa     => 'Int',
+      lazy    => 1,
+      default => sub {
+          my $self = shift;
+          $self->init_height;
+      }
+  );
+
+  requires 'init_height';
+
+In this example, the role will not compose successfully unless the
+class provides a C<init_height> method.
+
+If none of those solutions work, then it is possible that a role is
+not the best tool for the job, and you really should be using
+classes. Or, at the very least, you should reduce the amount of
+functionality in your role so that it does not require initialization.
+
+=head3 What are traits, and how are they different from roles?
+
+In Moose, a trait is almost exactly the same thing as a role, except
+that traits typically register themselves, which allows you to refer
+to them by a short name ("Big" vs "MyApp::Role::Big").
+
+In Moose-speak, a I<Role> is usually composed into a I<class> at
+compile time, whereas a I<Trait> is usually composed into an instance
+of a class at runtime to add or modify the behavior of B<just that
+instance>.
+
+Outside the context of Moose, traits and roles generally mean exactly
+the same thing. The original paper called them traits, but Perl 6
+will call them roles.
+
+=head3 Can an attribute-generated method (e.g. an accessor) satisfy requires?
+
+Yes, just be sure to consume the role I<after> declaring your
+attribute.  L<Moose::Manual::Roles/Required Attributes> provides
+an example:
+
+  package Breakable;
+  use Moose::Role;
+  requires 'stress';
+
+  package Car;
+  use Moose;
+  has 'stress' => ( is  => 'rw', isa => 'Int' );
+  with 'Breakable';
+
+If you mistakenly consume the C<Breakable> role before declaring your
+C<stress> attribute, you would see an error like this:
+
+  'Breakable' requires the method 'stress' to be implemented by 'Car' at...
+
+=head2 Moose and Subroutine Attributes
+
+=head3 Why don't subroutine attributes I inherited from a superclass work?
+
+Currently when subclassing a module is done at runtime with the
+C<extends> keyword, but attributes are checked at compile time by
+Perl. To make attributes work, you must place C<extends> in a C<BEGIN>
+block so that the attribute handlers will be available at compile time,
+like this:
+
+  BEGIN { extends qw/Foo/ }
+
+Note that we're talking about Perl's subroutine attributes here, not
+Moose attributes:
+
+  sub foo : Bar(27) { ... }
+
+=head1 AUTHOR
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See L<Moose/CABAL> and L<Moose/CONTRIBUTORS> for details.
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut

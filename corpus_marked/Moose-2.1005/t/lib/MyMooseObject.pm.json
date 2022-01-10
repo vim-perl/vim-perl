@@ -1,0 +1,1 @@
+[["Statement","package"],["Type"," MyMooseObject"],["",";\n\n"],["Statement","use strict"],["",";\n"],["Statement","use warnings"],["",";\n"],["Statement","use base"],[""," "],["String","'Moose::Object'"],["",";\n\n"],["Number","1"],["",";\n"]]

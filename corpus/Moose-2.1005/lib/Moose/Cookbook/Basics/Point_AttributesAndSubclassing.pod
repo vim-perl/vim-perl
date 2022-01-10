@@ -1,0 +1,446 @@
+package Moose::Cookbook::Basics::Point_AttributesAndSubclassing;
+
+# ABSTRACT: Point and Point3D classes, showing basic attributes and subclassing.
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Moose::Cookbook::Basics::Point_AttributesAndSubclassing - Point and Point3D classes, showing basic attributes and subclassing.
+
+=head1 VERSION
+
+version 2.1005
+
+=head1 SYNOPSIS
+
+  package Point;
+  use Moose;
+
+  has 'x' => (isa => 'Int', is => 'rw', required => 1);
+  has 'y' => (isa => 'Int', is => 'rw', required => 1);
+
+  sub clear {
+      my $self = shift;
+      $self->x(0);
+      $self->y(0);
+  }
+
+  package Point3D;
+  use Moose;
+
+  extends 'Point';
+
+  has 'z' => (isa => 'Int', is => 'rw', required => 1);
+
+  after 'clear' => sub {
+      my $self = shift;
+      $self->z(0);
+  };
+
+  package main;
+
+  # hash or hashrefs are ok for the constructor
+  my $point1 = Point->new(x => 5, y => 7);
+  my $point2 = Point->new({x => 5, y => 7});
+
+  my $point3d = Point3D->new(x => 5, y => 42, z => -5);
+
+=head1 DESCRIPTION
+
+This is the classic Point example. It is taken directly from the Perl
+6 Apocalypse 12 document, and is similar to the example found in the
+classic K&R C book as well.
+
+As with all Perl 5 classes, a Moose class is defined in a package.
+Moose handles turning on C<strict> and C<warnings> for us, so all we
+need to do is say C<use Moose>, and no kittens will die.
+
+When Moose is loaded, it exports a set of sugar functions into our
+package. This means that we import some functions which serve as Moose
+"keywords". These aren't real language keywords, they're just Perl
+functions exported into our package.
+
+Moose automatically makes our package a subclass of L<Moose::Object>.
+The L<Moose::Object> class provides us with a constructor that
+respects our attributes, as well other features. See L<Moose::Object>
+for details.
+
+Now, onto the keywords. The first one we see here is C<has>, which
+defines an instance attribute in our class:
+
+  has 'x' => (isa => 'Int', is => 'rw', required => 1);
+
+This will create an attribute named C<x>. The C<isa> parameter says
+that we expect the value stored in this attribute to pass the type
+constraint for C<Int> (1). The accessor generated for this attribute
+will be read-write.
+
+The C<< required => 1 >> parameter means that this attribute must be
+provided when a new object is created. A point object without
+coordinates doesn't make much sense, so we don't allow it.
+
+We have defined our attributes; next we define our methods. In Moose,
+as with regular Perl 5 OO, a method is just a subroutine defined
+within the package:
+
+  sub clear {
+      my $self = shift;
+      $self->x(0);
+      $self->y(0);
+  }
+
+That concludes the B<Point> class.
+
+Next we have a subclass of B<Point>, B<Point3D>. To declare our
+superclass, we use the Moose keyword C<extends>:
+
+  extends 'Point';
+
+The C<extends> keyword works much like C<use base>. First, it will
+attempt to load your class if needed. However, unlike C<base>, the
+C<extends> keyword will I<overwrite> any previous values in your
+package's C<@ISA>, where C<use base> will C<push> values onto the
+package's C<@ISA>.
+
+It is my opinion that the behavior of C<extends> is more intuitive.
+(2).
+
+Next we create a new attribute for B<Point3D> called C<z>.
+
+  has 'z' => (isa => 'Int', is => 'rw', required => 1);
+
+This attribute is just like B<Point>'s C<x> and C<y> attributes.
+
+The C<after> keyword demonstrates a Moose feature called "method
+modifiers" (or "advice" for the AOP inclined):
+
+  after 'clear' => sub {
+      my $self = shift;
+      $self->z(0);
+  };
+
+When C<clear> is called on a B<Point3D> object, our modifier method
+gets called as well. Unsurprisingly, the modifier is called I<after>
+the real method.
+
+In this case, the real C<clear> method is inherited from B<Point>. Our
+modifier method receives the same arguments as those passed to the
+modified method (just C<$self> here).
+
+Of course, using the C<after> modifier is not the only way to
+accomplish this. This B<is> Perl, right? You can get the same results
+with this code:
+
+  sub clear {
+      my $self = shift;
+      $self->SUPER::clear();
+      $self->z(0);
+  }
+
+You could also use another Moose method modifier, C<override>:
+
+  override 'clear' => sub {
+      my $self = shift;
+      super();
+      $self->z(0);
+  };
+
+The C<override> modifier allows you to use the C<super> keyword to
+dispatch to the superclass's method in a very Ruby-ish style.
+
+The choice of whether to use a method modifier, and which one to use,
+is often a question of style as much as functionality.
+
+Since B<Point> inherits from L<Moose::Object>, it will also inherit
+the default L<Moose::Object> constructor:
+
+  my $point1 = Point->new(x => 5, y => 7);
+  my $point2 = Point->new({x => 5, y => 7});
+
+  my $point3d = Point3D->new(x => 5, y => 42, z => -5);
+
+The C<new> constructor accepts a named argument pair for each
+attribute defined by the class, which you can provide as a hash or
+hash reference. In this particular example, the attributes are
+required, and calling C<new> without them will throw an error.
+
+  my $point = Point->new( x => 5 ); # no y, kaboom!
+
+From here on, we can use C<$point> and C<$point3d> just as you would
+any other Perl 5 object. For a more detailed example of what can be
+done, you can refer to the
+F<t/recipes/moose_cookbook_basics_point_attributesandsubclassing.t> test file.
+
+=head2 Moose Objects are Just Hashrefs
+
+While this all may appear rather magical, it's important to realize
+that Moose objects are just hash references under the hood (3). For
+example, you could pass C<$self> to C<Data::Dumper> and you'd get
+exactly what you'd expect.
+
+You could even poke around inside the object's data structure, but
+that is strongly discouraged.
+
+The fact that Moose objects are hashrefs means it is easy to use Moose
+to extend non-Moose classes, as long as they too are hash
+references. If you want to extend a non-hashref class, check out
+C<MooseX::InsideOut>.
+
+=head1 CONCLUSION
+
+This recipe demonstrates some basic Moose concepts, attributes,
+subclassing, and a simple method modifier.
+
+=head1 FOOTNOTES
+
+=over 4
+
+=item (1)
+
+Moose provides a number of builtin type constraints, of which C<Int>
+is one. For more information on the type constraint system, see
+L<Moose::Util::TypeConstraints>.
+
+=item (2)
+
+The C<extends> keyword supports multiple inheritance. Simply pass all
+of your superclasses to C<extends> as a list:
+
+  extends 'Foo', 'Bar', 'Baz';
+
+=item (3)
+
+Moose supports using instance structures other than blessed hash
+references (such as glob references - see L<MooseX::GlobRef>).
+
+=back
+
+=head1 SEE ALSO
+
+=over 4
+
+=item Method Modifiers
+
+The concept of method modifiers is directly ripped off from CLOS. A
+great explanation of them can be found by following this link.
+
+L<http://www.gigamonkeys.com/book/object-reorientation-generic-functions.html>
+
+=back
+
+=begin testing
+
+my $point = Point->new( x => 1, y => 2 );
+isa_ok( $point, 'Point' );
+isa_ok( $point, 'Moose::Object' );
+
+is( $point->x, 1, '... got the right value for x' );
+is( $point->y, 2, '... got the right value for y' );
+
+$point->y(10);
+is( $point->y, 10, '... got the right (changed) value for y' );
+
+isnt(
+    exception {
+        $point->y('Foo');
+    },
+    undef,
+    '... cannot assign a non-Int to y'
+);
+
+isnt(
+    exception {
+        Point->new();
+    },
+    undef,
+    '... must provide required attributes to new'
+);
+
+$point->clear();
+
+is( $point->x, 0, '... got the right (cleared) value for x' );
+is( $point->y, 0, '... got the right (cleared) value for y' );
+
+# check the type constraints on the constructor
+
+is(
+    exception {
+        Point->new( x => 0, y => 0 );
+    },
+    undef,
+    '... can assign a 0 to x and y'
+);
+
+isnt(
+    exception {
+        Point->new( x => 10, y => 'Foo' );
+    },
+    undef,
+    '... cannot assign a non-Int to y'
+);
+
+isnt(
+    exception {
+        Point->new( x => 'Foo', y => 10 );
+    },
+    undef,
+    '... cannot assign a non-Int to x'
+);
+
+# Point3D
+
+my $point3d = Point3D->new( { x => 10, y => 15, z => 3 } );
+isa_ok( $point3d, 'Point3D' );
+isa_ok( $point3d, 'Point' );
+isa_ok( $point3d, 'Moose::Object' );
+
+is( $point3d->x,     10, '... got the right value for x' );
+is( $point3d->y,     15, '... got the right value for y' );
+is( $point3d->{'z'}, 3,  '... got the right value for z' );
+
+$point3d->clear();
+
+is( $point3d->x, 0, '... got the right (cleared) value for x' );
+is( $point3d->y, 0, '... got the right (cleared) value for y' );
+is( $point3d->z, 0, '... got the right (cleared) value for z' );
+
+isnt(
+    exception {
+        Point3D->new( x => 10, y => 'Foo', z => 3 );
+    },
+    undef,
+    '... cannot assign a non-Int to y'
+);
+
+isnt(
+    exception {
+        Point3D->new( x => 'Foo', y => 10, z => 3 );
+    },
+    undef,
+    '... cannot assign a non-Int to x'
+);
+
+isnt(
+    exception {
+        Point3D->new( x => 0, y => 10, z => 'Bar' );
+    },
+    undef,
+    '... cannot assign a non-Int to z'
+);
+
+isnt(
+    exception {
+        Point3D->new( x => 10, y => 3 );
+    },
+    undef,
+    '... z is a required attribute for Point3D'
+);
+
+# test some class introspection
+
+can_ok( 'Point', 'meta' );
+isa_ok( Point->meta, 'Moose::Meta::Class' );
+
+can_ok( 'Point3D', 'meta' );
+isa_ok( Point3D->meta, 'Moose::Meta::Class' );
+
+isnt(
+    Point->meta, Point3D->meta,
+    '... they are different metaclasses as well'
+);
+
+# poke at Point
+
+is_deeply(
+    [ Point->meta->superclasses ],
+    ['Moose::Object'],
+    '... Point got the automagic base class'
+);
+
+my @Point_methods = qw(meta x y clear);
+my @Point_attrs = ( 'x', 'y' );
+
+is_deeply(
+    [ sort @Point_methods ],
+    [ sort Point->meta->get_method_list() ],
+    '... we match the method list for Point'
+);
+
+is_deeply(
+    [ sort @Point_attrs ],
+    [ sort Point->meta->get_attribute_list() ],
+    '... we match the attribute list for Point'
+);
+
+foreach my $method (@Point_methods) {
+    ok( Point->meta->has_method($method),
+        '... Point has the method "' . $method . '"' );
+}
+
+foreach my $attr_name (@Point_attrs) {
+    ok( Point->meta->has_attribute($attr_name),
+        '... Point has the attribute "' . $attr_name . '"' );
+    my $attr = Point->meta->get_attribute($attr_name);
+    ok( $attr->has_type_constraint,
+        '... Attribute ' . $attr_name . ' has a type constraint' );
+    isa_ok( $attr->type_constraint, 'Moose::Meta::TypeConstraint' );
+    is( $attr->type_constraint->name, 'Int',
+        '... Attribute ' . $attr_name . ' has an Int type constraint' );
+}
+
+# poke at Point3D
+
+is_deeply(
+    [ Point3D->meta->superclasses ],
+    ['Point'],
+    '... Point3D gets the parent given to it'
+);
+
+my @Point3D_methods = qw( meta z clear );
+my @Point3D_attrs   = ('z');
+
+is_deeply(
+    [ sort @Point3D_methods ],
+    [ sort Point3D->meta->get_method_list() ],
+    '... we match the method list for Point3D'
+);
+
+is_deeply(
+    [ sort @Point3D_attrs ],
+    [ sort Point3D->meta->get_attribute_list() ],
+    '... we match the attribute list for Point3D'
+);
+
+foreach my $method (@Point3D_methods) {
+    ok( Point3D->meta->has_method($method),
+        '... Point3D has the method "' . $method . '"' );
+}
+
+foreach my $attr_name (@Point3D_attrs) {
+    ok( Point3D->meta->has_attribute($attr_name),
+        '... Point3D has the attribute "' . $attr_name . '"' );
+    my $attr = Point3D->meta->get_attribute($attr_name);
+    ok( $attr->has_type_constraint,
+        '... Attribute ' . $attr_name . ' has a type constraint' );
+    isa_ok( $attr->type_constraint, 'Moose::Meta::TypeConstraint' );
+    is( $attr->type_constraint->name, 'Int',
+        '... Attribute ' . $attr_name . ' has an Int type constraint' );
+}
+
+=end testing
+
+=head1 AUTHOR
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See L<Moose/CABAL> and L<Moose/CONTRIBUTORS> for details.
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut

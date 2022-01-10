@@ -1,0 +1,1 @@
+[["Statement","package"],["Type"," Role::Parent"],["",";\n"],["Statement","use "],["","Moose::Role;\n\n"],["Keyword","sub "],["Function","meth2  "],["","{ }\n"],["Keyword","sub "],["Function","meth1 "],["","{ }\n\n"],["Number","1"],["",";\n"]]

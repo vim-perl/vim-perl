@@ -1,0 +1,272 @@
+package Moose::Manual;
+
+# ABSTRACT: What is Moose, and how do I use it?
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Moose::Manual - What is Moose, and how do I use it?
+
+=head1 VERSION
+
+version 2.1005
+
+=head1 WHAT IS MOOSE?
+
+Moose is a I<complete> object system for Perl 5. Consider any modern
+object-oriented language (which Perl 5 definitely isn't). It provides
+keywords for attribute declaration, object construction, inheritance,
+and maybe more. These keywords are part of the language, and you don't
+care how they are implemented.
+
+Moose aims to do the same thing for Perl 5 OO. We can't actually
+create new keywords, but we do offer "sugar" that looks a lot like
+them. More importantly, with Moose, you I<define your class
+declaratively>, without needing to know about blessed hashrefs,
+accessor methods, and so on.
+
+With Moose, you can concentrate on the I<logical> structure of your
+classes, focusing on "what" rather than "how". A class definition with
+Moose reads like a list of very concise English sentences.
+
+Moose is built on top of C<Class::MOP>, a meta-object protocol (aka
+MOP). Using the MOP, Moose provides complete introspection for all
+Moose-using classes. This means you can ask classes about their
+attributes, parents, children, methods, etc., all using a well-defined
+API. The MOP abstracts away the symbol table, looking at C<@ISA> vars,
+and all the other crufty Perl tricks we know and love(?).
+
+Moose is based in large part on the Perl 6 object system, as well as
+drawing on the best ideas from CLOS, Smalltalk, and many other
+languages.
+
+=head1 WHY MOOSE?
+
+Moose makes Perl 5 OO both simpler and more powerful. It encapsulates
+Perl 5 power tools in high-level declarative APIs which are easy to
+use. Best of all, you don't need to be a wizard to use it.
+
+But if you want to dig about in the guts, Moose lets you do that too,
+by using and extending its powerful introspection API.
+
+=head1 AN EXAMPLE
+
+  package Person;
+
+  use Moose;
+
+  has 'first_name' => (
+      is  => 'rw',
+      isa => 'Str',
+  );
+
+  has 'last_name' => (
+      is  => 'rw',
+      isa => 'Str',
+  );
+
+  no Moose;
+  __PACKAGE__->meta->make_immutable;
+
+This is a I<complete and usable> class definition!
+
+  package User;
+
+  use DateTime;
+  use Moose;
+
+  extends 'Person';
+
+  has 'password' => (
+      is  => 'rw',
+      isa => 'Str',
+  );
+
+  has 'last_login' => (
+      is      => 'rw',
+      isa     => 'DateTime',
+      handles => { 'date_of_last_login' => 'date' },
+  );
+
+  sub login {
+      my $self = shift;
+      my $pw   = shift;
+
+      return 0 if $pw ne $self->password;
+
+      $self->last_login( DateTime->now() );
+
+      return 1;
+  }
+
+  no Moose;
+  __PACKAGE__->meta->make_immutable;
+
+We'll leave the line-by-line explanation of this code to other
+documentation, but you can see how Moose reduces common OO idioms to
+simple declarative constructs.
+
+=head1 TABLE OF CONTENTS
+
+This manual consists of a number of documents.
+
+=over 4
+
+=item L<Moose::Manual::Concepts>
+
+Introduces Moose concepts, and contrasts them against "old school"
+Perl 5 OO.
+
+=item L<Moose::Manual::Unsweetened>
+
+Shows two example classes, each written first with Moose and then with
+"plain old Perl 5".
+
+=item L<Moose::Manual::Classes>
+
+How do you make use of Moose in your classes? Now that I'm a Moose,
+how do I subclass something?
+
+=item L<Moose::Manual::Attributes>
+
+Attributes are a core part of the Moose OO system. An attribute is a
+piece of data that an object has. Moose has a lot of attribute-related
+features!
+
+=item L<Moose::Manual::Delegation>
+
+Delegation is a powerful way to make use of attributes which are
+themselves objects.
+
+=item L<Moose::Manual::Construction>
+
+Learn how objects are built in Moose, and in particular about the
+C<BUILD> and C<BUILDARGS> methods. Also covers object destruction
+with C<DEMOLISH>.
+
+=item L<Moose::Manual::MethodModifiers>
+
+A method modifier lets you say "before calling method X, do this
+first", or "wrap method X in this code". Method modifiers are
+particularly handy in roles and with attribute accessors.
+
+=item L<Moose::Manual::Roles>
+
+A role is something a class does (like "Debuggable" or
+"Printable"). Roles provide a way of adding behavior to classes that
+is orthogonal to inheritance.
+
+=item L<Moose::Manual::Types>
+
+Moose's type system lets you strictly define what values an attribute
+can contain.
+
+=item L<Moose::Manual::MOP>
+
+Moose's meta API system lets you ask classes about their parents,
+children, methods, attributes, etc.
+
+=item L<Moose::Manual::MooseX>
+
+This document describes a few of the most useful Moose extensions on
+CPAN.
+
+=item L<Moose::Manual::BestPractices>
+
+Moose has a lot of features, and there's definitely more than one way
+to do it. However, we think that picking a subset of these features
+and using them consistently makes everyone's life easier.
+
+=item L<Moose::Manual::FAQ>
+
+Frequently asked questions about Moose.
+
+=item L<Moose::Manual::Contributing>
+
+Interested in hacking on Moose? Read this.
+
+=item L<Moose::Manual::Delta>
+
+This document details backwards-incompatibilities and other major
+changes to Moose.
+
+=back
+
+=head1 JUSTIFICATION
+
+If you're still asking yourself "Why do I need this?", then this
+section is for you.
+
+=over 4
+
+=item Another object system!?!?
+
+Yes, we know there are many, many ways to build objects in Perl 5,
+many of them based on inside-out objects and other such things. Moose
+is different because it is not a new object system for Perl 5, but
+instead an extension of the existing object system.
+
+Moose is built on top of L<Class::MOP>, which is a metaclass system
+for Perl 5. This means that Moose not only makes building normal
+Perl 5 objects better, but it also provides the power of metaclass
+programming.
+
+=item Is this for real? Or is this just an experiment?
+
+Moose is I<based> on the prototypes and experiments Stevan did for the
+Perl 6 meta-model. However, Moose is B<NOT> an experiment or
+prototype; it is for B<real>.
+
+=item Is this ready for use in production?
+
+Yes.
+
+Moose has been used successfully in production environments by many
+people and companies. There are Moose applications which have been in
+production with little or no issue now for years. We consider it
+highly stable and we are committed to keeping it stable.
+
+Of course, in the end, you need to make this call yourself. If you
+have any questions or concerns, please feel free to email Stevan or
+the moose@perl.org list, or just stop by irc.perl.org#moose and ask
+away.
+
+=item Is Moose just Perl 6 in Perl 5?
+
+No. While Moose is very much inspired by Perl 6, it is not itself Perl
+6. Instead, it is an OO system for Perl 5. Stevan built Moose because
+he was tired of writing the same old boring Perl 5 OO code, and
+drooling over Perl 6 OO. So instead of switching to Ruby, he wrote
+Moose :)
+
+=item Wait, I<post> modern, I thought it was just I<modern>?
+
+Stevan read Larry Wall's talk from the 1999 Linux World entitled
+"Perl, the first postmodern computer language" in which he talks about
+how he picked the features for Perl because he thought they were cool
+and he threw out the ones that he thought sucked. This got him
+thinking about how we have done the same thing in Moose. For Moose, we
+have "borrowed" features from Perl 6, CLOS (LISP), Smalltalk, Java,
+BETA, OCaml, Ruby and more, and the bits we didn't like (cause they
+sucked) we tossed aside. So for this reason (and a few others) Stevan
+has re-dubbed Moose a I<postmodern> object system.
+
+Nuff Said.
+
+=back
+
+=head1 AUTHOR
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See L<Moose/CABAL> and L<Moose/CONTRIBUTORS> for details.
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut

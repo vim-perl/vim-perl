@@ -1,0 +1,354 @@
+package Moose::Cookbook::Basics::BinaryTree_AttributeFeatures;
+
+# ABSTRACT: Demonstrates various attribute features including lazy, predicates, weak refs, and more
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Moose::Cookbook::Basics::BinaryTree_AttributeFeatures - Demonstrates various attribute features including lazy, predicates, weak refs, and more
+
+=head1 VERSION
+
+version 2.1005
+
+=head1 SYNOPSIS
+
+  package BinaryTree;
+  use Moose;
+
+  has 'node' => ( is => 'rw', isa => 'Any' );
+
+  has 'parent' => (
+      is        => 'rw',
+      isa       => 'BinaryTree',
+      predicate => 'has_parent',
+      weak_ref  => 1,
+  );
+
+  has 'left' => (
+      is        => 'rw',
+      isa       => 'BinaryTree',
+      predicate => 'has_left',
+      lazy      => 1,
+      default   => sub { BinaryTree->new( parent => $_[0] ) },
+      trigger   => \&_set_parent_for_child
+  );
+
+  has 'right' => (
+      is        => 'rw',
+      isa       => 'BinaryTree',
+      predicate => 'has_right',
+      lazy      => 1,
+      default   => sub { BinaryTree->new( parent => $_[0] ) },
+      trigger   => \&_set_parent_for_child
+  );
+
+  sub _set_parent_for_child {
+      my ( $self, $child ) = @_;
+
+      confess "You cannot insert a tree which already has a parent"
+          if $child->has_parent;
+
+      $child->parent($self);
+  }
+
+=head1 DESCRIPTION
+
+This recipe shows how various advanced attribute features can be used
+to create complex and powerful behaviors. In particular, we introduce
+a number of new attribute options, including C<predicate>, C<lazy>,
+and C<trigger>.
+
+The example class is a classic binary tree. Each node in the tree is
+itself an instance of C<BinaryTree>. It has a C<node>, which holds
+some arbitrary value. It has C<right> and C<left> attributes, which
+refer to its child trees, and a C<parent>.
+
+Let's take a look at the C<node> attribute:
+
+  has 'node' => ( is => 'rw', isa => 'Any' );
+
+Moose generates a read-write accessor for this attribute. The type
+constraint is C<Any>, which literally means it can contain anything.
+
+We could have left out the C<isa> option, but in this case, we are
+including it for the benefit of other programmers, not the computer.
+
+Next, let's move on to the C<parent> attribute:
+
+  has 'parent' => (
+      is        => 'rw',
+      isa       => 'BinaryTree',
+      predicate => 'has_parent',
+      weak_ref  => 1,
+  );
+
+Again, we have a read-write accessor. This time, the C<isa> option
+says that this attribute must always be an instance of
+C<BinaryTree>. In the second recipe, we saw that every time we create
+a Moose-based class, we also get a corresponding class type
+constraint.
+
+The C<predicate> option is new. It creates a method which can be used
+to check whether or not a given attribute has been initialized. In
+this case, the method is named C<has_parent>.
+
+This brings us to our last attribute option, C<weak_ref>. Since
+C<parent> is a circular reference (the tree in C<parent> should
+already have a reference to this one, in its C<left> or C<right>
+attribute), we want to make sure that we weaken the reference to avoid
+memory leaks. If C<weak_ref> is true, it alters the accessor function
+so that the reference is weakened when it is set.
+
+Finally, we have the C<left> and C<right> attributes. They are
+essentially identical except for their names, so we'll just look at
+C<left>:
+
+  has 'left' => (
+      is        => 'rw',
+      isa       => 'BinaryTree',
+      predicate => 'has_left',
+      lazy      => 1,
+      default   => sub { BinaryTree->new( parent => $_[0] ) },
+      trigger   => \&_set_parent_for_child
+  );
+
+There are three new options here, C<lazy>, C<default>, and
+C<trigger>. The C<lazy> and C<default> options are linked.  In fact,
+you cannot have a C<lazy> attribute unless it has a C<default>
+(or a C<builder>, but we'll cover that later). If you try to make an
+attribute lazy without a default, class creation will fail with an
+exception. (2)
+
+In the second recipe the B<BankAccount>'s C<balance> attribute had a
+default value of C<0>. Given a non-reference, Perl copies the
+I<value>. However, given a reference, it does not do a deep clone,
+instead simply copying the reference. If you just specified a simple
+reference for a default, Perl would create it once and it would be
+shared by all objects with that attribute.
+
+As a workaround, we use an anonymous subroutine to generate a new
+reference every time the default is called.
+
+  has 'foo' => ( is => 'rw', default => sub { [] } );
+
+In fact, using a non-subroutine reference as a default is illegal in Moose.
+
+  # will fail
+  has 'foo' => ( is => 'rw', default => [] );
+
+This will blow up, so don't do it.
+
+You'll notice that we use C<$_[0]> in our default sub. When the
+default subroutine is executed, it is called as a method on the
+object.
+
+In our case, we're making a new C<BinaryTree> object in our default,
+with the current tree as the parent.
+
+Normally, when an object is instantiated, any defaults are evaluated
+immediately. With our C<BinaryTree> class, this would be a big
+problem! We'd create the first object, which would immediately try to
+populate its C<left> and C<right> attributes, which would create a new
+C<BinaryTree>, which would populate I<its> C<left> and C<right>
+slots. Kaboom!
+
+By making our C<left> and C<right> attributes C<lazy>, we avoid this
+problem. If the attribute has a value when it is read, the default is
+never executed at all.
+
+We still have one last bit of behavior to add. The autogenerated
+C<right> and C<left> accessors are not quite correct. When one of
+these is set, we want to make sure that we update the parent of the
+C<left> or C<right> attribute's tree.
+
+We could write our own accessors, but then why use Moose at all?
+Instead, we use a C<trigger>. A C<trigger> accepts a subroutine
+reference, which will be called as a method whenever the attribute is
+set. This can happen both during object construction or later by
+passing a new object to the attribute's accessor method. However, it
+is not called when a value is provided by a C<default> or C<builder>.
+
+  sub _set_parent_for_child {
+      my ( $self, $child ) = @_;
+
+      confess "You cannot insert a tree which already has a parent"
+          if $child->has_parent;
+
+      $child->parent($self);
+  }
+
+This trigger does two things. First, it ensures that the new child
+node does not already have a parent. This is done for the sake of
+simplifying the example. If we wanted to be more clever, we would
+remove the child from its old parent tree and add it to the new one.
+
+If the child has no parent, we will add it to the current tree, and we
+ensure that is has the correct value for its C<parent> attribute.
+
+As with all the other recipes, B<BinaryTree> can be used just like any
+other Perl 5 class. A more detailed example of its usage can be found
+in F<t/recipes/moose_cookbook_basics_recipe3.t>.
+
+=head1 CONCLUSION
+
+This recipe introduced several of Moose's advanced features. We hope
+that this inspires you to think of other ways these features can be
+used to simplify your code.
+
+=head1 FOOTNOTES
+
+=over 4
+
+=item (1)
+
+Weak references are tricky things, and should be used sparingly and
+appropriately (such as in the case of circular refs). If you are not
+careful, attribute values could disappear "mysteriously" because
+Perl's reference counting garbage collector has gone and removed the
+item you are weak-referencing.
+
+In short, don't use them unless you know what you are doing :)
+
+=item (2)
+
+You I<can> use the C<default> option without the C<lazy> option if you
+like, as we showed in the second recipe.
+
+Also, you can use C<builder> instead of C<default>. See
+L<Moose::Cookbook::Basics::BinaryTree_BuilderAndLazyBuild> for details.
+
+=back
+
+=begin testing
+
+use Scalar::Util 'isweak';
+
+my $root = BinaryTree->new(node => 'root');
+isa_ok($root, 'BinaryTree');
+
+is($root->node, 'root', '... got the right node value');
+
+ok(!$root->has_left, '... no left node yet');
+ok(!$root->has_right, '... no right node yet');
+
+ok(!$root->has_parent, '... no parent for root node');
+
+# make a left node
+
+my $left = $root->left;
+isa_ok($left, 'BinaryTree');
+
+is($root->left, $left, '... got the same node (and it is $left)');
+ok($root->has_left, '... we have a left node now');
+
+ok($left->has_parent, '... lefts has a parent');
+is($left->parent, $root, '... lefts parent is the root');
+
+ok(isweak($left->{parent}), '... parent is a weakened ref');
+
+ok(!$left->has_left, '... $left no left node yet');
+ok(!$left->has_right, '... $left no right node yet');
+
+is($left->node, undef, '... left has got no node value');
+
+is(
+    exception {
+        $left->node('left');
+    },
+    undef,
+    '... assign to lefts node'
+);
+
+is($left->node, 'left', '... left now has a node value');
+
+# make a right node
+
+ok(!$root->has_right, '... still no right node yet');
+
+is($root->right->node, undef, '... right has got no node value');
+
+ok($root->has_right, '... now we have a right node');
+
+my $right = $root->right;
+isa_ok($right, 'BinaryTree');
+
+is(
+    exception {
+        $right->node('right');
+    },
+    undef,
+    '... assign to rights node'
+);
+
+is($right->node, 'right', '... left now has a node value');
+
+is($root->right, $right, '... got the same node (and it is $right)');
+ok($root->has_right, '... we have a right node now');
+
+ok($right->has_parent, '... rights has a parent');
+is($right->parent, $root, '... rights parent is the root');
+
+ok(isweak($right->{parent}), '... parent is a weakened ref');
+
+# make a left node of the left node
+
+my $left_left = $left->left;
+isa_ok($left_left, 'BinaryTree');
+
+ok($left_left->has_parent, '... left does have a parent');
+
+is($left_left->parent, $left, '... got a parent node (and it is $left)');
+ok($left->has_left, '... we have a left node now');
+is($left->left, $left_left, '... got a left node (and it is $left_left)');
+
+ok(isweak($left_left->{parent}), '... parent is a weakened ref');
+
+# make a right node of the left node
+
+my $left_right = BinaryTree->new;
+isa_ok($left_right, 'BinaryTree');
+
+is(
+    exception {
+        $left->right($left_right);
+    },
+    undef,
+    '... assign to rights node'
+);
+
+ok($left_right->has_parent, '... left does have a parent');
+
+is($left_right->parent, $left, '... got a parent node (and it is $left)');
+ok($left->has_right, '... we have a left node now');
+is($left->right, $left_right, '... got a left node (and it is $left_left)');
+
+ok(isweak($left_right->{parent}), '... parent is a weakened ref');
+
+# and check the error
+
+isnt(
+    exception {
+        $left_right->right($left_left);
+    },
+    undef,
+    '... cannot assign a node which already has a parent'
+);
+
+=end testing
+
+=head1 AUTHOR
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See L<Moose/CABAL> and L<Moose/CONTRIBUTORS> for details.
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut

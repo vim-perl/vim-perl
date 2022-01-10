@@ -1,0 +1,137 @@
+package Moose::Cookbook::Basics::Person_BUILDARGSAndBUILD;
+
+# ABSTRACT: Using BUILDARGS and BUILD to hook into object construction
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Moose::Cookbook::Basics::Person_BUILDARGSAndBUILD - Using BUILDARGS and BUILD to hook into object construction
+
+=head1 VERSION
+
+version 2.1005
+
+=head1 SYNOPSIS
+
+  package Person;
+
+  has 'ssn' => (
+      is        => 'ro',
+      isa       => 'Str',
+      predicate => 'has_ssn',
+  );
+
+  has 'country_of_residence' => (
+      is      => 'ro',
+      isa     => 'Str',
+      default => 'usa'
+  );
+
+  has 'first_name' => (
+      is  => 'ro',
+      isa => 'Str',
+  );
+
+  has 'last_name' => (
+      is  => 'ro',
+      isa => 'Str',
+  );
+
+  around BUILDARGS => sub {
+      my $orig = shift;
+      my $class = shift;
+
+      if ( @_ == 1 && ! ref $_[0] ) {
+          return $class->$orig(ssn => $_[0]);
+      }
+      else {
+          return $class->$orig(@_);
+      }
+  };
+
+  sub BUILD {
+      my $self = shift;
+
+      if ( $self->country_of_residence eq 'usa' ) {
+          die 'Cannot create a Person who lives in the USA without an ssn.'
+              unless $self->has_ssn;
+      }
+  }
+
+=head1 DESCRIPTION
+
+This recipe demonstrates the use of C<BUILDARGS> and C<BUILD>. By
+defining these methods, we can hook into the object construction
+process without overriding C<new>.
+
+The C<BUILDARGS> method is called I<before> an object has been
+created. It is called as a class method, and receives all of the
+parameters passed to the C<new> method. It is expected to do something
+with these arguments and return a hash reference. The keys of the hash
+must be attribute C<init_arg>s.
+
+The primary purpose of C<BUILDARGS> is to allow a class to accept
+something other than named arguments. In the case of our C<Person>
+class, we are allowing it to be called with a single argument, a
+social security number:
+
+  my $person = Person->new('123-45-6789');
+
+The key part of our C<BUILDARGS> is this conditional:
+
+      if ( @_ == 1 && ! ref $_[0] ) {
+          return $class->$orig(ssn => $_[0]);
+      }
+
+By default, Moose constructors accept a list of key-value pairs, or a
+hash reference. We need to make sure that C<$_[0]> is not a reference
+before assuming it is a social security number.
+
+We call the original C<BUILDARGS> method to handle all the other
+cases. You should always do this in your own C<BUILDARGS> methods,
+since L<Moose::Object> provides its own C<BUILDARGS> method that
+handles hash references and a list of key-value pairs.
+
+The C<BUILD> method is called I<after> the object is constructed, but
+before it is returned to the caller. The C<BUILD> method provides an
+opportunity to check the object state as a whole. This is a good place
+to put logic that cannot be expressed as a type constraint on a single
+attribute.
+
+In the C<Person> class, we need to check the relationship between two
+attributes, C<ssn> and C<country_of_residence>. We throw an exception
+if the object is not logically consistent.
+
+=head1 MORE CONSIDERATIONS
+
+This recipe is made significantly simpler because all of the
+attributes are read-only. If the C<country_of_residence> attribute
+were settable, we would need to check that a Person had an C<ssn> if
+the new country was C<usa>. This could be done with a C<before>
+modifier.
+
+=head1 CONCLUSION
+
+We have repeatedly discouraged overriding C<new> in Moose
+classes. This recipe shows how you can use C<BUILDARGS> and C<BUILD>
+to hook into object construction without overriding C<new>.
+
+The C<BUILDARGS> method lets us expand on Moose's built-in parameter
+handling for constructors. The C<BUILD> method lets us implement
+logical constraints across the whole object after it is created.
+
+=head1 AUTHOR
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See L<Moose/CABAL> and L<Moose/CONTRIBUTORS> for details.
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut

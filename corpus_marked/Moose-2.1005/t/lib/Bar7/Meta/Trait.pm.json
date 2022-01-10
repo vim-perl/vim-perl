@@ -1,0 +1,1 @@
+[["Statement","package"],["Type"," Bar7::Meta::Trait"],["",";\n"],["Statement","use "],["","Moose::Role;\n\naround "],["String","_immutable_options"],[""," => "],["Keyword","sub "],["","{ };\n\n"],["Statement","no "],["","Moose::Role;\n\n"],["Number","1"],["",";\n"]]

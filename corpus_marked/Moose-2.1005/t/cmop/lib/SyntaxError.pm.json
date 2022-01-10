@@ -1,0 +1,1 @@
+[["PreProc","#!/usr/bin/env perl"],["","\n"],["Statement","package"],["Type"," SyntaxError"],["",";\n"],["Statement","use strict"],["",";\n"],["Statement","use warnings"],["",";\n\n"],["Comment","# this syntax error is intentional!"],["","\n\n    {\n\n"],["Number","1"],["",";\n\n"]]

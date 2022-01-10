@@ -1,0 +1,1 @@
+[["","\n"],["Statement","package"],["Type"," MyMetaClass::Instance"],["",";\n\n"],["Statement","use strict"],["",";\n"],["Statement","use warnings"],["",";\n\n"],["Statement","use base"],[""," "],["String","'Class::MOP::Instance'"],["",";\n\n"],["Number","1"],["",";\n"]]

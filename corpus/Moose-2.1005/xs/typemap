@@ -1,0 +1,17 @@
+type_filter_t  T_TYPE_FILTER
+
+INPUT
+
+T_TYPE_FILTER
+    {
+        const char *__tMp = SvPV_nolen($arg);
+        switch (*__tMp) {
+            case 'C': $var = TYPE_FILTER_CODE;   break;
+            case 'A': $var = TYPE_FILTER_ARRAY;  break;
+            case 'I': $var = TYPE_FILTER_IO;     break;
+            case 'H': $var = TYPE_FILTER_HASH;   break;
+            case 'S': $var = TYPE_FILTER_SCALAR; break;
+            default:
+                croak(\"Unknown type %s\\n\", __tMp);
+        }
+    }

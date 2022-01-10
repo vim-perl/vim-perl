@@ -1,0 +1,1 @@
+[["Statement","package"],["Type"," Role::Interface"],["",";\n"],["Statement","use "],["","Moose::Role;\n\nrequires "],["String","\"meth2\""],["",";\n\n"],["Number","1"],["",";\n"]]

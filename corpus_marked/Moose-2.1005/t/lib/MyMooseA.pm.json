@@ -1,0 +1,1 @@
+[["Statement","package"],["Type"," MyMooseA"],["",";\n\n"],["Statement","use "],["","Moose;\n\nhas "],["String","'b'"],[""," => ("],["String","is"],[""," => "],["String","'rw'"],["",", "],["String","isa"],[""," => "],["String","'MyMooseB'"],["",");\n\n"],["Number","1"],["",";\n"]]

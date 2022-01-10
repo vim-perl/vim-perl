@@ -1,0 +1,23 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use File::Basename qw( basename );
+
+for my $subdir ( glob 't/*' ) {
+    my %files;
+
+    for my $file ( map { basename($_) } glob "$subdir/*.t" ) {
+        my ($number) = $file =~ /^(\d+)/;
+        next unless defined $number;
+
+        push @{ $files{$number} }, $file;
+    }
+
+    for my $number ( grep { @{ $files{$_} } > 1 } keys %files ) {
+        print $subdir, "\n";
+        print '  - ', $_, "\n" for @{ $files{$number} };
+        print "\n";
+    }
+}

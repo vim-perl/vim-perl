@@ -1,0 +1,246 @@
+package Moose::Cookbook;
+
+# ABSTRACT: How to cook a Moose
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Moose::Cookbook - How to cook a Moose
+
+=head1 VERSION
+
+version 2.1005
+
+=head1 DESCRIPTION
+
+The Moose cookbook is a series of recipes showing various Moose
+features. Most recipes present some code demonstrating some feature,
+and then explain the details of the code.
+
+You should probably read the L<Moose::Manual> first. The manual
+explains Moose concepts without being too code-heavy.
+
+=head1 RECIPES
+
+=head2 Basic Moose
+
+These recipes will give you a good overview of Moose's capabilities, starting
+with simple attribute declaration, and moving on to more powerful features like
+laziness, types, type coercion, method modifiers, and more.
+
+=over 4
+
+=item L<Moose::Cookbook::Basics::Point_AttributesAndSubclassing>
+
+A simple Moose-based class. Demonstrates basic Moose attributes and subclassing.
+
+=item L<Moose::Cookbook::Basics::BankAccount_MethodModifiersAndSubclassing>
+
+A slightly more complex Moose class. Demonstrates using a method modifier in a
+subclass.
+
+=item L<Moose::Cookbook::Basics::BinaryTree_AttributeFeatures>
+
+Demonstrates several attribute features, including types, weak
+references, predicates ("does this object have a foo?"), defaults,
+laziness, and triggers.
+
+=item L<Moose::Cookbook::Basics::Company_Subtypes>
+
+Introduces the creation and use of custom types, a C<BUILD> method, and the
+use of C<override> in a subclass. This recipe also shows how to model a set of
+classes that could be used to model companies, people, employees, etc.
+
+=item L<Moose::Cookbook::Basics::HTTP_SubtypesAndCoercion>
+
+This recipe covers more subtype creation, including the use of type coercions.
+
+=item L<Moose::Cookbook::Basics::Immutable>
+
+Making a class immutable greatly increases the speed of accessors and
+object construction.
+
+=item L<Moose::Cookbook::Basics::BinaryTree_BuilderAndLazyBuild> - Builder methods and lazy_build
+
+The builder feature provides an inheritable and role-composable way to
+provide a default attribute value.
+
+=item L<Moose::Cookbook::Basics::Genome_OverloadingSubtypesAndCoercion>
+
+Demonstrates using operator overloading, coercion, and subtypes to
+model how eye color is determined during reproduction.
+
+=item L<Moose::Cookbook::Basics::Person_BUILDARGSAndBUILD>
+
+This recipe demonstrates the use of C<BUILDARGS> and C<BUILD> to hook
+into object construction.
+
+=item L<Moose::Cookbook::Basics::DateTime_ExtendingNonMooseParent>
+
+In this recipe, we make a Moose-based subclass of L<DateTime>, a
+module which does not use Moose itself.
+
+=item L<Moose::Cookbook::Basics::Document_AugmentAndInner>
+
+Demonstrates the use of C<augment> method modifiers, a way of turning
+the usual method overriding style "inside-out".
+
+=back
+
+=head2 Moose Roles
+
+These recipes will show you how to use Moose roles.
+
+=over 4
+
+=item L<Moose::Cookbook::Roles::Comparable_CodeReuse>
+
+Demonstrates roles, which are also sometimes known as traits or
+mix-ins. Roles provide a method of code re-use which is orthogonal to
+subclassing.
+
+=item L<Moose::Cookbook::Roles::Restartable_AdvancedComposition>
+
+Sometimes you just want to include part of a role in your
+class. Sometimes you want the whole role but one of its methods
+conflicts with one in your class. With method exclusion and aliasing,
+you can work around these problems.
+
+=item L<Moose::Cookbook::Roles::ApplicationToInstance>
+
+In this recipe, we apply a role to an existing object instance.
+
+=back
+
+=head2 Meta Moose
+
+These recipes show you how to write your own meta classes, which lets
+you extend the object system provided by Moose.
+
+=over 4
+
+=item L<Moose::Cookbook::Meta::WhyMeta>
+
+If you're wondering what all this "meta" stuff is, and why you should
+care about it, read this "recipe".
+
+=item L<Moose::Cookbook::Meta::Labeled_AttributeTrait>
+
+Extending Moose's attribute metaclass is a great way to add
+functionality. However, attributes can only have one metaclass.
+Applying roles to the attribute metaclass lets you provide
+composable attribute functionality.
+
+=item L<Moose::Cookbook::Meta::Table_MetaclassTrait>
+
+This recipe takes the class metaclass we saw in the previous recipe
+and reimplements it as a metaclass trait.
+
+=item L<Moose::Cookbook::Meta::PrivateOrPublic_MethodMetaclass>
+
+This recipe shows a custom method metaclass that implements making a
+method private.
+
+=item L<Moose::Cookbook::Meta::GlobRef_InstanceMetaclass>
+
+This recipe shows an example of how you create your own meta-instance
+class. The meta-instance determines the internal structure of object
+instances and provide access to attribute slots.
+
+In this particular instance, we use a blessed glob reference as the instance
+instead of a blessed hash reference.
+
+=item Hooking into immutabilization (TODO)
+
+Moose has a feature known as "immutabilization". By calling C<<
+__PACKAGE__->meta()->make_immutable() >> after defining your class
+(attributes, roles, etc), you tell Moose to optimize things like
+object creation, attribute access, and so on.
+
+If you are creating your own metaclasses, you may need to hook into
+the immutabilization system. This cuts across a number of spots,
+including the metaclass class, meta method classes, and possibly the
+meta-instance class as well.
+
+This recipe shows you how to write extensions which immutabilize
+properly.
+
+=back
+
+=head2 Extending Moose
+
+These recipes cover some more ways to extend Moose, and will be useful
+if you plan to write your own C<MooseX> module.
+
+=over 4
+
+=item L<Moose::Cookbook::Extending::ExtensionOverview>
+
+There are quite a few ways to extend Moose. This recipe provides an
+overview of each method, and provides recommendations for when each is
+appropriate.
+
+=item L<Moose::Cookbook::Extending::Debugging_BaseClassRole>
+
+Many base object class extensions can be implemented as roles. This
+example shows how to provide a base object class debugging role that
+is applied to any class that uses a notional C<MooseX::Debugging>
+module.
+
+=item L<Moose::Cookbook::Extending::Mooseish_MooseSugar>
+
+This recipe shows how to provide a replacement for C<Moose.pm>. You
+may want to do this as part of the API for a C<MooseX> module,
+especially if you want to default to a new metaclass class or base
+object class.
+
+=back
+
+=head1 SNACKS
+
+=over 4
+
+=item L<Moose::Cookbook::Snack::Keywords>
+
+=item L<Moose::Cookbook::Snack::Types>
+
+=back
+
+=head1 Legacy Recipes
+
+These cover topics that are no longer considered best practice. We've kept
+them in case in you encounter these usages in the wild.
+
+=over 4
+
+=item L<Moose::Cookbook::Legacy::Labeled_AttributeMetaclass>
+
+=item L<Moose::Cookbook::Legacy::Table_ClassMetaclass>
+
+=item L<Moose::Cookbook::Legacy::Debugging_BaseClassReplacement>
+
+=back
+
+=head1 SEE ALSO
+
+=over 4
+
+=item L<http://www.gsph.com/index.php?Lang=En&ID=291>
+
+=back
+
+=head1 AUTHOR
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See L<Moose/CABAL> and L<Moose/CONTRIBUTORS> for details.
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut

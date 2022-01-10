@@ -1,0 +1,180 @@
+package Moose::Manual::Construction;
+
+# ABSTRACT: Object construction (and destruction) with Moose
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Moose::Manual::Construction - Object construction (and destruction) with Moose
+
+=head1 VERSION
+
+version 2.1005
+
+=head1 WHERE'S THE CONSTRUCTOR?
+
+B<Do not define a C<new()> method for your classes!>
+
+When you C<use Moose> in your class, your class becomes a subclass of
+L<Moose::Object>. The L<Moose::Object> provides a C<new()> method for your
+class. If you follow our recommendations in L<Moose::Manual::BestPractices>
+and make your class immutable, then you actually get a class-specific C<new()>
+method "inlined" in your class.
+
+=head1 OBJECT CONSTRUCTION AND ATTRIBUTES
+
+The Moose-provided constructor accepts a hash or hash reference of
+named parameters matching your attributes (actually, matching their
+C<init_arg>s). This is just another way in which Moose keeps you from
+worrying I<how> classes are implemented. Simply define a class and
+you're ready to start creating objects!
+
+=head1 OBJECT CONSTRUCTION HOOKS
+
+Moose lets you hook into object construction. You can validate an
+object's state, do logging, customize construction from parameters which
+do not match your attributes, or maybe allow non-hash(ref) constructor
+arguments. You can do this by creating C<BUILD> and/or C<BUILDARGS>
+methods.
+
+If these methods exist in your class, Moose will arrange for them to
+be called as part of the object construction process.
+
+=head2 BUILDARGS
+
+The C<BUILDARGS> method is called as a class method I<before> an
+object is created. It will receive all of the arguments that were
+passed to C<new()> I<as-is>, and is expected to return a hash
+reference. This hash reference will be used to construct the object,
+so it should contain keys matching your attributes' names (well,
+C<init_arg>s).
+
+One common use for C<BUILDARGS> is to accommodate a non-hash(ref)
+calling style. For example, we might want to allow our Person class to
+be called with a single argument of a social security number, C<<
+Person->new($ssn) >>.
+
+Without a C<BUILDARGS> method, Moose will complain, because it expects
+a hash or hash reference. We can use the C<BUILDARGS> method to
+accommodate this calling style:
+
+  around BUILDARGS => sub {
+      my $orig  = shift;
+      my $class = shift;
+
+      if ( @_ == 1 && !ref $_[0] ) {
+          return $class->$orig( ssn => $_[0] );
+      }
+      else {
+          return $class->$orig(@_);
+      }
+  };
+
+Note the call to C<< $class->$orig >>. This will call the default C<BUILDARGS>
+in L<Moose::Object>. This method takes care of distinguishing between a hash
+reference and a plain hash for you.
+
+=head2 BUILD
+
+The C<BUILD> method is called I<after> an object is created. There are
+several reasons to use a C<BUILD> method. One of the most common is to
+check that the object state is valid. While we can validate individual
+attributes through the use of types, we can't validate the state of a
+whole object that way.
+
+  sub BUILD {
+      my $self = shift;
+
+      if ( $self->country_of_residence eq 'USA' ) {
+          die 'All US residents must have an SSN'
+              unless $self->has_ssn;
+      }
+  }
+
+Another use of a C<BUILD> method could be for logging or tracking
+object creation.
+
+  sub BUILD {
+      my $self = shift;
+
+      debug( 'Made a new person - SSN = ', $self->ssn, );
+  }
+
+The C<BUILD> method is called with the hash reference of the parameters passed
+to the constructor (after munging by C<BUILDARGS>). This gives you a chance to
+do something with parameters that do not represent object attributes.
+
+  sub BUILD {
+      my $self = shift;
+      my $args = shift;
+
+      $self->add_friend(
+          My::User->new(
+              user_id => $args->{user_id},
+          )
+      );
+  }
+
+=head3 BUILD and parent classes
+
+The interaction between multiple C<BUILD> methods in an inheritance hierarchy
+is different from normal Perl methods. B<You should never call C<<
+$self->SUPER::BUILD >>>, nor should you ever apply a method modifier to
+C<BUILD>.
+
+Moose arranges to have all of the C<BUILD> methods in a hierarchy
+called when an object is constructed, I<from parents to
+children>. This might be surprising at first, because it reverses the
+normal order of method inheritance.
+
+The theory behind this is that C<BUILD> methods can only be used for
+increasing specialization of a class's constraints, so it makes sense
+to call the least specific C<BUILD> method first. Also, this is how
+Perl 6 does it.
+
+=head1 OBJECT DESTRUCTION
+
+Moose provides a hook for object destruction with the C<DEMOLISH>
+method. As with C<BUILD>, you should never explicitly call C<<
+$self->SUPER::DEMOLISH >>. Moose will arrange for all of the
+C<DEMOLISH> methods in your hierarchy to be called, from most to least
+specific.
+
+Each C<DEMOLISH> method is called with a single argument.
+
+In most cases, Perl's built-in garbage collection is sufficient, and
+you won't need to provide a C<DEMOLISH> method.
+
+=head2 Error Handling During Destruction
+
+The interaction of object destruction and Perl's global C<$@> and C<$?>
+variables can be very confusing.
+
+Moose always localizes C<$?> when an object is being destroyed. This means
+that if you explicitly call C<exit>, that exit code will be preserved even if
+an object's destructor makes a system call.
+
+Moose also preserves C<$@> against any C<eval> calls that may happen during
+object destruction. However, if an object's C<DEMOLISH> method actually dies,
+Moose explicitly rethrows that error.
+
+If you do not like this behavior, you will have to provide your own C<DESTROY>
+method and use that instead of the one provided by L<Moose::Object>. You can
+do this to preserve C<$@> I<and> capture any errors from object destruction by
+creating an error stack.
+
+=head1 AUTHOR
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See L<Moose/CABAL> and L<Moose/CONTRIBUTORS> for details.
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut

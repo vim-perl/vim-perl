@@ -1,0 +1,1800 @@
+After 1.12, Class::MOP was merged into the Moose distribution, and is no
+longer released separately.
+
+1.12 Mon, Jan 3, 2011
+
+  * Remove usage of undocumented Package::Stash APIs from the tests. This
+    prevents the tests from failing on Package::Stash >= 0.18.
+
+1.11 Sun, Oct 31, 2010
+
+  [ENHANCEMENTS]
+
+  * Replace use of Test::Exception with Test::Fatal. (Karen Etheridge and Dave
+    Rolsky)
+
+1.10 Mon, Oct 18, 2010
+
+  [BUG FIXES]
+
+  * Lots of fixes for edge cases with anon classes. (doy)
+
+1.09 Tue, Oct 5, 2010
+
+  [ENHANCEMENTS]
+
+  * It's now possible to tell Class::MOP::Class->create and the metaclass
+    pragma to not install a 'meta' method into classes they manipulate,
+    or to install one under a different name. (doy)
+
+  * Reinitializing a metaclass no longer removes the existing method and
+    attribute objects (it instead fixes them so they are correct for the
+    reinitialized metaclass). (doy)
+
+  * All 'meta' methods created by Class::MOP are now of the class
+    Class::MOP::Method::Meta. This is overridable at the metaclass layer. (doy)
+
+  [OTHER]
+
+  * Use get_or_add_package_symbol when we intend for it to autovivify, in
+    preparation for changes in Package::Stash. (doy)
+
+  * We now use Module::Install::AuthorRequires to force authors to run all
+    tests, just like we do for Moose. (sartak)
+
+1.08 Mon, Sep 13, 2010
+
+  [BUG FIXES]
+
+  * The get_method_list and _get_local_methods methods blew up in the face
+    of subroutine stubs. (Goro Fuji)
+
+1.07 Tue, Aug 25, 2010
+
+  [BUG FIXES]
+
+  * Fix a mysterious error reported by Piers Cawley. The error showed up as
+    "Can't use an undefined value as a symbol reference at
+    /usr/local/lib/perl/5.10.1/Class/MOP/Mixin/HasMethods.pm line 167." (Dave
+    Rolsky)
+
+1.06 Sun, Aug 23, 2010
+
+  [BUG FIXES]
+
+  * Version 1.05 no longer reported constants as methods, except with Perl
+    5.8.x, and doing so in 5.8.x caused test failures. Constants are now
+    _expected_ to be reported as methods, and we explicitly test this. (Dave
+    Rolsky)
+
+1.05 Sun, Aug 22, 2010
+
+  [ENHANCEMENTS]
+
+  * Refactorings and improvements to how defaults are handled, particularly
+    for inlined code (doy).
+
+  * Optimizations that should help speed up compilation time (Dave Rolsky).
+
+1.04 Tue, Jul 25, 2010
+
+  [ENHANCEMENTS]
+
+  * Class::MOP::Deprecated now uses Package::DeprecationManager
+    internally. Deprecation warnings are now only issued once for each calling
+    package, which cuts down on noise. When importing Class::MOP::Deprecated,
+    the request API version should now be passed in the "-api_version"
+    flag. However, the old "-compatible" flag will continue to work. (Dave
+    Rolsky)
+
+1.03 Sat, Jun 5, 2010
+
+  [ENHANCEMENTS]
+
+  * Make CMOP::Package a thin wrapper around Package::Stash (doy).
+
+1.02 Thu, May 20, 2010
+
+  [API CHANGES]
+
+  * Packages and modules no longer have methods - this functionality was
+    moved back up into Class::MOP::Class (doy).
+
+  [ENHANCEMENTS]
+
+  * Metaclass incompatibility checking now checks all metaclass types. (doy)
+
+  * Class::MOP can now do simple metaclass incompatibility fixing: if your
+    class's metaclass is a subclass of your parent class's metaclass, it will
+    just use the parent class's metaclass directly. (doy)
+
+1.01 Thu, May 6, 2010
+
+  [NEW FEATURES]
+
+  * is_class_loaded, load_class and load_first_existing_class now allow
+    specifying a minimum required version (Florian Ragwitz).
+
+  [BUG FIXES]
+
+  * The __INSTANCE__ parameter to Class::MOP::Class::new_object now enforces
+    that the passed in reference is blessed into the correct class (by dying if
+    it's not) (doy, jhallock).
+
+1.00 Thu, Mar 25, 2010
+
+  [GRRR< FUCKING STEVAN@]
+
+  * Re-release 0.99 as 1.00.
+
+0.99 Thu, Mar 25, 2010
+
+  [DOCUMENTATION]
+
+  * Fix typo in Class::MOP::Attribute (Franck Cuny).
+
+0.98 Mon, Jan 18, 2010
+
+  [ENHANCEMENTS]
+
+  * Added Class::MOP::Class->rebless_instance_back, which does the inverse of
+    rebless_instance (doy, rafl).
+
+0.97_01 Mon, Jan 4, 2010
+
+  [ENHANCEMENTS]
+
+  * Internal refactorings to move shared behavior into new "mixin" classes. This
+    made adding some new features to Moose much easier. (Dave Rolsky)
+
+0.97 Fri, Dec 18, 2009
+    * No code changes, just packaging fixes to make this distro installable.
+
+0.96 Fri, Dec 18, 2009
+    * tests
+      - Fixed t/082_get_code_info.t so it passes with bleadperl. (Dave Rolsky)
+      - Add XS & C files to no tabs check (Dave Rolsky)
+      - Convert all tests to done_testing. (Florian Ragwitz)
+
+0.95 Wed, Nov 19, 2009
+    * Class::MOP
+      - Make is_class_loaded without any arguments fail loudly
+        (Florian Ragwitz).
+      - Make load_class throw more standard error messages when loading single
+        modules (nothingmuch).
+
+    * Class::MOP::Package
+      - Stop add_method from behaving differently under the debugger
+        (Florian Ragwitz).
+
+    * Class::MOP::Class
+    * Class::MOP::Package
+      - Any method which takes a method name as an argument now allows names
+        which are false (like "0"), but the name must be defined and not be an
+        empty string. (Dave Rolsky)
+
+    * Class::MOP::Class
+      - Deprecated get_attribute_map as a public method. You can use a
+        combination of get_attribute_list and get_attribute instead. (Dave
+        Rolsky)
+
+0.94 Tue, Sep 22, 2009
+    * Class::MOP::Attribute
+      - Introduce set_raw_value and get_raw_value, side effect free variants
+        of {get,set}_value. These don't do anything useful in Class::MOP but
+        have different behavior that set_value and get_value for Moose
+        attributes. (nothingmuch)
+
+0.93 Tue, Sep 15, 2009
+    * Class::MOP
+      - The load_class function just returns true, since it's return value was
+        confusing (either a metaclass object or a class name). It either loads
+        a class or dies trying. In the future, this may change to not return
+        anything, since there's no point in checking its return
+        value. Addresses RT #45883. (Dave Rolsky)
+
+    * Class::MOP::Class::Trait::Immutable
+      - When throwing an error because of an immutable method, include that
+        method's name. Addresses RT #49680. (Shawn M Moore)
+
+    * Class::MOP::Package
+      - Adding the same sub reference to multiple packages failed to update
+        the method map properly. RT #48985. Reported by Paul Mooney. (Dave
+        Rolsky)
+      - The get_method_map method is now private (and called as
+        _full_method_map or _method_map). The public version is available as a
+        deprecated method. (Dave Rolsky)
+
+0.92_01 Thu, Sep 10, 2009
+    * Class::MOP::Package
+      - Backwards compatibility tweaks to XS for 5.8.1. (Goro Fuji)
+
+    * Class::MOP
+      - Make sure XS code handles magical scalars correctly. (Goro Fuji)
+
+    * Class::MOP::Class
+      - Documented the immutable_options method, which is useful if you need
+        to make a class mutable temporarily, and then nede to restore
+        immutability. (Dave Rolsky)
+
+    * Many modules
+      - Deprecated features have been moved to their own module,
+        Class::MOP::Deprecated, for easier deprecation management. (Goro Fuji)
+
+0.92 Thu Aug 13, 2009
+    * Class::MOP::Class
+    * Class::MOP::Package
+      - Move get_method_map and its various scaffolding into Package. (hdp)
+
+    * Class::MOP::Method
+      - Allow Class::MOP::Method->wrap to take a Class::MOP::Method object as
+        the first argument, rather than just a coderef. (doy)
+
+    * Class::MOP::Attribute
+    * Class::MOP::Class
+      - Allow attribute names to be false (while still requiring them to be
+        defined). (rafl)
+
+0.91 Wed Jul 29, 2009
+    * Class::MOP::Method::Wrapped
+      - Fixing variable usage issues with the patch from previous
+        version, not properly using lexicals in the for
+        loops. (stevan)
+
+0.90 Tue Jul 21, 2009
+    Japan Perl Association has sponsored Goro Fuji to improve startup
+    performance of Class::MOP and Moose. These enhancements may break
+    backwards compatibility if you're doing (or using) complex
+    metaprogramming, so, as always, test your code!
+    http://blog.perlassociation.org/2009/07/jpa-sponsors-moose-class-mop-work.html
+
+    * Class::MOP::Class
+    * XS
+      - Anonymous classes were not completely destroyed when they went
+        out of scope, leading to a memory leak. RT #47480. (Goro
+        Fuji).
+
+    * Class::MOP::Class
+      - The get_method, has_method, and add_method methods no longer
+        use get_method_map. Method objects are instantiated
+        lazily. This significantly improves Class::MOP's load
+        time. (Goro Fuji)
+
+    * All classes
+      - Inline fewer metaclass-level constructors since the ones we
+        have are perfectly fine. This reduces the number of string
+        evals. (Goro Fuji)
+
+    * Class::MOP::Method::Wrapped
+      - If a method modifier set $_, this caused the modifier to blow
+        up, because of some weird internals. (Jeremy Stashewsky)
+
+0.89 Fri Jul 3, 2009
+    * Class::MOP::Class
+    * Class::MOP::Class::Immutable::Trait
+      - Made the Trait act like a role with a bunch of "around"
+        modifiers, rather than sticking it in the inheritance
+        hierarchy. This fixes various problems that caused with
+        metaclass compatibility, which broke Fey::ORM.
+
+    * Class::MOP::Method
+      - Allow a blessed code reference as the method body. Fixes a
+        problem interaction with MooseX::Types. (ash)
+
+    * Class::MOP::Instance
+      - add inline version of rebless_instance_structure. (doy)
+      - change inline_slot_access to use single quotes (gphat)
+
+0.88 Tue, Jun 23, 2009
+    * Class::MOP::Class
+      - Moved the __INSTANCE__ parameter to _construct_instance from
+        Moose to here. (doy)
+      - Fixed some issues involving metaclasses of metaclasses and
+        immutability. (doy)
+
+0.87 Sun, Jun 21, 2009
+    * Various
+      - Made sure to always local-ize $@ and $SIG{__DIE__} before
+        calling an eval. Fixes RT #45973.
+
+    * Class::MOP::Class
+      - Synced docs about immutability with the current reality (which
+        changed back in 0.82_01)
+      - Removed the immutable_transformer method, which had been
+        returning undef since 0.82_01 anyway.
+
+    * Tests
+      - Got rid of tests which needed Moose and improved testing of
+        constructor/destructor inlining warnings. Fixes RT #47119.
+
+0.86 Tue, Jun 16, 2009
+    * Class::MOP::Class
+      - If you redefined a subroutine at runtime and then wrapped it
+        with a method modifier, the modifier could in some cases wrap
+        the original version of the subroutine. Fixes RT #46957.
+
+    * Class::MOP::Class
+      - make_immutable issues a warning instead of overriding an
+        existing DESTROY method (Dylan William Hardison). Fixes RT
+        #46854.
+
+0.85 Sat, Jun 6, 2009
+    * Class::MOP::Attribute
+      - Allow default values to be Class::MOP::Methods.  (Florian
+        Ragwitz)
+      - Test the above. (Rhesa Rozendaal)
+      - Tweak original commit so the intent matches the accepted
+        behavior (Nicholas Perez)
+
+    * Class::MOP
+      - Localize $SIG{__DIE__} inside _try_load_one_class (Sartak)
+
+    * Class::MOP::Class
+      - Add direct_subclasses method (Sartak)
+        - Tests for subclasses and direct_subclasses (Sartak)
+      - subname is no longer used unconditionally in add_method, but
+        only if the code reference's name is '__ANON__' (nothingmuch)
+      - Add a hook for _superclasses_updated (Sartak)
+
+    * Class::MOP::Method
+      - Remove long, old warning about possibly outdated modules
+        (Sartak)
+
+0.84 Tue, May 12, 2009
+    * Makefile.PL
+      - Depend on Text::Exception 0.27 to avoid failing tests ond old
+        versions (rafl)
+
+    * Class::MOP
+      - Made is_class_loaded a little stricter. It was reporting that
+        a class was loaded if it merely had an @ISA variable in its
+        stash. Now it checks that the @ISA var has elements in it.
+      - Deprecate in_global_destruction and subname re-exporting
+        (perigrin & Sartak)
+
+    * Class::MOP::Class
+      - Explicitly use Devel::GlobalDestruction and Sub::Name
+        (perigrin)
+
+    * Class::MOP::Package
+      - Disable prototype mismatch warnings for add_package_symbol.
+        (Florian Ragwitz)
+    * Tests
+      - Add test for finding methods from $meta->name->meta before immutable,
+        (t0m)
+
+0.83 Mon, April 27, 2009
+    * Class::MOP::Class
+      - Fix segfault when calling get_method_map on a metaclass for an empty
+        package (doy)
+
+0.82_02 Fri, April 24, 2009
+    * Class::MOP::Method::Inlined
+      - Don't inline if the expected method is not defined at all (happens with
+        e.g. Moose::Object::_new is the expected method due to an overridden
+        name)
+    * Tests
+      - Some tests were trying to load Class::MOP::Immutable, which
+        was removed in 0.82_01.
+
+0.82_01 Thu, April 23, 2009
+    * Class::MOP::Immutable (and others)
+      - Refactor the immutability system to use a pre-defined class
+        for the immutable metaclass of Class::MOP::Class::Immutable::$class
+      - Rather than generating methods into this class every time, use
+        a Trait (basic mixin) to supply the cached methods
+      - Remove the hack that returns the mutable metaclass for
+        metacircularity in order to provide consistent meta-metaclasses
+        for the Moose compatibility handling code
+        (mst broke it, nothingmuch fixed it)
+
+0.82 Mon, April 20, 2009
+    * Various
+      - The deprecation wrappers for some renamed methods were not
+        passing arguments to the new method. (nothingmuch)
+
+    * Class::MOP::Immutable
+      - Warn during immutablization if the local class provides its own
+        constructor, to parallel the warning in Moose when a superclass
+        provides its own constructor (doy)
+
+0.81 Tue, April 7, 2009
+    * Class::MOP
+    * Class::MOP::Class
+    * Class::MOP::Instance
+    * Class::MOP::Attribute
+    * Class::MOP::Method::Accessor
+    * Class::MOP::Method::Constructor
+      - Include stack traces in the deprecation warnings introduced in
+        0.80_01. (Florian Ragwitz)
+
+    * MOP.xs
+      - Avoid c compiler warnings by declaring some unused function
+        arguments. (Florian Ragwitz)
+
+0.80_01 Sun, April 5, 2009
+    * Makefile.PL
+      - Make sure to preserve any compiler flags already defined in
+        Config.pm. Patch by Vincent Pit. RT #44739.
+
+    * Many methods have been renamed with a leading underscore, and a
+      few have been deprecated entirely. The methods with a leading
+      underscore are considered "internals only". People writing
+      subclasses or extensions to Class::MOP should feel free to
+      override them, but they are not for "public" use.
+
+      - Class::MOP::Class
+        - construct_class_instance => _construct_class_instance (use new_object)
+        - construct_instance => _construct_instance (use new_object)
+        - check_metaclass_compatibility => _check_metaclass_compatibility
+        - create_meta_instance => _create_meta_instance (use get_meta_instance)
+        - clone_instance => _clone_instance (use clone_object)
+        - compute_all_applicable_methods is deprecated, use get_all_methods
+        - compute_all_applicable_attributes is deprecated, use get_all_attributes
+
+      - Class::MOP::Instance
+        - bless_instance_structure is deprecated and will be removed
+          in a future release
+
+      - Class::MOP::Module
+        - create has been renamed to _instantiate_module. This method
+          does not construct an object, it evals some code that
+          creates the relevant package in Perl's symbol table.
+
+      - Class::MOP::Method::Accessor
+        - initialize_body => _initialize_body (this is always called
+          when an object is constructed)
+        - /(generate_.*_method(?:_inline)?)/ => '_' . $1
+
+      - Class::MOP::Method::Constructor
+        - initialize_body => _initialize_body (this is always called
+          when an object is constructed)
+        - /(generate_constructor_method(?:_inline)?)/ => '_' . $1
+        - attributes => _attributes
+        - meta_instance => _meta_instance
+
+0.80 Wed, April 1, 2009
+    * Class::MOP::*
+      - Call user_class->meta in fewer places, with the eventual goal
+        of allowing the user to rename or exclude ->meta
+        altogether. Instead uses Class::MOP::class_of. (Sartak)
+
+    * Class::MOP
+      - New class_of function that should be used to retrieve a
+        metaclass. This is unlike get_metaclass_by_name in that it
+        accepts instances, not just class names. (Sartak)
+
+    * Class::MOP
+      - load_first_existing_class didn't actually load the first
+        existing class; instead, it loaded the first existing and
+        compiling class.  It now throws an error if a class exists (in
+        @INC) but fails to compile.  (hdp)
+
+    * Class::MOP
+    * Class::MOP::Class
+      - we had some semi-buggy code that purported to provide a
+        HAS_ISAREV based on whether mro had get_isarev (due to an
+        oversight, it always returned 1). Since mro and MRO::Compat
+        have always had get_isarev, HAS_ISAREV was pointless. This
+        insight simplified the subclasses method by deleting the
+        pure-perl fallback. HAS_ISAREV is now deprecated. (Sartak)
+
+0.79 Fri, March 29, 2009
+    * No changes from 0.78_02.
+
+0.78_02 Thu, March 26, 2009
+    * Class::MOP::Class
+    * Class::MOP::Immutable
+      - A big backwards-incompatible refactoring of the Immutable API,
+        and the make_immutable/make_mutable pieces of the Class
+        API. The core __PACKAGE__->meta->make_immutable API remains
+        the same, however, so this should only affect the most
+        guts-digging code.
+
+    * XS code
+      - The XS code used a macro, XSPROTO, that's only in 5.10.x. This
+        has been fixed to be backwards compatible with 5.8.x.
+
+    * Class::MOP::Class
+      - Add a hook for rebless_instance_away (Sartak)
+      - Use blessed instead of ref to get an instance's class name
+        in rebless_instance. (Sartak)
+
+0.78_01 Wed, March 18, 2009
+    * Class::MOP::*
+      - Revised and reorganized all of the API documentation. All
+        classes now have (more or less) complete API documentation.
+
+    * Class::MOP::Class
+    * Class::MOP::Instance
+      - Reblessing into a package that supports overloading wasn't
+        properly adding overload magic to the object due to a bug
+        in (at least) 5.8.8. We now use $_[1] directly which seems
+        to set the magic properly. (Sartak)
+
+    * Class::MOP::Attribute
+      - The process_accessors method is now private. A public alias
+        exists (and will stick around for a few releases), but it
+        warns that calling the public method is deprecated.
+
+    * Class::MOP::Method::Generated
+      - Removed the new and _new methods, since this is an abstract
+        base class, and all existing subclasses implement their own
+        constructors.
+
+    * MOP.xs
+      - Stop is_class_loaded from thinking a class is loaded if it
+        only has an empty GV (Florian Ragwitz).
+        - Add a test for this (Yappo).
+      - Refactor get_all_package_symbols to allow short-circuiting
+        (Florian Ragwitz).
+        - Use this in is_class_loaded (Florian Ragwitz).
+      - Stop segfaulting when trying to get the name from a sub that's
+        still being compiled (Florian Ragwitz).
+        - Add tests for this (Florian Ragwitz).
+      - Prefix all public symbols with "mop_" (Florian Ragwitz).
+      - Clean up and simplify prehashing of hash keys (Florian Ragwitz).
+      - Simplify creating simple xs reader methods (Florian Ragwitz).
+      - Make everything compile with c++ compilers (Florian Ragwitz).
+      - Upgrade ppport.h from 3.14 to 3.17 (Florian Ragwitz).
+
+    * Tests
+      - Remove optional test plans for tests depending on Sub::Name as
+        we have a hard dependency on Sub::Name anyway (Florian Ragwitz).
+
+    * Makefile.PL
+      - Rebuild all c code if mop.h has changed (Florian Ragwitz)
+
+0.78 Mon, February 23, 2009
+    * No changes from 0.77_01
+
+0.77_01 Sun, February 22, 2009
+    * Everything
+      - This package now requires its XS components. Not using
+        Sub::Name lead to different behavior and bugginess in the pure
+        Perl version of the code. A Moose test would fail when run
+        against the pure Perl version of this code.
+
+    * Class::MOP::Instance
+      - The inline_* methods now quote attribute names themselves, and
+        don't expect to receive a quoted value.
+
+
+0.77 Sat, February 14, 2009
+    * MOP.xs
+      - Avoid assertion errors on debugging perls in is_class_loaded
+        (Florian Ragwitz)
+
+    * Class::MOP
+      - Fixed various corner cases where is_class_loaded incorrectly
+        returned true for a class that wasn't really loaded. (Dave
+        Rolsky)
+
+    * Class::MOP::Class
+      - Add get_all_method_names (Sartak)
+      - Add a wrapped_method_metaclass attribute (Florian Ragwitz)
+
+    * Class::MOP::Package
+      - Disable deprecated get_all_package_symbols in list
+        context. (Florian Ragwitz)
+
+    * Makefile.PL
+      - Make sure we generate a BSD-compatible Makefile (Florian
+        Ragwitz)
+
+    * Class::MOP::Class
+      - The misspelled "check_metaclass_compatability" method we've
+        kept around for backwards compat_i_bility will be removed in a
+        near future release. You've been warned.
+
+0.76 Thu, January 22, 2009
+    * Class::MOP::Method::Generated
+      - Added new private methods to support code generation, which
+        are being used by Moose and can be used by MooseX
+        authors. (mst)
+      - Generated methods are now generated with a #line directive
+        reflecting the source of the generated method. (nothingmuch)
+
+    * Class::MOP::Class
+      - Clarified documentation of methods that return
+        Class::MOP::Method objects. (doy)
+
+    * Class::MOP
+      - Clarified documentation of the metaclass cache methods. (Sartak)
+
+    * Tests
+      - Add test showing how the xs Class::MOP::is_class_loaded can
+        be made to operate differently to the pure perl version (t0m)
+
+0.75 Wed, December 31, 2008
+    * Class::MOP::Class
+      - A class that was made immutable and then mutable could end up
+        sharing an immutable transformer object
+        (Class::MOP::Immutable) with other classes, leading to all
+        sorts of odd bugs. Reported by t0m. (Dave Rolsky)
+
+0.74 Tue, December 25, 2008
+    * MOP.xs
+      - Add an xs implementation of Class::MOP::is_class_loaded (closes
+        RT#41862). Based on a patch by Goro Fuji. (Florian Ragwitz)
+      - Changed internals to make prehashing of hash keys easier and less
+        error-prone. (Florian Ragwitz)
+    * Class::MOP::Class
+      - Fix documentation to show that around modifiers happen on both
+        sides of the modified method. (Dave Rolsky)
+
+0.73 Tue, December 16, 2008
+    * MOP.xs
+      - Don't use Perl_mro_meta_init. It's not part of the public perl
+        api. Fixes failures to build on Win32 (RT #41750).  (Florian
+        Ragwitz)
+    * t/082_get_code_info.t
+      - Add $^P &= ~0x200; (per Ovid's suggestion) in order to not
+        munger anonymous subs when under -d and so making the tests
+        succeed in that case.
+
+0.72 Mon, December 8, 2008
+    * Class::MOP::Package
+      - Pass options to _new, so subclass' attributes can be
+        initialized (Sartak)
+    * Class::MOP::Method
+      - In the docs, indicate that package_name and name are required
+        when calling ->wrap (Stefan O'Rear)
+
+0.71_02 Fri, December 5, 2008
+    * Class::MOP::Immutable
+      - Added a new attribute, inlined_constructor, which is true if
+        the constructor was inlined.
+    * Class::MOP::Package
+      - Make get_all_package_symbols return a hash ref in scalar
+        context and deprecate calling it in list context with a
+        warning. (Florian Ragwitz)
+    * MOP.xs
+      - Various improvements and refactoring, making things more robust and
+        easier to maintain. (Florian Ragwitz)
+
+0.71_01 Wed, December 3, 2008
+    * Class::MOP::Method
+      - Add an "execute" method to invoke the body so
+        we can avoid using the coderef overload (Sartak)
+    * Class::MOP::Immutable
+      - When we memoize methods, get their results lazily
+        to remove some compile-time cost (Sartak)
+      - Small speedup from eliminating several method
+        calls (Sartak)
+    * Class::MOP::Class
+      - Some small internal tweaks to try to reduce the number of
+        times we call get_method_map when bootstrapping the MOP. This
+        might make loading Class::MOP (and Moose) a little
+        faster. (Dave Rolsky)
+      - Implemented an optional XS version of get_method_map. Mostly
+        taken from a patch by Goro Fuji (rt.cpan.org #41080), with
+        help form Florian Ragwitz. (Dave Rolsky)
+      - Make the behaviour of of get_all_package_symbols (and
+        therefore get_method_map) consistent for stub methods. Report
+        and test by Goro Fuji (rt.cpan.org #41255). (Florian Ragwitz)
+
+0.71 Wed November 26, 2008
+    * Class::MOP::Class
+    * Class::MOP::Module
+      - Actual package creation has moved upward from
+        Class to Module so that Moose roles can share
+        the code (Sartak)
+
+0.70_01 Mon, November 19, 2008
+    * Class::MOP
+      - Fixes for failures with blead (Florian Ragwitz)
+      - Silenced compiler warnings (Florian Ragwitz)
+
+0.70 Fri, November 14, 2008
+    * Class::MOP
+      - Fixed an odd corner case where the XS version of
+        get_all_package_symbols could cause a segfault. This only
+        happened with inlined constants in Perl 5.10.0 (Florian
+        Ragwitz)
+
+0.69 Fri, November 7, 2008
+    * Class::MOP::Method::Wrapped
+      - Added introspection methods for method modifiers (Dave Rolsky)
+
+
+0.68 Fri October 24, 2008
+    * Class::MOP
+      - Make load_class require by file name instead of module name.
+        This stops confusing error messages when loading '__PACKAGE__'.
+        (Florian Ragwitz)
+      - Add load_one_class_of function to enable you to load one of a
+        list of classes, rather than having to call load_class multiple
+        times in an eval. (t0m)
+
+0.67 Tue October 14, 2008
+    * Class::MOP::Class
+      - Call a method on the class after setting the superclass list
+        so that we can get Perl to detect cycles before MRO::Compat
+        spirals into an infinite loop (sartak)
+        - Reported by Schwern, [rt.cpan.org #39001]
+      - In create(), pass unused options on to initialize()
+        - added test for this
+
+0.66 Sat September 20, 2008
+    !! This release has an incompatible change regarding !!
+       introspection of a class's method with Class::MOP::Class !!
+
+    * Tests and XS
+      - We (us maintainers) now run all tests with XS and then without
+        XS, which should help us catch skew between the XS/pure Perl
+        code. (Dave Rolsky)
+
+    * Class::MOP::Class
+      ! The alias_method method has been deprecated. It now simply
+        calls add_method instead. There is no distinction between
+        aliased methods and "real" methods.
+
+        This means that methods added via alias_method now show up as
+        part of the class's method list/map. This is a backwards
+        incompatible change, but seems unlikely to break any
+        code. Famous last words. (Dave Rolsky)
+
+    * Class::MOP::Class
+      - Fixed the spelling of "compatibility", but we still have a
+        "check_metaclass_compatability" method for backwards
+        compatibility.
+
+0.65 Mon September 1, 2008
+    For those not following the series of dev releases, the changes
+    from 0.64 from 0.65 can mostly be summed up as a lot performance
+    improvements by nothingmuch, including new optional XS versions of
+    some methods. Also, Class::MOP now works _without_ any XS modules,
+    for sad systems without a compiler.
+
+    * Class::MOP::Method
+      - Added name and package_name XS accessors, and make sure all
+        the XS and Perl versions work the same way. (Dave Rolsky)
+
+    * MOP.xs
+      - The XS versions of various methods just returned undef when
+        called class methods, rather than dying like the pure Perl
+        versions. (Dave Rolsky)
+
+0.64_07 Fri August 29, 2008
+    * Class::MOP
+      - Silenced warnings that managed to break Moose tests when XS
+        was loaded. (Dave Rolsky)
+      - Some XS versions of methods were ignored because of typos in
+        MOP.xs. (Dave Rolsky)
+
+0.64_06 Mon August 25, 2008
+    * Class::MOP (MOP.xs)
+      - Another MS VC++ fix, cannot declare a variable in the middle
+        of a scope (Taro Nishino).
+
+0.64_05 Sun August 24, 2008
+    * Class::MOP
+      - None of the dev releases actually loaded the XS properly, but
+        we silently fell back to the pure Perl version of the
+        code. (Dave Rolsky)
+
+    * Class::MOP (MOP.xs)
+      - Replaced some code that used functions not available on Visual
+        C++ with some Perl XS API bits (Dave Rolsky).
+
+0.64_04 Sat August 23, 2008
+    * Class::MOP::Class
+      - Workaround a bug in 5.8.1's goto sub (nothingmuch)
+
+    * pod.t and pod_coveraget.t
+      - These are no longer shipped with the tarball because of bogus
+        failures from CPAN testers. (Dave Rolsky)
+
+0.64_03 Thu August 21, 2008
+    * Class::MOP::Package
+      - Some (legit) code was misparsed by earlier 5.8.x
+        releases. (nothingmuch)
+
+    * Class::MOP
+      - Fix a constant in void context warning (nothingmuch)
+
+0.64_02 Thu August 21, 2008
+    * Makefile.PL and Class::MOP
+      - Explicitly require Perl 5.8.0+ (Dave Rolsky)
+
+    * Makefile.PL
+      - Add missing prereqs that got lost in the switch away from
+        Module::Install.
+
+    * Class::MOP::Instance
+      - New method - get_all_attributes (nothingmuch)
+
+0.64_01 Wed August 20, 2008
+    * Makefile.PL
+      - We now check to see if you have a compiler. If you don't, the
+        module installs without some XS bits, but will work the same
+        as with XS. This should make it easier to install on platforms
+        without a compiler (like Windows). (Dave Rolsky)
+
+    * many modules
+      - Perl 6 style attribute naming replaced with sane style ('methods', not
+        '%!methods'). These changes should not impact any existing API uses.
+        (nothingmuch).
+
+    * many modules
+      - Quite a number of optimizations based on profiling, including
+        allowing constructors to take hash references instead of
+        hashes, duplicating some frequently used code in XS, and
+        making constructors immutable. These changes should not impact
+        any existing API uses. (nothingmuch)
+
+    * Many modules
+      - Constructors now respect the meta attributes of their subclasses,
+        facilitating MOP extensibility. More related changes will happen in the
+        next several releases. (nothingmuch)
+
+    * Class::MOP::Class
+      - New method - get_all_methods, replaces the deprecated
+        compute_all_applicable_methods. get_all_attributes provided for
+        consistency (nothingmuch)
+      - New method - wrap_method was refactored out of get_method_map
+        (nothingmuch)
+      - New API for meta instance invalidation - invalidate_meta_instance,
+        invalidate_meta_instances, add_dependent_meta_instance,
+        remove_dependent_meta_instance, called automatically when attribute
+        definitions change and allows notification of dependent subclasses.
+        (nothingmuch)
+
+0.64 Sun August 3, 2008
+    * Class::MOP::Immutable
+      - fixing subtle edge case in immutable when you
+        call ->meta (stevan)
+      - clean up option processing (nothingmuch)
+
+    * Class::MOP::Instance
+      - inlined initialize slot didn't match
+        non-inlined (nothingmuch)
+
+0.63 Mon July 7, 2008
+    * Class::MOP
+      - load_class will initialize a metaclass even if
+        the class is already loaded (sartak)
+      - load_class now returns the metaclass instance
+        instead of just 1 (sartak)
+
+    * elsewhere
+      - better error messages (sartak and Dave Rolsky)
+
+0.62 Wed June 18, 2008
+    - in is_class_loaded, recognize scalar references (as opposed to globs) in
+      the symbol table as methods (these are optimized constant subs)
+
+0.61 Fri. June 13, 2008
+    - Okay, lets give this another try and see if PAUSE
+      recognizes it correct this time.
+
+0.60 Thurs. Jun 12, 2008
+    - Fixed a version number issue by bumping all modules
+      to 0.60.
+
+0.59 Thurs. Jun 12, 2008
+    !! Several fixes resulting in yet another 25-30% speedup !!
+
+    * Class::MOP::Class
+      - now stores the instance of the instance
+        metaclass to avoid needless recomputation
+        and deletes it when the cache is blown
+      - introduce methods to query Class::MOP::Class for
+        the options used to make it immutable as well as
+        the proper immutable transformer. (groditi)
+
+    * Class::MOP::Package
+      - {add, has, get, remove}_package_symbol all
+        now accept a HASH ref argument as well as the
+        string. All internal usages now use the HASH
+        ref version.
+
+    * Class::MOP
+      - MOP.xs does sanity checks on the coderef
+        to avoid a segfault
+      - is_class_loaded check now uses code that
+        was improved in Moose's ClassName type
+        check (Sartak)
+      - nonsensical (undef, empty, reference) class
+        names now throw a more direct error in
+        load_class (Sartak)
+        - tests for this and other aspects of
+          load_class (Sartak)
+
+    * Class::MOP
+      Class::MOP::Class
+      Class::MOP::Method
+      Class::MOP::Method::Wrapped
+      Class::MOP::Attribute
+      - switched usage of reftype to ref because
+        it is much faster
+
+0.58 Thurs. May 29, 2008
+    (late night release engineering)--
+
+    - fixing the version is META.yml, no functional
+      changes in this release
+
+0.57 Wed. May 28, 2008
+    !! Several speedups resulting in 20-25% speedups !!
+    || (thanks to konobi, groditi, mst & CataMoose) !!
+
+    * Class::MOP::Class
+      - made get_method_map use list_all_package_symbols
+        instead of manually grabbing each symbol
+      - streamlining &initialize somewhat, since it gets
+        called so much
+
+    * Class::MOP::Package
+      - made {get, has}_package_symbol not call
+        &namespace so much
+      - inlining a few calls to &name with
+        direct HASH access key access
+      - added get_all_package_symbols to fetch
+        a HASH of items based on a type filter
+        similar to list_all_package_symbols
+        - added tests for this
+
+    * Class::MOP::Method
+      Class::MOP::Method::Constructor
+      Class::MOP::Method::Generated
+      Class::MOP::Method::Accessor
+      - added more descriptive error message to help
+        keep people from wasting time tracking an error
+        that is easily fixed by upgrading.
+
+    * Class::MOP::Immutable
+      - Don't inline a destructor unless the user actually
+        needs one
+        - added tests for this
+
+0.56 Saturday, May 24, 2008
+    * Class::MOP
+      - we now get the &check_package_cache_flag
+        function from MRO::Compat
+      - All XS based functionality now has a
+        Pure Perl alternative
+        - the CLASS_MOP_NO_XS environment variable
+          can now be used to force non-XS versions
+          to always be used
+
+    * Class::MOP::Attribute
+      - add has_read_method and has_write_method
+      - get_{read,write}_method_ref now wraps the
+        anon-sub ref in the method metaclass when
+        possible
+        - added tests for this
+
+    * Class::MOP::Immutable
+      - added the ability to "wrap" methods when
+        making the class immutable
+
+    * Class::MOP::Class
+      - now handling the edge case of ->meta->identifier
+        dying by wrapping add_package_symbol to specifically
+        allow for it to work.
+        - added tests for this
+
+    * Class::MOP::Attribute
+      Class::MOP::Class
+      Class::MOP::Immutable
+      - any time a method meta object is constructed
+        we make sure to pass the correct package and
+        method name information
+
+    * Class::MOP::Method
+      Class::MOP::Method::Wrapped
+      Class::MOP::Method::Generated
+      Class::MOP::Method::Accessor
+      Class::MOP::Method::Consructor
+      - the &wrap constructor method now requires that a
+        'package_name' and 'name' attribute are passed. This
+        is to help support the no-XS version, and will
+        throw an error if these are not supplied.
+      - all these classes are now bootstrapped properly
+        and now store the package_name and name attributes
+        correctly as well
+
+    ~ Build.PL has been removed since the
+      Module::Install support has been removed
+
+0.55 Mon. April 28, 2008
+    - All classes now have proper C3 MRO support
+      - added MRO::Compat as a dependency to allow
+        for the C3 MRO support to Just Work in all
+        perl versions
+
+    * Class::MOP::Class
+      - rebless_instance now returns the instance
+        it has just blessed, this is mostly to
+        facilitate chaining
+      - set the attr correctly in rebless_instance
+        when it has no init_arg
+      - tweaked &linear_isa and &class_precedence_list
+        to support c3 classes.
+
+0.54 Fri. March, 14, 2008
+    * Class::MOP
+      metaclass.pm
+      - making sure that load_class never gets
+        passed a value from @_ or $_ to squash
+        Ovid's bug (http://use.perl.org/~Ovid/journal/35763)
+
+    * Class::MOP::Class
+      - make_{immutable,mutable} now return 1
+        (cause Sartak asked)
+      - improved error handling in ->create method
+      - rebless_instance now takes extra params which
+        will be used to populate values
+        - added tests for this
+
+    * Class::MOP::Object
+      - localizing the Data::Dumper configurations so
+        that it does not pollute others (RT #33509)
+
+    * Class::MOP::Class
+      Class::MOP::Package
+      Class::MOP::Module
+      Class::MOP::Method
+      Class::MOP::Attribute
+      - these classes no longer define their own ->meta,
+        but instead just inherit from Class::MOP::Object
+
+    * Class::MOP::Instance
+      Class::MOP::Immutable
+      - these classes now inherit from Class::MOP::Object
+
+    * t/
+      - fixed the filename length on several
+        test files so we install on VMS better
+        (RT #32295)
+      - fixed incorrect use of catdir when it
+        should be catfile (RT #32385)
+
+0.53 Thurs. Feb. 14, 1008
+    ~~ several doc. fixes and updates ~~
+
+    * Class::MOP::Class
+      Class::MOP::Method::Constructor
+      Class::MOP::Attribute
+        - making init_arg accept an undefined value
+          to indicate that no constructor args can
+          be passed (thanks to nothingmuch)
+          - added tests for this
+        - added attribute initializer attribute (rjbs)
+
+    * Class::MOP.
+        - making this use the new init_arg => undef
+          feature instead of the silly hack from
+          before (thanks to nothingmuch)
+
+0.52 Tues. Jan. 22, 2008
+    * Class::MOP::Class
+      - fixed bug in rebless_instance
+        (discovered by ash)
+
+    * Class::MOP::Method::Constructor
+      - removed assumptions about the existence of
+        a &meta method
+
+0.51 Mon. Jan. 14, 2008
+    ~~~ some misc. doc. fixes ~~~
+    ~~ updated copyright dates ~~
+
+    * Class::MOP
+      - now sets the IS_RUNNING_ON_5_10
+        constant so that we can take advantage
+        of some of the nice bits of 5.10
+
+    * Class::MOP::Class
+      - uses the IS_RUNNING_ON_5_10 flag to
+        optimize the &linearized_isa method
+        and avoid the hack/check for circular
+        inheritence in &class_precedence_list
+      - added rebless_instance method (Sartak)
+        - added tests for this
+
+    * Class::MOP::Immutable
+      - the immutable class now keeps track of
+        the transformer which immutablized it
+
+    * Class::MOP::Instance
+      - added rebless_instance_structure method (Sartak)
+        - added tests for this
+
+0.50 Fri. Dec. 21, 2007
+    * Class::MOP::Class
+      - fixed bug in immutable to make sure that
+        transformation arguments are saved
+        correctly (mst)
+        - added tests for this
+
+    * Class::MOP::Immutable
+      - fixed a bug (see above)
+
+    * Class::MOP::Attribute
+      - some doc updates
+
+0.49 Fri. Dec. 14, 2007
+    !! Class::MOP now loads 2 x faster  !!
+    !! with XS speedups (thanks konobi) !!
+
+    * Class::MOP
+      - removed the dependency on B
+      - added two XS functions (thanks konobi)
+        - get_code_info($code) which replaces all
+          the B fiddling we were doing with
+          faster/leaner XS level fiddling
+        - check_package_cache_flag($pkg_name) which
+          returns the PL_sub_generation variable to
+          be used to help manage method caching.
+
+          NOTE:
+          In 5.10 or greater this will actually
+          use the mro::get_pkg_gen instead to give
+          even more accurate caching information.
+          blblack++ for that stuff :)
+
+    * Class::MOP::Class
+      - added the &subclasses method (thanks rlb)
+      - added the update_package_cache_flag and
+        reset_package_cache_flag which help keep
+        track of when we need to re-fetch the
+        method map.
+      - Several small improvements to take advantage
+        of the new method map caching features
+
+0.48 Mon. Nov. 26, 2007
+    * Class::MOP::Attribute
+      - fixed get_read/write_method to handle the
+        HASH ref case, which makes the
+        get_read/write_method_ref handle it too.
+        - added more tests for this
+
+0.47 Sat. Nov. 24, 2007
+    * Class::MOP::Attribute
+      - fixed misspelling in get_write_method_ref
+        - added more tests for this
+
+0.46 Fri. Nov. 23, 2007
+    * Class::MOP::Class
+      - added the linearized_isa method instead of constantly
+        pruning duplicate classes (this will be even more
+        useful in the 5.10-compat version coming soon)
+
+    * Class::MOP::Attribute
+      - added the get_read_method_ref and get_write_method_ref
+        methods which allow you to retrieve a CODE ref which
+        can always be used to read or write an attribute.
+
+0.45 Thurs. Nov. 13, 2007
+    * Class::MOP::Attribute
+      - Fix error message on confess (groditi)
+
+0.44 Thurs. Nov. 13, 2007
+    - Apparently I didn't make dist correctly (groditi)
+
+0.43 Thurs. Nov. 13, 2007
+    * Class::MOP
+      - Add support for the 'builder' attribute (groditi)
+
+    * Class::MOP::Class
+      - optimise metaclass-already-exists check in
+        construct_class_instance (groditi)
+      - duplicate check into initialize to save a
+        call through (groditi)
+
+    * Class::MOP::Attribute
+      - Add support for the 'builder' attribute (groditi)
+      - Make predicates check for the existence of a value, not whether
+        it is defined (groditi)
+
+    * Class::MOP::Instance
+      - Make predicates check for the existence of a value, not whether
+        it is defined (groditi)
+
+    * Class::MOP::Method::Accessor
+      - made this a subclass of Class::MOP::Method::Generated
+        - removed the relevant attributes
+
+    * Class::MOP::Method::Constructor
+      - fixed the cached values we had to be more sane
+      - made this a subclass of Class::MOP::Method::Generated
+      - fixed generated constructor so it properly handles
+        subclasses now.
+        - added tests for this
+      - added the option to allow for both inlined and
+        non-inlined constructors.
+      - Update inlined methods for builder and predicate changes (groditi)
+
+    * Class::MOP::Method::Generated
+      - added this class as an abstract base for the
+        Class::MOP::Method::{Constructor,Accessor} classes
+        - added tests for this
+
+    *t/
+      - Alter tests (005, 014 020, 021) for new builder addition (groditi)
+      - Tests for new predicate behavior (and corrections to old tests) (groditi)
+
+    *examples/
+      - Update ArrayRef based class example to work with predicate changes
+
+0.42 Mon. July 16, 2007
+    !!! Horray for mst, he fixed it !!!
+
+    * Class::MOP::Package
+      - alter symbol table handling to deal with 5.8.x and 5.9.x
+
+    * t/
+      - Get rid of the crappy workaround from 0.40/41
+
+0.41 Sun. July 15, 2007
+    * t/
+        Arghh!!! My TODO test didn't work, so I handle
+        it manually now so that people can use this
+        with 5.9.5/bleadperl without issue.
+
+0.40 Tues, July 3, 2007
+    * t/
+      ~ marked a test in 003_methods.t as TODO
+        for perl 5.9.5 (this test is irrelvant to
+        the module functioning on 5.9.5 for the most
+        part anyway)
+
+0.39 Mon. June 18, 2007
+    * Class::MOP::Immutable
+      - added make_metaclass_mutable + docs (groditi)
+      - removed unused variable
+      - added create_immutable_transformer
+        necessary for sane overloading of immutable behavior
+         - tests for this (groditi)
+
+    * Class::MOP::Class
+      - Immutability can now be undone,
+        added make_mutable + tests + docs (groditi)
+      - Massive changes to the way Immutable is done
+        for details see comments next to make_immutable
+        This fixes a bug where custom metaclasses broke
+        when made immutable. We are now keeping one immutable
+        metaclass instance per metaclass instead of just one
+        to prevent isa hierarchy corruption. Memory use will go
+        up, but I suspect it will be neglible.
+         - New tests added for this behavior.  (groditi)
+
+0.38 Thurs. May 31, 2007
+    ~~ More documentation updates ~~
+
+    * Class::MOP::Package
+      - we now deal with stub methods properly
+        - added tests for this
+      - fixed some tests failing on 5.9.5 (thanks blblack)
+
+    * Class::MOP::Attribute
+      - added get_read_method and get_write_method
+        thanks to groditi for this code, tests
+        and docs.
+        - added tests and POD for this
+
+    * Class::MOP::Class
+      - fixed RT issue #27329, clone object now
+        handles undef values correctly.
+        - added tests for this
+      - Corrected anon-class handling so that they
+        will not get reaped when instances still
+        exist which need to reference them. This is
+        the correct behavior, hopefully this is an
+        obscure enough feature that there are not too
+        many work arounds out in the wild.
+        - added tests for this by groditi
+        - updated docs to explain this
+
+    * metaclass
+      - load custom metaclasses automatically (thanks groditi)
+        - added tests for this behavior
+
+0.37 Sat. March 10, 2007
+    ~~ Many, many documentation updates ~~
+
+    * Class::MOP
+      - added &load_class and &is_class_loaded
+        - added tests and docs for these
+
+    * Class::MOP::Attribute
+      - default now checks the instance with defined to
+        avoid setting off bool-overloads (found by Carl Franks)
+
+0.37_002
+    * /t
+      - bad name in a test, causing meaningless failuress.
+        No other changes.
+
+0.37_001
+
+    ~~ GLOBAL CHANGES ~~
+    - All attribute names are now consistent and follow Perl 6
+      style (prefixed with the sigil, and ! as the twigil for
+      private attrs). This should not affect any code, unless
+      you broke encapsulation, in which case, it is your problem
+      anyway.
+
+    !! Class::MOP::Class::Immutable has been removed
+
+    * Class::MOP::Method::Constructor
+      - this has been moved out of Class::MOP::Class::Immutable
+        and is a proper subclass of Class::MOP::Method now.
+
+    * Class::MOP::Class
+      - this module now uses Class::MOP::Immutable for the
+        immutable transformation instead of
+        Class::MOP::Class::Immutable.
+
+    + Class::MOP::Immutable
+      - this module now controls the transformation from a mutable
+        to an immutable version of the class. Docs for this will
+        be coming eventually.
+
+
+0.36 Sun. Nov. 5, 2006
+    * Class::MOP::Class
+      - added a few 'no warnings' lines to keep annoying
+        (and meaningless) warnings from chirping during
+        global destruction.
+
+    * Class::MOP
+      - some more bootstrapping is now done on the new
+        classes
+
+    * Class::MOP::Class::Immutable
+      *** API CHANGE ***
+      - constructor generation is now handled by
+        the Class::MOP::Method::Constructor class
+
+    * Class::MOP::Method::Constructor
+      - created this to handle constructor generation
+        in Class::MOP::Class::Immutable
+
+    * Class::MOP::Attribute
+      *** API CHANGE ***
+      - attributes now delegate to the
+        Class::MOP::Method::Accessor to generate
+        accessors
+
+    * Class::MOP::Method::Accessor
+      - all accessor generation functions from
+        Class::MOP::Attribute have been moved here
+
+0.35 Sat. Sept. 30, 2006
+
+    * scripts/class_browser.pl
+      - initial prototype of a class browser, more
+        on this to come. Comments and patches are
+        very much welcome.
+
+    * Class::MOP
+      - All Class::MOP::* accessors are no longer
+        re-generated in the bootstrap, instead
+        they are aliased from the originals
+        - fixed tests to reflect
+      - added Class::MOP::Method (and its subclasses)
+        to the bootstrap
+        - adjusted tests for this
+      - added the Class::MOP::Instance attributes
+        to the bootstrap
+
+    * Class::MOP::Method
+      *** API CHANGE ***
+      - methods are no longer blessed CODE refs
+        but are actual objects which can be CODE-ified
+        - adjusted tests to compensate
+        - adjusted docs for this
+
+    * Class::MOP::Class
+      - changed how methods are dealt with to
+        encapsulate most of the work into the
+        &get_method_map method
+      - made several adjustments for the change
+        in Class::MOP::Method
+      - &add_attribute now checks if you are adding
+        a duplicate name, and properly removes the
+        old one before installing the new one
+        - added tests for this
+        - adjusted docs for this
+
+    * Class::MOP::Class::Immutable
+      - added caching of &get_method_map
+      - fixed issue with &get_package_symbol
+      - cleaned up the methods that die (patch by David Wheeler)
+
+    * Class::MOP::Package
+      - added filtering capabilities to
+        &list_all_package_symbols
+
+0.34 Sat. Aug. 26, 2006
+    * Class::MOP::Class
+      - added the %:methods attribute, which like
+        the $:version and such just actually goes
+        to the symbol table to get it's stuff.
+        However, it makes the MOP more complete.
+     ** API CHANGE **
+      - The &create method now requires that all
+        but the package name now is passed in as
+        named parameters. See docs for more info.
+        - updated docs and tests for this
+
+    * Class::MOP::Object
+      - added &dump method to easily Data::Dumper
+        an object
+
+    * Class::MOP
+      - cleaned up the initialization of attributes
+        which do not store things in the instance
+      - added the %:methods attribute definition to
+        the bootstrap
+
+    ~ lots of misc. test cleanup
+
+0.33 Sat. Aug. 19, 2006
+    * Class::MOP::Class
+      - moved the metaclass cache out of here
+        and it is now in Class::MOP itself.
+
+    * Class::MOP
+      - moved all the metaclass cache stuff here
+        - fixed all tests for this
+
+    * Class::MOP::Attribute
+      - reference values (other than CODE refs)
+        are no longer allowed for defaults
+        - added tests for this
+
+    * Class::MOP::Package
+      - fixed an issue with perl 5.8.1 and how it deals
+        with symbol tables. The namespace hash is now
+        always reloaded from the symbol table.
+
+    ~ lots of misc. documentation cleanup
+
+0.32 Sat. Aug. 12, 2006
+    + added Class::MOP::Object so that the
+      metamodel is more complete (and closer
+      to what Perl 6 will probably be).
+
+    * Class::MOP::Package
+      - refactored entire class, this is now
+        the primary gateway between the metaclass
+        and the Perl 5 symbol table
+        - added many tests for this
+      - this class is now a subclass of
+        Class::MOP::Object
+        - added some tests to reflect this
+
+    * Class::MOP::Class
+      - refactored all symbol table access to
+        use Class::MOP::Package methods instead
+
+    * Class::MOP::Module
+      - adding the $:version attribute in the bootstrap
+        so that Module has a version as an attribute
+        - see comment in Class::MOP for details
+      - added the $:authority attribute to this module
+        as well as an &identifier method, to bring us
+        ever closer to Perl 6 goodness
+        - I have added $AUTHORITY to all the modules
+        - added tests for this
+
+    * Class::MOP::Instance
+      - added &deinitialize_slot for removing slots
+        from an instance
+        - added tests for this
+
+    * Class::MOP::Attribute
+      - added support for &deinitialize_slot for removing
+        slots from an instance
+        - added tests for this
+
+0.31 Sat. July 15, 2006
+
+    * Class::MOP::Class
+      - added &find_method_by_name to locate a method
+        anywhere within the class hierarchy
+
+    * Class::MOP::Attribute
+      - added &set_value and &get_value for getting
+        the value of the attribute for a particular
+        instance.
+
+0.30 Wed. July 5, 2006
+    ---------------------------------------
+    This is the first version of Class::MOP
+    to introduce the immutable features which
+    will be used for optimizating the MOP.
+    This support should still be considered
+    experimental, but moving towards stability.
+    ---------------------------------------
+
+    * Created Class::MOP::Class::Immutable
+
+    * Created the Class::MOP::Package and
+      Class::MOP::Module classes to more
+      closely conform to Perl 6's meta-model
+
+    * Class::MOP::Class
+      - now inherits from Class::MOP::Module
+      - several methods moved to ::Module and
+        ::Package and now inherited
+        - added tests for this
+
+    * Class::MOP::Instance
+      - added an is_inlinable method to allow other
+        classes to check before they attempt to optimize.
+      - added an inline_create_instance to inline
+        instance creation (of course)
+
+    ** API CHANGE **
+      - the Class::MOP::Class::*_package_variable
+        methods are all now methods of Class::MOP::Package
+        and called *_package_symbol instead. This is
+        because they are now more general purpose symbol
+        table manipulation methods.
+
+0.29_02 Thurs. June 22, 2006
+    ++ DEVELOPER RELEASE ++
+    * Class::MOP::Class
+      - small change in &create so that it behaves
+        properly when inherited
+      - small fix to &clone_instance
+
+0.29_01 Fri. May 12, 2006
+    ++ DEVELOPER RELEASE ++
+      - This release works in combination with
+        Moose 0.09_01, it is a developer release
+        because it introduces a new instance
+        sub-protocol and has not yet been
+        optimized.
+
+    * Class::MOP::Class
+      - anon-classes are now properly garbage collected
+        - added tests for this
+      - improved method modifier wrapping
+
+    * Class::MOP::Instance
+      - added new instance protocol
+        - added tests for this
+      - changed all relevant modules and examples
+        - Class::MOP::Class
+        - Class::MOP::Attribute
+        - examples/*
+
+    * metaclass
+      - you no longer need to specify the metaclass
+        itself, if it is not there, Class::MOP::Class
+        is just assumed
+        - updated tests for this
+
+    * examples/
+      - added ArrayBasedStorage example to show
+        instance storage using ARRAY refs instead of
+        HASH refs.
+        - added tests for this
+      - InsideOutClass is totally revised using the
+        new instance protocol
+        - added more tests for this
+
+0.26 Mon. April 24, 2006
+    * Class::MOP::Class
+      - added find_attribute_by_name method
+        - added tests and docs for this
+      - some small optimizations
+
+    * Class::MOP::Attribute
+      - some small optimizations
+
+0.25 Thurs. April 20, 2006
+    * Class::MOP::Class
+      - added create_anon_class for creating anonymous classes
+        - added tests for this
+      - added get_all_metaclasses, get_all_metaclass_names
+        and get_all_metaclass_instances method to allow
+        access to all the cached metaclass objects.
+      - attribute slot initialization is now the responsibility
+        of the attribute itself, and construct_instance now
+        delegates appropriately
+
+    * Class::MOP::Attribute
+      - attribute slot initialization is now the responsibility
+        of the attribute itself, so we added a method for it
+        called initialize_instance_slot
+
+    * examples/
+      - adjusted all the examples to use the new attribute
+        initialize_instance_slot method
+
+0.24 Tues. April 11, 2006
+    * Class::MOP::Class
+      - cleaned up how the before/after/around method
+        modifiers get named with Sub::Name
+
+0.23 Thurs. March 30, 2006
+    * Class::MOP::Class
+      - fixed the way attribute defaults are handled
+        during instance construction (bug found by chansen)
+
+    * Class::MOP::Attribute
+      - read-only accessors ('reader') will now die if
+        passed more than one argument (attempting to write
+        to them basically)
+          - added tests for this
+          - adjusted all /example files to comply
+
+0.22 Mon. March 20, 2006
+    * Class::MOP::Class
+      - localized $@ in the *_package_variable functions
+        because otherwise, it does ugly things in Moose.
+          - added test case for this
+
+0.21 Wed. March 15, 2006
+    * Class::MOP::Class
+      - fixed issue where metaclasses are reaped from
+        our cache in global destruction, and so are not
+        available in DESTORY calls
+
+0.20 Thurs. March 2, 2006
+    - removed the dependency for Clone since
+      we no longer to deep-cloning by default.
+
+    * Class::MOP::Method
+      - added &package_name, &name and
+        &fully_qualified_name methods, some of
+        which were formerly private subs in
+        Class::MOP::Class
+
+    * Class::MOP::Method::Wrapped
+      - allows for a method to be wrapped with
+        before, after and around modifiers
+          - added tests and docs for this feature
+
+    * Class::MOP::Class
+      - improved &get_package_symbol
+          - &version and &superclasses now use it
+      - methods are now blessed into Class::MOP::Method
+        whenever possible
+      - added methods to install CLOS-style method modifiers
+         - &add_before_method_modifier
+         - &add_after_method_modifier
+         - &add_around_method_modifier
+             - added tests and docs for these
+      - added &find_next_method_by_name which finds the
+        equivalent of SUPER::method_name
+
+0.12 Thurs. Feb 23, 2006
+    - reduced the dependency on B, no need to always
+      have the latest
+
+    * examples/
+      - added docs to the C3 method dispatch order test
+      - fixed missing Algorithm::C3 dependency by making
+        the test skip if it is not installed
+
+0.11 Mon Feb. 20, 2006
+    * examples/
+      - added example of changing method dispatch order to C3
+
+    * Class::MOP::Class
+      - changed how clone_instance behaves, it now only does a
+        shallow clone (see docs for more details)
+        - added docs and tests
+
+0.10 Tues Feb. 14, 2006
+    ** This release was mostly about writing more tests and
+       cleaning out old and dusty code, the MOP should now
+       be considered "ready to use".
+
+    - adding more tests to get coverage up a little higher,
+      mostly testing errors and edge cases.
+      - test coverage is now at 99%
+
+    * Class::MOP
+      - no longer optionally exports to UNIVERSAL::meta or
+        creates a custom metaclass generator, use the
+        metaclass pragma instead.
+
+    * Class::MOP::Class
+      - fixed a number of minor issues which came up in the
+        error/edge-case tests
+
+    * Class::MOP::Attribute
+      - fixed a number of minor issues which came up in the
+        error/edge-case tests
+
+    * examples/
+      - fixing the AttributesWithHistory example, it was broken.
+
+0.06 Thurs Feb. 9, 2006
+    * metaclass
+      - adding new metaclass pragma to make setting up the
+        metaclass a little more straightforward
+
+    * Class::MOP
+      - clean up bootstrapping to include more complete
+        attribute definitions for Class::MOP::Class and
+        Class::MOP::Attribute (accessors, readers, writers,
+        etc.) ... it is redundant, but is useful meta-info
+        to have around.
+
+    * Class::MOP::Class
+      - fixing minor meta-circularity issue with &meta, it
+        is now more useful for subclasses
+      - added &get_attribute_map as an accessor for the
+        hash of attribute meta objects
+      - &compute_all_applicable_attributes now just returns
+        the attribute meta-object, rather than the HASH ref
+        since all the same info can be gotten from the
+        attribute meta-object itself
+          - updated docs & tests to reflect
+      - added &clone_instance method which does a deep clone
+        of the instance structure created by &construct_instance
+          - added docs & tests for this
+          - added Clone as a dependency
+      - added &new_object and &clone_object convience methods to
+        return blessed new or cloned instances
+          - they handle Class::MOP::Class singletons correctly too
+          - added docs & tests for this
+      - cleaned up the &constuct_class_instance so that it behaves
+        more like &construct_instance (and managed the singletons too)
+      - added the &check_metaclass_compatibility method to make sure
+        that metaclasses are upward and downward compatible.
+          - added tests and docs for this
+
+    * examples/
+      - adjusting code to use the &Class::MOP::Class::meta
+        fix detailed above
+      - adjusting code to use the metaclass pragma
+
+0.05 Sat Feb. 4, 2006
+    * Class::MOP::Class
+      - added the &attribute_metaclass and &method_metaclass
+        attributes which contain a metaclass name to use for
+        attributes/methods respectively
+
+    * Class::MOP
+      - bootstrap additional attributes for Class::MOP::Class
+
+    * examples/
+      - adjusted the example code and tests to use the new
+        &attribute_metaclass feature of Class::MOP::Class
+      - added new example:
+        - LazyClass
+
+0.04 Fri Feb. 3, 2006
+    * Class::MOP::Class
+      - some documentation suggestions from #perl6
+
+    * Class::MOP::Attribute
+      - improved error messages
+
+    * examples/
+      - added new examples:
+        - AttributesWithHistory
+        - ClassEncapsultedAttributes
+
+0.03 Fri Feb. 3, 2006
+    - converted to Module::Build instead of EU::MM
+
+    * Class::MOP::Attribute
+      - refactored method generation code
+      - attributes are now associated with class directly
+
+    * examples/
+      - refactored the InsideOut example to take advantage
+        of the Class::MOP::Attribute refactoring
+      - changed example files to .pod files and hide thier
+        package names from PAUSE (I don't want to own these
+        namespaces really, they are just examples)
+
+0.02 Thurs Feb. 2, 2006
+    - moving examples from t/lib/* to examples/*
+        - adding POD documentation to the examples
+
+0.01 Thurs Feb. 2, 2006
+    - Initial release

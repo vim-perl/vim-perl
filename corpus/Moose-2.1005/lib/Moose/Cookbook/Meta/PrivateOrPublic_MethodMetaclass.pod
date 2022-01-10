@@ -1,0 +1,179 @@
+package Moose::Cookbook::Meta::PrivateOrPublic_MethodMetaclass;
+
+# ABSTRACT: A method metaclass for marking methods public or private
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Moose::Cookbook::Meta::PrivateOrPublic_MethodMetaclass - A method metaclass for marking methods public or private
+
+=head1 VERSION
+
+version 2.1005
+
+=head1 SYNOPSIS
+
+  package MyApp::Meta::Method::PrivateOrPublic;
+
+  use Moose;
+  use Moose::Util::TypeConstraints;
+
+  extends 'Moose::Meta::Method';
+
+  has '_policy' => (
+      is       => 'ro',
+      isa      => enum( [ qw( public private ) ] ),
+      default  => 'public',
+      init_arg => 'policy',
+  );
+
+  sub new {
+      my $class   = shift;
+      my %options = @_;
+
+      my $self = $class->SUPER::wrap(%options);
+
+      $self->{_policy} = $options{policy};
+
+      $self->_add_policy_wrapper;
+
+      return $self;
+  }
+
+  sub _add_policy_wrapper {
+      my $self = shift;
+
+      return if $self->is_public;
+
+      my $name      = $self->name;
+      my $package   = $self->package_name;
+      my $real_body = $self->body;
+
+      my $body = sub {
+          die "The $package\::$name method is private"
+              unless ( scalar caller() ) eq $package;
+
+          goto &{$real_body};
+      };
+
+      $self->{body} = $body;
+  }
+
+  sub is_public  { $_[0]->_policy eq 'public' }
+  sub is_private { $_[0]->_policy eq 'private' }
+
+  package MyApp::User;
+
+  use Moose;
+
+  has 'password' => ( is => 'rw' );
+
+  __PACKAGE__->meta()->add_method(
+      '_reset_password',
+      MyApp::Meta::Method::PrivateOrPublic->new(
+          name         => '_reset_password',
+          package_name => __PACKAGE__,
+          body         => sub { $_[0]->password('reset') },
+          policy       => 'private',
+      )
+  );
+
+=head1 DESCRIPTION
+
+This example shows a custom method metaclass that models public versus
+private methods. If a method is defined as private, it adds a wrapper
+around the method which dies unless it is called from the class where
+it was defined.
+
+The way the method is added to the class is rather ugly. If we wanted
+to make this a real feature, we'd probably want to add some sort of
+sugar to allow us to declare private methods, but that is beyond the
+scope of this recipe. See the Extending recipes for more on this
+topic.
+
+The core of our custom class is the C<policy> attribute, and
+C<_add_policy_wrapper> method.
+
+You'll note that we have to explicitly set the C<policy> attribute in
+our constructor:
+
+      $self->{_policy} = $options{policy};
+
+That is necessary because Moose metaclasses do not use the meta API to
+create objects. Most Moose classes have a custom "inlined" constructor
+for speed.
+
+In this particular case, our parent class's constructor is the C<wrap>
+method. We call that to build our object, but it does not include
+subclass-specific attributes.
+
+The C<_add_policy_wrapper> method is where the real work is done. If
+the method is private, we construct a wrapper around the real
+subroutine which checks that the caller matches the package in which
+the subroutine was created.
+
+If they don't match, it dies. If they do match, the real method is
+called. We use C<goto> so that the wrapper does not show up in the
+call stack.
+
+Finally, we replace the value of C<< $self->{body} >>. This is another
+case where we have to do something a bit gross because Moose does not
+use Moose for its own implementation.
+
+When we pass this method object to the metaclass's C<add_method>
+method, it will take the method body and make it available in the
+class.
+
+Finally, when we retrieve these methods via the introspection API, we
+can call the C<is_public> and C<is_private> methods on them to get
+more information about the method.
+
+=head1 SUMMARY
+
+A custom method metaclass lets us add both behavior and
+meta-information to methods. Unfortunately, because the Perl
+interpreter does not provide easy hooks into method declaration, the
+API we have for adding these methods is not very pretty.
+
+That can be improved with custom Moose-like sugar, or even by using a
+tool like L<Devel::Declare> to create full-blown new keywords in Perl.
+
+=begin testing
+
+package main;
+
+use Test::Fatal;
+
+my $user = MyApp::User->new( password => 'foo!' );
+
+like( exception { $user->_reset_password },
+qr/The MyApp::User::_reset_password method is private/,
+    '_reset_password method dies if called outside MyApp::User class');
+
+{
+    package MyApp::User;
+
+    sub run_reset { $_[0]->_reset_password }
+}
+
+$user->run_reset;
+
+is( $user->password, 'reset', 'password has been reset' );
+
+=end testing
+
+=head1 AUTHOR
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See L<Moose/CABAL> and L<Moose/CONTRIBUTORS> for details.
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut

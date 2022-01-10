@@ -1,0 +1,111 @@
+package Moose::Cookbook::Extending::Debugging_BaseClassRole;
+
+# ABSTRACT: Providing a role for the base object class
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Moose::Cookbook::Extending::Debugging_BaseClassRole - Providing a role for the base object class
+
+=head1 VERSION
+
+version 2.1005
+
+=head1 SYNOPSIS
+
+  package MooseX::Debugging;
+
+  use Moose::Exporter;
+
+  Moose::Exporter->setup_import_methods(
+      base_class_roles => ['MooseX::Debugging::Role::Object'],
+  );
+
+  package MooseX::Debugging::Role::Object;
+
+  use Moose::Role;
+
+  sub BUILD {}
+  after BUILD => sub {
+      my $self = shift;
+
+      warn "Made a new " . ( ref $self ) . " object\n";
+  };
+
+=head1 DESCRIPTION
+
+In this example, we provide a role for the base object class that adds
+some simple debugging output. Every time an object is created, it
+spits out a warning saying what type of object it was.
+
+Obviously, a real debugging role would do something more interesting,
+but this recipe is all about how we apply that role.
+
+In this case, with the combination of L<Moose::Exporter> and
+L<Moose::Util::MetaRole>, we ensure that when a module does C<S<use
+MooseX::Debugging>>, it automatically gets the debugging role applied
+to its base object class.
+
+There are a few pieces of code worth looking at more closely.
+
+  Moose::Exporter->setup_import_methods(
+      base_class_roles => ['MooseX::Debugging::Role::Object'],
+  );
+
+This creates an C<import> method in the C<MooseX::Debugging> package. Since we
+are not actually exporting anything, we do not pass C<setup_import_methods>
+any parameters related to exports, but we need to have an C<import> method to
+ensure that our C<init_meta> method is called. The C<init_meta> is created by
+C<setup_import_methods> for us, since we passed the C<base_class_roles>
+parameter. The generated C<init_meta> will in turn call
+L<Moose::Util::MetaRole::apply_base_class_roles|Moose::Util::MetaRole/apply_base_class_roles>.
+
+  sub BUILD {}
+  after BUILD => sub {
+      ...
+  };
+
+Due to the way role composition currently works, if the class that a role is
+composed into contains a C<BUILD> method, then that will override the C<BUILD>
+method in any roles it composes, which is typically not what you want. Using a
+method modifier on C<BUILD> avoids this issue, since method modifiers compose
+together rather than being overridden. Method modifiers require that a method
+exists in order to wrap, however, so we also provide a stub method to wrap if
+no C<BUILD> method exists in the class.
+
+=for testing-SETUP use Test::Requires {
+    'Test::Output' => '0',
+};
+
+=begin testing
+
+{
+    package Debugged;
+
+    use Moose;
+    MooseX::Debugging->import;
+}
+
+stderr_is(
+    sub { Debugged->new },
+    "Made a new Debugged object\n",
+    'got expected output from debugging role'
+);
+
+=end testing
+
+=head1 AUTHOR
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See L<Moose/CABAL> and L<Moose/CONTRIBUTORS> for details.
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut

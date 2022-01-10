@@ -1,0 +1,34 @@
+package Moose::Cookbook::Style;
+
+# ABSTRACT: Expanded into Moose::Manual::BestPractices, so go read that
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Moose::Cookbook::Style - Expanded into Moose::Manual::BestPractices, so go read that
+
+=head1 VERSION
+
+version 2.1005
+
+=head1 DESCRIPTION
+
+The style cookbook has been replaced by
+L<Moose::Manual::BestPractices>. This POD document still exists for
+the benefit of anyone out there who might've linked to it in the past.
+
+=head1 AUTHOR
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See L<Moose/CABAL> and L<Moose/CONTRIBUTORS> for details.
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut

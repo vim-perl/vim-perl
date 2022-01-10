@@ -1,0 +1,513 @@
+# vim: set ft=markdown :
+
+## Uncontroversial Items
+
+These items are reasonably well thought out, and can go in any major release.
+
+### RT Tickets
+
+RT#59478/RT#63000 - 0+ overload causes NV conversion on == on perls before
+5.14 - this causes comparisons to fail when the number can't fit in an NV
+without precision loss. I'd like to fix this in a more general way (forcing
+anyone else who might be using == on tc objects to do weird things isn't very
+good), although it's hard to test to see what actually works.
+
+### Revise MetaRole API to reunify class/role metaroles:
+
+    apply_metaroles(
+        for   => $meta,
+        roles => {
+            attribute => [...],
+            class     => [...],
+            role_attribute => [ ... ],
+        }
+    );
+
+If the $meta is a class, we apply the roles to the class. If it's a role, we
+hold onto them and apply them as part of applying the role to a class.
+
+To make this all work nicely, we'll probably want to track the original role
+where a method was defined, just like we do with attributes currently. We'll
+also need to store method modifiers with their original role, which may mean
+adding some sort of Moose::Meta::Role::MethodModifier class.
+
+For each role-specific thing (methods, attributes, etc.) we should allow a
+`role_attribute`, `role_method`, etc. key. The common case will be that the
+metaroles are intended for the consuming class, but we should allow for
+metaroles on the role's metaobjects as well.
+
+### Deprecate old-style Moose extensions
+
+Moose extensions that work by calling `Moose->init_meta(metaclass =>
+'Some::Custom::Metaclass', ...)` during their own `init_meta` should be
+deprecated, so they can be removed later (this should fix the issues with
+`init_meta` generation in Moose::Exporter, see RT51561)
+
+This needs to wait until the previous fix gets in, since it will hopefully
+eliminate the need to write custom `init_meta` methods entirely.
+
+### Attributes in roles need to be able to participate in role composition
+
+Right now, this fails with no decent workaround:
+
+    package R1;
+    use Moose::Role;
+    has foo => (is => 'ro');
+
+    package R2;
+    use Moose::Role;
+    with 'R1';
+    requires 'foo';
+
+    package C;
+    use Moose;
+    with 'R2';
+
+Role attributes really need to be able to participate in role-role combination.
+This should also fix "with 'Role1', 'Role2'" being broken when Role1 implements
+a method as an accessor and Role2 requires that method, but at least in that
+case you can split it into two 'with' statements with minimal loss of
+functionality.
+
+### Method modifiers in roles should silently add 'requires' for them
+
+This shouldn't be a functionality change, just a better error message (and
+better introspectability). This shouldn't happen if the role already contains a
+method by that name, so it'll depend on the previous fix going in (so "has foo
+=> (is => 'ro'); around foo => sub { }" doesn't produce a 'requires' entry).
+
+### has +foo in roles
+
+There's no actual reason for this not to work, and it gets asked often enough
+that we really should just do it at some point.
+
+### use Sub::Identify instead of doing our own thing with `get_code_info`
+
+No idea why we stopped using Sub::Identify in the past, but there's no reason
+not to do this. We have a bug fix in our version (the `isGV_with_GP` thing), so
+this should be submitted to Sub::Identify first.
+
+## Needs Thought
+
+These are things we think are good ideas, but they need more fleshing out.
+
+### Add overloading support
+
+or at least, don't break existing overloading support
+
+This shouldn't treat the overloading stuff as actual methods, since that's just
+an implementation detail, but we should provide an API for `add_overload`,
+`get_overload`, `get_overload_list`, etc. In particular, this would allow
+namespace::autoclean to not break things.
+
+Also, MooseX::Role::WithOverloading should probably be cored.
+
+This should probably also wait for the metarole unification fix, to avoid the
+::WithOverloading stuff being too insane.
+
+### Actual API for metaclass extensions
+
+Right now, the only way to bundle multiple metaclass traits is via
+Moose::Exporter. This is unhelpful if you want to apply the extension to a
+metaclass object rather than a class you're actually writing. We should come up
+with an API for doing this.
+
+### MooseX::NonMoose in core
+
+I think all of the actual issues are solved at this point. The only issue is
+the (necessary) implementation weirdness - it sets up multiple inheritance
+between the non-Moose class and Moose::Object, and it installs a custom
+constructor method at 'extends' time (although perhaps this could be solved by
+moving some of the logic back into Moose::Object::new?). Other than that, it
+handles everything transparently as far as I can tell.
+
+### Fix attribute and method metaclass compatibility
+
+So i got this wrong when rewriting it last year - right now, metaclass compat
+checks the default attribute and method metaclasses, which is wrong. This means
+that if a parent class does "use MooseX::FollowPBP", then attributes declared
+in a subclass will get PBP-style accessors, which is quite surprising.
+
+On the other hand, sometimes metaclasses might need to be able to say "I'm
+going to assume that all of my attributes at least inherit from this custom
+class", so we might need to split it into "default specified by the user" and
+"default specified by the metaclass" and only do compat checking on the second?
+I'm not actually sure this is a valid use case though.
+
+Something that probably should be taken into account though is attributes and
+methods that extend existing attributes or methods from a superclass should
+inherit the metaclass of the existing one. Also not sure if this is correct,
+but something to think about.
+
+### Rename a bunch of the public API methods
+
+Right now the public API is kind of a mess - we have things like `get_method`
+vs `find_method_by_name` (you almost always want to use the latter), there
+being no `has_method` equivalent that checks superclasses, `get_method_list`
+being public but only returning method names, while `_get_local_methods` is
+private (returning method objects), and yet neither of those looks at
+superclasses, and basically none of this naming follows any kind of consistent
+pattern.
+
+What we really need is a consistent and easy to remember API where the method
+that people would think to use first is the method that they actually mean.
+Something like renaming `find_method_by_name` to `find_method`, and `get_method` to
+`find_local_method` or something along those lines.
+
+### Clean up metaclass constructors
+
+There's a _lot_ of different conventions in here. Some things to consider:
+
+* `new` vs `_new`
+* allowing new( 'name', %args ) vs ( name => 'name', %args )
+* `Method->wrap` vs `Method->new`
+
+### Move method modifiers out to an external module
+
+Class::Method::Modifiers uses a different method for doing method modifiers,
+which I'm not sure why we aren't using in Moose right now. Optionally using
+Class::Method::Modifiers::Fast would be even better - it uses Data::Util to
+implement XS method modifiers, which could help things a lot.
+
+### Move type constraints out to an external module
+
+There's nothing about our type constraint system that requires being tied to
+Moose - it's conceptually an entirely separate system that Moose just happens
+to use. Splitting it out into its own thing (that Moose could extend to add
+things like role types) would make things conceptually a lot cleaner, and would
+let people interested in just the type system have that.
+
+### Merge Class::MOP and Moose
+
+This is a long term goal, but would allow for a lot of things to be cleaned up.
+There's a bunch of stuff that's duplicated, and other stuff that's not
+implemented as well as it could be (Class::MOP::Method::Wrapped should be a
+role, for instance).
+
+### Fix the error system
+
+oh god it's terrible
+
+More specifically, we really want exception objects.
+
+### Moose::Util::TypeConstraints vs Moose::Meta::Type{Coercion,Constraint}
+
+The Util module has _way_ too much functionality. It needs to be
+refactored so it's a thin sugar layer on top of the meta API. As it
+stands now, it does things like parse type names (and determine if
+they're valid), manage the registry, and much more.
+
+### Anything with a \_(meta)?class method
+
+Every method that returns a class name needs to become a rw attribute
+that can be set via the constructor.
+
+## Things to contemplate
+
+These are ideas we're not sure about. Prototypes are welcome, but we may never
+merge the feature.
+
+### Does applying metaroles really need to reinitialize the metaclass?
+
+Seems like the logic that's actually necessary is already contained in
+`rebless_instance`, and not reinitializing means that existing attributes and
+methods won't be blown away when metaroles are applied.
+
+### Do we want to core namespace::autoclean behavior somehow?
+
+This would add Variable::Magic as a required XS dep (not a huge deal at the
+moment, since Sub::Name is also a required XS dep, but it'd be nice for Moose
+to be able to be pure perl again at some point in the future, and I'm not sure
+what the relative chances of Sub::Name vs Variable::Magic making it into core
+are). If we enabled it by default, this would also break things for people who
+have introduced Moose into legacy-ish systems where roles are faked using
+exporters (since those imported methods would be cleaned).
+
+If we decide we want this, we may want to core it as an option first ("use
+Moose -clean" or so), and move to making it the default later.
+
+### Should using -excludes with a role add 'requires' for excluded methods?
+
+It seems to make sense, since otherwise you're violating the role's API
+contract.
+
+### Moose "strict" mode
+
+use Moose 'strict'; This would allow us to have all sort of expensive tests
+which can be turned off in prod.
+
+### Moose::Philosophy.pod
+
+To explain Moose from a very high level
+
+### moosedoc
+
+We certainly have enough meta-information to make pretty complete POD docs.
+
+## TODO test summary
+
+Note that some of these are fairly old, and may not be things we actually want
+to do anymore.
+
+### `t/basics/basic_class_setup.t`
+
+Imports aren't automatically cleaned. Need to think about bringing
+namespace::autoclean functionality into core.
+
+### `t/bugs/create_anon_recursion.t`
+
+Loading Moose::Meta::Class (or probably a lot of other metaclasses) before
+loading Moose or Class::MOP causes issues (the bootstrapping gets confused).
+
+### `t/bugs/handles_foreign_class_bug.t`
+
+There should be a warning when delegated methods override 'new' (and possibly
+others?).
+
+### `t/bugs/role_caller.t`
+
+Role methods should be cloned into classes on composition so that using
+caller(0) in a role method uses the class's package, not the role's.
+
+### `t/cmop/metaclass_incompatibility.t`
+
+If a child class is created before a parent class, metaclass compatibility
+checks won't run on the child when the parent is created, and so the child
+could end up with an incompatible metaclass.
+
+### `t/cmop/modify_parent_method.t`
+
+Modifying parent class methods after a child class has already wrapped them
+with a method modifier will cause the child class method to retain the original
+method that it wrapped, not the new one it was replaced with.
+
+### `t/immutable/inline_close_over.t`
+
+Initializers and custom error classes still close over metaobjects.
+Initializers do it because the initializer has to be passed in the attribute
+metaobject as a parameter, and custom error classes can't be automatically
+inlined.
+
+### `t/metaclasses/moose_exporter_trait_aliases.t`
+
+Renamed imports aren't cleaned on unimport. For instance:
+
+    package Foo;
+    use Moose has => { -as => 'my_has' };
+    no Moose;
+    # Foo still contains my_has
+
+### `t/metaclasses/reinitialize.t`
+
+Special method types can't have method metaroles applied. Applying a method
+metarole to a class doesn't apply that role to things like constructors,
+accessors, etc.
+
+### `t/roles/compose_overloading.t`
+
+Overload methods aren't composed during role composition (this is detailed
+above - Add overloading support).
+
+### `t/roles/method_modifiers.t`
+
+Method modifiers in roles don't support the regex form of method selection.
+
+### `t/roles/role_compose_requires.t`
+
+Accessors for attributes defined in roles don't satisfy role method
+requirements (this is detailed above - Attributes in roles need to be able to
+participate in role composition).
+
+### `t/todo_tests/exception_reflects_failed_constraint.t`
+
+Type constraint failures should indicate which ancestor constraint failed -
+subtype 'Foo', as 'Str', where { length < 5 } should mention Str when passed an
+arrayref, but not when passed the string "ArrayRef".
+
+### `t/todo_tests/moose_and_threads.t`
+
+On 5.8, the type constraint name parser isn't thread safe.
+
+### `t/todo_tests/replacing_super_methods.t`
+
+Modifying parent class methods after a child class has already wrapped them
+with a override will cause 'super' in the child class to call the original
+parent class method, not the one it was overridden with.
+
+### `t/todo_tests/required_role_accessors.t`
+
+Role attribute accessors don't satisfy requires from roles they consume.
+
+### `t/todo_tests/role_insertion_order.t`
+
+Roles don't preserve attribute `insertion_order`.
+
+### `t/todo_tests/various_role_features.t`
+
+* Role attribute accessors don't satisfy requires from roles they consume.
+* Role combination should produce a conflict when one role has an actual method
+  and the other role has an accessor.
+* Role attribute accessors should not override methods in the class the role is
+  applied to.
+* Role attribute accessors should be delegated when a class does
+  handles => 'Role'.
+* Delegating to a role doesn't make $class->does('Role') true.
+* Method modifier in a role doesn't create a method requirement.
+* `Role->meta->has_method('attr_accessor')` is false.
+
+### `t/type_constraints/type_names.t`
+
+Type constraint object constructors don't validate the type name provided.
+
+### MooseX::Aliases in core
+
+Is there any reason why this would be bad?  It would certainly make the
+implementation a little faster (it can be inlined better).
+
+### MooseX::MethodAttributes in core
+
+discuss
+
+----
+
+## Old todo
+
+Old todo stuff which may be totally out of date.
+
+### DDuncan's Str types
+
+    subtype 'Str'
+        => as 'Value'
+        => where { Encode::is_utf8( $_[0] ) or $_[0] !~ m/[^0x00-0x7F]/x }
+        => optimize_as { defined($_[0]) && !ref($_[0]) };
+
+    subtype 'Blob'
+        => as 'Value'
+        => where { !Encode::is_utf8( $_[0] ) }
+        => optimize_as { defined($_[0]) && !ref($_[0]) };
+
+### type unions
+
+Add support for doing it with Classes which do not have a type constraint yet
+created
+
+### type intersections
+
+Mostly just for Roles
+KENTNL is working on this
+
+### inherited slot specs
+
+'does' can be added to,.. but not changed (need type unions for this)
+
+### proxy attributes
+
+a proxied attribute is an attribute which looks like an attribute, talks like
+an attribute, smells like an attribute,.. but if you look behind the
+curtain,.. its over there.. in that other object
+
+(... probably be a custom metaclass)
+
+### local coerce
+
+    [13:16]   mst stevan: slight problem with coerce
+    [13:16]   mst I only get to declare it once
+    [13:17]   mst so if I'm trying to declare it cast-style per-source-class rather than per-target-class
+    [13:17]   mst I am extremely screwed
+    [13:17]   stevan  yes
+    [13:17]   stevan  they are not class specific
+    [13:18]   stevan  they are attached to the type constraint itself
+    [13:18]   *   stevan ponders anon-coercion-metaobjects
+    [13:18]   mst yes, that's fine
+    [13:19]   mst but when I declare a class
+    [13:19]   mst I want to be able to say "this class coerces to X type via <this>"
+    [13:19]   stevan  yeah something like that
+    [13:19]   stevan  oh,.. hmm
+    [13:20]   stevan  sort of like inflate/deflate?
+    [13:20]   stevan  around the accessors?
+    [13:25]   *   bluefeet has quit (Remote host closed the connection)
+    [13:27]   mst no
+    [13:27]   mst nothing like that
+    [13:27]   mst like a cast
+    [13:31]   mst stevan: $obj->foo($bar); where 'foo' expects a 'Foo' object
+    [13:31]   mst stevan: is effectively <Foo>$bar, right?
+    [13:32]   mst stevan: I want to be able to say in package Bar
+    [13:32]   mst stevan: coerce_to 'Foo' via { ... };
+    [13:32]   mst etc.
+    [13:53]   stevan  hmm
+
+### add support for locally scoped TC
+
+This would borrow from MooseX::TypeLibrary to prefix the TC with the name
+of the package. It would then be accesible from the outside as the fully
+scoped name, but the local attributes would use it first. (this would need support
+in the registry for this).
+
+### look into sugar extensions
+
+Use roles as sugar layer function providers (ala MooseX::AttributeHelpers). This
+would allow custom metaclasses to provide roles to extend the sugar syntax with.
+
+(NOTE: Talk to phaylon a bit more on this)
+
+### allow a switch of some kind to optionally turn TC checking off at runtime
+
+The type checks can get expensive and some people have suggested that allowing
+the checks to be turned off would be helpful for deploying into performance
+intensive systems. Perhaps this can actually be done as an option to `make_immutable`?
+
+### misc. minor bits
+
+* make the errors for TCs use `->message`
+* look into localizing the messages too
+* make ANON TCs be lazy, so they can possibly be subsituted for the real thing later
+* make ANON TCs more introspectable
+* add this ...
+
+        subtype 'Username',
+           from 'Str',
+          where {     (/[a-z][a-z0-9]+/i or fail('Invalid character(s)'))
+                  and (length($_) >= 5   or fail('Too short (less than 5 chars)'))
+                }
+        on_fail { MyException->throw(value => $_[0], message => $_[1]) };
+
+fail() will just return false unless the call is made via `$tc->check_or_fail($value);`
+
+* and then something like this:
+
+        subtype Foo => as Bar => where { ... } => scoped => -global;
+        subtype Foo => as Bar => where { ... } => scoped => -local;
+
+        # or
+
+        subtype Foo => as Bar => where { ... } => in __PACKAGE__ ;
+
+        # or (not sure if it would be possible)
+
+        my $Foo = subtype Bar => where { ... };
+
+### Deep coercion?
+
+    [17:10]  <autarch> stevan: it should do it if I pass coerce => 1 as part of the attribute definition
+    [17:12]  <stevan> autarch: what I am not 100% sure of is how to tell it to deep coerce and when to not
+    [17:13]  <stevan> cause a basic coerce is from A to B
+    [17:13]  <autarch> hmm
+    [17:13]  <stevan> which is valid for collection types too
+    [17:13]  <stevan> deep coercion is what you are asking for
+    [17:13]  <autarch> yeah
+    [17:13]  <stevan> so perhaps we add deep_coerce => 1
+    [17:13]  <stevan> which will do it
+    [17:13]  <autarch> that's fine for me
+    [17:13]  <stevan> k
+
+`coerce_deeply => 1 # reads better`
+
+### Moose::Meta::TypeConstraint::Parameter{izable,ized}
+
+The relationship between these two classes is very odd. In particular,
+this line in Parameterized is insane:
+
+    foreach my $type (Moose::Util::TypeConstraints::get_all_parameterizable_types()) {
+
+Why does it need to loop through all parameterizable types? Shouldn't
+it know which parameterizable type it "came from"?

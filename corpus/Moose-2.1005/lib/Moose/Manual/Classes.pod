@@ -1,0 +1,161 @@
+package Moose::Manual::Classes;
+
+# ABSTRACT: Making your classes use Moose (and subclassing)
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Moose::Manual::Classes - Making your classes use Moose (and subclassing)
+
+=head1 VERSION
+
+version 2.1005
+
+=head1 USING MOOSE
+
+Using Moose is very simple, you just C<use Moose>:
+
+  package Person;
+
+  use Moose;
+
+That's it, you've made a class with Moose!
+
+There's actually a lot going on here under the hood, so let's step
+through it.
+
+When you load L<Moose>, a bunch of sugar functions are exported into your
+class, such as C<extends>, C<has>, C<with>, and more. These functions are what
+you use to define your class. For example, you might define an attribute ...
+
+  package Person;
+
+  use Moose;
+
+  has 'ssn' => ( is => 'rw' );
+
+Attributes are described in the L<Moose::Manual::Attributes>
+documentation.
+
+Loading Moose also enables the C<strict> and C<warnings> pragmas in your
+class.
+
+When you load Moose, your class will become a subclass of
+L<Moose::Object>. The L<Moose::Object> class provides a default
+constructor and destructor, as well as object construction helper
+methods. You can read more about this in the
+L<Moose::Manual::Construction> document.
+
+As a convenience, Moose creates a new class type for your class. See
+the L<Moose::Manual::Types> document to learn more about types.
+
+It also creates a L<Moose::Meta::Class> object for your class. This
+metaclass object is now available by calling a C<meta> method on your
+class, for example C<< Person->meta >>.
+
+The metaclass object provides an introspection API for your class. It
+is also used by Moose itself under the hood to add attributes, define
+parent classes, and so on. In fact, all of Moose's sugar does the real
+work by calling methods on this metaclass object (and other meta API
+objects).
+
+=head1 SUBCLASSING
+
+Moose provides a simple sugar function for declaring your parent
+classes, C<extends>:
+
+  package User;
+
+  use Moose;
+
+  extends 'Person';
+
+  has 'username' => ( is => 'rw' );
+
+Note that each call to C<extends> will I<reset> your parents. For
+multiple inheritance you must provide all the parents at once,
+C<extends 'Foo', 'Bar'>.
+
+When you call C<extends> Moose will try to load any classes you pass.
+
+You can use Moose to extend a non-Moose parent. However, when you do
+this, you will inherit the parent class's constructor (assuming it is
+also called C<new>). In that case, you will have to take care of
+initializing attributes manually, either in the parent's constructor,
+or in your subclass, and you will lose a lot of Moose magic.
+
+See the L<MooseX::NonMoose> module on CPAN if you're interested in extending
+non-Moose parent classes with Moose child classes.
+
+=head1 CLEANING UP MOOSE DROPPINGS
+
+Moose exports a number of functions into your class. It's a good idea to
+remove these sugar functions from your class's namespace, so that C<<
+Person->can('has') >> will no longer return true.
+
+There are several ways to do this. We recommend using L<namespace::autoclean>,
+a CPAN module. Not only will it remove Moose exports, it will also remove
+any other exports.
+
+  package Person;
+
+  use namespace::autoclean;
+
+  use Moose;
+
+If you absolutely can't use a CPAN module (but can use Moose?), you can write
+C<no Moose> at the end of your class. This will remove any Moose exports in
+your class.
+
+  package Person;
+
+  use Moose;
+
+  has 'ssn' => ( is => 'rw' );
+
+  no Moose;
+
+=head1 MAKING IT FASTER
+
+Moose has a feature called "immutabilization" that you can use to
+greatly speed up your classes at runtime. However, using it incurs
+a cost when your class is first being loaded. When you make your class
+immutable you tell Moose that you will not be changing it in the
+future. You will not be adding any more attributes, methods, roles, etc.
+
+This allows Moose to generate code specific to your class. In
+particular, it creates an "inline" constructor, making object
+construction much faster.
+
+To make your class immutable you simply call C<make_immutable> on your
+class's metaclass object.
+
+  __PACKAGE__->meta->make_immutable;
+
+=head2 Immutabilization and C<new()>
+
+If you override C<new()> in your class, then the immutabilization code
+will not be able to provide an optimized constructor for your
+class. Instead, you should use a C<BUILD()> method, which will be
+called from the inlined constructor.
+
+Alternately, if you really need to provide a different C<new()>, you
+can also provide your own immutabilization method. Doing so requires
+extending the Moose metaclasses, and is well beyond the scope of this
+manual.
+
+=head1 AUTHOR
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See L<Moose/CABAL> and L<Moose/CONTRIBUTORS> for details.
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut

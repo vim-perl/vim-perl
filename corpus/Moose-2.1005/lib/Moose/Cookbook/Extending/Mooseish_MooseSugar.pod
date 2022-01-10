@@ -1,0 +1,117 @@
+package Moose::Cookbook::Extending::Mooseish_MooseSugar;
+
+# ABSTRACT: Acting like Moose.pm and providing sugar Moose-style
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Moose::Cookbook::Extending::Mooseish_MooseSugar - Acting like Moose.pm and providing sugar Moose-style
+
+=head1 VERSION
+
+version 2.1005
+
+=head1 SYNOPSIS
+
+  package MyApp::Mooseish;
+
+  use Moose::Exporter;
+
+  Moose::Exporter->setup_import_methods(
+      with_meta       => ['has_table'],
+      class_metaroles => {
+          class => ['MyApp::Meta::Class::Trait::HasTable'],
+      },
+  );
+
+  sub has_table {
+      my $meta = shift;
+      $meta->table(shift);
+  }
+
+  package MyApp::Meta::Class::Trait::HasTable;
+  use Moose::Role;
+
+  has table => (
+      is  => 'rw',
+      isa => 'Str',
+  );
+
+=head1 DESCRIPTION
+
+This recipe expands on the use of L<Moose::Exporter> we saw in
+L<Moose::Cookbook::Extending::ExtensionOverview> and the class metaclass trait
+we saw in L<Moose::Cookbook::Meta::Table_MetaclassTrait>. In this example we
+provide our own metaclass trait, and we also export a C<has_table> sugar
+function.
+
+The C<with_meta> parameter specifies a list of functions that should
+be wrapped before exporting. The wrapper simply ensures that the
+importing package's appropriate metaclass object is the first argument
+to the function, so we can do C<S<my $meta = shift;>>.
+
+See the L<Moose::Exporter> docs for more details on its API.
+
+=head1 USING MyApp::Mooseish
+
+The purpose of all this code is to provide a Moose-like
+interface. Here's what it would look like in actual use:
+
+  package MyApp::User;
+
+  use namespace::autoclean;
+
+  use Moose;
+  use MyApp::Mooseish;
+
+  has_table 'User';
+
+  has 'username' => ( is => 'ro' );
+  has 'password' => ( is => 'ro' );
+
+  sub login { ... }
+
+=head1 CONCLUSION
+
+Providing sugar functions can make your extension look much more
+Moose-ish. See L<Fey::ORM> for a more extensive example.
+
+=begin testing
+
+{
+    package MyApp::User;
+
+    use Moose;
+    MyApp::Mooseish->import;
+
+    has_table( 'User' );
+
+    has( 'username' => ( is => 'ro' ) );
+    has( 'password' => ( is => 'ro' ) );
+
+    sub login { }
+}
+
+can_ok( MyApp::User->meta, 'table' );
+is( MyApp::User->meta->table, 'User',
+    'MyApp::User->meta->table returns User' );
+ok( MyApp::User->can('username'),
+    'MyApp::User has username method' );
+
+=end testing
+
+=head1 AUTHOR
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See L<Moose/CABAL> and L<Moose/CONTRIBUTORS> for details.
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut

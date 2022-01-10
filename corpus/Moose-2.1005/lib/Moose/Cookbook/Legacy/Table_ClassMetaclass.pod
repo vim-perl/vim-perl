@@ -1,0 +1,89 @@
+package Moose::Cookbook::Meta::Table_ClassMetaclass;
+
+# ABSTRACT: Adding a "table" attribute to the metaclass
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Moose::Cookbook::Meta::Table_ClassMetaclass - Adding a "table" attribute to the metaclass
+
+=head1 VERSION
+
+version 2.1005
+
+=head1 SYNOPSIS
+
+  package MyApp::Meta::Class;
+  use Moose;
+  extends 'Moose::Meta::Class';
+
+  has table => (
+      is  => 'rw',
+      isa => 'Str',
+  );
+
+=head1 DESCRIPTION
+
+B<WARNING: Subclassing metaclasses (as opposed to providing metaclass traits)
+is strongly discouraged. This recipe is provided solely for reference when
+encountering older code that does this.>
+
+In this recipe, we'll create a new metaclass which has a "table"
+attribute. This metaclass is for classes associated with a DBMS table,
+as one might do for an ORM.
+
+In this example, the table name is just a string, but in a real ORM
+the table might be an object describing the table.
+
+=head1 THE METACLASS
+
+This really is as simple as the recipe L</SYNOPSIS> shows. The trick
+is getting your classes to use this metaclass, and providing some sort
+of sugar for declaring the table. This is covered in
+L<Moose::Cookbook::Extending::Recipe2>, which shows how to make a
+module like C<Moose.pm> itself, with sugar like C<has_table()>.
+
+=head2 Using this Metaclass in Practice
+
+Accessing this new C<table> attribute is quite simple. Given a class
+named C<MyApp::User>, we could simply write the following:
+
+  my $table = MyApp::User->meta->table;
+
+As long as C<MyApp::User> has arranged to use C<MyApp::Meta::Class> as
+its metaclass, this method call just works. If we want to be more
+careful, we can check the metaclass's class:
+
+  $table = MyApp::User->meta->table
+      if MyApp::User->meta->isa('MyApp::Meta::Class');
+
+=head1 CONCLUSION
+
+Creating custom metaclass is trivial. Using it is a little harder, and
+is covered in other recipes. We will also talk about applying traits
+to a class metaclass, which is a more flexible and cooperative
+implementation.
+
+=head1 SEE ALSO
+
+L<Moose::Cookbook::Meta::Recipe5> - The "table" attribute implemented
+as a metaclass trait
+
+L<Moose::Cookbook::Extending::Recipe2> - Acting like Moose.pm and
+providing sugar Moose-style
+
+=head1 AUTHOR
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See L<Moose/CABAL> and L<Moose/CONTRIBUTORS> for details.
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut

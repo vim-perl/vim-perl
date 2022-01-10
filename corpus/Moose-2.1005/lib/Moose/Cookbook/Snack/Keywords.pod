@@ -1,0 +1,197 @@
+package Moose::Cookbook::Snack::Keywords;
+
+# ABSTRACT: Restricted "keywords" in Moose
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Moose::Cookbook::Snack::Keywords - Restricted "keywords" in Moose
+
+=head1 VERSION
+
+version 2.1005
+
+=head1 DESCRIPTION
+
+Moose exports a number of sugar functions in order to emulate Perl
+built-in keywords. These can cause clashes with other user-defined
+functions. This document provides a list of those keywords for easy
+reference.
+
+=head2 The 'meta' keyword
+
+C<S<use Moose>> adds a method called C<meta> to your class. If this
+conflicts with a method or function you are using, you can rename it,
+or prevent it from being installed entirely. To do this, pass the
+C<-meta_name> option when you C<S<use Moose>>. For instance:
+
+  # install it under a different name
+  use Moose -meta_name => 'moose_meta';
+
+  # don't install it at all
+  use Moose -meta_name => undef;
+
+=head2 Moose Keywords
+
+If you are using L<Moose> or L<Moose::Role> it is best to avoid these
+keywords:
+
+=over 4
+
+=item extends
+
+=item with
+
+=item has
+
+=item before
+
+=item after
+
+=item around
+
+=item super
+
+=item override
+
+=item inner
+
+=item augment
+
+=item confess
+
+=item blessed
+
+=back
+
+=head2 Moose::Util::TypeConstraints Keywords
+
+If you are using L<Moose::Util::TypeConstraints> it is best to avoid
+these keywords:
+
+=over 4
+
+=item type
+
+=item subtype
+
+=item class_type
+
+=item role_type
+
+=item maybe_type
+
+=item duck_type
+
+=item as
+
+=item where
+
+=item message
+
+=item optimize_as
+
+=item inline_as
+
+=item coerce
+
+=item from
+
+=item via
+
+=item enum
+
+=item find_type_constraint
+
+=item register_type_constraint
+
+=back
+
+=head2 Avoiding collisions
+
+=head3 Turning off Moose
+
+To remove the sugar functions L<Moose> exports, just add C<S<no Moose>>
+at the bottom of your code:
+
+  package Thing;
+  use Moose;
+
+  # code here
+
+  no Moose;
+
+This will unexport the sugar functions that L<Moose> originally
+exported. The same will also work for L<Moose::Role> and
+L<Moose::Util::TypeConstraints>.
+
+=head3 Sub::Exporter features
+
+L<Moose>, L<Moose::Role> and L<Moose::Util::TypeConstraints> all use
+L<Sub::Exporter> to handle all their exporting needs. This means that
+all the features that L<Sub::Exporter> provides are also available to
+them.
+
+For instance, with L<Sub::Exporter> you can rename keywords, like so:
+
+  package LOL::Cat;
+  use Moose 'has' => { -as => 'i_can_haz' };
+
+  i_can_haz 'cheeseburger' => (
+      is      => 'rw',
+      trigger => sub { print "NOM NOM" }
+  );
+
+  LOL::Cat->new->cheeseburger('KTHNXBYE');
+
+See the L<Sub::Exporter> docs for more information.
+
+=head3 namespace::autoclean and namespace::clean
+
+You can also use L<namespace::autoclean> to clean up your namespace.
+This will remove all imported functions from your namespace. Note
+that if you are importing functions that are intended to be used as
+methods (this includes L<overload>, due to internal implementation
+details), it will remove these as well.
+
+Another option is to use L<namespace::clean> directly, but
+you must be careful not to remove C<meta> when doing so:
+
+  package Foo;
+  use Moose;
+  use namespace::clean -except => 'meta';
+  # ...
+
+=head1 SEE ALSO
+
+=over 4
+
+=item L<Moose>
+
+=item L<Moose::Role>
+
+=item L<Moose::Util::TypeConstraints>
+
+=item L<Sub::Exporter>
+
+=item L<namespace::autoclean>
+
+=item L<namespace::clean>
+
+=back
+
+=head1 AUTHOR
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See L<Moose/CABAL> and L<Moose/CONTRIBUTORS> for details.
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut

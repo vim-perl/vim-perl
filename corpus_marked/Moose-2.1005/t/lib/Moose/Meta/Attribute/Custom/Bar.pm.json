@@ -1,0 +1,1 @@
+[["Statement","package"],["Type"," Moose::Meta::Attribute::Custom::Bar"],["",";\n\n"],["Keyword","sub "],["Function","register_implementation "],["","{ "],["String","'My::Bar'"],[""," }\n\n\n"],["Statement","package"],["Type"," My::Bar"],["",";\n\n"],["Statement","use "],["","Moose::Role;\n\n"],["Number","1"],["",";\n"]]

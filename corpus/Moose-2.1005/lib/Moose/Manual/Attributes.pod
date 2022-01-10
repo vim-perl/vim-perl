@@ -1,0 +1,654 @@
+package Moose::Manual::Attributes;
+
+# ABSTRACT: Object attributes with Moose
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Moose::Manual::Attributes - Object attributes with Moose
+
+=head1 VERSION
+
+version 2.1005
+
+=head1 INTRODUCTION
+
+Moose attributes have many properties, and attributes are probably the
+single most powerful and flexible part of Moose. You can create a
+powerful class simply by declaring attributes. In fact, it's possible
+to have classes that consist solely of attribute declarations.
+
+An attribute is a property that every member of a class has. For
+example, we might say that "every C<Person> object has a first name and
+last name". Attributes can be optional, so that we can say "some C<Person>
+objects have a social security number (and some don't)".
+
+At its simplest, an attribute can be thought of as a named value (as
+in a hash) that can be read and set. However, attributes can also have
+defaults, type constraints, delegation and much more.
+
+In other languages, attributes are also referred to as slots or
+properties.
+
+=head1 ATTRIBUTE OPTIONS
+
+Use the C<has> function to declare an attribute:
+
+  package Person;
+
+  use Moose;
+
+  has 'first_name' => ( is => 'rw' );
+
+This says that all C<Person> objects have an optional read-write
+"first_name" attribute.
+
+=head2 Read-write vs. read-only
+
+The options passed to C<has> define the properties of the attribute. There are
+many options, but in the simplest form you just need to set C<is>, which can
+be either C<ro> (read-only) or C<rw> (read-write). When an attribute is C<rw>,
+you can change it by passing a value to its accessor. When an attribute is
+C<ro>, you may only read the current value of the attribute.
+
+In fact, you could even omit C<is>, but that gives you an attribute
+that has no accessor. This can be useful with other attribute options,
+such as C<handles>. However, if your attribute generates I<no>
+accessors, Moose will issue a warning, because that usually means the
+programmer forgot to say the attribute is read-only or read-write. If
+you really mean to have no accessors, you can silence this warning by
+setting C<is> to C<bare>.
+
+=head2 Accessor methods
+
+Each attribute has one or more accessor methods. An accessor lets you
+read and write the value of that attribute for an object.
+
+By default, the accessor method has the same name as the attribute. If
+you declared your attribute as C<ro> then your accessor will be
+read-only. If you declared it as C<rw>, you get a read-write
+accessor. Simple.
+
+Given our C<Person> example above, we now have a single C<first_name>
+accessor that can read or write a C<Person> object's C<first_name>
+attribute's value.
+
+If you want, you can also explicitly specify the method names to be
+used for reading and writing an attribute's value. This is
+particularly handy when you'd like an attribute to be publicly
+readable, but only privately settable. For example:
+
+  has 'weight' => (
+      is     => 'ro',
+      writer => '_set_weight',
+  );
+
+This might be useful if weight is calculated based on other methods.
+For example, every time the C<eat> method is called, we might adjust
+weight. This lets us hide the implementation details of weight
+changes, but still provide the weight value to users of the class.
+
+Some people might prefer to have distinct methods for reading and
+writing. In I<Perl Best Practices>, Damian Conway recommends that
+reader methods start with "get_" and writer methods start with "set_".
+
+We can do exactly that by providing names for both the C<reader> and
+C<writer> methods:
+
+  has 'weight' => (
+      is     => 'rw',
+      reader => 'get_weight',
+      writer => 'set_weight',
+  );
+
+If you're thinking that doing this over and over would be insanely
+tedious, you're right! Fortunately, Moose provides a powerful
+extension system that lets you override the default naming
+conventions. See L<Moose::Manual::MooseX> for more details.
+
+=head2 Predicate and clearer methods
+
+Moose allows you to explicitly distinguish between a false or
+undefined attribute value and an attribute which has not been set. If
+you want to access this information, you must define clearer and
+predicate methods for an attribute.
+
+A predicate method tells you whether or not a given attribute is
+currently set. Note that an attribute can be explicitly set to
+C<undef> or some other false value, but the predicate will return
+true.
+
+The clearer method unsets the attribute. This is I<not> the
+same as setting the value to C<undef>, but you can only distinguish
+between them if you define a predicate method!
+
+Here's some code to illustrate the relationship between an accessor,
+predicate, and clearer method.
+
+  package Person;
+
+  use Moose;
+
+  has 'ssn' => (
+      is        => 'rw',
+      clearer   => 'clear_ssn',
+      predicate => 'has_ssn',
+  );
+
+  ...
+
+  my $person = Person->new();
+  $person->has_ssn; # false
+
+  $person->ssn(undef);
+  $person->ssn; # returns undef
+  $person->has_ssn; # true
+
+  $person->clear_ssn;
+  $person->ssn; # returns undef
+  $person->has_ssn; # false
+
+  $person->ssn('123-45-6789');
+  $person->ssn; # returns '123-45-6789'
+  $person->has_ssn; # true
+
+  my $person2 = Person->new( ssn => '111-22-3333');
+  $person2->has_ssn; # true
+
+By default, Moose does not make a predicate or clearer for you. You must
+explicitly provide names for them, and then Moose will create the methods
+for you.
+
+=head2 Required or not?
+
+By default, all attributes are optional, and do not need to be
+provided at object construction time. If you want to make an attribute
+required, simply set the C<required> option to true:
+
+  has 'name' => (
+      is       => 'ro',
+      required => 1,
+  );
+
+There are a couple caveats worth mentioning in regards to what
+"required" actually means.
+
+Basically, all it says is that this attribute (C<name>) must be provided to
+the constructor, or be lazy with either a default or a builder. It does not
+say anything about its value, so it could be C<undef>.
+
+If you define a clearer method on a required attribute, the clearer
+I<will> work, so even a required attribute can be unset after object
+construction.
+
+This means that if you do make an attribute required, providing a
+clearer doesn't make much sense. In some cases, it might be handy to
+have a I<private> C<clearer> and C<predicate> for a required
+attribute.
+
+=head2 Default and builder methods
+
+Attributes can have default values, and Moose provides two ways to
+specify that default.
+
+In the simplest form, you simply provide a non-reference scalar value
+for the C<default> option:
+
+  has 'size' => (
+      is        => 'ro',
+      default   => 'medium',
+      predicate => 'has_size',
+  );
+
+If the size attribute is not provided to the constructor, then it ends
+up being set to C<medium>:
+
+  my $person = Person->new();
+  $person->size; # medium
+  $person->has_size; # true
+
+You can also provide a subroutine reference for C<default>. This
+reference will be called as a method on the object.
+
+  has 'size' => (
+      is => 'ro',
+      default =>
+          sub { ( 'small', 'medium', 'large' )[ int( rand 3 ) ] },
+      predicate => 'has_size',
+  );
+
+This is a trivial example, but it illustrates the point that the subroutine
+will be called for every new object created.
+
+When you provide a C<default> subroutine reference, it is called as a
+method on the object, with no additional parameters:
+
+  has 'size' => (
+      is      => 'ro',
+      default => sub {
+          my $self = shift;
+
+          return $self->height > 200 ? 'large' : 'average';
+      },
+  );
+
+When the C<default> is called during object construction, it may be
+called before other attributes have been set. If your default is
+dependent on other parts of the object's state, you can make the
+attribute C<lazy>. Laziness is covered in the next section.
+
+If you want to use a reference of any sort as the default value, you
+must return it from a subroutine.
+
+  has 'mapping' => (
+      is      => 'ro',
+      default => sub { {} },
+  );
+
+This is necessary because otherwise Perl would instantiate the reference
+exactly once, and it would be shared by all objects:
+
+  has 'mapping' => (
+      is      => 'ro',
+      default => {}, # wrong!
+  );
+
+Moose will throw an error if you pass a bare non-subroutine reference
+as the default.
+
+If Moose allowed this then the default mapping attribute could easily
+end up shared across many objects. Instead, wrap it in a subroutine
+reference as we saw above.
+
+This is a bit awkward, but it's just the way Perl works.
+
+As an alternative to using a subroutine reference, you can supply a C<builder>
+method for your attribute:
+
+  has 'size' => (
+      is        => 'ro',
+      builder   => '_build_size',
+      predicate => 'has_size',
+  );
+
+  sub _build_size {
+      return ( 'small', 'medium', 'large' )[ int( rand 3 ) ];
+  }
+
+This has several advantages. First, it moves a chunk of code to its own named
+method, which improves readability and code organization. Second, because this
+is a I<named> method, it can be subclassed or provided by a role.
+
+We strongly recommend that you use a C<builder> instead of a
+C<default> for anything beyond the most trivial default.
+
+A C<builder>, just like a C<default>, is called as a method on the
+object with no additional parameters.
+
+=head3 Builders allow subclassing
+
+Because the C<builder> is called I<by name>, it goes through Perl's
+method resolution. This means that builder methods are both
+inheritable and overridable.
+
+If we subclass our C<Person> class, we can override C<_build_size>:
+
+  package Lilliputian;
+
+  use Moose;
+  extends 'Person';
+
+  sub _build_size { return 'small' }
+
+=head3 Builders work well with roles
+
+Because builders are called by name, they work well with roles. For
+example, a role could provide an attribute but require that the
+consuming class provide the C<builder>:
+
+  package HasSize;
+  use Moose::Role;
+
+  requires '_build_size';
+
+  has 'size' => (
+      is      => 'ro',
+      lazy    => 1,
+      builder => '_build_size',
+  );
+
+  package Lilliputian;
+  use Moose;
+
+  with 'HasSize';
+
+  sub _build_size { return 'small' }
+
+Roles are covered in L<Moose::Manual::Roles>.
+
+=head2 Laziness
+
+Moose lets you defer attribute population by making an attribute
+C<lazy>:
+
+  has 'size' => (
+      is      => 'ro',
+      lazy    => 1,
+      builder => '_build_size',
+  );
+
+When C<lazy> is true, the default is not generated until the reader
+method is called, rather than at object construction time. There are
+several reasons you might choose to do this.
+
+First, if the default value for this attribute depends on some other
+attributes, then the attribute I<must> be C<lazy>. During object
+construction, defaults are not generated in a predictable order, so
+you cannot count on some other attribute being populated when
+generating a default.
+
+Second, there's often no reason to calculate a default before it's
+needed. Making an attribute C<lazy> lets you defer the cost until the
+attribute is needed. If the attribute is I<never> needed, you save
+some CPU time.
+
+We recommend that you make any attribute with a builder or non-trivial
+default C<lazy> as a matter of course.
+
+=head3 Lazy defaults and C<$_>
+
+Please note that a lazy default or builder can be called anywhere, even inside
+a C<map> or C<grep>. This means that if your default sub or builder changes
+C<$_>, something weird could happen. You can prevent this by adding C<local
+$_> inside your default or builder.
+
+=head2 Constructor parameters (C<init_arg>)
+
+By default, each attribute can be passed by name to the class's
+constructor. On occasion, you may want to use a different name for
+the constructor parameter. You may also want to make an attribute
+unsettable via the constructor.
+
+You can do either of these things with the C<init_arg> option:
+
+  has 'bigness' => (
+      is       => 'ro',
+      init_arg => 'size',
+  );
+
+Now we have an attribute named "bigness", but we pass C<size> to the
+constructor.
+
+Even more useful is the ability to disable setting an attribute via
+the constructor. This is particularly handy for private attributes:
+
+  has '_genetic_code' => (
+      is       => 'ro',
+      lazy     => 1,
+      builder  => '_build_genetic_code',
+      init_arg => undef,
+  );
+
+By setting the C<init_arg> to C<undef>, we make it impossible to set
+this attribute when creating a new object.
+
+=head2 Weak references
+
+Moose has built-in support for weak references. If you set the
+C<weak_ref> option to a true value, then it will call
+C<Scalar::Util::weaken> whenever the attribute is set:
+
+  has 'parent' => (
+      is       => 'rw',
+      weak_ref => 1,
+  );
+
+  $node->parent($parent_node);
+
+This is very useful when you're building objects that may contain
+circular references.
+
+When the object in a weak references goes out of scope, the attribute's value
+will become C<undef> "behind the scenes". This is done by the Perl interpreter
+directly, so Moose does not see this change. This means that triggers don't
+fire, coercions aren't applied, etc.
+
+The attribute is not cleared, so a predicate method for that attribute will
+still return true. Similarly, when the attribute is next accessed, a default
+value will not be generated.
+
+=head2 Triggers
+
+A C<trigger> is a subroutine that is called whenever the attribute is
+set:
+
+  has 'size' => (
+      is      => 'rw',
+      trigger => \&_size_set,
+  );
+
+  sub _size_set {
+      my ( $self, $size, $old_size ) = @_;
+
+      my $msg = $self->name;
+
+      if ( @_ > 2 ) {
+          $msg .= " - old size was $old_size";
+      }
+
+      $msg .= " - size is now $size";
+      warn $msg;
+  }
+
+The trigger is called I<after> an attribute's value is set. It is
+called as a method on the object, and receives the new and old values as
+its arguments. If the attribute had not previously been set at all,
+then only the new value is passed. This lets you distinguish between
+the case where the attribute had no value versus when the old value was C<undef>.
+
+This differs from an C<after> method modifier in two ways. First, a
+trigger is only called when the attribute is set, as opposed to
+whenever the accessor method is called (for reading or
+writing). Second, it is also called when an attribute's value is
+passed to the constructor.
+
+However, triggers are I<not> called when an attribute is populated
+from a C<default> or C<builder>.
+
+=head2 Attribute types
+
+Attributes can be restricted to only accept certain types:
+
+  has 'first_name' => (
+      is  => 'ro',
+      isa => 'Str',
+  );
+
+This says that the C<first_name> attribute must be a string.
+
+Moose also provides a shortcut for specifying that an attribute only
+accepts objects that do a certain role:
+
+  has 'weapon' => (
+      is   => 'rw',
+      does => 'MyApp::Weapon',
+  );
+
+See the L<Moose::Manual::Types> documentation for a complete
+discussion of Moose's type system.
+
+=head2 Delegation
+
+An attribute can define methods which simply delegate to its value:
+
+  has 'hair_color' => (
+      is      => 'ro',
+      isa     => 'Graphics::Color::RGB',
+      handles => { hair_color_hex => 'as_hex_string' },
+  );
+
+This adds a new method, C<hair_color_hex>. When someone calls
+C<hair_color_hex>, internally, the object just calls C<<
+$self->hair_color->as_hex_string >>.
+
+See L<Moose::Manual::Delegation> for documentation on how to set up
+delegation methods.
+
+=head2 Attribute traits and metaclasses
+
+One of Moose's best features is that it can be extended in all sorts of ways
+through the use of metaclass traits and custom metaclasses.
+
+You can apply one or more traits to an attribute:
+
+  use MooseX::MetaDescription;
+
+  has 'size' => (
+      is          => 'ro',
+      traits      => ['MooseX::MetaDescription::Meta::Trait'],
+      description => {
+          html_widget  => 'text_input',
+          serialize_as => 'element',
+      },
+  );
+
+The advantage of traits is that you can mix more than one of them
+together easily (in fact, a trait is just a role under the hood).
+
+There are a number of MooseX modules on CPAN which provide useful
+attribute metaclasses and traits. See L<Moose::Manual::MooseX> for
+some examples. You can also write your own metaclasses and traits. See
+the "Meta" and "Extending" recipes in L<Moose::Cookbook> for examples.
+
+=head2 Native Delegations
+
+Native delegations allow you to delegate to standard Perl data structures as
+if they were objects.
+
+For example, we can pretend that an array reference has methods like
+C<push()>, C<shift()>, C<map()>, C<count()>, and more.
+
+  has 'options' => (
+      traits  => ['Array'],
+      is      => 'ro',
+      isa     => 'ArrayRef[Str]',
+      default => sub { [] },
+      handles => {
+          all_options    => 'elements',
+          add_option     => 'push',
+          map_options    => 'map',
+          option_count   => 'count',
+          sorted_options => 'sort',
+      },
+  );
+
+See L<Moose::Manual::Delegation> for more details.
+
+=head1 ATTRIBUTE INHERITANCE
+
+By default, a child inherits all of its parent class(es)' attributes
+as-is. However, you can change most aspects of the inherited attribute in the
+child class. You cannot change any of its associated method names (reader,
+writer, predicate, etc).
+
+To override an attribute, you simply prepend its name with a plus sign
+(C<+>):
+
+  package LazyPerson;
+
+  use Moose;
+
+  extends 'Person';
+
+  has '+first_name' => (
+      lazy    => 1,
+      default => 'Bill',
+  );
+
+Now the C<first_name> attribute in C<LazyPerson> is lazy, and defaults
+to C<'Bill'>.
+
+We recommend that you exercise caution when changing the type (C<isa>)
+of an inherited attribute.
+
+=head1 MULTIPLE ATTRIBUTE SHORTCUTS
+
+If you have a number of attributes that differ only by name, you can declare
+them all at once:
+
+  package Point;
+
+  use Moose;
+
+  has [ 'x', 'y' ] => ( is => 'ro', isa => 'Int' );
+
+Also, because C<has> is just a function call, you can call it in a loop:
+
+  for my $name ( qw( x y ) ) {
+      my $builder = '_build_' . $name;
+      has $name => ( is => 'ro', isa => 'Int', builder => $builder );
+  }
+
+=head1 MORE ON ATTRIBUTES
+
+Moose attributes are a big topic, and this document glosses over a few
+aspects. We recommend that you read the L<Moose::Manual::Delegation>
+and L<Moose::Manual::Types> documents to get a more complete
+understanding of attribute features.
+
+=head1 A FEW MORE OPTIONS
+
+Moose has lots of attribute options. The ones listed below are
+superseded by some more modern features, but are covered for the sake
+of completeness.
+
+=head2 The C<documentation> option
+
+You can provide a piece of documentation as a string for an attribute:
+
+  has 'first_name' => (
+      is            => 'rw',
+      documentation => q{The person's first (personal) name},
+  );
+
+Moose does absolutely nothing with this information other than store
+it.
+
+=head2 The C<auto_deref> option
+
+If your attribute is an array reference or hash reference, the
+C<auto_deref> option will make Moose dereference the value when it is
+returned from the reader method I<in list context>:
+
+  my %map = $object->mapping;
+
+This option only works if your attribute is explicitly typed as an
+C<ArrayRef> or C<HashRef>.  When the reader is called in I<scalar> context,
+the reference itself is returned.
+
+However, we recommend that you use L<Moose::Meta::Attribute::Native> traits
+for these types of attributes, which gives you much more control over how
+they are accessed and manipulated. See also
+L<Moose::Manual::BestPractices#Use_Moose::Meta::Attribute::Native_traits_instead_of_auto_deref>.
+
+=head2 Initializer
+
+Moose provides an attribute option called C<initializer>. This is called when
+the attribute's value is being set in the constructor, and lets you change the
+value before it is set.
+
+=head1 AUTHOR
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See L<Moose/CABAL> and L<Moose/CONTRIBUTORS> for details.
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut

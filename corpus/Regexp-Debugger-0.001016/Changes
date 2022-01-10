@@ -1,0 +1,163 @@
+Revision history for Regexp-Debugger
+
+0.0.1  Sun Jan 30 11:19:53 2011
+       Initial release.
+
+
+0.001000  Thu Jul 19 09:49:39 2012
+
+    First public release
+
+
+0.001001  Sat Jul 21 10:29:42 2012
+
+    - Removed redundant _sleep() (thanks Peter)
+
+    - Patched rxrx problem in 5.16
+      [Changes in eval inconsistent with previous behaviour]
+      (thanks alierak!)
+
+
+
+0.001002  Sat Jul 21 16:53:23 2012
+
+    - Fixed windowing of capture and backtracking graphics
+
+    - Removed dependency on Term::ReadKey
+      (thanks everyone who reported it!)
+
+    - Added microdocs for bin/rxrx (thanks Salvatore)
+
+
+0.001003  Mon Jul 23 10:19:14 2012
+
+    - Patched to support seaching for .rxrx under Windows
+      (thanks Christian)
+
+    - Patched to support color text under Windows
+      (thanks Christian)
+
+
+0.001004  Wed Jul 25 08:12:02 2012
+
+    - Adjusted messages for JSON output
+      (thanks Glen!)
+
+
+0.001005  Fri Jul 27 19:09:04 2012
+
+    - Use numeric sorting order for capture variables
+      (thanks Ken)
+
+
+
+0.001006  Sun Aug 19 10:40:20 2012
+
+    - Added 'f' command to interactive mode
+      (like 'm', but runs to next failure-to-match instead)
+
+    - Added 'd' command to describe static regex
+
+    - Made heatmap and description colours lexically configurable
+
+    - Added 'x' command to exit program entirely
+
+    - Added handling of ^D (synonym for 'q')
+      (Thanks, Mike)
+
+    - Fixed bug with \N{...} 
+      (Thanks, Tom)
+
+    - Fixed nasty bug in exporting lexical hint via $^H
+      (Thanks, Tom!)
+
+
+0.001007  Sun Aug 19 20:03:58 2012
+
+    - Fixed missing \[ \] handling in character classes
+      (thanks, Thomas)
+
+
+
+0.001008  Mon Aug 20 09:44:46 2012
+
+    - Made whitespace-separated repetition quantifiers default to /x semantics
+      and documented the issue in LIMITATIONS
+      (Thanks, Tom)
+
+
+0.001009  Sat Sep 22 14:37:33 2012
+
+    - Added history mechanism to rxrx (if a recent IO::Prompter installed)
+
+    - Added cursor motions over input to rxrx (if a recent IO::Prompter installed)
+
+
+
+0.001010  Sun Sep 23 21:19:08 2012
+
+    - Added ability to pass flags to regexes specified in rxrx REPL
+
+
+0.001011  Thu Oct 11 19:22:47 2012
+
+    - Added tracking of $^N variable
+      (thanks Frederic!)
+
+    - Various minor tweaks
+
+    - Fixed bug in charset parsing (thanks Geunyoung Park)
+
+    - Improved atom parsing
+
+
+0.001012  Fri Mar  8 17:19:54 2013
+
+    - Optimized non-interactive cases
+      (no longer rewrites regexes in non-interactive at compile-time)
+
+    - Added correct handling of null regexes to rxrx
+      (thanks Felix)
+
+    - Added EXE_FILES to Makefile.PL to install rxrx
+      (thanks Felix)
+
+    - Added snapshots for description output
+
+    - Improved reporting of non-backtracking parens
+      during backtracking
+
+    - Fixed critical bug in matching repeated blocks
+      (thanks Holger!)
+
+    - Improved tracking and reporting of self-matching whitespace
+
+
+0.001013  Wed May 22 17:44:28 2013
+
+    - Fixed buglet in whitespace echoing under 'visible'
+
+    - Made \n, \t, etc in strings being matched
+      appear as specially coloured n and t respectively
+      (added ws_col config to allow customization)
+
+
+0.001014  Mon Jul 15 12:02:01 2013
+
+    - Added minimal perl version info to Build.PL and Makefile.PL
+      (thanks Andreas!)
+
+    - Updated for Perl 5.18 (thanks Ken!)
+
+
+0.001015  Fri Jul 26 07:20:09 2013
+
+    - Improved specificity of 'd' and 'D' reporting
+
+
+0.001016  Tue Oct 22 10:26:33 2013
+
+    - Made error checking in rxrx more robust
+
+    - Made rxrx reinvoke the version of Perl it was itself invoked with,
+      regardless of $PATH idiosyncrasies (thanks, brian!)
