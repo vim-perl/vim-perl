@@ -130,6 +130,8 @@ while(my ( $filename, $contents ) = $iter->()) {
     next unless $filename =~ /(?:pm|pl)\z/;
 
     my $source = File::Temp->new;
+    print "Processing ", $source->filename, " from $filename\n";
+
     print { $source } $contents;
     close $source;
 
