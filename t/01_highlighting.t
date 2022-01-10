@@ -14,17 +14,20 @@ use Test::More;
 use Test::Differences;
 use Text::VimColor 0.25;
 
-my @HIGHLIGHTERS = (
-    construct_highlighter('perl', ['+let perl_include_pod=1']),
-    construct_highlighter('perl', [
-        '+let perl_include_pod=1',
-        '+let perl_fold=1',
-    ]),
-    construct_highlighter('perl', [
-        '+let perl_include_pod=1',
-        '+let perl_fold=1',
-        '+let perl_fold_anonymous_subs=1',
-    ]),
+my %HIGHLIGHTERS = (
+    'With pod' =>
+        construct_highlighter('perl', ['+let perl_include_pod=1']),
+    'With pod and fold' =>
+        construct_highlighter('perl', [
+            '+let perl_include_pod=1',
+            '+let perl_fold=1',
+        ]),
+    'With pod and fold and anonymous subs' =>
+        construct_highlighter('perl', [
+            '+let perl_include_pod=1',
+            '+let perl_fold=1',
+            '+let perl_fold_anonymous_subs=1',
+        ]),
 );
 
 sub construct_highlighter {
@@ -78,7 +81,7 @@ sub create_custom_highlighter {
 sub test_source_file {
     my ( $file, $highlighters ) = @_;
 
-    foreach my $hilite (@$highlighters) {
+    while ( my ( $desc, $hilite ) = each %{$highlighters} ) {
         my @custom_options = extract_custom_options($file);
         my $output;
 
@@ -108,7 +111,7 @@ sub test_source_file {
             my $expected = decode_json(do { local $/; scalar <$handle> });
 
             my $differences = find_differently_colored_lines($expected, $output);
-            ok(!@$differences, "Correct output for $file");
+            ok(!@$differences, "Correct output for $file: $desc");
 
             # if the markup is incorrect, write it out to a file for
             # the user to inspect
@@ -133,8 +136,8 @@ if(@ARGV) {
     }, 't_source/perl');
 }
 
-plan tests => @HIGHLIGHTERS * @test_files;
+plan tests => @test_files * scalar keys %HIGHLIGHTERS;
 
 foreach my $test_file (@test_files) {
-    test_source_file($test_file, \@HIGHLIGHTERS);
+    test_source_file($test_file, \%HIGHLIGHTERS);
 }
