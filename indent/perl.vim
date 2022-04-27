@@ -133,6 +133,7 @@ function! GetPerlIndent()
                         \ || synid == "perlHereDoc"
                         \ || synid == "perlBraces"
                         \ || synid == "perlStatementIndirObj"
+                        \ || synid == "perlSubDeclaration"
                         \ || synid =~ "^perlFiledescStatement"
                         \ || synid =~ '^perl\(Sub\|Block\|Package\)Fold'
                 let brace = strpart(line, bracepos, 1)
