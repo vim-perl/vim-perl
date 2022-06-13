@@ -1,12 +1,12 @@
 " Vim syntax file
-" Language:     Mason (Perl embedded in HTML)
-" Maintainer:   vim-perl <vim-perl@googlegroups.com>
-" Homepage:      http://github.com/vim-perl/vim-perl/tree/master
-" Bugs/requests: http://github.com/vim-perl/vim-perl/issues
-" License: Vim License (see :help license)
-" Last Change:  {{LAST_CHANGE}}
-" Contributors: Hinrik Örn Sigurðsson <hinrik.sig@gmail.com>
-"               Andrew Smith <andrewdsmith@yahoo.com>
+" Language:      Mason (Perl embedded in HTML)
+" Maintainer:    vim-perl <vim-perl@googlegroups.com>
+" Homepage:      https://github.com/vim-perl/vim-perl
+" Bugs/requests: https://github.com/vim-perl/vim-perl/issues
+" License:       Vim License (see :help license)
+" Last Change:   {{LAST_CHANGE}}
+" Contributors:  Hinrik Örn Sigurðsson <hinrik.sig@gmail.com>
+"                Andrew Smith <andrewdsmith@yahoo.com>
 "
 " TODO:
 "  - Fix <%text> blocks to show HTML tags but ignore Mason tags.

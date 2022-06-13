@@ -1,9 +1,10 @@
+" Vim syntax file
 " Language:      TT2 (Perl Template Toolkit)
 " Maintainer:    vim-perl <vim-perl@googlegroups.com>
 " Author:        Moriki, Atsushi <4woods+vim@gmail.com>
-" Homepage:      http://github.com/vim-perl/vim-perl
-" License: Vim License (see :help license)
-" Bugs/requests: http://github.com/vim-perl/vim-perl/issues
+" Homepage:      https://github.com/vim-perl/vim-perl
+" Bugs/requests: https://github.com/vim-perl/vim-perl/issues
+" License:       Vim License (see :help license)
 " Last Change:   {{LAST_CHANGE}}
 "
 " Installation:
