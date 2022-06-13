@@ -43,7 +43,7 @@ syn match podForKeywd	"\S\+" contained contains=@NoSpell
 " An indented line, to be displayed verbatim
 syn region podVerbatim	start="^\s\+\S.*$" end="^\ze\s*$" end="^\ze=cut\>" contains=@NoSpell
 
-syn region podOrdinary	start="^\S.*$" end="^\ze\s*$" end="^\ze=cut\>" contains=podFormat,podSpecial,@NoSpell
+syn region podOrdinary	start="^\S.*$" end="^\ze\s*$" end="^\ze=cut\>" contains=podFormat,podSpecial,@Spell
 
 " Inline textual items handled specially by POD
 syn match podSpecial	"\(\<\|&\)\I\i*\(::\I\i*\)*([^)]*)" contains=@NoSpell
