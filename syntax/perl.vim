@@ -1,9 +1,9 @@
 " Vim syntax file
-" Language:      Perl 5
+" Language:      Perl
 " Maintainer:    vim-perl <vim-perl@googlegroups.com>
-" Homepage:      http://github.com/vim-perl/vim-perl/tree/master
-" Bugs/requests: http://github.com/vim-perl/vim-perl/issues
-" License: Vim License (see :help license)
+" Homepage:      https://github.com/vim-perl/vim-perl
+" Bugs/requests: https://github.com/vim-perl/vim-perl/issues
+" License:       Vim License (see :help license)
 " Last Change:   {{LAST_CHANGE}}
 " Contributors:  Andy Lester <andy@petdance.com>
 "                Hinrik Örn Sigurðsson <hinrik.sig@gmail.com>
