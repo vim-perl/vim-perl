@@ -14,10 +14,18 @@ if get(g:, 'perl_fold', 0)
   syntax region perlHereDocSQL matchgroup=perlStringStartEnd start=+<<\s*'\z(\%(END_\)\=SQL\)'+ end='^\z1$' contained contains=@SQL               fold extend
   syntax region perlHereDocSQL matchgroup=perlStringStartEnd start='<<\s*"\z(\%(END_\)\=SQL\)"' end='^\z1$' contained contains=@perlInterpDQ,@SQL fold extend
   syntax region perlHereDocSQL matchgroup=perlStringStartEnd start='<<\s*\z(\%(END_\)\=SQL\)'   end='^\z1$' contained contains=@perlInterpDQ,@SQL fold extend
+
+  syntax region perlHereDocSQL matchgroup=perlStringStartEnd start=+<<\~\s*'\z(\%(END_\)\=SQL\)'+ end='^\s*\z1$' contained contains=@SQL               fold extend
+  syntax region perlHereDocSQL matchgroup=perlStringStartEnd start='<<\~\s*"\z(\%(END_\)\=SQL\)"' end='^\s*\z1$' contained contains=@perlInterpDQ,@SQL fold extend
+  syntax region perlHereDocSQL matchgroup=perlStringStartEnd start='<<\~\s*\z(\%(END_\)\=SQL\)'   end='^\s*\z1$' contained contains=@perlInterpDQ,@SQL fold extend
 else
   syntax region perlHereDocSQL matchgroup=perlStringStartEnd start=+<<\s*'\z(\%(END_\)\=SQL\)'+ end='^\z1$' contained contains=@SQL
   syntax region perlHereDocSQL matchgroup=perlStringStartEnd start='<<\s*"\z(\%(END_\)\=SQL\)"' end='^\z1$' contained contains=@perlInterpDQ,@SQL
   syntax region perlHereDocSQL matchgroup=perlStringStartEnd start='<<\s*\z(\%(END_\)\=SQL\)'   end='^\z1$' contained contains=@perlInterpDQ,@SQL
+
+  syntax region perlHereDocSQL matchgroup=perlStringStartEnd start=+<<\~\s*'\z(\%(END_\)\=SQL\)'+ end='^\s*\z1$' contained contains=@SQL
+  syntax region perlHereDocSQL matchgroup=perlStringStartEnd start='<<\~\s*"\z(\%(END_\)\=SQL\)"' end='^\s*\z1$' contained contains=@perlInterpDQ,@SQL
+  syntax region perlHereDocSQL matchgroup=perlStringStartEnd start='<<\~\s*\z(\%(END_\)\=SQL\)'   end='^\s*\z1$' contained contains=@perlInterpDQ,@SQL
 endif
 
 syn cluster perlTop add=perlHereDocSQL
