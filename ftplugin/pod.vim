@@ -61,7 +61,7 @@ if !exists("no_plugin_maps") && !exists("no_pod_maps")
   let b:undo_ftplugin .=
         \ " | silent! exe 'nunmap <buffer> ]]' | silent! exe 'vunmap <buffer> ]]'" .
         \ " | silent! exe 'nunmap <buffer> ][' | silent! exe 'vunmap <buffer> ]['" .
-        \ " | silent! exe 'nunmap <buffer> ]]' | silent! exe 'vunmap <buffer> ]]'" .
+        \ " | silent! exe 'nunmap <buffer> [[' | silent! exe 'vunmap <buffer> [['" .
         \ " | silent! exe 'nunmap <buffer> []' | silent! exe 'vunmap <buffer> []'"
 endif
 
