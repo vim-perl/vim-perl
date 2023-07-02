@@ -8,8 +8,9 @@
 " Last Change:   {{LAST_CHANGE}}
 
 if exists("b:did_ftplugin")
-    finish
+  finish
 endif
+let b:did_ftplugin = 1
 
 let s:save_cpo = &cpo
 set cpo-=C
