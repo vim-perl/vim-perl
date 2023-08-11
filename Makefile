@@ -57,3 +57,7 @@ test-more: contrib_syntax
 
 try-tiny: contrib_syntax
 	cp contrib/try-tiny.vim after/syntax/perl/
+
+object-pad: contrib_syntax
+	cp contrib/object-pad.vim after/syntax/perl/
+
