@@ -93,7 +93,7 @@ if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
     let b:browsefilter = "Perl Source Files (*.pl)\t*.pl\n" .
 		       \ "Perl Modules (*.pm)\t*.pm\n" .
 		       \ "Perl Documentation Files (*.pod)\t*.pod\n" .
-		       \ "All Files (*.*)\t*.*\n"
+		       \ "All Files\t*\n"
     let b:undo_ftplugin .= " | unlet! b:browsefilter"
 endif
 
