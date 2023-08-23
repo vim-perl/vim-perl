@@ -57,6 +57,8 @@ xs.vim has now been updated to highlight symbols from perl 5.22.
 Support has been added for indented heredocs, introduced in perl 5.26.
 Thanks, @roflcopter4, for adding this!
 
+Add support for Object::Pad in contrib/ from @kfly8.
+
 [FIXES]
 Minor tweak to p6RxCharClass.  Thanks, Arne Skjærholt.
 
