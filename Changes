@@ -82,6 +82,9 @@ Stop setting "iskeyword" globally. (Hinrik)
 
 Fix folding for subroutines with prototypes. (zdm)
 
+Change handling of "&shellxquote": use single-quotes by default. This
+fixes "@INC" discovery for rc-shell users. (odc)
+
 [TESTING]
 Added a test harness in t/ (try "make test"). Moved example code
 to t_source/ (Hinrik)

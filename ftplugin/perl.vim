@@ -57,7 +57,7 @@ if !exists("perlpath")
     " safety check: don't execute perl from current directory
     if executable("perl") && fnamemodify(exepath("perl"), ":p:h") != getcwd()
       try
-	if &shellxquote != '"'
+	if &shellxquote == '"'
 	    let perlpath = system('perl -e "print join(q/,/,@INC)"')
 	else
 	    let perlpath = system("perl -e 'print join(q/,/,@INC)'")
