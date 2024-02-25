@@ -230,15 +230,15 @@ syn match  perlString	"\<\%(v\d\+\%(\.\d\+\)*\|\d\+\%(\.\d\+\)\{2,}\)\>" contain
 syn match  perlVStringV	"\<v" contained
 
 
-syn region perlParensSQ		start=+(+ end=+)+ extend contained contains=perlParensSQ,@perlInterpSQ keepend
-syn region perlBracketsSQ	start=+\[+ end=+\]+ extend contained contains=perlBracketsSQ,@perlInterpSQ keepend
-syn region perlBracesSQ		start=+{+ end=+}+ extend contained contains=perlBracesSQ,@perlInterpSQ keepend
-syn region perlAnglesSQ		start=+<+ end=+>+ extend contained contains=perlAnglesSQ,@perlInterpSQ keepend
+syn region perlParensSQ		matchgroup=perlParensSQ start=+(+ end=+)+ extend contained contains=perlParensSQ,@perlInterpSQ keepend
+syn region perlBracketsSQ	matchgroup=perlBracketsSQ start=+\[+ end=+\]+ extend contained contains=perlBracketsSQ,@perlInterpSQ keepend
+syn region perlBracesSQ		matchgroup=perlBracesSQ start=+{+ end=+}+ extend contained contains=perlBracesSQ,@perlInterpSQ keepend
+syn region perlAnglesSQ		matchgroup=perlAnglesSQ start=+<+ end=+>+ extend contained contains=perlAnglesSQ,@perlInterpSQ keepend
 
-syn region perlParensDQ		start=+(+ end=+)+ extend contained contains=perlParensDQ,@perlInterpDQ keepend
-syn region perlBracketsDQ	start=+\[+ end=+\]+ extend contained contains=perlBracketsDQ,@perlInterpDQ keepend
-syn region perlBracesDQ		start=+{+ end=+}+ extend contained contains=perlBracesDQ,@perlInterpDQ keepend
-syn region perlAnglesDQ		start=+<+ end=+>+ extend contained contains=perlAnglesDQ,@perlInterpDQ keepend
+syn region perlParensDQ		matchgroup=perlParensDQ start=+(+ end=+)+ extend contained contains=perlParensDQ,@perlInterpDQ keepend
+syn region perlBracketsDQ	matchgroup=perlBracketsDQ start=+\[+ end=+\]+ extend contained contains=perlBracketsDQ,@perlInterpDQ keepend
+syn region perlBracesDQ		matchgroup=perlBracesDQ start=+{+ end=+}+ extend contained contains=perlBracesDQ,@perlInterpDQ keepend
+syn region perlAnglesDQ		matchgroup=perlAnglesDQ start=+<+ end=+>+ extend contained contains=perlAnglesDQ,@perlInterpDQ keepend
 
 
 " Simple version of searches and matches
