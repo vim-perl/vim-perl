@@ -136,6 +136,7 @@ function! GetPerlIndent()
                         \ || synid == "perlSubDeclaration"
                         \ || synid =~ "^perlFiledescStatement"
                         \ || synid =~ '^perl\(Sub\|Block\|Package\)Fold'
+                        \ || synid == "perlSubDeclaration"
                 let brace = strpart(line, bracepos, 1)
                 if brace == '(' || brace == '{' || brace == '['
                     let ind = ind + shiftwidth()
